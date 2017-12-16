@@ -1,0 +1,15 @@
+This directory contains a set of lisp.config configuration template files you
+can use for deploying different types of LISP network components. Where you
+see angle brackets ("<>") in any lisp.config file, you should replace with real
+values relevant to your network environment.
+
+This directory also contains how-to guides on first-time installation of the
+lispers.net software as well as how to use the apps in the apps/ directory.
+
+The lisp.config.example file contains all lispers.net command documentation 
+and can also be found by clicking the "Command Documentation" button on the
+lispers.net landing page.
+
+-------------------------------------------------------------------------------
+
+

@@ -1,0 +1,91 @@
+#
+# lispers.net lisp.config file, last changed: <sample>
+#
+# (1) Only commands between the first pair of dotted lines will be processed. 
+#
+# (2) Any lines you find prepended with "#>>>" are errors found during command 
+#     processing.
+#
+# (3) You may comment out lines by placing a "#" in the first column of any 
+#     line between the section between the first pair of dotted lines.
+#
+# (4) Note the modification timestamp above is auto generated after you have 
+#     saved this file and it has been processed.
+#
+# (5) Deleting configuration can be achieved by deleting lines and restarting
+#     the LISP component or by use of the LISP API.
+#
+# (6) The landing web page on any device provides detailed Command and API
+#     documentation.
+#
+# (7) Any name references must follow their definitions. Examples are 
+#     elp-names and rle-names when referred to in static map-cache entries.
+#
+# DO NOT WRITE TO ANY OTHER PART OF THIS FILE. YOU MUST ONLY ADD, CHANGE, OR
+# REMOVE LINES BETWEEN THE FIRST PAIR OF DOTTED LINES SECTION.
+#
+#-----------------------------------------------------------------------------
+lisp enable {
+    itr = no
+    etr = no
+    rtr = no
+    map-server = yes
+    map-resolver = no
+    ddt-node = no
+}
+lisp debug {
+    core = no
+    itr = no
+    etr = no
+    rtr = no
+    map-server = no
+    map-resolver = no
+    ddt-node = no
+}
+lisp user-account {
+    username = root
+    password =
+    super-user = yes
+}
+lisp rtr-list {
+     address = <rloc-of-rtr-to-send-in-info-replies-by-map-server>
+     address = <a-second-rloc-of-rtr-to-send-in-info-replies-by-map-server>
+}
+lisp ms-authoritative-prefix {
+    instance-id = <lower>-<upper>
+}
+lisp map-server-peer {
+    prefix {
+        instance-id = <lower>-<upper>
+    }
+    peer {
+        address = <other-ms-or-local-rloc>
+    }
+}
+lisp site {
+    site-name = <configure-a-site-that-will-register-to-you>
+    authentication-key = <same-as-on-map-server-command-on-xtr>
+    allowed-prefix {
+        instance-id = <same-as-on-database-mapping-command-on-xtr>
+	accept-more-specifics = yes
+    }
+}
+lisp site {
+    site-name = <configure-a-site-that-will-register-to-you>
+    authentication-key = <same-as-on-map-server-command-on-xtr>
+    allowed-prefix {
+        instance-id = <same-as-on-database-mapping-command-on-xtr>
+	eid-prefix = <exact-prefix-on-database-mapping-comamnd-on-xtr>
+    }
+}
+lisp site {
+    site-name = <configure-a-site-behind-a-nat-that-will-register-to-you>
+    authentication-key = <same-as-on-map-server-command-on-xtr>
+    allowed-prefix {
+        instance-id = <same-as-on-database-mapping-command-on-xtr>
+	accept-more-specifics = yes
+	force-proxy-reply = yes
+	force-nat-proxy-reply = yes
+    }
+}
+#-----------------------------------------------------------------------------#

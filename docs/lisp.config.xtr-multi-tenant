@@ -1,0 +1,99 @@
+#
+# lispers.net lisp.config file, last changed: <sample>
+#
+# (1) Only commands between the first pair of dotted lines will be processed. 
+#
+# (2) Any lines you find prepended with "#>>>" are errors found during command 
+#     processing.
+#
+# (3) You may comment out lines by placing a "#" in the first column of any 
+#     line between the section between the first pair of dotted lines.
+#
+# (4) Note the modification timestamp above is auto generated after you have 
+#     saved this file and it has been processed.
+#
+# (5) Deleting configuration can be achieved by deleting lines and restarting
+#     the LISP component or by use of the LISP API.
+#
+# (6) The landing web page on any device provides detailed Command and API
+#     documentation.
+#
+# (7) Any name references must follow their definitions. Examples are 
+#     elp-names and rle-names when referred to in static map-cache entries.
+#
+# DO NOT WRITE TO ANY OTHER PART OF THIS FILE. YOU MUST ONLY ADD, CHANGE, OR
+# REMOVE LINES BETWEEN THE FIRST PAIR OF DOTTED LINES SECTION.
+#
+#-----------------------------------------------------------------------------
+lisp enable {
+    itr = yes
+    etr = yes
+    rtr = no
+    map-server = no
+    map-resolver = no
+    ddt-node = no
+}
+lisp debug {
+    core = no
+    itr = no
+    etr = no
+    rtr = no
+    map-server = no
+    map-resolver = no
+    ddt-node = no
+}
+lisp user-account {
+    username = root
+    password =
+    super-user = yes
+}
+lisp xtr-parameters {
+    rloc-probing = no
+    data-plane-security = no
+    nat-traversal = no
+    nonce-echoing = no
+    data-plane-logging = no
+    flow-logging = no
+}
+lisp map-resolver {
+    dns-name = <dns-name-of-map-resolver>
+}
+lisp map-server {
+    dns-name = <dns-name-of-map-server>
+    authentication-key = <authentication-key-configured-in-map-server>
+}
+lisp database-mapping {
+    prefix {
+        instance-id = <tenant-1-iid>
+	eid-prefix = <you-fill-in-any-address-family-prefix>
+    }
+    prefix {
+        instance-id = <tenant-2-iid>
+	eid-prefix = '<you-fill-in-an-eid-distinguished-name>'
+    }
+    prefix {
+        instance-id = <tenant-3-iid>
+	eid-prefix = '<you-fill-in-an-eid-distinguished-name>'
+    }
+    rloc {
+        address = <you-fill-in-a-routable-address-on-one-of-your-interfaces>
+    }    
+}
+lisp interface {
+    interface-name = tenant-1
+    device = eth0
+    instance-id = <tenant-1-iid>
+    multi-tenant-eid = <tenant-1-eid-prefix>
+}
+lisp interface {
+    interface-name = tenant-2
+    device = eth0
+    instance-id = <tenant-2-iid>
+    multi-tenant-eid = <tenant-2-eid-prefix>
+}
+lisp interface {
+    interface-name = tenant-3
+    device = eth1
+    instance-id = <tenant-3-iid>
+}
+#-----------------------------------------------------------------------------#
