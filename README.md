@@ -1,6 +1,6 @@
 
-			     lispers.net
-     			     -----------
+lispers.net
+-----------
 
 This repository contains the world's most feature-rich implementation of the
 Locator/ID Separation Protocol. The implementation runs on the following
@@ -11,7 +11,7 @@ OS platforms:
 
 The lispers.net implementation supprots the following RFCs and Internet-Drafts:
 
-RFC 6830 (was draft-ietf-lisp) 
+RFC 6830 (was draft-ietf-lisp)
 The Locator/ID Separation Protocol (LISP)
 
 RFC 6831 (was draft-ietf-lisp-multicast) 
