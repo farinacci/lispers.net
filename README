@@ -3,13 +3,14 @@
                              -----------
 
 This repository contains the world's most feature-rich implementation of the
-Locator/ID Separation Protocol. The implementation runs on the following
-OS platforms:
+Locator/ID Separation Protocol (LISP). The implementation runs on the 
+following OS platforms:
 
     Ubuntu, Debian, Centos, MacOS
     Raspbian, Alpine Linux, and Docker
 
-The lispers.net implementation supprots the following RFCs and Internet-Drafts:
+The lispers.net implementation supports the following IETF LISP Working Group
+created RFCs and Internet-Drafts:
 
 RFC 6830 (was draft-ietf-lisp)
 The Locator/ID Separation Protocol (LISP)
