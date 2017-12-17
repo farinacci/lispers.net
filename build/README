@@ -10,6 +10,10 @@ This script must be run in this build/ directory and depends on peer
 directories docs/ and lisp/. It also depends on a sub-directory called 
 py-depend/.
 
+When building a new release, make sure you update the top of lisp/release-
+notes.txt so the lispers.net web page can tell you the notes (new features,
+bugfixes, or notes) for the latest release.
+
 The last built release directory will always have a symbolic-link called 
 "latest" pointing to it.
 
