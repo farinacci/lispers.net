@@ -1,0 +1,550 @@
+
+		lispers.net Beta Release Version 0.427
+                --------------------------------------
+
+o Release date: Thu Dec 14 15:46:26 PST 2017
+
+o When discovering a source-EID in the lisp-itr process, a check is done to
+  see if a map-cache entry exists for the destination-EID. A test for action
+  LISP_SEND_MAP_REQUEST_ACTION should be made. This type of map-cache entry
+  has no RLOCs. So allow a Map-Request to be sent.
+
+o When sending a new RLOC-probe make sure the lookup in the encap-crypto-list
+  is for port 4341 when RLOC-probe destination is an RTR or non-NAT ETR.
+
+o Do not display LISP-ITR/RTR Nonce Crypto State when there are no entries
+  in the data structure.
+
+o If an interface is configured with a dynamic-EID prefix, there is no
+  requirement that a database-mapping configured have "dynamic-eid=yes" set.
+  So allow the lisp-itr system to process a "punt" IPC message.
+
+o When remote re-keying happens, make sure we keep the local public-key.
+  Because if we allocate a new one and return it to the other side, the
+  other side will think there is a remote re-key. Then we have a re-key
+  loop. Fixed now.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.426
+                --------------------------------------
+
+o Release date: Tue Dec 12 17:44:56 PST 2017
+
+o When "ipc-data-plane = yes" is configured, that means another data-plane
+  in the system is listening on data encapsulation port 4341. Don't have
+  the lisp-core process listen on it as well or the second entity that comes
+  up will crash with "Address already in use".
+
+o Don't increment rekey-count when keying for the first time.
+
+o Secret magic password no longer needed to see cyrpto-list data structures.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.425
+                --------------------------------------
+
+o Release date: Mon Dec 11 14:48:55 PST 2017
+
+o Display nonce/encap/decap crypto-list data structures (only when a secret
+  magic password is supplied). The display does not produce any full key
+  material. The links to these pages are available to superuser accounts only
+  and can be found in the RLOC Record column of the ITR, ETR, and RTR pages.
+
+o Remove entries from the nonce crypto-list. They stay in list when a Map-
+  Request is sent to the mapping system and the Map-Servers proxy Map-Reply.
+
+o Fix "KeyError: 'bad-inner-header-version'" traceback.
+
+o If an xTR is behind a NAT but using a non-RFC1918 address RLOC, make sure
+  it uses the global translated-RLOC for an itr-rloc field in a Map-Request.
+
+o Add uptime, last rekey-time, rekey-count, and use-count to each crypto key
+  maintained and display on new web pages documented above.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.424
+                --------------------------------------
+
+o Release date: Tue Dec  5 23:11:27 PST 2017
+
+o When the LISP_PCAP_LIST is specified, we don't set pcap filters for receiving
+  RLOC-probe Map-Replies in the lisp-itr process. This causes RLOCs to go
+  unreachable even though Map-Replies are being received (but not processed).
+
+o Allow all of lisp-itr, lisp-etr, and lisp-rtr processes to periodically
+  log the lisp-crypto data structures.
+
+o Clean out the lisp_crypto_keys_by_nonce{} array periodically for RLOC-probes
+  that are not answered due to real connectivity issues.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.423
+                --------------------------------------
+
+o Release date: Fri Dec  1 10:31:15 PST 2017
+
+o If an invalid formatted public-key is registered to the mapping system,
+  avoid calling the ecdsa library, issue a log message, and certainly don't
+  crash.
+
+o A "lisp rtr-list" clause does not take all address sub-commands. A bug
+  caused the first entry to be overwritten by the last configure RTR address.
+
+o Do not process sent Map-Requests from yourself or sent Map-Replies from
+  yourself. The pcap code returns this, the processing code needs to check
+  the source address for self.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.422
+                --------------------------------------
+
+o Release date: Wed Nov 15 05:50:48 PST 2017
+
+o If LISP cipher-suite 4 or 5 is not negotiated, use ciper suite 1. We were
+  erroring out saying we don't support when we do.
+
+o Implement data-plane IPC interface as spec'ed out in lisp-data-plane-ipc.txt.
+  Now any data-plane can use the lispers.net control-plane via this simple API.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.421
+                --------------------------------------
+
+o Release date: Mon Nov 13 16:05:07 PST 2017
+
+o Handle a corner condition when a "lisp database-mapping" command replaces
+  an existing one where a translated RLOC and port is in the RLOC-set. The
+  replacement causes a local private address (from "interface=<device>" RLOC
+  command clauses) to become an RLOC. And if its time to send a Map-Register
+  (before another Into-Reqeust/Info-Reply exchange occurs), then a private
+  address RLOC gets registered in the mapping system for a short time. During
+  that time, ITRs can get their map-caches stuck with private addresses.
+
+o Add "dev eth0" when a IPv6 default route is configured in RL-template.
+
+o Send RLOC-probe requests and RLOC-probe replies with TTL 64 (or a specific
+  architectural constant so we can get through NATs that may reassign
+  the TTL to a standard value of 64). So we can determine the underlay
+  hop-count in both directions. We will display it in the map-cache RLOC-State
+  column as well as in the RLOC probe information display.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.420
+                --------------------------------------
+
+o Release date: Tue Nov  7 17:14:43 PST 2017
+
+o Cosmetic fix, don't display "RTR" in detailed mapping display on map-server
+  now that rloc-name of "RTR" is be provided in registrations and RLOC-probes.
+
+o Fix traceback in lisp_packet.encrypt(). Don't call it keys aren't negotiated
+  fully yet.
+
+o On startup, do not send Map-Register messages after a one-time 5 second timer
+  expires. When nat-traversal is enabled on a slow system behind a slow link,
+  a Info-Reply may have not been received so the global RLOC is not registered
+  initially. If a remote ITR does a mapping system lookup during this small
+  window of time, it could get a local RLOC in its map-cache it cannot use.
+
+o Add hostname to the initial startup log message from any LISP process.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.419
+                --------------------------------------
+
+o Release date: Thu Nov  2 20:33:08 PDT 2017
+
+o Do not use suppression logic for subsequent RLOC-probes if the last one
+  was NOT sent for a given EID. This bug is causing RLOC-probes to not be
+  sent for unreachable RLOCs. So they never can come back up again.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.418
+                --------------------------------------
+
+o Release date: Thu Nov  2 12:32:15 PDT 2017
+
+o The best priority unreachable RLOCs were not being probed to test them
+  for reachability. Fixed now.
+
+o Do "NAT-traversal optimized RLOC-set" for Map-Reply messages which are not
+  RLOC-probe replies.
+
+o Have ETRs register the RTR RLOC when doing nat-traversal with rloc-name
+  "RTR". So it will be clear reading map-caches that a particular RLOC is
+  the RLOC of an RTR node.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.417
+                --------------------------------------
+
+o Release date: Wed Nov  1 14:48:27 PDT 2017
+
+o Fix traceback in lisp_get_local_rloc().
+
+o Add documentation to how-to-install.txt when logs/lisp-itr.log reports
+  "pcap_open_live() not found".
+
+o If signature string in RLOC lisp.config command clause is tampered with, the
+  Map-Server should not crash.
+
+o The map-server should not create subscriber state if the Map-Request
+  signature fails verification.
+
+o Add xTR-ID to the Map-Request when a subscription-based Map-Request is
+  being sent.
+
+o Time out subscription state in Map-Server.
+
+o When the Map-Server returns an RLOC-set for a ITR making a Map-Request for
+  an EID behind a NAT, do not return the translated address. The ITR cannot
+  get through its NAT. We were inadvertently returning RLOCs with RLOC-names
+  which cause this situation to happen.
+
+o When a private-address RLOC is returned with the RTR RLOC to an ITR, and
+  the priority for the private RLOC is better than the RTR's RLOC, for a
+  newly created map-cache, mark the private RLOC down while using the RTR
+  RLOC. Once the private RLOC is tested and has proven reachability, then use
+  the private RLOC. This is the case where the EID is behind the same NAT as
+  the ITR. This allows to reduce the amount of time we encapsulate packets to
+  a non-reachable RLOC.
+
+o When mapping system returns JSON-type RLOC-records, have an ITR or
+  RTR not put them in the map-cache. Log a message that we pruned the list
+  provided by the mapping system. Such RLOC-records are control-plane only
+  RLOC types.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.416
+                --------------------------------------
+
+o Release date: Fri Oct 27 15:39:07 PDT 2017
+
+o Add draft-rodrigueznatal-lisp-pubsub-01.txt PubSub support. The Map-Server
+  will cache subscription requests and Map-Notify EID-prefixes requested when
+  there are RLOC-set changes.
+
+o Add pubsub support to lig. That is, accept keyword "pubsub" on command line
+  which makes lisp-lig.pyo continue to run waiting for Map-Notify messages
+  from the Map-Server when the EID it is ligging hash RLOC-set changes.
+
+o Fix traceback in lisp_rloc.store_rloc_from_record().
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.415
+                --------------------------------------
+
+o Release date: Fri Oct 20 16:23:31 PDT 2017
+
+o Fix a couple of Tracebacks associated with processing the lisp_crypto_keys_
+  by_rloc_decap{} dictionary array.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.414
+                --------------------------------------
+
+o Release date: Thu Oct 19 20:20:50 PDT 2017
+
+o Fix crash in lisp-rtr process while processing RLOC-probe requests with
+  crypto keys in the ITR-RLOCs field.
+
+o Have a non-NAT xTR check to see if address plus port if not found and then
+  create a decap/decrypt key for just the address.
+
+o When a subsequent EID is added to the map-cache with the same RLOC that ha
+  already been determined unreachable via RLOC-probing, mark the RLOC
+  unreachable in the map-cache.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.413
+                --------------------------------------
+
+o Release date: Thu Oct 19 13:53:59 PDT 2017
+
+o Fix short packet unexpected in flow-logging. And display something meaningful
+  when the encapsulated packet is a LISP control message.
+
+o Fix an unexplainable crash in lisp_send_map_request(). There could have been
+  an RLOC-probe sent to an IPv6 RLOC but since there wasn't any local IPv6
+  RLOCs, we could not build the ITR-RLOCs field in a Map-Request.
+
+o Don't use the Map-Request source address (inside of an ECM message) as a
+  destination for a Map-Reply. Since now we guaranteed the Map-Request source
+  is an EID, use the ITR-RLOC address.
+
+o Print public keys when ICV fails. Happens only when data-plane-logging=yes.
+
+o Do not display "encap-crypto" if shared-key not computed.
+
+o Bad check introduced in 0.412 that caused key to not get encoded by RTR.
+
+o There is no way for an RTR to tell when an RLOC-probe is received, by and in
+  of itself, that it is from an ITR that is behind a NAT. One has to assume 
+  that it is not and when RLOC-probe state is created to determine reachability
+  and encapsulation encryption keys, the port number is known and used
+  as part of the lookup in the lisp_decap_crypto_list{}. This way we can find
+  the right keys for multiple xTRs behind the same NAT at the same time
+  finding the right keys for an xTR that is NOT behind a NAT. This fix also
+  works when there is not a symmetric data-path through the RTR. Which means
+  that a non-NAT xTR sends through the RTR and the return traffic from the
+  NAT-based xTR goes directly to the non-NAT xTR.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.412
+                --------------------------------------
+
+o Release date: Sun Oct 15 14:30:54 PDT 2017
+
+o Fix crash in rloc_record.print_record(). Don't try to print keys if keys
+  array member is None.
+
+o In release 0.407, code was removed to update a local/private RLOC change.
+  That code needs to remain or an incorrect itr-rloc is used in a RLOC-probe
+  Map-Request. This causes reachability to not get reset when an xTR moves
+  from one NAT to another.
+
+o Clear the RTR-list in the ITR when the map-cache is cleared by the user.
+  That way, a new set of defalut map-cache entries can be created.
+
+o When a source-EID is available to send a Map-Request, use it as the source
+  address for the encapsulated (ECM) control message. Only when one is not
+  available use the ITR-RLOC.
+
+o Display "uptime since" timestamp for a non-priority RLOC in the ITR map-cache
+  entry.
+
+o When an RLOC goes unreachable, set unreachable state for all EIDs that use
+  the same RLOC address.
+
+o Added decap statistics to the RTR display. What was implemented in release
+  0.410 for the ETR is now available for the RTR. That is, display total
+  receive stats as well as receive errors on decapsulation. Only show per
+  receive thread stats when more than one forwarding thread is configured.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.411
+                --------------------------------------
+
+o Release date: Mon Oct  9 16:47:16 PDT 2017
+
+o Reformat the LISP-ITR RLOC-Probe Information display to collapse common
+  RLOCs for different EIDs into one row of information. And fix a few bugs.
+
+o Do not process an RLOC-probe reply for an RLOC that has a different address-
+  family of the arrived packet. You don't know for sure you have connectivity
+  to that RLOC unless you probe it in that address-family.
+
+o Indicate when RLOC-probes are suppressed for the same RLOC for a different
+  EID.
+
+o Made changes to RL-template to simplify the explanation of it as well as
+  give examples of using static route commands with the "src" parameter so
+  app source addresss selection happens automatically for EIDs.
+
+o Trigger RLOC-probes for best priority RLOCs when a new map-cache entry is
+  created. This tells us within 10 seconds what RLOCs are unreachable and
+  reduces packet loss sooner.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.410
+                --------------------------------------
+
+o Release date: Wed Oct  4 17:04:11 PDT 2017
+
+o The map-server site cache gets removed when any configuration change occurs.
+  When the user wants to enable or disable debug logging, the site cache
+  should be left alone. The fix is to not allow the modification of an
+  existing configured site but allows new sites to be configured/added.
+
+o Put in ETR receive stats in the ETR display. Display total receive stats as
+  well as receive errors on decapsulation. The total stats is the sum of
+  stats for each configured database-mapping EID-prefix.
+
+o By clicking the title of the column label in LISP-ETR Decapsulation Stats
+  table, a superuser can clear the stats counters.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.409
+                --------------------------------------
+
+o Release date: Tue Oct  3 12:20:24 PDT 2017
+
+o Fix all occurences in command documentation in lisp.config.example where
+  "*" is accepted as a valid instance-id value. Remove all other occurences.
+
+o Add new "lisp database-mapping" parameter for sub-command "prefix" called
+  "signature-eid = yes | no". This allows an xTR to use this specific EID
+  as a crypto-EID for Map-Request signatures. By doing this, then the single
+  lisp-sig.pem file contains the private key that is associated with the
+  public key the crypto-EID hashes. This will NOW be required on the RTR
+  as well.
+
+o Fix NoneType dereference in lisp_process_register_timer().
+
+o Do not data-encapsulate RLOC-probe replies directly to xTRs behind NATs.
+  Only RTRs should do this, not ETRs.
+
+o Fix traceback in lisp_packet.print_flow() when IPv4 packet is less than 24
+  bytes for IPv6 packet is less than 44 bytes.
+
+o On an ITR, make sure you RLOC-probe two xTRs even though they have the same
+  RLOC address. Since the ITR does not track port state for these xTRs behind
+  the same NAT, it can't tell this from an xTR for two different EID-prefixes.
+  So check the RLOC-names, if different, they are different xTRs.
+
+-------------------------------------------------------------------------------
+
+		lispers.net Beta Release Version 0.408
+                --------------------------------------
+
+o Release date: Fri Sep 29 11:55:31 PDT 2017
+
+o Send triggered RLOC-probe with correct socket list so RLOC-probe can be
+  returned through a NAT.
+
+o Fix flow-log to not display "receive errors" for encapsulated packets. There
+  was packet residue on the decap data structure that leaked into the encap
+  data structure on the RTR.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.407
+                --------------------------------------
+
+o Release date: Thu Sep 28 21:11:04 PDT 2017
+
+o When a translated-port changes for an xTR behind a NAT, the RTR should
+  trigger an RLOC-probe to get RLOC reachability and to get lisp-crypto
+  session keys established.
+
+o The Map-Server should never send a Native-Forward action Map-Reply for a
+  crypto-EID. It should return a Send-Map-Request action Map-Reply. And the
+  ITR should wait <ttl> minutes to resend a Map-Request, where <ttl> is the
+  value in the Map-Reply returned.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.406
+                --------------------------------------
+
+o Release date: Thu Sep 28 17:04:01 PDT 2017
+
+o When launching timer threads for triggered messages, we need to stop the
+  previous periiodic threads or else we send double redundant messages.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.405
+                --------------------------------------
+
+o Release date: Thu Sep 28 13:20:35 PDT 2017
+
+o In the flow log output, if a packet is encrypted but had an ICV error,
+  display the fact. This is a quick way to determine if there are any input
+  processing errors for packets being decapsulated.
+
+o In the lisp-itr process, when a Map-Resolver is configured, send an Info-
+  Request immediately rather than setting a 3 second timer to send one.
+
+o In the lisp-etr process, when a Map-Server is configured, send an Info-
+  Request immediately rather than setting a 3 second timer to send one.
+
+o In the lisp-itr process, when an Info-Reply is received from a Map-Server
+  with a new RTR-list and default map-cache entries are created, trigger
+  an RLOC-probe to get RLOC reachability and to get lisp-crypto session keys
+  established.
+
+o In the lisp-etr process, when an Info-Reply is received from a Map-Server
+  with a new RTR-list, trigger a Map-Register to all Map-Servers so the
+  RLOC-set contains the RTR RLOC-records.
+
+o In the lisp-etr process, do not log "Local interface address changed" and
+  "Store translation" when there isn't a change.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.404
+                --------------------------------------
+
+o Release date: Tue Sep 26 13:54:28 PDT 2017
+
+o When recording an exception, traceback.print_last() may fail writing to
+  standard output. This prevents the traceback from being written to the
+  log file of the crashsing process as well as lisp-traceback.log. 
+
+o Do not print "up-state since never" when the state of an RLOC has never
+  changed. Print the uptime of the map-cache entry.
+
+o Fix traceback in lisp_mapping.increment_decap_stats().
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.403
+                --------------------------------------
+
+o Release date: Wed Sep 20 21:24:10 PDT 2017
+
+o For a configuration race condition where a component process is slow in
+  processing configuration commands, do not give up if there is a IPC timeout.
+  Go to the next command (when processing process bringup) or go to the next
+  process (when processing a config file change).
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.402
+                --------------------------------------
+
+o Release date: Fri Sep 15 14:12:12 PDT 2017
+
+o Allow for logfile rotation. That is, whenever an external procedure moves
+  any processs logfile, a new logfile is created with the same name.
+  The feature detects that a file has been moves before creating a new one so
+  no log messages are lost.
+
+o For lisp.debug(), add timestamps between ">>>" and "<<<". Helps corelate
+  output from regular lisp.lprint() statements.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.401
+                --------------------------------------
+
+o Release date: Mon Sep  4 00:52:13 PDT 2017
+
+o Don't write cold right before vacation. Fix traceback in lisp_interface_
+  command(). ;-)
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.400
+                --------------------------------------
+
+o Release date: Sat Sep  2 12:46:14 PDT 2017
+
+o This release fixes regression bugs introduced in 0.399.
+
+o In lisp_interface_command(), check for instance-ID is a number. And if not,
+  set instance-ID to 0. Otherwise, convert string to integer and store in
+  data structure.
+
+o Make RLOC-record display for JSON entry "json: { ... }".
+
+-------------------------------------------------------------------------------

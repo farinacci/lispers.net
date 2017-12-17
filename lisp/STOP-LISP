@@ -1,0 +1,55 @@
+#!/bin/tcsh
+#
+# STOP-LISP
+#
+# Stop all LISP processes and remove the named socket descriptors and any
+# iptables rules created by lispers.net. 
+#
+#------------------------------------------------------------------------------
+
+cd `dirname $0`
+ls lisp-itr >& /dev/null
+set itr = $status
+
+#
+# Remove each lispers.net LISP processes. Do not continue until they are 
+# all gone.
+#
+set pids = `./pslisp | egrep python | cut -f 1 -d " "`
+echo "Stopping LISP processes [$pids] ..."
+foreach p ($pids)
+    sudo kill $p
+end
+while 1
+    set pids = `./pslisp | egrep python | cut -f 1 -d " "`
+    if ($pids == "") then
+        break
+    else
+        echo "Waiting on processes ["$pids"]"
+    endif
+end
+
+#
+# Remove LISP lock files.
+#
+python remove-lisp-locks.pyo
+
+#
+# User created iptables rules and doesn't want lispers.net to remove anything.
+#
+if ($?LISP_NO_IPTABLES) then
+    echo "User bypass removing LISP iptables"
+    exit(0)
+endif
+
+#
+# Remove iptables lispers.net created if we are an ITR.
+#
+if ($itr == 0) then
+    python remove-lisp-iptables.pyo
+else
+    echo "Bypass removing LISP iptables, ITR process not running"
+endif
+exit(0)
+
+#------------------------------------------------------------------------------

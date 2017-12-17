@@ -1,0 +1,392 @@
+Help on module lispapi:
+
+NAME
+    lispapi
+
+FILE
+    /Users/dino/code/lisp/lispapi.py
+
+DESCRIPTION
+    This python module is called by client network applications that want to
+    interface with the lispers.net implementation of LISP. For questions, bug
+    reports, or feature requests, contact support@lispers.net.
+    
+    Here is a program calling sequence:
+    
+    >>> import lispapi
+    >>> att = lispapi.api_init("att.net", "root")
+    >>> vz = lispapi.api_init("verizon.net", "root")
+    >>>
+    >>> att_rtr = att.is_rtr_enabled()
+    >>> vz_ms = vz.is_ms_enabled()
+    >>>
+    >>> print "AT&T has RTR:, att_rtr 
+    AT&T has RTR: True
+    >>> print "VZ has MS:", vz_ms
+    VZ has MS: False
+    >>>
+    >>> vz.enable_ms()
+    >>> print "VZ has MS:", vz.is_ms_enabled()
+    VZ has MS: True
+    >>>
+
+CLASSES
+    api_init
+    
+    class api_init
+     |  Methods defined here:
+     |  
+     |  __init__(self, host, user, pw=None, port=8080, api_debug=False, do_get=True)
+     |      Required to be first call by API user. Returns instance that must
+     |      be stored by caller. If 'pw' is None, then the password will be
+     |      obtained from the environment variable LISPAPI_PW. If you want the
+     |      LISP API to return debug information, pass argument api_debug=True.
+     |  
+     |  add_ddt_auth_prefix(self, iid='0', auth_prefix='', group='')
+     |      Configure a LISP-DDT authoritative-prefix for a DDT-node.
+     |      The 'auth_prefix' argument is an IPv4, IPv6 or MAC address prefix 
+     |      string. Returns error string or "good" when successful.
+     |  
+     |  add_ddt_delegation(self, iid='0', prefix='', group='', referral_set=[])
+     |      Configure a LISP-DDT delegation EID-prefix with a referral-set. 
+     |      First argument is an instance-ID value in string format. the 
+     |      second argument is an IPv4, IPv6 or MAC address prefix string. 
+     |      The third argument is an optional group address when an (S,G) 
+     |      entry is being passed where 'prefix' is S and 'group" is G. 
+     |      The fourth argument is an array of child DDT-node IPv4 or IPv6
+     |      address strings. Returns error string or "good" when successful.
+     |  
+     |  add_etr_database_mapping(self, iid='0', prefix='', group='', rloc_set=[])
+     |      Add database-mapping for LISP site to ETR. The rloc-set can be an 
+     |      array of address strings or an array of dictionaries that has been
+     |      created by making successive calls to build_rloc_record().
+     |  
+     |  add_etr_map_server(self, address='', auth_key=None, address_is_name=False)
+     |      Add Map-Server address to ETR at LISP site. If parameter
+     |      address_is_name is set to True then 'address' is a DNS name for
+     |      the Map-Server.
+     |  
+     |  add_itr_map_cache(self, iid='0', prefix='', group='', rloc_set=[])
+     |      Add map-cache entry to ITR or RTR. The rloc-set can be an array
+     |      of address strings or an array of dictionaries that has been
+     |      created by making successive calls to build_rloc_record().
+     |  
+     |  add_itr_map_resolver(self, address, address_is_name=False)
+     |      Add Map-Resolver info to RTR, or ITR at LISP site. If parameter
+     |      address_is_name is set to True then 'address' is a DNS name for
+     |      the Map-Resolver.
+     |  
+     |  add_mr_ddt_root(self, address='')
+     |      Configure the address of a LISP-DDT root node. Variable 'address'
+     |      is an IPv4 or IPv6 address string. Returns error string or "good"
+     |      when successful.
+     |  
+     |  add_mr_referral(self, iid='0', prefix='', group='', referral_set=[])
+     |      Configure a referral EID-prefix. First argument is an instance-ID
+     |      value in string format. the second argument is an IPv4, IPv6
+     |      or MAC address prefix string. The third argument is an optional
+     |      group address when an (S,G) entry is being passed where 'prefix'
+     |      is S and 'group" is G. The fourth argument is an array
+     |      of DDT-node IPv4 or IPv6 address strings. Returns error string or 
+     |      "good" when successful.
+     |  
+     |  add_ms_map_server_peer(self, iid='0', prefix='', group='', peer_set=[])
+     |      Configure a Map-Server peer for a given EID-prefix. This allows
+     |      a Map-Server to return all otther Map-Servers in a Map-Referral
+     |      message for this given EID-prefix. First argument is an 
+     |      instance-ID value in string format. the second argument is an 
+     |      IPv4, IPv6 or MAC address prefix string. The third argument is an 
+     |      optional group address when an (S,G) entry is being passed where 
+     |      'prefix' is S and 'group" is G. The fourth argument is an array of
+     |      of all Map-Servers serving this EID-prefix. It should include
+     |      this local Map-Server the API call is to. Each element of the
+     |      array are address strings. Returns error string or "good" when 
+     |      successful.
+     |  
+     |  add_ms_site(self, site_name, auth_key, prefix_list, description='')
+     |      Add LISP site with allowed EID-prefix list. Array prefix_list
+     |      must be built by build_ms_site_allowed_prefix() before using this
+     |      call.
+     |  
+     |  add_policy(self, policy_name, match_iid='0', match_seid='', match_deid='', match_srloc='', match_drloc='', match_rloc_name='', match_geo='', match_elp='', match_rle='', match_json='', match_datetime_range='', set_action='drop', set_record_ttl='', set_iid='', set_seid='', set_deid='', set_rloc='', set_rloc_name='', set_geo='', set_elp='', set_rle='', set_json='')
+     |      Add a LISP policy. All parameters except policy_name are 
+     |      optional.
+     |  
+     |  add_user_account(self, username, password)
+     |      Configures a user-account command. Returns True if successful.
+     |  
+     |  api_disable_debug(self)
+     |      Disable debug output for this LISP API.
+     |  
+     |  api_enable_debug(self)
+     |      Enable debug output for this LISP API.
+     |  
+     |  api_print(self)
+     |      Print contents of lispapi class. Returns a string.
+     |  
+     |  build_ms_site_allowed_prefix(self, prefix_list, iid='0', prefix='', group='', ams=False, fpr=False, fnpr=False, pprd=False, pra='')
+     |      Add EID-prefix and attributes to a prefix-list array to be supplied
+     |      with site information when calling add_ms_site(). Caller needs to
+     |      intialize prefix_list to [] for the first call and needs to pass
+     |      the same variable on each subsequent call.
+     |  
+     |  build_rloc_record(self, rloc_or_int, upriority, uweight, rloc_name=None, mpriority=255, mweight=0, rloc_set=[])
+     |      Build an RLOC record to be passed to add_itr_map_cache() and
+     |      add_etr_database_mapping(). Returns an array of dictionaries.
+     |  
+     |  delete_ddt_auth_prefix(self, iid='0', auth_prefix='', group='')
+     |      Deconfigure a LISP-DDT authoritative-prefix for a DDT-node.
+     |      The 'auth_prefix' argument is an IPv4, IPv6 or MAC address prefix 
+     |      string. Returns error string or "good" when successful.
+     |  
+     |  delete_ddt_delegation(self, iid='0', prefix='', group='')
+     |      Deconfigure a LISP-DDT delegation EID-prefix. The 'prefix'
+     |      argument is an IPv4, IPv6 or MAC address prefix string. 
+     |      The second argument is an array of child DDT-node IPv4 or IPv6 
+     |      address strings. Returns error string or "good" when successful.
+     |  
+     |  delete_etr_database_mapping(self, iid='0', prefix='', group='')
+     |      Remove database-mapping for LISP site from ETR.
+     |  
+     |  delete_etr_map_server(self, address, address_is_name=False)
+     |      Remove Map-Server address from ETR at LISP site. If parameter
+     |      address_is_name is set to True then 'address' is a DNS name for
+     |      the Map-Server.
+     |  
+     |  delete_itr_map_cache(self, iid='0', prefix='', group='')
+     |      Delete map-cache from ITR or RTR.
+     |  
+     |  delete_itr_map_resolver(self, address, address_is_name=False)
+     |      Remove Map-Resolver address from RTR, or ITR at LISP site. If 
+     |      parameter address_is_name is set to True then 'address' is a DNS 
+     |      name for the Map-Resolver.
+     |  
+     |  delete_mr_ddt_root(self, address='')
+     |      Deconfigure the address of a LISP-DDT root node. Variable 'address'
+     |      is an IPv4 or IPv6 address string. Returns error string or "good"
+     |      when successful.
+     |  
+     |  delete_mr_referral(self, iid='0', prefix='', group='')
+     |      Deconfigure a referral EID-prefix. The 'prefix' and 'group' 
+     |      arguments are IPv4, IPv6 or MAC address prefix strings. The 'iid'
+     |      argument is the value of an instance-ID in string format.
+     |      Returns error string or "good" when successful.
+     |  
+     |  delete_ms_map_server_peer(self, iid='0', prefix='', group='')
+     |      Deconfigure a Map-Server peer EID-prefix in a Map-Server. The 
+     |      'prefix' argument is an IPv4, IPv6 or MAC address prefix string. 
+     |      The second argument is an array of child DDT-node IPv4 or IPv6 
+     |      address strings. Returns error string or "good" when successful.
+     |  
+     |  delete_ms_site(self, site_name)
+     |      Delete LISP site and all allowed EID-prefixes previously added
+     |      for the site.
+     |  
+     |  delete_policy(self, policy_name)
+     |      Delete a LISP policy. The policy is referenced by policy name.
+     |  
+     |  delete_user_account(self, username)
+     |      Removes a user-account command. Returns True if successful.
+     |  
+     |  disable_core_debug(self)
+     |      Deactivate the LISP core process debug logging.
+     |  
+     |  disable_ddt(self)
+     |      Deactivate DDT-node functionality on system.
+     |  
+     |  disable_ddt_debug(self)
+     |      Deactivate DDT-node debug logging.
+     |  
+     |  disable_etr(self)
+     |      Deactivate ETR functionality on system.
+     |  
+     |  disable_etr_debug(self)
+     |      Deactivate ETR debug logging.
+     |  
+     |  disable_itr(self)
+     |      Deactivate ITR functionality on system.
+     |  
+     |  disable_itr_debug(self)
+     |      Deactivate ITR debug logging.
+     |  
+     |  disable_itr_security(self)
+     |      Disable AES encryption for packets ITRs or RTRs encapsulate.
+     |  
+     |  disable_mr(self)
+     |      Deactivate Map-Resolver functionality on system.
+     |  
+     |  disable_mr_debug(self)
+     |      Deactivate Map-Resolver debug logging.
+     |  
+     |  disable_ms(self)
+     |      Deactivate Map-Server functionality on system.
+     |  
+     |  disable_ms_debug(self)
+     |      Deactivate Map-Server debug logging.
+     |  
+     |  disable_rtr(self)
+     |      Deactivate RTR functionality on system.
+     |  
+     |  disable_rtr_debug(self)
+     |      Deactivate RTR debug logging.
+     |  
+     |  disable_xtr_data_plane_logging(self)
+     |      Disable data-plane logging functionality on an xTR.
+     |  
+     |  disable_xtr_flow_logging(self)
+     |      Disable packet flow logging functionality on an xTR.
+     |  
+     |  disable_xtr_nat_traversal(self)
+     |      Disable NAT-traversal functionality in an ITR and ETR.
+     |  
+     |  disable_xtr_nonce_echoing(self)
+     |      Disable Nonce-Echoing functionality on an ITR and RTR.
+     |  
+     |  disable_xtr_rloc_probing(self)
+     |      Disable RLOC-probing functionality on an ITR and RTR.
+     |  
+     |  enable_core_debug(self)
+     |      Activate the LISP core process debug logging.
+     |  
+     |  enable_ddt(self)
+     |      Activate DDT-node functionality on system.
+     |  
+     |  enable_ddt_debug(self)
+     |      Activate DDT-node debug logging.
+     |  
+     |  enable_etr(self)
+     |      Activate ETR functionality on system.
+     |  
+     |  enable_etr_debug(self)
+     |      Activate ETR debug logging.
+     |  
+     |  enable_itr(self)
+     |      Activate ITR functionality on system.
+     |  
+     |  enable_itr_debug(self)
+     |      Activate ITR debug logging.
+     |  
+     |  enable_itr_security(self)
+     |      Enable AES encryption for packets ITRs or RTRs encapsulate.
+     |  
+     |  enable_mr(self)
+     |      Activate Map-Resolver functionality on system.
+     |  
+     |  enable_mr_debug(self)
+     |      Activate Map-Resolver debug logging.
+     |  
+     |  enable_ms(self)
+     |      Activate Map-Server functionality on system.
+     |  
+     |  enable_ms_debug(self)
+     |      Activate Map-Server debug logging.
+     |  
+     |  enable_rtr(self)
+     |      Activate RTR functionality on system.
+     |  
+     |  enable_rtr_debug(self)
+     |      Activate RTR debug logging.
+     |  
+     |  enable_xtr_data_plane_logging(self)
+     |      Enable data-plane logging functionality on an xTR.
+     |  
+     |  enable_xtr_flow_logging(self)
+     |      Enable packet flow logging functionality on an xTR.
+     |  
+     |  enable_xtr_nat_traversal(self)
+     |      Enable NAT-traversal functionality on ITR and ETR. Make sure
+     |      your database-mapping configuration contains an interface 
+     |      (versus an address) for an RLOC.
+     |  
+     |  enable_xtr_nonce_echoing(self)
+     |      Enable Nonce-Echoing functionality on an ITR or RTR.
+     |  
+     |  enable_xtr_rloc_probing(self)
+     |      Enable RLOC-probing functionality on an ITR or RTR.
+     |  
+     |  get_debug(self)
+     |      Returns "lisp debug" status for system. Returns a dictionary
+     |      array.
+     |  
+     |  get_enable(self, force_query=False)
+     |      Returns "lisp enable" status for system. Returns a dictionary
+     |      array.
+     |  
+     |  get_etr_map_server(self, address, address_is_name=False)
+     |      Get Map-Server info from ETR at LISP site. If parameter
+     |      address_is_name is set to True then 'address' is a DNS name for
+     |      the Map-Resolver.
+     |  
+     |  get_itr_map_resolver(self, address, address_is_name=False)
+     |      Get Map-Resolver info from RTR, or ITR at LISP site. If parameter
+     |      address_is_name is set to True then 'address' is a DNS name for
+     |      the Map-Resolver.
+     |  
+     |  get_map_cache(self)
+     |      Return the entire map-cache from an ITR or RTR. The returned format
+     |      is an array of map-cache entries. Each entry is a dictionary
+     |      array with unicoded keys and string values.
+     |  
+     |  get_map_cache_entry(self, iid='', prefix='', group='')
+     |      Do a longest match lookup in the map-cache from an ITR or RTR.
+     |      The returned value will be a dictionary array with unicoded keys
+     |      and string values.
+     |  
+     |  get_site_cache(self)
+     |      Return the entire site-cache from a Map-Server. The returned format
+     |      is an array of site-cache entries. Each entry is a dictionary
+     |      array with unicoded keys and string values.
+     |  
+     |  get_site_cache_entry(self, iid='', prefix='', group='')
+     |      Do a longest match lookup in the site-cache from a Map-Server.
+     |      The returned value will be a dictionary array with unicoded keys
+     |      and string values.
+     |  
+     |  get_system(self)
+     |      Return system information for a lispers.net system. A dictionary
+     |      array of values is returned.
+     |  
+     |  get_xtr_parameters(self)
+     |      Returns the "lisp xtr-parameters" settings for the system. Returns
+     |      a dictionary array.
+     |  
+     |  is_ddt_debug_enabled(self)
+     |      Return True if DDT-node debug looging is enabled on system.
+     |  
+     |  is_ddt_enabled(self)
+     |      Return True if DDT-node is enabled on system.
+     |  
+     |  is_etr_debug_enabled(self)
+     |      Return True if ETR debug looging is enabled on system.
+     |  
+     |  is_etr_enabled(self)
+     |      Return True if ETR is enabled on system.
+     |  
+     |  is_itr_debug_enabled(self)
+     |      Return True if ITR debug looging is enabled on system.
+     |  
+     |  is_itr_enabled(self)
+     |      Return True if ITR is enabled on system.
+     |  
+     |  is_mr_debug_enabled(self)
+     |      Return True if Map-Resolver debug looging is enabled on system.
+     |  
+     |  is_mr_enabled(self)
+     |      Return True if MR is enabled on system.
+     |  
+     |  is_ms_debug_enabled(self)
+     |      Return True if Map-Server debug looging is enabled on system.
+     |  
+     |  is_ms_enabled(self)
+     |      Return True if Map-Server is enabled on system.
+     |  
+     |  is_rtr_debug_enabled(self)
+     |      Return True if RTR debug looging is enabled on system.
+     |  
+     |  is_rtr_enabled(self)
+     |      Return True if RTR is enabled on system.
+
+DATA
+    REQ_TIMEOUT = 3
+
+

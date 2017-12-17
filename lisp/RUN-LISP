@@ -1,0 +1,127 @@
+#!/bin/tcsh
+#
+# RUN-LISP
+#
+# This simple entry script runs the LISP subsystem.
+#
+#------------------------------------------------------------------------------
+
+setenv LISP_ADDR_SELECT     $2
+setenv LISP_PCAP_THREADS    1
+setenv LISP_WORKER_THREADS  0
+setenv LISP_RTR_BEHIND_NAT
+setenv LISP_VIRTIO_BUG
+setenv LISP_ECDH_25519
+#setenv LISP_NO_USER_TIMEOUT
+#setenv LISP_ANYCAST_MR
+#setenv LISP_ENFORCE_BINDTODEVICE
+#setenv LISP_LOAD_SPLIT_PINGS
+
+#
+# Cipher defaults to chacha20. Comment out lines below if you want AES.
+#
+setenv LISP_USE_CHACHA
+setenv LISP_USE_POLY
+
+#
+# If you do not want lispers.net to pcap on each interface, supply a list 
+# below. Make sure you supply a interface device already defined/configured
+# in the kernel. The member list is delimited with whitespace.
+#
+#setenv LISP_PCAP_LIST "eth0 eth1"
+
+#
+# When this environment variable is defined, the lispers.net code will not
+# do any iptables functionality.
+#
+#setenv LISP_NO_IPTABLES
+
+#
+# How long in seconds the lisp-itr process should poll to check if "lisp
+# database-mapping" commands have been totally processed.
+#
+#setenv LISP_ITR_WAIT_TIME 1
+
+#
+# Bail if "python" does not give us version 2.7.x.
+#
+python -V |& egrep 2.7 > /dev/null
+if ($status != "0") then
+    echo "Requires python version 2.7.x"
+    exit(1)
+endif
+
+#
+# Create logs directory if it does not exist.
+#
+ls ./logs >& /dev/null
+if ($status != "0") then
+    mkdir ./logs
+endif
+
+#
+# Determine if we are running in binary mode or development mode off of py
+# and pyc files.
+#
+ls lisp-core.pyo >& /dev/null
+if ($status != "0") then
+
+    #
+    # If source is in the directory, run in development/manual mode.
+    #
+    ls lisp.py >& /dev/null
+    if ($status != "0") then
+        echo "File lisp-core.pyo not found, script requires binary files"
+        exit(1)
+    endif
+
+    if ($1 == "" || $1 == "core" || $1 == "dont-timeout") then
+        set component = "lisp-core"
+        rm -fr ./logs/lisp-traceback.log
+    else
+        set component = "lisp-$1"
+    endif
+
+    echo -n "Running $component.py manually, run in background (y/n): "
+    if ($< == "y") then
+        python $component.py >& ./logs/$component.log &
+        echo -n "Want to tail -f ./logs/$component.log (y/n): "
+        if ($< == "y") then
+            tail -f ./logs/$component.log &
+        endif
+    else
+        python $component.py | tee ./logs/$component.log
+    endif
+    exit(0)
+endif
+
+#
+# Check to see if lisp-save-logs script exists.
+#
+ls lisp-save-logs.pyo >& /dev/null
+if ($status != "0") then
+    echo "File lisp-save-logs.pyo not found, script requires binary files"
+    exit(1)
+endif
+
+#
+# Skip if no log files found. If found, save them.
+#
+ls ./logs/*.log >& /dev/null
+if ($status == "0") then
+    python -O lisp-save-logs.pyo
+    rm -fr ./logs/lisp-traceback.log
+endif
+
+#
+# Remove file descriptors if last time we crashed.
+#
+python -O remove-lisp-locks.pyo
+
+#
+# Now run core process that starts the configured LISP components.
+#
+python -O lisp-core.pyo $1 >& ./logs/lisp-core.log &
+exit(0)
+
+#------------------------------------------------------------------------------
