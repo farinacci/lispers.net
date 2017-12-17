@@ -1,0 +1,22 @@
+This directory is used to build lispers.net images. The script:
+
+    python make-release.py <release-number>
+
+builds a compressed tarball with obfuscated pyo files. The script depends on 
+the program pyobfuscate. So it will need to be on your system to build a 
+lispers.net tarball.
+
+This script must be run in this build/ directory and depends on peer 
+directories docs/ and lisp/. It also depends on a sub-directory called 
+py-depend/.
+
+The last built release directory will always have a symbolic-link called 
+"latest" pointing to it.
+
+The script:
+
+    python make-apps-release.py
+
+will build a compressed tarball image with all the apps in the apps/ directory.
+
+-------------------------------------------------------------------------------
