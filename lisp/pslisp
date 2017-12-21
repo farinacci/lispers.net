@@ -1,0 +1,12 @@
+#!/bin/tcsh
+#
+# pslisp
+#
+# Just a wrapper to call python source or binary.
+#
+ls ./is-lisp-running.pyo >& /dev/null
+if ($status == "0") then
+    python -O ./is-lisp-running.pyo
+else
+    python ./is-lisp-running.py
+endif
