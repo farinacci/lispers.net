@@ -1,4 +1,109 @@
 
+                lispers.net Beta Release Version 0.436
+                --------------------------------------
+
+o Release date:
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.435
+                --------------------------------------
+
+o Release date: Sat Jan 27 12:42:39 PST 2018
+
+o Put environment variable LISP_GEO_ZOOM_LEVEL in ./RUN-LISP so when a uer
+  clicks on a gps-cooridinate URL, they can get more map detail.
+
+o Have lisp_geo.get_distance() take two geo points. Do not restrict to
+  geo-prefix and geo-point.
+
+o Drop ciphertext packet when it is not a multiple of 16 bytes. Print log
+  message when "data-plane-logging = yes".
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.434
+                --------------------------------------
+
+o Release date: Thu Jan 18 12:19:27 PST 2018
+
+o Fix the Cipher Suite constants. The lispers.net uses cipher suite 5 and 6.
+  What is coded from old Internet Drafts is 4 and 5.
+
+o In lisp_itr_process_punt() pass into lisp_rate_limit_map_request() a
+  lisp_address() type versus string type.
+
+o When writing a "type" : "interfaces", make sure instance-id is transmitted
+  as a string.
+
+o Process { "type" : "restart" } message when received on the "lispers.net-itr"
+  named socket.
+
+o Introduce a { "type" : "entire-map-cache" } so when a external data-plane
+  restart happens the entire map-cache can go in one IPC message from the
+  control-plane to the data-plane.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.433
+                --------------------------------------
+
+o Release date: Fri Jan 12 15:05:39 PST 2018
+
+o When sending Map-Registers to multiple Map-Servers, use the same xTR-ID.
+
+o Fix crash in lisp_queue_multicast_map_notify() when there is a empty
+  rle-list.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.432
+                --------------------------------------
+
+o Release date: Wed Jan 10 21:14:57 PST 2018
+
+o Introduce "lisp xtr-parameters" sub-command "decentralized-xtr = yes | no"
+  (which defaults to "no"). This is an implementation of draft-farinacci-
+  lisp-decent-00 where no third-party managed mapping system is needed. That 
+  is, all the xTRs are Map-Servers and Map-Resolvers for their own use. This 
+  feature can be used for an emergency use-case scenario where there is no 
+  Internet connectivity (for access to infrastructure components like DNS or 
+  a LISP mapping system) but local connectivity is available among the xTRs.
+
+o Make sure that named socket /tmp/lisp-lig is closed and removed for any error
+  conditions found by lisp-lig.py.
+
+o If a bug is introduced in lisp-lig.py, make sure that STOP-LISP removes file
+  /tmp/lisp-lig.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.431
+                --------------------------------------
+
+o Release date: Fri Jan  5 11:17:51 PST 2018
+
+o Allow the "lisp group-mapping" command sub-clause to accept "address = 
+  0.0.0.0" or "address = 0::0" to mean (*,G) which joins/registers 
+  (0.0.0.0/0, G/32) or (0::0/0, G/128).
+
+o Fix bug to print out RLE name in boldface blue. Distinguish between text
+  output and html output.
+
+o When the Map-Server proxy-replies for a requested multicast EID, do not 
+  skip over RLOC unless the multicast priority is 255. For multicast EIDs, 
+  we were checking the unicast priority.
+
+o Really fix a "bad-inner-header" dictionary keyword reference. Should be
+  "bad-inner-version".
+
+o Fix traceback bug in lisp-lig.py.
+
+o First code commit for a decentralized mapping system. Sneak preview of
+  LISP-Decent.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.430
                 --------------------------------------
 

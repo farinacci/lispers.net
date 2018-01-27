@@ -16,12 +16,18 @@ setenv LISP_ECDH_25519
 #setenv LISP_ANYCAST_MR
 #setenv LISP_ENFORCE_BINDTODEVICE
 #setenv LISP_LOAD_SPLIT_PINGS
+#setenv LISP_NO_CRYPTO
 
 #
 # Cipher defaults to chacha20. Comment out lines below if you want AES.
 #
 setenv LISP_USE_CHACHA
 setenv LISP_USE_POLY
+
+#
+# Configure zoom level when a user clicks on a geo-coordinate URL.
+#
+setenv LISP_GEO_ZOOM_LEVEL 10
 
 #
 # If you do not want lispers.net to pcap on each interface, supply a list 

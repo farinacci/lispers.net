@@ -98,7 +98,7 @@ def process_eid_records(record_count, nonce, packet):
                 print "        elp: {}".format(elp)
             #endif
             if (rloc_record.rle):
-                rle = rloc_record.rle.print_rle()
+                rle = rloc_record.rle.print_rle(False)
                 print "        rle: {}".format(rle)
             #endif
             if (rloc_record.json):
@@ -108,6 +108,17 @@ def process_eid_records(record_count, nonce, packet):
             rloc_record.print_record("  ")
         #endfor
         print ""
+    #endfor
+#enddef
+
+#
+# lisp_lig_close_sockets
+#
+def lisp_lig_close_sockets(lisp_sockets):
+    for s in lisp_sockets:
+        if (s == None): continue
+        name = "/tmp/lisp-lig" if (s == lisp_ipc_socket) else ""
+        lisp.lisp_close_socket(s, name)
     #endfor
 #enddef
 
@@ -257,6 +268,7 @@ except:
 
 lisp_sockets[0] = lisp_ephem_listen_socket
 lisp_sockets[1] = lisp_ephem_listen_socket
+lisp_sockets[2] = lisp_ipc_socket
 
 #
 # Build and send ECM based Map-Request.
@@ -283,11 +295,13 @@ elif (dest_eid.find("-") != -1):
     ml = 48
 else:
     print("Invalid EID address {}".format(dest_eid))
+    lisp_lig_close_sockets(lisp_sockets)
     exit(1)
 #endif
 
 if (lisp.lisp_valid_address_format("address", dest_eid) == False):
     print("Invalid address syntax '{}'".format(dest_eid))
+    lisp_lig_close_sockets(lisp_sockets)
     exit(1)
 #endif
 
@@ -340,6 +354,7 @@ elif (mr.find(".") != -1):
     ml = 32
 else:
     print("Invalid Map-Resolver address {}".format(mr))
+    lisp_lig_close_sockets(lisp_sockets)
     exit(1)
 #endif
 mr = lisp.lisp_address(afi, mr, ml, 0)
@@ -352,6 +367,7 @@ global_address = None
 local_address = lisp.lisp_get_local_rloc()
 if (local_address == None):
     print("Cannot obtain a local address")
+    lisp_lig_close_sockets(lisp_sockets)
     exit(1)
 #endif
 source_port = lisp.LISP_CTRL_PORT
@@ -381,6 +397,7 @@ if (local_address != None and local_address.is_private_address() and
     #
     if (source == ""):
         print "No Info-Reply received"
+        lisp_lig_close_sockets(lisp_sockets)
         exit(1)
     #endif
 
@@ -435,6 +452,7 @@ map_request.itr_rlocs.append(itr_rloc)
 packet = map_request.encode(None, 0)
 if (packet == None):
     print "Could not sign Map-Request"
+    lisp_lig_close_sockets(lisp_sockets)
     exit(1)
 #endif
 map_request.print_map_request()
@@ -507,14 +525,15 @@ for i in range(count):
         continue
     #endif
 
-    mr = "map-reply" if header.type == lisp.LISP_MAP_REPLY else "map-notify"
+    mr_str = "map-reply" if header.type == lisp.LISP_MAP_REPLY else \
+      "map-notify"
 
     #
     # Process Map-Reply
     #
     rtt = round(time.time() - map_request_ts, 3)
     print "Received {} from {} with rtt {} secs:".format(mr, source, rtt)
-    if (mr == "map-reply"):
+    if (mr_str == "map-reply"):
         packet = map_reply.decode(packet)
         if (packet == None):
             print "Could not decode Map-Reply packet"
@@ -589,11 +608,7 @@ if (pubsub):
 #
 # Close down resources and exit.
 #
-for s in lisp_sockets:
-    if (s == None): continue
-    name = "/tmp/lisp-lig" if (s == lisp_ipc_socket) else ""
-    lisp.lisp_close_socket(s, name)
-#endfor
+lisp_lig_close_sockets(lisp_sockets)
 
 exit(1) if (no_reply) else exit(0)
 

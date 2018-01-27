@@ -544,7 +544,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
                 output += "{}elp: {}<br>".format(indent12, elp)
             #endif
             if (rloc.rle):
-                rle = lisp.lisp_print_cour(rloc.rle.print_rle())
+                rle = lisp.lisp_print_cour(rloc.rle.print_rle(True))
                 output += "{}rle: {}<br>".format(indent12, rle)
             #endif
             if (rloc.json):
@@ -614,7 +614,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
                 output += "{}elp: {}<br>".format(indent12, elp)
             #endif
             if (rloc.rle):
-                rle = lisp.lisp_print_cour(rloc.rle.print_rle())
+                rle = lisp.lisp_print_cour(rloc.rle.print_rle(True))
                 output += "{}rle: {}<br>".format(indent12, rle)
             #endif
             if (rloc.json):

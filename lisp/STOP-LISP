@@ -35,6 +35,12 @@ end
 python remove-lisp-locks.pyo
 
 #
+# Remove /tmp/lisp-lig if lisp-lig.py crashed and wasn't able to remove the
+# named socket.
+#
+rm -f /tmp/lisp-lig > /dev/null
+
+#
 # User created iptables rules and doesn't want lispers.net to remove anything.
 #
 if ($?LISP_NO_IPTABLES) then

@@ -53,18 +53,22 @@ build_date = commands.getoutput("date")
 #
 # Run pyflakes. We don't want to build a release with python errors.
 #
+print "Checking for python errors with pyflakes ... ", 
 status = os.system("pyflakes {}/lisp/*py > /dev/null".format(root))
 if (status != 0):
-    print("Found pyflakes errors")
+    print("found pyflakes errors")
     exit(1)
 #endif
+print("done")
 
 #
 # Check and ask if you want to build release with debug code in it.
 #
+print "Checking for any lisp.debug() calls ... ", 
 command = 'egrep "debug\(" {}/lisp/*py | egrep -v "def|self" > /dev/null'. \
     format(root)
 status = os.system(command)
+print("done")
 if (status == 0):
     if (raw_input("Build release with debug code? (y/n): ") != "y"): exit(1)
 #endif
@@ -108,7 +112,6 @@ if (status != 0):
     print "failed"
     exit(1)
 #endif
-
 print "done"
 
 #
@@ -124,12 +127,13 @@ if (obfuscate_on):
     py_files = commands.getoutput("cd {}/src; ls *py".format(dir)).split("\n")
     libraries = ["lisp.py", "lispconfig.py", "lispapi.py", "chacha.py",
         "poly1305.py"]
+    print "Obfuscating py files ...",
     for py_file in py_files:
-        print "Obfuscating {} ... ".format(py_file)
         dash_a = "-a" if py_file in libraries else ""
         os.system("pyobfuscate {} {}/src/{} > {}/{}".format(dash_a, dir, 
             py_file, dir, py_file))
     #endfor
+    print "done"
 else:
     os.system("cp {}/src/*py {}/.".format(dir, dir))
 #endif

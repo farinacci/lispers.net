@@ -618,6 +618,10 @@ def lisp_setup_kv_pairs(clause):
     if (count != 0):
         kv_pairs["program-hardware"] = [""] * count
     #endif
+    count = clause.count("decentralized-xtr =")
+    if (count != 0):
+        kv_pairs["decentralized-xtr"] = [""] * count
+    #endif
 
     #
     # There is a special case here where there are no sub-clauses but
@@ -2283,7 +2287,7 @@ def lisp_display_map_cache(mc, output):
             rloc_str += "elp: {}<br>".format(elp)
         #endif
         if (rloc.rle): 
-            rle = rloc.rle.print_rle()
+            rle = rloc.rle.print_rle(True)
             rloc_str += "rle: {}<br>".format(rle)
         #endif
         if (rloc.json): 
@@ -2735,6 +2739,9 @@ def lisp_xtr_command(kv_pair):
             #endif
             lisp.lisp_ipc_data_plane = turn_onoff
         #endif
+        if (kw == "decentralized-xtr"):
+            lisp.lisp_decent_configured = (value == "yes")
+        #endif
     #endfor
 #enddef
 
@@ -2771,7 +2778,7 @@ def lisp_show_rle_list(output):
     rle_list = sorted(lisp.lisp_rle_list)
     for rle_name in rle_list:
         rle = lisp.lisp_rle_list[rle_name]
-        output += lisp_table_row(rle_name, rle.print_rle())
+        output += lisp_table_row(rle_name, rle.print_rle(True))
     #endfor
     output += lisp_table_footer()
     return(output)
@@ -3510,7 +3517,7 @@ def lisp_replace_db_list(db):
 # This function supports adding additional RLOCs to a database-mapping entry
 # that already exists.
 #
-def lisp_database_mapping_command(kv_pair):
+def lisp_database_mapping_command(kv_pair, ephem_port=None):
     nat_interfaces = []
     rloc_set = []
     if (kv_pair.has_key("address")):
@@ -3691,7 +3698,7 @@ def lisp_database_mapping_command(kv_pair):
     #
     # Write to data-plane.
     #
-    lisp.lisp_write_ipc_database_mappings()
+    lisp.lisp_write_ipc_database_mappings(ephem_port)
 
     #
     # Set default instance-ID to be the first database-mapping command in

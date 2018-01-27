@@ -246,6 +246,13 @@ lisp_reassembly_queue = {}
 #
 lisp_pubsub_cache = {}
 
+#
+# When "decentralized-xtr = yes" is configured, the xTR is also running as
+# a Map-Server and Map-Resolver. So Map-Register messages the ETR sends is
+# looped back to the lisp-ms process.
+#
+lisp_decent_configured = False
+
 #------------------------------------------------------------------------------
 
 #
@@ -339,50 +346,67 @@ LISP_DEFAULT_DYN_EID_TIMEOUT         = 15 # In units of seconds
 LISP_NONCE_ECHO_INTERVAL             = 10 # In units of seconds
 
 #
-# Cipher Suites defined in draft-ietf-lisp-crypto-02:
+# Cipher Suites defined in RFC 8061:
 #
-# Cipher Suite 0: 
-#   Reserved
+# Cipher Suite 0:
+#     Reserved
 # 
-# Cipher Suite 1:
-#   Diffie-Hellman Group: 1024-bit Modular Exponential (MODP) [RFC2409]
-#   Encryption:           AES with 128-bit keys in CBC mode [AES-CBC]
-#   Integrity:            HMAC-SHA1-96 [RFC2404]
+#  Cipher Suite 1 (LISP_2048MODP_AES128_CBC_SHA256):
+#     Diffie-Hellman Group: 2048-bit MODP [RFC3526]
+#     Encryption:  AES with 128-bit keys in CBC mode [AES-CBC]
+#     Integrity:   Integrated with AEAD_AES_128_CBC_HMAC_SHA_256 [AES-CBC]
+#     IV length:   16 bytes
+#     KDF:         HMAC-SHA-256
 # 
-# Cipher Suite 2:
-#   Diffie-Hellman Group: 2048-bit MODP [RFC3526]
-#   Encryption:           AES with 128-bit keys in CBC mode [AES-CBC]
-#   Integrity:            HMAC-SHA1-96 [RFC2404]
+#  Cipher Suite 2 (LISP_EC25519_AES128_CBC_SHA256):
+#     Diffie-Hellman Group: 256-bit Elliptic-Curve 25519 [CURVE25519]
+#     Encryption:  AES with 128-bit keys in CBC mode [AES-CBC]
+#     Integrity:   Integrated with AEAD_AES_128_CBC_HMAC_SHA_256 [AES-CBC]
+#     IV length:   16 bytes
+#     KDF:         HMAC-SHA-256
 # 
-# Cipher Suite 3:
-#   Diffie-Hellman Group: 3072-bit MODP [RFC3526]
-#   Encryption:           AES with 128-bit keys in CBC mode [AES-CBC]
-#   Integrity:            HMAC-SHA1-96 [RFC2404]
+#  Cipher Suite 3 (LISP_2048MODP_AES128_GCM):
+#     Diffie-Hellman Group: 2048-bit MODP [RFC3526]
+#     Encryption:  AES with 128-bit keys in GCM mode [RFC5116]
+#     Integrity:   Integrated with AEAD_AES_128_GCM [RFC5116]
+#     IV length:   12 bytes
+#     KDF:         HMAC-SHA-256
 # 
-# Cipher Suite 4:
-#   Diffie-Hellman Group: 256-bit Elliptic-Curve 25519 [CURVE25519]
-#   Encryption:           AES with 128-bit keys in CBC mode [AES-CBC]
-#   Integrity:            HMAC-SHA1-96 [RFC2404]
+#  Cipher Suite 4 (LISP_3072MODP_AES128_GCM):
+#     Diffie-Hellman Group: 3072-bit MODP [RFC3526]
+#     Encryption:  AES with 128-bit keys in GCM mode [RFC5116]
+#     Integrity:   Integrated with AEAD_AES_128_GCM [RFC5116]
+#     IV length:   12 bytes
+#     KDF:         HMAC-SHA-256
 # 
-# Cipher Suite 5:
-#   Diffie-Hellman Group: 256-bit Elliptic-Curve 25519 [CURVE25519]
-#   Encryption:           Chacha20-Poly1305 [CHACHA-POLY]
-#   Integrity:            HMAC-SHA1-96 [RFC2404]
+#  Cipher Suite 5 (LISP_256_EC25519_AES128_GCM):
+#     Diffie-Hellman Group: 256-bit Elliptic-Curve 25519 [CURVE25519]
+#     Encryption:  AES with 128-bit keys in GCM mode [RFC5116]
+#     Integrity:   Integrated with AEAD_AES_128_GCM [RFC5116]
+#     IV length:   12 bytes
+#     KDF:         HMAC-SHA-256
+# 
+#  Cipher Suite 6 (LISP_256_EC25519_CHACHA20_POLY1305):
+#     Diffie-Hellman Group: 256-bit Elliptic-Curve 25519 [CURVE25519]
+#     Encryption: Chacha20-Poly1305 [CHACHA-POLY] [RFC7539]
+#     Integrity:  Integrated with AEAD_CHACHA20_POLY1305 [CHACHA-POLY]
+#     IV length:  8 bytes
+#     KDF:        HMAC-SHA-256
 #
-LISP_CS_1024    = 1
+LISP_CS_1024    = 0
 LISP_CS_1024_G  = 2
 LISP_CS_1024_P  = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
 
-LISP_CS_2048    = 2
+LISP_CS_2048    = 1
 LISP_CS_2048_G  = 2
 LISP_CS_2048_P   = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
 
-LISP_CS_3072    = 3
+LISP_CS_3072    = 4
 LISP_CS_3072_G  = 2
 LISP_CS_3072_P  = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AAAC42DAD33170D04507A33A85521ABDF1CBA64ECFB850458DBEF0A8AEA71575D060C7DB3970F85A6E1E4C7ABF5AE8CDB0933D71E8C94E04A25619DCEE3D2261AD2EE6BF12FFA06D98A0864D87602733EC86A64521F2B18177B200CBBE117577A615D6C770988C0BAD946E208E24FA074E5AB3143DB5BFCE0FD108E4B82D120A93AD2CAFFFFFFFFFFFFFFFF
 
-LISP_CS_25519_AES    = 4
-LISP_CS_25519_CHACHA = 5
+LISP_CS_25519_AES    = 5
+LISP_CS_25519_CHACHA = 6
 
 LISP_8_64_MASK   = 0xFFFFFFFFFFFFFFFF
 LISP_16_128_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -1581,12 +1605,16 @@ class lisp_packet():
             else packet[16::]
 
         #
-        # Call AES or chacha cipher.
+        # Call AES or chacha cipher. Make sure for AES that
         #
         ts = lisp_get_timestamp()
         if (key.cipher_suite == LISP_CS_25519_CHACHA):
             decrypt = chacha.ChaCha(key.encrypt_key, iv).decrypt
         else:
+            if ((len(packet) % 16) != 0):
+                dprint("Ciphertext not multiple of 16 bytes, packet dropped")
+                return([None, False])
+            #endif
             decrypt = AES.new(key.encrypt_key, AES.MODE_CBC, iv).decrypt
         #endif
         plaintext = decrypt(packet)
@@ -2028,7 +2056,7 @@ class lisp_packet():
             if (lisp_flow_logging): self.log_flow(False)
             return(self)
         else:
-            self.packet_error = "bad-inner-header"
+            self.packet_error = "bad-inner-version"
             if (stats): stats[self.packet_error].increment(orig_len)
 
             lprint("Cannot decode encapsulation, header version {}".format(\
@@ -3560,7 +3588,7 @@ class lisp_map_request():
         try:
             key = ecdsa.VerifyingKey.from_pem(pubkey)
         except:
-            lprint("Invalid public-key in mapping system for sig-eid {]". \
+            lprint("Invalid public-key in mapping system for sig-eid {}". \
                 format(self.signature_eid.print_address_no_iid()))
             good = False
         #endtry
@@ -3826,6 +3854,7 @@ class lisp_map_request():
         #endif
         self.source_eid.mask_len = self.source_eid.host_mask_len()
 
+        no_crypto = (os.getenv("LISP_NO_CRYPTO") != None)
         self.itr_rlocs = []
         while (self.itr_rloc_count != 0):
             format_size = struct.calcsize("H")
@@ -3844,6 +3873,12 @@ class lisp_map_request():
                 if (len(packet) < itr.addr_length()): return(None)
                 packet = itr.unpack_address(packet[format_size::])
                 if (packet == None): return(None)
+
+                if (no_crypto):
+                    self.itr_rlocs.append(itr)
+                    self.itr_rloc_count -= 1
+                    continue
+                #endif
 
                 addr_str = lisp_build_crypto_decap_lookup_key(itr, port)
 
@@ -3888,9 +3923,15 @@ class lisp_map_request():
 
                 packet = itr.unpack_address(packet[format_size::])
                 if (packet == None): return(None)
-                
-                addr_str = lisp_build_crypto_decap_lookup_key(itr, port)
 
+                if (no_crypto):
+                    self.itr_rlocs.append(itr)
+                    self.itr_rloc_count -= 1
+                    continue
+                #endif
+                    
+                addr_str = lisp_build_crypto_decap_lookup_key(itr, port)
+                
                 stored_key = None
                 if (lisp_nat_traversal and itr.is_private_address() and \
                     source): itr = source
@@ -4600,7 +4641,7 @@ class lisp_rloc_record():
         if (self.rle):
             name = ""
             if (self.rle.rle_name): name = "'{}' ".format(self.rle.rle_name)
-            rle_str = ", rle: {}{}".format(name, self.rle.print_rle())
+            rle_str = ", rle: {}{}".format(name, self.rle.print_rle(False))
         #endif
         json_str = ""
         if (self.json):
@@ -6486,7 +6527,7 @@ def lisp_get_private_rloc_set(target_site_eid, seid, group):
 # do not have the same priority as the Map-Request source (an RTR supporting
 # NAT-traversal) RLOC. Otherwise, return all RLOCs that are not priority 254.
 #
-def lisp_get_partial_rloc_set(registered_rloc_set, mr_source):
+def lisp_get_partial_rloc_set(registered_rloc_set, mr_source, multicast):
     rtr_list = []
     rloc_set = []
 
@@ -6529,7 +6570,8 @@ def lisp_get_partial_rloc_set(registered_rloc_set, mr_source):
     #
     for rloc_entry in registered_rloc_set:
         if (ignore_private and rloc_entry.rloc.is_private_address()): continue
-        if (rloc_entry.priority == 255): continue
+        if (multicast == False and rloc_entry.priority == 255): continue
+        if (multicast and rloc_entry.mpriority == 255): continue
         if (rloc_entry.priority == 254): 
             rtr_list.append(rloc_entry)
         else:
@@ -6839,7 +6881,8 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
                 rloc_set = lisp_get_private_rloc_set(site_eid, seid, group)
             #endif
             if (rloc_set == site_eid.registered_rlocs):
-                new_set = lisp_get_partial_rloc_set(rloc_set, reply_dest)
+                m = (site_eid.group.is_null() == False)
+                new_set = lisp_get_partial_rloc_set(rloc_set, reply_dest, m)
                 if (new_set != rloc_set):
                     ttl = 15
                     rloc_set = new_set
@@ -7697,6 +7740,18 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         #endif
 
         #
+        # If this is a (0.0.0.0/0, G) with drop-action, we don't want to
+        # cache more-specific (S,G) entry. It is a startup timing problem.
+        #
+        if (lisp_decent_configured):
+            action = eid_record.action
+            multicast = (eid_record.group.is_null() == False)
+            if (multicast and action == LISP_DROP_ACTION):
+                if (eid_record.eid.is_local()): continue
+            #endif
+        #endif
+
+        #
         # Some RLOC-probe Map-Replies may have no EID value in the EID-record.
         # Like from RTRs or PETRs.
         #
@@ -8284,37 +8339,54 @@ def lisp_queue_multicast_map_notify(lisp_sockets, rle_list):
             #endfor
             sg_rloc_set = temp_set.values()
         #endif
-
+            
         #
-        # If the (S,G) has an RTR registered, then we will send a Map-Notify
-        # to the RTR instead the ITRs of the source-site.
+        # If this is a (0.0.0.0/0, G) or a (0::/0, G), we send a Map-Notify
+        # to all members (all RLOCs in the sg_rloc_set.
         #
         notify = []
-        for rloc_entry in sg_rloc_set:
-            if (rloc_entry.is_rtr()): notify.append(rloc_entry.rloc)
-        #endfor
-
-        #
-        # If no RTRs were found, get ITRs from source-site.
-        #
-        found_rtrs = (len(notify) != 0)
-        if (found_rtrs == False):
-            site_eid = lisp_site_eid_lookup(sg[0], null_group, False)
-            if (site_eid == None): continue
-
-            for rloc_entry in site_eid.registered_rlocs:
-                if (rloc_entry.rloc.is_null()): continue
-                notify.append(rloc_entry.rloc)
+        found_rtrs = False
+        if (sg_site_eid.eid.address == 0 and sg_site_eid.eid.mask_len == 0):
+            notify_str = []
+            rle_nodes = [] if len(sg_rloc_set) == 0 else \
+                sg_rloc_set[0].rle.rle_nodes
+            for rle_node in rle_nodes: 
+                notify.append(rle_node.address)
+                notify_str.append(rle_node.address.print_address_no_iid())
             #endfor
-        #endif
+            lprint("Notify existing RLE-nodes {}".format(notify_str))
+        else:
 
-        #
-        # No ITRs or RTRs fond.
-        #
-        if (len(notify) == 0):
-            lprint("No ITRs or RTRs found for {}, Map-Notify suppressed". \
-                format(green(sg_site_eid.print_eid_tuple(), False)))
-            continue
+            #
+            # If the (S,G) has an RTR registered, then we will send a 
+            # Map-Notify to the RTR instead the ITRs of the source-site.
+            #
+            for rloc_entry in sg_rloc_set:
+                if (rloc_entry.is_rtr()): notify.append(rloc_entry.rloc)
+            #endfor
+
+            #
+            # If no RTRs were found, get ITRs from source-site.
+            #
+            found_rtrs = (len(notify) != 0)
+            if (found_rtrs == False):
+                site_eid = lisp_site_eid_lookup(sg[0], null_group, False)
+                if (site_eid == None): continue
+
+                for rloc_entry in site_eid.registered_rlocs:
+                    if (rloc_entry.rloc.is_null()): continue
+                    notify.append(rloc_entry.rloc)
+                #endfor
+            #endif
+
+            #
+            # No ITRs or RTRs fond.
+            #
+            if (len(notify) == 0):
+                lprint("No ITRs or RTRs found for {}, Map-Notify suppressed". \
+                    format(green(sg_site_eid.print_eid_tuple(), False)))
+                continue
+            #endif
         #endif
 
         #
@@ -9044,7 +9116,7 @@ def lisp_process_multicast_map_notify(packet, source):
             mc.build_best_rloc_set()
 
             lprint("Update {} map-cache entry with RLE {}".format( \
-                green(mc.print_eid_tuple(), False), rloc.rle.print_rle()))
+                green(mc.print_eid_tuple(), False), rloc.rle.print_rle(False)))
         #endfor
     #endfor
 #enddef
@@ -9532,8 +9604,22 @@ def lisp_process_ecm(lisp_sockets, packet, source, ecm_port):
 # Map-Server.
 #
 def lisp_send_map_register(lisp_sockets, packet, map_register, ms):
+
+    #
+    # If we are doing LISP-Decent and have a multicast group configured as
+    # a Map-Server, we can't join the group by using the group so we have to
+    # send to the loopback address to bootstrap our membership. We join to
+    # one other member of the peer-group so we can get the group membership.
+    #
     dest = ms.map_server
-    ms.map_registers_sent += 1
+    if (lisp_decent_configured and dest.is_multicast_address() and
+        (ms.map_registers_multicast_sent == 1 or ms.map_registers_sent == 1)):
+        dest = copy.deepcopy(dest)
+        dest.address = 0x7f000001
+        b = bold("Bootstrap", False)
+        g = ms.map_server.print_address_no_iid()
+        lprint("{} mapping system for peer-group {}".format(b, g))
+    #endif
 
     #
     # Modify authentication hash in Map-Register message if supplied when
@@ -9542,7 +9628,7 @@ def lisp_send_map_register(lisp_sockets, packet, map_register, ms):
     packet = lisp_compute_auth(packet, map_register, ms.password)
 
     lprint("Send Map-Register to map-server {}{}".format(dest.print_address(),
-           ", ms-name '{}'".format(ms.ms_name)))
+        ", ms-name '{}'".format(ms.ms_name)))
     lisp_send(lisp_sockets, dest, LISP_CTRL_PORT, packet)
 #enddef
 
@@ -11019,10 +11105,13 @@ class lisp_geo():
         return(geo_str)
 
     def geo_url(self):
+        zoom = os.getenv("LISP_GEO_ZOOM_LEVEL")
+        zoom = "10" if (zoom == "" or zoom.isdigit() == False) else zoom
         lat, lon = self.dms_to_decimal()
         url = ("http://maps.googleapis.com/maps/api/staticmap?center={},{}" + \
             "&markers=color:blue%7Clabel:lisp%7C{},{}" + \
-            "&zoom=10&size=1024x1024&sensor=false").format(lat, lon, lat, lon)
+            "&zoom={}&size=1024x1024&sensor=false").format(lat, lon, lat, lon,
+             zoom)
         return(url)
 
     def print_geo_url(self):
@@ -11051,7 +11140,6 @@ class lisp_geo():
         return((dd_lat, dd_long))
     
     def get_distance(self, geo_point):
-        if (self.radius == 0): return(0)
         dd_prefix = self.dms_to_decimal()
         dd_point = geo_point.dms_to_decimal()
         distance = vincenty(dd_prefix, dd_point)
@@ -11180,11 +11268,11 @@ class lisp_rle():
         rle.build_forwarding_list()
         return(rle)
  
-    def print_rle(self):
+    def print_rle(self, html):
         rle_str = ""
         for rle_node in self.rle_nodes:
             port = rle_node.translated_port
-            rle_name_str = blue(rle_node.rloc_name, False) if \
+            rle_name_str = blue(rle_node.rloc_name, html) if \
                 rle_node.rloc_name != None else ""
             rle_str += "{}{}(L{}){}, ".format( \
                 rle_node.address.print_address_no_iid(), "" if port == 0 \
@@ -12411,7 +12499,7 @@ class lisp_site_eid():
         #
         if (old_rle.keys() == new_rle.keys()): return(False)
 
-        lprint("{} {} from: {} to {}".format( \
+        lprint("{} {} from {} to {}".format( \
             green(self.print_eid_tuple(), False), bold("RLE change", False), 
             old_rle.keys(), new_rle.keys()))
 
@@ -12692,6 +12780,11 @@ class lisp_ms():
         self.dns_name = dns_name
         self.map_server = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.last_dns_resolve = None
+        if (lisp_map_servers_list == {}):
+            self.xtr_id = lisp_get_control_nonce()
+        else:
+            self.xtr_id = lisp_map_servers_list.values()[0].xtr_id
+        #endif
         if (addr_str): 
             self.map_server.store_address(addr_str)
             self.insert_ms()
@@ -12706,8 +12799,8 @@ class lisp_ms():
         self.refresh_registrations = rr
         self.want_map_notify = wmn
         self.site_id = site_id
-        self.xtr_id = lisp_get_control_nonce()
         self.map_registers_sent = 0
+        self.map_registers_multicast_sent = 0
         self.map_notifies_received = 0
         self.map_notify_acks_sent = 0
 
@@ -14327,7 +14420,7 @@ def lisp_gather_map_cache_data(mc, data):
         #endif
         if (rloc.geo): r["geo"] = rloc.geo.print_geo()
         if (rloc.elp): r["elp"] = rloc.elp.print_elp(False)
-        if (rloc.rle): r["rle"] = rloc.rle.print_rle()
+        if (rloc.rle): r["rle"] = rloc.rle.print_rle(False)
         if (rloc.json): r["json"] = rloc.json.print_json(False)
         if (rloc.rloc_name): r["rloc-name"] = rloc.rloc_name
         stats = rloc.stats.get_stats(False, False)
@@ -14487,7 +14580,7 @@ def lisp_gather_site_cache_data(se, data):
 
         if (rloc.geo): r["geo"] = rloc.geo.print_geo()
         if (rloc.elp): r["elp"] = rloc.elp.print_elp(False)
-        if (rloc.rle): r["rle"] = rloc.rle.print_rle()
+        if (rloc.rle): r["rle"] = rloc.rle.print_rle(False)
         if (rloc.json): r["json"] = rloc.json.print_json(False)
         if (rloc.rloc_name): r["rloc-name"] = rloc.rloc_name
         r["uptime"] = lisp_print_elapsed(rloc.uptime)
@@ -15800,7 +15893,7 @@ def lisp_write_to_dp_socket(entry):
 #
 # Write a map-cache entry to named socket "lisp-ipc-data-plane".
 #
-def lisp_write_ipc_map_cache(add_or_delete, mc):
+def lisp_write_ipc_map_cache(add_or_delete, mc, dont_send=False):
     if (lisp_i_am_etr): return
     if (lisp_ipc_dp_socket == None): return
     if (lisp_check_dp_socket() == False): return
@@ -15841,7 +15934,8 @@ def lisp_write_ipc_map_cache(add_or_delete, mc):
         #endfor
     #endif
 
-    lisp_write_to_dp_socket(entry)
+    if (dont_send == False): lisp_write_to_dp_socket(entry)
+    return(entry)
 #enddef
 
 #
@@ -15889,8 +15983,8 @@ def lisp_build_json_keys(entry, key):
 #
 # In the lisp-etr process, write an RLOC record to the ipc-data-plane socket.
 #
-def lisp_write_ipc_database_mappings():
-    if (lisp_i_am_etr): return
+def lisp_write_ipc_database_mappings(ephem_port):
+    if (lisp_i_am_etr == False): return
     if (lisp_ipc_dp_socket == None): return
     if (lisp_check_dp_socket() == False): return
 
@@ -15904,7 +15998,13 @@ def lisp_write_ipc_database_mappings():
             "eid-prefix" : db.eid.print_prefix_no_iid() }
         entry["database-mappings"].append(record)
     #endfor
+    lisp_write_to_dp_socket(entry)
 
+    #
+    # Write ephemeral NAT port an external data-plane needs to receive
+    # encapsulated packets from the RTR.
+    #
+    entry = { "type" : "etr-nat-port", "port" : ephem_port }
     lisp_write_to_dp_socket(entry)
 #enddef
 
@@ -15926,7 +16026,7 @@ def lisp_write_ipc_interfaces():
     for interface in lisp_myinterfaces.values():
         if (interface.instance_id == None): continue
         record = { "interface" : interface.device, 
-            "instance-id" : interface.instance_id }
+            "instance-id" : str(interface.instance_id) }
         entry["interfaces"].append(record)
     #endfor
 

@@ -353,6 +353,7 @@ lisp xtr-parameters {
     nat-traversal = yes | no
     checkpoint-map-cache = yes | no
     ipc-data-plane = yes | no
+    decentralized-xtr = yes | no
 }
 
 Command Description:
@@ -419,11 +420,26 @@ Command Description:
         the checkpoint file. This parameter defaults to "no".
 
     ipc-data-plane
-        When this is set to "yes", the lispers.net control-planen will program
+        When this is set to "yes", the lispers.net control-plane will program
         a external data-plane that may use any packet encapsulation it sees
         fit. This allows the lispers.net control-plane to be used with faster
         software forwarding or hardware forwarding implementations. When this
 	feature is used, the lispers.net data-plane does not execute.
+
+    decentralized-xtr
+        When this is set to "yes", an xTR will run a Decentrailzed Mapping 
+	System (DMS). That is an xTR is configured as an ITR, ETR, Map-Resolver
+	and Map-Server. The "lisp map-server" command must supply a group
+	address for the peer-group. Details of the design can be found in the
+	Internet Draft draft-farinacci-lisp-decent. All xTRs will have a
+	synchronized mapping system realized by draft-ietf-lisp-signal-free-
+        multicast. There is no dependence on a third-party mapping system. The
+	xTRs contribute to maintaining a mapping system for their own use. For 
+        initial testing, you must create a file "join-<group-address>" in the 
+        lispers.net directory. The <group-address> must match the group address 
+        in the "lisp map-server" command and the "lisp group-mapping" command. 
+        There is a template file called lisp.config.decent-xtr available for 
+        use. The default setting for this sub-command is "no".
 
 Example:
 
@@ -978,7 +994,9 @@ Command Description:
     system for groups contained in <group-prefix> are IGMP/MLD joined. Multiple
     sources can be configured. For the example below, when IGMP joins 
     224.1.1.1, the ETR will register (1.1.1.1, 224.1.1.1) and (2.2.2.2,
-    224.1.1.1) to the mapping database system.
+    224.1.1.1) to the mapping database system. When "address = 0.0.0.0" or
+    "address = 0::0" is configured, then a (*,G) entry is registered as
+    (0.0.0.0/0, G) or (0::0/0, G).
 
 Example:
 
@@ -988,6 +1006,13 @@ lisp group-mapping {
     sources {
         address = 1.1.1.1
 	address = 2.2.2.2
+    }
+}
+lisp group-mapping {
+    group-name = join-star-g
+    group-prefix = 224.1.1.1/32
+    sources {
+        address = 0.0.0.0
     }
 }
 

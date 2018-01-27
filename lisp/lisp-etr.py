@@ -54,7 +54,7 @@ def lisp_etr_database_mapping_command(kv_pair):
     global lisp_trigger_register_timer
     global lisp_send_sockets
 
-    lispconfig.lisp_database_mapping_command(kv_pair)
+    lispconfig.lisp_database_mapping_command(kv_pair, lisp_ephem_port)
 
     #
     # Trigger Map-Register when all databaase-mappings are configured.
@@ -116,10 +116,11 @@ def lisp_etr_show_command(clause):
             "N" if ms.want_map_notify else "n",
             "R" if ms.refresh_registrations else "r")
 
+        registers_sent = ms.map_registers_sent + ms.map_registers_multicast_sent
+
         output += lispconfig.lisp_table_row(addr_str, 
            "sha1" if (ms.alg_id == lisp.LISP_SHA_1_96_ALG_ID) else  "sha2",
-            xtr_id, ms.site_id, flags, ms.map_registers_sent, 
-            ms.map_notifies_received)
+            xtr_id, ms.site_id, flags, registers_sent, ms.map_notifies_received)
     #endfor
     output += lispconfig.lisp_table_footer()
 
@@ -291,7 +292,6 @@ def lisp_map_server_command(kv_pairs):
             lisp_process_register_timer, [lisp_send_sockets])
         lisp_trigger_register_timer.start()
     #endif
-    
 #enddef
 
 #
@@ -551,6 +551,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
             eid_records = msl[0]
             packet = packet + eid_records + trailer
 
+            ms.map_registers_sent += 1
             lisp.lisp_send_map_register(lisp_sockets, packet, map_register, ms)
             time.sleep(.001)
         #endfor
@@ -747,6 +748,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         eid_record.authoritative = True
         eid_record.record_ttl = lisp.LISP_REGISTER_TTL if joinleave else 0
         eid_record.eid = lisp.lisp_address(afi, source, 0, iid)
+        if (eid_record.eid.address == 0): eid_record.eid.mask_len = 0
         eid_record.group = lisp.lisp_address(afi, group, 0, iid)
         if (eid_record.group.is_mac_broadcast() and \
             eid_record.eid.address == 0): eid_record.eid.mask_len = 0
@@ -852,6 +854,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         trailer = map_register.encode_xtr_id("")
         packet = packet + eid_records + trailer
 
+        ms.map_registers_multicast_sent += 1
         lisp.lisp_send_map_register(lisp_sockets, packet, map_register, ms)
 
         #
@@ -950,7 +953,8 @@ lisp_igmp_record_types = { 1 : "include-mode", 2 : "exclude-mode",
 def lisp_process_igmp_packet(packet):
     global lisp_send_sockets
 
-    lisp.lprint("Receive {}-byte IGMP packet: {}".format(len(packet), 
+    r = lisp.bold("Receive", False)
+    lisp.lprint("{} {}-byte IGMP packet: {}".format(r, len(packet), 
         lisp.lisp_format_packet(packet)))
 
     #
@@ -1007,6 +1011,10 @@ def lisp_process_igmp_packet(packet):
             lisp_send_multicast_map_register(lisp_send_sockets, 
                 [[None, group_str, True]])
         #endif
+
+        #
+        # Finished with IGMPv1 or IGMPv2 processing.
+        #
         return
     #endif
 
@@ -1158,11 +1166,41 @@ def lisp_etr_data_plane(parms, not_used, packet):
     if (status == None): return
 
     #
-    # Print some useful header fields and strip outer headers..
+    # Print some useful header fields.
     #
     packet.print_packet("Receive", True)
-    packet.strip_outer_headers()
 
+    #
+    # If we are looping back Map-Registers via encapsulation, overwrite
+    # multicast address with source address. That means we are sending a
+    # Map-Register message to the lisp-core process from our local RLOC
+    # address to our local RLOC address. Also, zero out the UDP checksum
+    # since the destination address changes that affects the pseudo-header.
+    #
+    if (lisp.lisp_decent_configured and 
+        packet.inner_dest.is_multicast_address() and \
+        packet.lisp_header.get_instance_id() == 0xffffff):
+        source = packet.inner_source.print_address_no_iid()
+        packet.strip_outer_headers()
+        packet = packet.packet[28::]
+        packet = lisp.lisp_packet_ipc(packet, source, sport)
+        lisp.lisp_ipc(packet, lisp_ipc_listen_socket, "lisp-ms")
+        return
+    #endif
+
+    #
+    # Packets are arriving on pcap interface. Need to check if another data-
+    # plane is running. If so, don't deliver duplicates.
+    #
+    if (lisp.lisp_ipc_data_plane): 
+        lisp.dprint("Drop packet, external data-plane active")
+        return
+    #endif
+
+    #
+    # Strip outer headers and start inner header forwarding logic.
+    #
+    packet.strip_outer_headers()
     f_or_b = lisp.bold("Forward", False)
 
     #
@@ -1252,6 +1290,9 @@ def lisp_etr_data_plane(parms, not_used, packet):
 def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     global lisp_ipc_listen_socket, lisp_send_sockets
 
+    #
+    # Decode LISP header.
+    #
     lisp_header = packet
     packet = lisp.lisp_packet(packet[8::])
     if (packet.lisp_header.decode(lisp_header) == False): return
@@ -1279,6 +1320,23 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     lisp.dprint(packet.lisp_header.print_header(" "))
 
     #
+    # If we are looping back Map-Registers via encapsulation, overwrite
+    # multicast address with source address. That means we are sending a
+    # Map-Register message to the lisp-core process from our local RLOC
+    # address to our local RLOC address. Also, zero out the UDP checksum
+    # since the destination address changes that affects the pseudo-header.
+    #
+    if (lisp.lisp_decent_configured and 
+        packet.inner_dest.is_multicast_address() and \
+        packet.lisp_header.get_instance_id() == 0xffffff):
+        sport = packet.udp_sport
+        packet = packet.packet[28::]
+        packet = lisp.lisp_packet_ipc(packet, source, sport)
+        lisp.lisp_ipc(packet, lisp_ipc_listen_socket, "lisp-ms")
+        return
+    #endif
+
+    #
     # Check if inner packet is a LISP control-packet. Typically RLOC-probes
     # from RTRs can come through NATs. We want to reply to the global address
     # of the RTR which is the outer source RLOC. We don't care about the
@@ -1293,6 +1351,15 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
         #endif
         packet = packet[28::]
         lisp.lisp_parse_packet(lisp_send_sockets, packet, source, 0, ttl)
+        return
+    #endif
+
+    #
+    # Packets are arriving on ephemeral socket. Need to check if another data-
+    # plane is running. If so, don't deliver duplicates.
+    #
+    if (lisp.lisp_ipc_data_plane): 
+        lisp.dprint("Drop packet, external data-plane active")
         return
     #endif
 
@@ -1519,8 +1586,9 @@ def lisp_etr_startup():
     #
     # Used on for listening for Info-Replies for NAT-traversal support.
     #
-    lisp_ephem_socket = lisp.lisp_open_listen_socket("0.0.0.0", 
-        str(lisp_ephem_port))
+    s = lisp.lisp_open_listen_socket("0.0.0.0", str(lisp_ephem_port))
+    s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
+    lisp_ephem_socket = s
 
     #
     # Open network send socket and internal listen socket.
@@ -1758,6 +1826,7 @@ lisp_etr_commands = {
         "nat-traversal" : [True, "yes", "no"],
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
+        "decentralized-xtr" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 
     "lisp interface" : [lispconfig.lisp_interface_command, {

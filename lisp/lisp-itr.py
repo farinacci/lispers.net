@@ -492,13 +492,151 @@ def lisp_itr_shutdown():
 #enddef
 
 #
+# lisp_itr_process_data_plane_stats
+#
+# [ { "type" : "statistics", "instance-id" : <iid>, "eid-prefix" : "<eid>",
+#     "rlocs" : [
+#       { "rloc" : <rloc-1>, "packet-count" : <count>, "byte-count" : <bcount>,
+#         "last-packet" : "<timestamp>" },  ...
+#       { "rloc" : <rloc-n>, "packet-count" : <count>, "byte-count" : <bcount>,
+#         "last-packet" : "<timestamp>" }
+# }, ... ]
+#
+def lisp_itr_process_data_plane_stats(msg):
+    if (msg.has_key("eid-prefix") == False):
+        lisp.lprint("No 'eid-prefix' in stats IPC message")
+        return
+    #endif
+    eid_str = msg["eid-prefix"]
+
+    if (msg.has_key("instance-id") == False):
+        lisp.lprint("No 'instance-id' in stats IPC message")
+        return
+    #endif
+    iid = int(msg["instance-id"])
+
+    #
+    # Lookup EID-prefix in map-cache.
+    #
+    eid = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, iid)
+    eid.store_prefix(eid_str)
+    mc = lisp.lisp_map_cache_lookup(None, eid)
+    if (mc == None): 
+        lisp.lprint("Map-cache entry for {} not found for stats update". \
+            format(eid_str))
+        return
+    #endif
+
+    if (msg.has_key("rlocs") == False):
+        lisp.lprint("No 'rlocs' in stats IPC message for {}".format(eid_str))
+        return
+    #endif
+    ipc_rlocs = msg["rlocs"]
+
+    #
+    # Loop through RLOCs in IPC message.
+    #
+    for ipc_rloc in ipc_rlocs:
+        if (ipc_rloc.has_key("rloc") == False): continue
+
+        rloc_str = ipc_rloc["rloc"]
+        rloc = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
+        rloc.store_address(rloc_str)
+
+        rloc_entry = mc.get_rloc(rloc)
+        if (rloc_entry == None): continue
+
+        #
+        # Update stats.
+        #
+        pc = 0 if ipc_rloc.has_key("packet-count") == False else \
+            int(ipc_rloc["packet-count"])
+        bc = 0 if ipc_rloc.has_key("byte-count") == False else \
+            int(ipc_rloc["byte-count"])
+        ts = 0 if ipc_rloc.has_key("last-packet") == False else \
+            int(ipc_rloc["last-packet"])
+        
+        rloc_entry.stats.packet_count += pc
+        rloc_entry.stats.byte_count += bc
+        rloc_entry.stats.last_increment = ts
+
+        ts = lisp.lisp_print_elapsed(ts)
+        
+        lisp.lprint("Update stats {}/{}/{} for {} RLOC {}".format(pc, bc, ts,
+            eid_str, rloc_str))
+    #endfor
+#enddef
+
+#
+# lisp_ipc_map_cache_entry
+#
+# Callback from class lisp_cache.walk_cache().
+#
+def lisp_ipc_map_cache_entry(mc, jdata):
+    entry = lisp.lisp_write_ipc_map_cache(True, mc, dont_send=True)
+    jdata.append(entry)
+    return([True, jdata])
+#enddef
+
+#
+# lisp_ipc_walk_map_cache
+#
+# Walk the entries in the lisp_map_cache(). And then subsequently walk the
+# entries in lisp_mapping.source_cache().
+#
+def lisp_ipc_walk_map_cache(mc, jdata):
+    
+    #
+    # There is only destination state in this map-cache entry.
+    #
+    if (mc.group.is_null()): return(lisp_ipc_map_cache_entry(mc, jdata))
+
+    if (mc.source_cache == None): return([True, jdata])
+
+    #
+    # There is (source, group) state so walk all sources for this group
+    # entry.
+    #
+    jdata = mc.source_cache.walk_cache(lisp_ipc_map_cache_entry, jdata)
+    return([True, jdata])
+#enddef
+
+#
+# lisp_itr_process_data_plane_restart
+#
+# The external data-plane has restarted. We will touch the lisp.config file so
+# all configuration information is sent and then traverse the map-cache
+# sending each entry to the data-plane so it can regain its state.
+#
+def lisp_itr_process_data_plane_restart():
+    os.system("touch ./lisp.config")
+
+    jdata = { "type" : "entire-map-cache", "entries" : [] }
+
+    entries = jdata["entries"]
+    lisp.lisp_map_cache.walk_cache(lisp_ipc_walk_map_cache, entries)
+    lisp.lisp_write_to_dp_socket(jdata)
+#enddef
+
+#
 # lisp_itr_process_punt
 #
-# Another data-plane (snabb) is punting a packet to us so we can discover
-# a MAC address EID. The format of the JSON message is:
+# Another data-plane is punting a packet to us so we can discover a source
+# EID, send a map-request, or store statistics data.
+# The format of the JSON message is:
 #
-# { "source-eid" : "<mac-address>", "dest-eid" : "<mac-address>", "interface" :
-#   "<device>" }
+# { "type" : "discovery", "source-eid" : <eid-source-address>, 
+#   "dest-eid" : <eid-dest-address>, "interface" : "<device-name>",
+#   "instance-id" : <iid> }
+# 
+# [ { "type" : "statistics", "eid-prefix" : "<eid-prefix>", "rlocs" : [
+#     { "rloc" : <rloc-1>, "packet-count" : <count>, "byte-count" : <bcount>,
+#       "last-packet" : "<timestamp>" },  ...
+#     { "rloc" : <rloc-n>, "packet-count" : <count>, "byte-count" : <bcount>,
+#        "last-packet" : "<timestamp>" }
+# }, ... ]
+#
+# { "type" : "restart" }
 #
 def lisp_itr_process_punt(punt_socket):
     global lisp_send_sockets, lisp_ephem_port
@@ -511,7 +649,34 @@ def lisp_itr_process_punt(punt_socket):
             format(source))
         return
     #endif
-    if (msg.has_key("type") == False or msg["type"] != "discovery"):
+    punt = lisp.bold("Punt", False)
+    lisp.lprint("{} message from '{}': '{}'".format(punt, source, msg))
+
+    if (msg.has_key("type") == False):
+        lisp.lprint("Punt IPC message has no 'type' key")
+        return
+    #endif
+
+    #
+    # Process statistics message.
+    #
+    if (msg["type"] == "statistics"):
+        lisp_itr_process_data_plane_stats(msg)
+        return
+    #endif
+
+    #
+    # Process statistics message.
+    #
+    if (msg["type"] == "restart"):
+        lisp_itr_process_data_plane_restart()
+        return
+    #endif
+
+    #
+    # Process possible punt packet discovery message.
+    #
+    if (msg["type"] != "discovery"):
         lisp.lprint("Punt IPC message has wrong format")
         return
     #endif
@@ -520,9 +685,6 @@ def lisp_itr_process_punt(punt_socket):
             format(source))
         return
     #endif
-
-    punt = lisp.bold("Punt", False)
-    lisp.lprint("{} message from '{}': '{}'".format(punt, source, msg))
 
     device = msg["interface"]
     iid = lisp.lisp_get_interface_instance_id(device, None)
@@ -588,7 +750,7 @@ def lisp_itr_process_punt(punt_socket):
             # Check if we should rate-limit Map-Request and if not send
             # Map-Request.
             #
-            if (lisp.lisp_rate_limit_map_request(source_eid, deid)): return
+            if (lisp.lisp_rate_limit_map_request(seid, deid)): return
             lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
                 seid, deid, None)
         else:
@@ -693,32 +855,44 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         return
     #endif
 
-    #
-    # Only forward packets from source-EIDs.
-    #
-    db = lisp.lisp_db_for_lookups.lookup_cache(packet.inner_source, False)
-    if (db == None):
-        lisp.dprint("Packet received from non-EID source")
-        return
+    lisp_decent = lisp.lisp_decent_configured
+    if (lisp_decent):
+        multicast = packet.inner_dest.is_multicast_address()
+        local = packet.inner_source.is_local()
+        lisp_decent = (local and multicast)
     #endif
 
-    #
-    # Check to see if we are doing dynamic-EID discovery.
-    #
-    if (db.dynamic_eid_configured()):
-        i = lisp.lisp_allow_dynamic_eid(input_interface, packet.inner_source)
-        if (i):
-            lisp_itr_discover_eid(db, packet.inner_source, input_interface, i)
-        else:
-            e = lisp.green(packet.inner_source.print_address(), False)
-            lisp.dprint("Disallow dynamic-EID {} on interface {}".format(e,
-                input_interface))
+    if (lisp_decent == False):
+
+        #
+        # Only forward packets from source-EIDs.
+        #
+        db = lisp.lisp_db_for_lookups.lookup_cache(packet.inner_source, False)
+        if (db == None):
+            lisp.dprint("Packet received from non-EID source")
             return
         #endif
-    #endif
 
-    if (packet.inner_source.is_local() and 
-        packet.udp_dport == lisp.LISP_CTRL_PORT): return
+        #
+        # Check to see if we are doing dynamic-EID discovery.
+        #
+        if (db.dynamic_eid_configured()):
+            i = lisp.lisp_allow_dynamic_eid(input_interface, 
+                packet.inner_source)
+            if (i):
+                lisp_itr_discover_eid(db, packet.inner_source, 
+                    input_interface, i)
+            else:
+                e = lisp.green(packet.inner_source.print_address(), False)
+                lisp.dprint("Disallow dynamic-EID {} on interface {}".format(e,
+                    input_interface))
+                return
+            #endif
+        #endif
+
+        if (packet.inner_source.is_local() and 
+            packet.udp_dport == lisp.LISP_CTRL_PORT): return
+    #endif
 
     #
     # Do input processing for currently supported packet types..
@@ -736,8 +910,6 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         if (packet.packet == None): return
         packet.encap_port = lisp.LISP_L2_DATA_PORT
     #endif
-
-    secondary_iid = db.secondary_iid
 
     #
     # First check if destination is to any local EID-prefixes from database-
@@ -764,6 +936,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     # EID-prefix. If destination EID found in secondary map-cache, use it.
     # Otherwise, send Map-Request for EID in default IID.
     #
+    secondary_iid = db.secondary_iid if (db != None) else None
     if (secondary_iid and mc and mc.action == lisp.LISP_NATIVE_FORWARD_ACTION):
         dest_eid = packet.inner_dest
         dest_eid.instance_id = secondary_iid
@@ -859,6 +1032,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
             if (node.level != level): return
 
             packet.outer_dest.copy_address(node.address)
+            if (lisp_decent): packet.inner_dest.instance_id = 0xffffff
             version = packet.outer_dest.afi_to_version()
             packet.outer_version = version
             source_rloc = lisp.lisp_myrlocs[0] if (version == 4) else \
@@ -1079,6 +1253,8 @@ def lisp_itr_build_pcap_filter(sources, dyn_eids, l2_overlay, pitr):
 
     ether_pfilter = "(not ether proto 0x806)"
     probe_pfilter = " or (udp src port 4342 and ip[28] == 0x28)"
+    decent_pfilter = \
+        " or (ip[16] >= 224 and ip[16] < 240 and (ip[28] & 0xf0) == 0x30)"
 
     src_pfilter = ""
     dst_pfilter = ""
@@ -1134,6 +1310,7 @@ def lisp_itr_build_pcap_filter(sources, dyn_eids, l2_overlay, pitr):
     #
     pfilter = ether_pfilter + src_pfilter + dst_pfilter + addr_pfilter
     pfilter += probe_pfilter
+    pfilter += decent_pfilter
 
     lisp.lprint("Using pcap filter: '{}'".format(pfilter))
     return(pfilter)
@@ -1339,6 +1516,7 @@ lisp_itr_commands = {
         "nat-traversal" : [True, "yes", "no"],
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
+        "decentralized-xtr" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 
     "lisp interface" : [lispconfig.lisp_interface_command, {
