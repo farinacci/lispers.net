@@ -1,0 +1,1 @@
+go build -o lisp-xtr xtr.go ipc.go lisp.go lml.go
