@@ -710,6 +710,12 @@ def lisp_rtr_xtr_command(kv_pair):
             None, lisp_raw_socket]
         lisp.lisp_start_rloc_probe_timer(1, lisp_sockets)
     #endif
+
+    #
+    # Write to external data-plane if enabled.
+    #
+    lisp.lisp_ipc_write_xtr_parameters(lisp.lisp_debug_logging,
+        lisp.lisp_data_plane_logging)
 #enddef
 
 #

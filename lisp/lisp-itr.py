@@ -392,13 +392,17 @@ def lisp_itr_get_capture_info():
     # If "ipc-data-plane = yes" is configured, we do not need to do any
     # data-plane forwarding. There is another module running with the
     # lispers.net control-plane that is doing data-plane forwarding. We'll
-    # get punts via the lispers.net-itr named socket.
+    # get punts via the lispers.net-itr named socket. But we do have to
+    # packet capture RLOC-probe replies. Also capture multicast Map-Register
+    # messages for LISP-Decent.
     #
-    probe_pfilter = None
+    cp_pfilter = None
     if (lisp.lisp_ipc_data_plane): 
-        lisp.lprint(lisp.bold("Packet capture is disabled", False))
-        probe_pfilter = "(udp src port 4342 and ip[28] == 0x28)"
-        lisp.lprint("Control-plane capture: '{}'".format(probe_pfilter))
+        lisp.lprint(lisp.bold("Data-plane packet capture disabled", False))
+        cp_pfilter = "(udp src port 4342 and ip[28] == 0x28)" + \
+            " or (ip[16] >= 224 and ip[16] < 240 and (ip[28] & 0xf0) == 0x30)"
+
+        lisp.lprint("Control-plane capture: '{}'".format(cp_pfilter))
     else:
         lisp.lprint("Capturing packets for source-EIDs {}".format( \
             lisp.green(str(sources), False)))
@@ -419,11 +423,15 @@ def lisp_itr_get_capture_info():
     # Build packet capture filter so we get packets for configured source EID-
     # prefixes.
     #
-    if (lisp.lisp_pitr):
-        pfilter = lisp_itr_build_pcap_filter(sources, [], False, True)
+    if (cp_pfilter == None):
+        if (lisp.lisp_pitr):
+            pfilter = lisp_itr_build_pcap_filter(sources, [], False, True)
+        else:
+            pfilter = lisp_itr_build_pcap_filter(sources, dyn_eids, l2_overlay,
+                False)
+        #endif
     else:
-        pfilter = lisp_itr_build_pcap_filter(sources, dyn_eids, l2_overlay, 
-            False)
+        pfilter = cp_pfilter
     #endif
 
     #
@@ -443,8 +451,6 @@ def lisp_itr_get_capture_info():
         interfaces = eid_interfaces
     #endif
 
-    if (probe_pfilter): pfilter = probe_pfilter
-
     #
     # Start a pcap thread so we can receive packets from applications on this
     # system. But make sure the device is up on A10 devices.
@@ -454,6 +460,7 @@ def lisp_itr_get_capture_info():
         lisp.lprint("Capturing packets on {}interface {}".format(us, device))
         threading.Thread(target=lisp_itr_pcap_thread, args=args).start() 
     #endfor
+    if (cp_pfilter): return
 
     #
     # Start a pcap thread so we can receive RLOC-probe Map-Replies packets on 
@@ -494,76 +501,83 @@ def lisp_itr_shutdown():
 #
 # lisp_itr_process_data_plane_stats
 #
-# [ { "type" : "statistics", "instance-id" : <iid>, "eid-prefix" : "<eid>",
-#     "rlocs" : [
-#       { "rloc" : <rloc-1>, "packet-count" : <count>, "byte-count" : <bcount>,
-#         "last-packet" : "<timestamp>" },  ...
-#       { "rloc" : <rloc-n>, "packet-count" : <count>, "byte-count" : <bcount>,
-#         "last-packet" : "<timestamp>" }
-# }, ... ]
+# { "type" : "statistics", "entries" :
+#   [ { "instance-id" : "<iid>", "eid-prefix" : "<eid>", "rlocs" : [
+#     { "rloc" : "<rloc-1>", "packet-count" : <count>, "byte-count" : <bcount>,
+#       "seconds-last-packet" : "<timestamp>" },  ...
+#     { "rloc" : "<rloc-n>", "packet-count" : <count>, "byte-count" : <bcount>,
+#        "seconds-last-packet" : <system-uptime> } ], ... }
+#    ]
+# }
 #
 def lisp_itr_process_data_plane_stats(msg):
-    if (msg.has_key("eid-prefix") == False):
-        lisp.lprint("No 'eid-prefix' in stats IPC message")
-        return
-    #endif
-    eid_str = msg["eid-prefix"]
-
-    if (msg.has_key("instance-id") == False):
-        lisp.lprint("No 'instance-id' in stats IPC message")
-        return
-    #endif
-    iid = int(msg["instance-id"])
-
-    #
-    # Lookup EID-prefix in map-cache.
-    #
-    eid = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, iid)
-    eid.store_prefix(eid_str)
-    mc = lisp.lisp_map_cache_lookup(None, eid)
-    if (mc == None): 
-        lisp.lprint("Map-cache entry for {} not found for stats update". \
-            format(eid_str))
+    if (msg.has_key("entries") == False):
+        lisp.lprint("No 'entries' in stats IPC message")
         return
     #endif
 
-    if (msg.has_key("rlocs") == False):
-        lisp.lprint("No 'rlocs' in stats IPC message for {}".format(eid_str))
-        return
-    #endif
-    ipc_rlocs = msg["rlocs"]
+    for msg in msg["entries"]:
+        if (msg.has_key("eid-prefix") == False):
+            lisp.lprint("No 'eid-prefix' in stats IPC message")
+            continue
+        #endif
+        eid_str = msg["eid-prefix"]
 
-    #
-    # Loop through RLOCs in IPC message.
-    #
-    for ipc_rloc in ipc_rlocs:
-        if (ipc_rloc.has_key("rloc") == False): continue
-
-        rloc_str = ipc_rloc["rloc"]
-        rloc = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
-        rloc.store_address(rloc_str)
-
-        rloc_entry = mc.get_rloc(rloc)
-        if (rloc_entry == None): continue
+        if (msg.has_key("instance-id") == False):
+            lisp.lprint("No 'instance-id' in stats IPC message")
+            continue
+        #endif
+        iid = int(msg["instance-id"])
 
         #
-        # Update stats.
+        # Lookup EID-prefix in map-cache.
         #
-        pc = 0 if ipc_rloc.has_key("packet-count") == False else \
-            int(ipc_rloc["packet-count"])
-        bc = 0 if ipc_rloc.has_key("byte-count") == False else \
-            int(ipc_rloc["byte-count"])
-        ts = 0 if ipc_rloc.has_key("last-packet") == False else \
-            int(ipc_rloc["last-packet"])
-        
-        rloc_entry.stats.packet_count += pc
-        rloc_entry.stats.byte_count += bc
-        rloc_entry.stats.last_increment = ts
+        eid = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, iid)
+        eid.store_prefix(eid_str)
+        mc = lisp.lisp_map_cache_lookup(None, eid)
+        if (mc == None): 
+            lisp.lprint("Map-cache entry for {} not found for stats update". \
+                format(eid_str))
+            continue
+        #endif
 
-        ts = lisp.lisp_print_elapsed(ts)
+        if (msg.has_key("rlocs") == False):
+            lisp.lprint("No 'rlocs' in stats IPC message for {}".format( \
+                eid_str))
+            continue
+        #endif
+        ipc_rlocs = msg["rlocs"]
+
+        #
+        # Loop through RLOCs in IPC message.
+        #
+        for ipc_rloc in ipc_rlocs:
+            if (ipc_rloc.has_key("rloc") == False): continue
+
+            rloc_str = ipc_rloc["rloc"]
+            rloc = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
+            rloc.store_address(rloc_str)
+
+            rloc_entry = mc.get_rloc(rloc)
+            if (rloc_entry == None): continue
+
+            #
+            # Update stats.
+            #
+            pc = 0 if ipc_rloc.has_key("packet-count") == False else \
+                ipc_rloc["packet-count"]
+            bc = 0 if ipc_rloc.has_key("byte-count") == False else \
+                ipc_rloc["byte-count"]
+            ts = 0 if ipc_rloc.has_key("seconds-last-packet") == False else \
+                ipc_rloc["seconds-last-packet"]
         
-        lisp.lprint("Update stats {}/{}/{} for {} RLOC {}".format(pc, bc, ts,
-            eid_str, rloc_str))
+            rloc_entry.stats.packet_count += pc
+            rloc_entry.stats.byte_count += bc
+            rloc_entry.stats.last_increment = lisp.lisp_get_timestamp() - ts
+        
+            lisp.lprint("Update stats {}/{}/{}s for {} RLOC {}".format(pc, bc,
+                ts, eid_str, rloc_str))
+        #endfor
     #endfor
 #enddef
 
@@ -1226,12 +1240,12 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
     #
     if (os.getenv("LISP_VIRTIO_BUG") != None):
         c = ("sudo iptables -A POSTROUTING -t mangle -p tcp -j " + \
-            "CHECKSUM --checksum-fill")
+            "CHECKSUM --checksum-fill; ")
         c += ("sudo iptables -A POSTROUTING -t mangle -p udp -j " + \
-            "CHECKSUM --checksum-fill")
-        c += ("; sudo ip6tables -A POSTROUTING -t mangle -p tcp -j " + \
-            "CHECKSUM --checksum-fill")
-        c += ("; sudo ip6tables -A POSTROUTING -t mangle -p udp -j " + \
+            "CHECKSUM --checksum-fill; ")
+        c += ("sudo ip6tables -A POSTROUTING -t mangle -p tcp -j " + \
+            "CHECKSUM --checksum-fill; ")
+        c += ("sudo ip6tables -A POSTROUTING -t mangle -p udp -j " + \
             "CHECKSUM --checksum-fill")
         os.system(c)
         virtio = lisp.bold("virtio", False)
@@ -1447,6 +1461,12 @@ def lisp_itr_xtr_command(kv_pair):
         lisp.lisp_crypto_ephem_port = port
         lisp.lprint("Use port {} for NAT-based lisp-crypto".format(port))
     #endif
+
+    #
+    # Write to external data-plane if enabled.
+    #
+    lisp.lisp_ipc_write_xtr_parameters(lisp.lisp_debug_logging,
+        lisp.lisp_data_plane_logging)
 #enddef
 
 #

@@ -1198,6 +1198,14 @@ def lisp_landing_page():
         output += '''<option value="/lisp/show/log/lisp-etr/100">[{}] ETR 
             log [{}]</option>'''.format(onoff, count)
     #endif
+    if (os.path.exists("./logs/lisp-xtr.log")):
+        count = commands.getoutput("wc -l logs/lisp-xtr.log")
+        count = count.replace(" ", "")
+        count = count.split("logs")[0]
+        onoff = "on" if dc["itr"] == "yes" or dc["etr"] == "yes" else "off"
+        output += '''<option value="/lisp/show/log/lisp-xtr/100">[{}] XTR 
+           log [{}]</option>'''.format(onoff, count)
+    #endif
     if (os.path.exists("./logs/lisp-mr.log")):
         count = commands.getoutput("wc -l logs/lisp-mr.log")
         count = count.replace(" ", "")
@@ -2686,6 +2694,15 @@ def lisp_itr_rtr_show_rloc_probe_command(itr_or_rtr):
 # Process xtr-parameters subclause commands.
 #
 def lisp_xtr_command(kv_pair):
+
+    #
+    # If env variable LISP_RUN_LISP_XTR is defined turn, configure "ipc-
+    # data-plane = yes".
+    #
+    if (os.getenv("LISP_RUN_LISP_XTR") != None):
+        kv_pair["ipc-data-plane"] = ["yes"]
+    #endif
+
     for kw in kv_pair.keys():
         value = kv_pair[kw][0]
         if (kw == "rloc-probing"):

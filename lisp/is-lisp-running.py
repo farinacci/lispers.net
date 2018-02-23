@@ -29,8 +29,8 @@ if (rv != None and rv.has_key("lisp-version")):
 #
 # Get data.
 #
-command = "ps auxww | egrep 'lisp-' | egrep -v grep | " + \
-   "egrep -v is-lisp-running | egrep -v tee | egrep -v pslisp"
+command = "ps auxww | egrep 'lisp-' |" + \
+    "egrep -v 'grep|is-lisp-running|tee|pslisp|sudo'"
 output = commands.getoutput(command)
 if (output == None or output == ""):
     print "No lispers.net code running, release {} installed".format(version)

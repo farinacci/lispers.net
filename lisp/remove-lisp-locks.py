@@ -9,7 +9,8 @@ import commands
 
 #------------------------------------------------------------------------------
 
-files = commands.getoutput("ls lisp-* | egrep -v 'py|log|pem|txt|config'")
+command = "ls lisp-* | egrep -v 'py|log|pem|txt|config' | egrep -v lisp-xtr"
+files = commands.getoutput(command)
 
 ipc_dp = "lisp-ipc-data-plane"
 if (files != ""):

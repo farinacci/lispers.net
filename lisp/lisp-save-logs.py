@@ -13,14 +13,14 @@ import commands
 
 ts = datetime.datetime.now().strftime("%m-%d-%y-%H:%M:%S")
 dirname = "logs." + ts
-os.system("mkdir {}".format(dirname))
-os.system("mv ./logs/*.log " + dirname)
+os.system("mkdir logs/{}".format(dirname))
+os.system("mv ./logs/*.log " + "logs/" + dirname)
 
 #
 # Check to see if there are more than 10 logs.* directory. If so delete all
 # of them so there is a max of 10.
 #
-files = commands.getoutput("ls -dltr logs.*")
+files = commands.getoutput("ls -dltr logs/logs.*")
 files = files.split("\n")
 file_count = len(files)
 if (file_count > 10):

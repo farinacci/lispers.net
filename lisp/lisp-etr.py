@@ -730,7 +730,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     #endfor
 
     rloc_name = None
-    if (lisp.lisp_nat_traversal): rloc_name = socket.gethostname()
+    if (lisp.lisp_nat_traversal): rloc_name = lisp.lisp_hostname
 
     #
     # Run through multicast entry array.

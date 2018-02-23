@@ -1557,6 +1557,7 @@ class lisp_packet():
             packet_icv = lisp_hex_string(packet_icv).zfill(32)
             packet = packet[0:-16]
             ps = 4
+            hash_str = bold("poly", False)
         else:
             icv1, icv2, icv3 = struct.unpack("QQI", packet[-20::])
             packet_icv = byte_swap_64(icv1) << 96
@@ -1565,6 +1566,7 @@ class lisp_packet():
             packet_icv = lisp_hex_string(packet_icv).zfill(40)
             packet = packet[0:-20]
             ps = 8
+            hash_str = bold("sha", False)
         #endif
         lisp = self.lisp_header.encode()
 
@@ -1589,7 +1591,8 @@ class lisp_packet():
 
         if (computed_icv != packet_icv):
             self.packet_error = "ICV-error"
-            fail = bold("ICV failed", False)
+            funcs = cipher_str + "/" + hash_str
+            fail = bold("ICV failed ({})".format(funcs), False)
             addr_str = red(addr_str, False)
             icv_str = "packet-ICV {} != computed-ICV {}".format(p_icv, c_icv)
             dprint("{} from RLOC {}, key-id: {}, packet dropped, {}".format( \
@@ -2642,7 +2645,8 @@ class lisp_echo_nonce():
 # "192-bit Random ECP Group".
 #
 class lisp_keys():
-    def __init__(self, key_id, do_curve=True, do_poly=use_poly):
+    def __init__(self, key_id, do_curve=True, do_chacha=use_chacha,
+        do_poly=use_poly):
         self.uptime = lisp_get_timestamp()
         self.last_rekey = None
         self.rekey_count = 0
@@ -2653,7 +2657,7 @@ class lisp_keys():
         self.dh_p_value = LISP_CS_1024_P
         self.curve25519 = None
         if (do_curve and curve25519):
-            self.cipher_suite = LISP_CS_25519_CHACHA if use_chacha else \
+            self.cipher_suite = LISP_CS_25519_CHACHA if do_chacha else \
                 LISP_CS_25519_AES
             self.local_private_key = random.randint(0, 2**128-1)
             key = lisp_hex_string(self.local_private_key).zfill(32)
@@ -3899,22 +3903,27 @@ class lisp_map_request():
                 lisp_write_ipc_decap_key(addr_str, None)
             else:
                 orig_packet = packet
-                ecdh_key = lisp_keys(1)
-                packet = ecdh_key.decode_lcaf(orig_packet, 0)
+                decode_key = lisp_keys(1)
+                packet = decode_key.decode_lcaf(orig_packet, 0)
                 if (packet == None): return(None)
 
                 #
                 # Other side may not do ECDH.
                 #
-                cs_list = [LISP_CS_25519_AES , LISP_CS_25519_CHACHA]
-                if (ecdh_key.cipher_suite in cs_list):
-                    key = ecdh_key
+                cs_list = [LISP_CS_25519_AES, LISP_CS_25519_CHACHA]
+                if (decode_key.cipher_suite in cs_list):
+                    if (decode_key.cipher_suite == LISP_CS_25519_AES):
+                        key = lisp_keys(1, do_poly=False, do_chacha=False)
+                    #endif
+                    if (decode_key.cipher_suite == LISP_CS_25519_CHACHA):
+                        key = lisp_keys(1, do_poly=True, do_chacha=True)
+                    #endif
                 else:
-                    dh_key = lisp_keys(1, False)
-                    packet = dh_key.decode_lcaf(orig_packet, 0)
-                    if (packet == None): return(None)
-                    key = dh_key
+                    key = lisp_keys(1, do_poly=False, do_curve=False,
+                        do_chacha=False)
                 #endif
+                packet = key.decode_lcaf(orig_packet, 0)
+                if (packet == None): return(None)
 
                 if (len(packet) < format_size): return(None)
                 afi = struct.unpack("H", packet[:format_size])[0]
@@ -4950,22 +4959,26 @@ class lisp_rloc_record():
             # Reply RLOC-record. Then get the RLOC address.
             #
             orig_packet = packet
-            ecdh_key = lisp_keys(1)
-            packet = ecdh_key.decode_lcaf(orig_packet, lcaf_len)
+            decode_key = lisp_keys(1)
+            packet = decode_key.decode_lcaf(orig_packet, lcaf_len)
             if (packet == None): return(None)
 
             #
             # Other side may not do ECDH.
             #
-            cs_list = [LISP_CS_25519_AES , LISP_CS_25519_CHACHA]
-            if (ecdh_key.cipher_suite in cs_list):
-                key = ecdh_key
+            cs_list = [LISP_CS_25519_AES, LISP_CS_25519_CHACHA]
+            if (decode_key.cipher_suite in cs_list):
+                if (decode_key.cipher_suite == LISP_CS_25519_AES):
+                    key = lisp_keys(1, do_poly=False, do_chacha=False)
+                #endif
+                if (decode_key.cipher_suite == LISP_CS_25519_CHACHA):
+                    key = lisp_keys(1, do_poly=True, do_chacha=True)
+                #endif
             else:
-                dh_key = lisp_keys(1, False)
-                packet = dh_key.decode_lcaf(orig_packet, lcaf_len)
-                if (packet == None): return(None)
-                key = dh_key
+                key = lisp_keys(1, do_poly=False, do_chacha=False)
             #endif
+            packet = key.decode_lcaf(orig_packet, lcaf_len)
+            if (packet == None): return(None)
 
             if (len(packet) < 2): return(None)
             afi = struct.unpack("H", packet[:2])[0]
@@ -7636,7 +7649,7 @@ def lisp_process_map_request(lisp_sockets, packet, ecm_source, ecm_port,
     #
     if (lisp_i_am_etr):
         lisp_etr_process_map_request(lisp_sockets, map_request, mr_source,
-            mr_port)
+            mr_port, ttl)
     #endif
 
     #
@@ -7722,6 +7735,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
     #
     # Process each EID record in Map-Reply message.
     #
+    rloc_key_change = False
     for i in range(map_reply.record_count):
         eid_record = lisp_eid_record()
         packet = eid_record.decode(packet)
@@ -7739,13 +7753,14 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
             lisp_store_mr_stats(source, map_reply.nonce)
         #endif
 
+        multicast = (eid_record.group.is_null() == False)
+
         #
         # If this is a (0.0.0.0/0, G) with drop-action, we don't want to
         # cache more-specific (S,G) entry. It is a startup timing problem.
         #
         if (lisp_decent_configured):
             action = eid_record.action
-            multicast = (eid_record.group.is_null() == False)
             if (multicast and action == LISP_DROP_ACTION):
                 if (eid_record.eid.is_local()): continue
             #endif
@@ -7761,7 +7776,11 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         # Do not lose state for other RLOCs that may be stored in an already
         # cached map-cache entry.
         #
-        mc = lisp_map_cache.lookup_cache(eid_record.eid, True)
+        if (multicast):
+            mc = lisp_map_cache_lookup(eid_record.eid, eid_record.group)
+        else:
+            mc = lisp_map_cache.lookup_cache(eid_record.eid, True)
+        #endif
         new_mc = (mc == None)
 
         #
@@ -7820,6 +7839,13 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
             # Append to rloc-set array to be stored in map-cache entry.
             # 
             rloc_set.append(rloc)
+
+            #
+            # Did keys change for thie RLOC, flag it if so.
+            #
+            if (lisp_data_plane_security and rloc.rloc_recent_rekey()):
+                rloc_key_change = True
+            #endif
         #endfor
 
         #
@@ -7834,16 +7860,33 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
             new_set = []
             log_set = []
             for rloc in rloc_set:
-                if (rloc.priority == 254):
-                    new_set.append(rloc)
-                    log_set.append(rloc.rloc.print_address_no_iid())
-                elif (rloc.rloc.is_private_address()):
+
+                #
+                # Set initial state for private RLOCs to UNREACH and test
+                # with RLOC-probes if up behind same NAT.
+                #
+                if (rloc.rloc.is_private_address()):
                     rloc.priority = 1
                     rloc.state = LISP_RLOC_UNREACH_STATE
                     new_set.append(rloc)
                     log_set.append(rloc.rloc.print_address_no_iid())
+                    continue
+                #endif
+
+                #
+                # RTR should not put RTR RLOC in map-cache. But xTRs do. None
+                # RTR RLOCs should only go in the RTR map-cache.
+                #
+                if (rloc.priority == 254 and lisp_i_am_rtr == False):
+                    new_set.append(rloc)
+                    log_set.append(rloc.rloc.print_address_no_iid())
+                #endif
+                if (rloc.priority != 254 and lisp_i_am_rtr):
+                    new_set.append(rloc)
+                    log_set.append(rloc.rloc.print_address_no_iid())
                 #endif
             #endfor
+
             if (log_set != []):
                 rloc_set = new_set
                 lprint("NAT-traversal optimized RLOC-set: {}".format(log_set))
@@ -7878,8 +7921,10 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         # If we are overwriting the rloc-set cached in the map-cache entry,
         # then remove the old rloc pointers from the RLOC-probe list.
         #
+        rloc_set_change = new_mc
         if (mc and rloc_set != mc.rloc_set):
             mc.delete_rlocs_from_rloc_probe_list()
+            rloc_set_change = True
         #endif
 
         #
@@ -7895,7 +7940,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
             mc.last_refresh_time = last_refresh
         #endif
         mc.action = eid_record.action
-        mc.add_cache()
+        mc.add_cache(rloc_set_change)
         
         add_or_replace = "Add"
         if (uptime):
@@ -7905,6 +7950,14 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
 
         lprint("{} {} map-cache with {} RLOCs".format(add_or_replace,
             green(mc.print_eid_tuple(), False), len(rloc_set)))
+
+        #
+        # If there were any changes to the RLOC-set or the keys for any
+        # existing RLOC in the RLOC-set, tell the external data-plane.
+        #
+        if (lisp_ipc_dp_socket and rloc_key_change):
+            lisp_write_ipc_map_cache(True, mc)
+        #endif
 
         #
         # Send RLOC-probe to highest priority RLOCs if this is a new map-cache
@@ -9082,17 +9135,24 @@ def lisp_process_multicast_map_notify(packet, source):
         mc.map_cache_ttl = eid_record.store_ttl()
 
         #
-        # If not RLOCs in the Map-Notify and we had RLOCs in the existing
+        # If no RLOCs in the Map-Notify and we had RLOCs in the existing
         # map-cache entry, remove them.
         #
         if (len(mc.rloc_set) != 0 and eid_record.rloc_count == 0):
             mc.rloc_set = []
             mc.build_best_rloc_set()
+            lisp_write_ipc_map_cache(True, mc)
             lprint("Update {} map-cache entry with no RLOC-set".format( \
                 green(mc.print_eid_tuple(), False)))
             continue
         #endif
-        
+
+        rtr_mc = mc.rtrs_in_rloc_set()
+
+        #
+        # If there are RTRs in the RLOC set for an existing map-cache entry,
+        # only put RTR RLOCs from the Map-Notify in the map-cache.
+        #
         for j in range(eid_record.rloc_count):
             rloc_record = lisp_rloc_record()
             eid_records = rloc_record.decode(eid_records, None)
@@ -9112,8 +9172,12 @@ def lisp_process_multicast_map_notify(packet, source):
             rloc = lisp_rloc()
             rloc.store_rloc_from_record(rloc_record, None, mc.mapping_source)
             if (stats != None): rloc.stats = copy.deepcopy(stats)
+
+            if (rtr_mc and rloc.is_rtr() == False): continue
+                
             mc.rloc_set = [rloc]
             mc.build_best_rloc_set()
+            lisp_write_ipc_map_cache(True, mc)
 
             lprint("Update {} map-cache entry with RLE {}".format( \
                 green(mc.print_eid_tuple(), False), rloc.rle.print_rle(False)))
@@ -11242,15 +11306,17 @@ class lisp_rle_node():
         self.address.copy_address(rloc)
         self.translated_port = port
 
-    def get_encap_key(self):
-        addr_str = self.address.print_address_no_iid() + ":" + \
-            str(self.translated_port)
+    def get_encap_keys(self):
+        port = "4341" if self.translated_port == 0 else \
+               str(self.translated_port)
+        addr_str = self.address.print_address_no_iid() + ":" + port
+
         try:
             keys = lisp_crypto_keys_by_rloc_encap[addr_str]
-            if (keys[1]): return(keys[1].encrypt_key)
-            return(None)
+            if (keys[1]): return(keys[1].encrypt_key, keys[1].icv_key)
+            return(None, None)
         except:
-            return(None)
+            return(None, None)
         #endtry
 #endclass
 
@@ -11848,15 +11914,30 @@ class lisp_rloc():
         #endwhile
         return(output)
 
-    def get_encap_key(self):
-        addr_str = self.rloc.print_address_no_iid() + ":" + \
-            str(self.translated_port)
+    def get_encap_keys(self):
+        port = "4341" if self.translated_port == 0 else \
+               str(self.translated_port)
+        addr_str = self.rloc.print_address_no_iid() + ":" + port
+
         try:
             keys = lisp_crypto_keys_by_rloc_encap[addr_str]
-            if (keys[1]): return(keys[1].encrypt_key)
-            return(None)
+            if (keys[1]): return(keys[1].encrypt_key, keys[1].icv_key)
+            return(None, None)
         except:
-            return(None)
+            return(None, None)
+        #endtry
+
+    def rloc_recent_rekey(self):
+        port = "4341" if self.translated_port == 0 else \
+               str(self.translated_port)
+        addr_str = self.rloc.print_address_no_iid() + ":" + port
+
+        try:
+            key = lisp_crypto_keys_by_rloc_encap[addr_str][1]
+            if (key == None or key.last_rekey == None): return(False)
+            return(time.time() - key.last_key < 1)
+        except:
+            return(False)
         #endtry
 #endclass        
 
@@ -12141,7 +12222,7 @@ class lisp_mapping():
             db.add_source_entry(self)
         #endif
 
-    def add_cache(self):
+    def add_cache(self, do_ipc=True):
         if (self.group.is_null()):
             lisp_map_cache.add_cache(self.eid, self)
             if (lisp_program_hardware): lisp_program_vxlan_hardware(self)
@@ -12156,7 +12237,7 @@ class lisp_mapping():
             if (self.eid.is_null()): self.eid.make_default_route(mc.group)
             mc.add_source_entry(self)
         #endif
-        lisp_write_ipc_map_cache(True, self)
+        if (do_ipc): lisp_write_ipc_map_cache(True, self)
 
     def delete_cache(self):
         self.delete_rlocs_from_rloc_probe_list()
@@ -12212,6 +12293,12 @@ class lisp_mapping():
         #endif
         if (rloc != None): rloc.stats.increment(len(packet.packet))
         self.stats.increment(len(packet.packet))
+
+    def rtrs_in_rloc_set(self):
+        for rloc in self.rloc_set:
+            if (rloc.is_rtr()): return(True)
+        #endfor
+        return(False)
 
 #endclass
 
@@ -13758,6 +13845,7 @@ def lisp_update_default_routes(map_resolver, iid, rtr_list):
         rloc_entry = lisp_rloc()
         rloc_entry.rloc.copy_address(rtr_addr)
         rloc_entry.priority = 254
+        rloc_entry.mpriority = 255
         rloc_entry.rloc_name = "RTR"
         rloc_set.append(rloc_entry)
     #endfor
@@ -15001,9 +15089,9 @@ def lisp_process_rloc_probe_reply(rloc_addr, source, port, nonce, hop_count,
     pl = lisp_rloc_probe_list
 
     #
-    # If we can't find RLOC address from the Map-Reply in the
-    # probe-list, maybe the same ETR is sending sourcing from a
-    # different address. Check that address in the probe-list.
+    # If we can't find RLOC address from the Map-Reply in the probe-list,
+    # maybe the same ETR is sending sourcing from a different address. Check
+    # that address in the probe-list.
     #
     addr = map_reply_addr
     if (pl.has_key(addr) == False):
@@ -15028,15 +15116,6 @@ def lisp_process_rloc_probe_reply(rloc_addr, source, port, nonce, hop_count,
             rloc.translated_port != port): continue
             
         rloc.process_rloc_probe_reply(nonce, eid, group, hop_count, ttl)
-
-        #
-        # If we are passing encryption-keys to another data-plane, send
-        # a new map-cache entry here.
-        #
-        if (lisp_ipc_dp_socket and lisp_data_plane_security):
-            mc = lisp_map_cache_lookup(eid, group)
-            if (mc): lisp_write_ipc_map_cache(True, mc)
-        #endif
     #endfor
 #enddef
 
@@ -15918,18 +15997,23 @@ def lisp_write_ipc_map_cache(add_or_delete, mc, dont_send=False):
         if (len(mc.rloc_set) >= 1 and mc.rloc_set[0].rle):
             for rle_node in mc.rloc_set[0].rle.rle_nodes:
                 addr = rle_node.address.print_address_no_iid()
-                r = { "rle" : addr }
-                key = rle_node.get_encap_key()
-                r = lisp_build_json_keys(r, key)
+                port = str(4341) if rle_node.translated_port == 0 else \
+                    str(rle_node.translated_port)                       
+                r = { "rle" : addr, "port" : port }
+                ekey, ikey = rle_node.get_encap_keys()
+                r = lisp_build_json_keys(r, ekey, ikey, "encrypt-key")
                 entry["rles"].append(r)
             #endfor
         #endif
     else:
         for rloc in mc.rloc_set:
+            port = str(4341) if rloc.translated_port == 0 else \
+                str(rloc.translated_port)                       
             r = { "rloc" : rloc.rloc.print_address_no_iid(), "priority" : 
-                  str(rloc.priority), "weight" : str(rloc.weight) }
-            key = rloc.get_encap_key()
-            r = lisp_build_json_keys(r, key)
+                str(rloc.priority), "weight" : str(rloc.weight), "port" :
+                port  }
+            ekey, ikey = rloc.get_encap_keys()
+            r = lisp_build_json_keys(r, ekey, ikey, "encrypt-key")
             entry["rlocs"].append(r)
         #endfor
     #endif
@@ -15949,16 +16033,19 @@ def lisp_write_ipc_decap_key(rloc_addr, keys):
     if (lisp_check_dp_socket() == False): return
 
     #
-    # Get decryption key.
+    # Get decryption key. If there is none, do not send message.
     #
-    key = None if (keys == None) else keys[1]
-    key = "" if (key == None) else key.encrypt_key
+    if (keys == None or keys[1] == None): return
+
+    ekey = keys[1].encrypt_key
+    ikey = keys[1].icv_key
 
     #
     # Write record in JSON format. Store encryption key.
     #
-    entry = { "type" : "decap-keys", "rloc" : rloc_addr }
-    entry = lisp_build_json_keys(entry, key)
+    r, p = rloc_addr.split(":")
+    entry = { "type" : "decap-keys", "rloc" : r, "port" : p }
+    entry = lisp_build_json_keys(entry, ekey, ikey, "decrypt-key")
 
     lisp_write_to_dp_socket(entry)
 #enddef
@@ -15969,11 +16056,11 @@ def lisp_write_ipc_decap_key(rloc_addr, keys):
 # Build the following for both the ITR encryption side and the ETR decryption
 # side.
 #
-def lisp_build_json_keys(entry, key):
-    if (key == None): return(entry)
+def lisp_build_json_keys(entry, ekey, ikey, key_type):
+    if (ekey == None): return(entry)
 
     entry["keys"] = []
-    key = { "key-id" : "1", "key" : key }
+    key = { "key-id" : "1", key_type : ekey, "icv-key" : ikey }
     entry["keys"].append(key)
     return(entry)
 #enddef
@@ -15993,7 +16080,11 @@ def lisp_write_ipc_database_mappings(ephem_port):
     #
     entry = { "type" : "database-mappings", "database-mappings" : [] }
 
+    #
+    # Write only IPv4 and IPv6 EIDs.
+    #
     for db in lisp_db_list:
+        if (db.eid.is_ipv4() == False and db.eid.is_ipv6() == False): continue
         record = { "instance-id" : str(db.eid.instance_id), 
             "eid-prefix" : db.eid.print_prefix_no_iid() }
         entry["database-mappings"].append(record)
@@ -16346,6 +16437,38 @@ def lisp_is_rloc_probe(packet, rr):
     lprint("{} {} bytes {} {}, packet: {}".format(r, len(packet), f, port, p))
 
     return([packet, source, port, ttl])
+#enddef
+
+#
+# lisp_ipc_write_xtr_parameters
+#
+# When an external data-plane is running, write the following parameters
+# to it:
+#
+# ipc = { "type" : "xtr-parameters", "control-plane-logging" : False,
+#         "data-plane-logging" : False }
+#
+def lisp_ipc_write_xtr_parameters(cp, dp):
+    if (lisp_ipc_dp_socket == None): return
+
+    ipc = { "type" : "xtr-parameters", "control-plane-logging" : cp,
+        "data-plane-logging" : dp }
+
+    lisp_write_to_dp_socket(ipc)
+#enddef
+
+#
+# lisp_external_data_plane
+#
+# Return True if an external data-plane is running. That means that "ipc-data-
+# plane = yes" is configured or the lisp-xtr go binary is running.
+#
+def lisp_external_data_plane():
+    cmd = 'egrep "ipc-data-plane = yes" ./lisp.config'
+    if (commands.getoutput(cmd) != ""): return(True)
+    
+    if (os.getenv("LISP_RUN_LISP_XTR") != None): return(True)
+    return(False)
 #enddef
 
 #------------------------------------------------------------------------------

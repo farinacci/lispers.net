@@ -429,7 +429,7 @@ def lisp_core_traceback_page():
     #
     if (clean):
         output = ""
-        log_files = commands.getoutput("egrep -c Traceback ./logs/*")
+        log_files = commands.getoutput("egrep -c Traceback ./logs/*.log")
         log_files = log_files.split("\n")
         for lf in log_files:
             line = lf.split(":")
@@ -2266,10 +2266,10 @@ def lisp_core_startup(bottle_port):
     # want the kernel to send port unreachables to ITRs and PITRs. If another
     # data-plane is running, it may listen on the data port 4341. Let it.
     #
-    cmd = 'egrep "ipc-data-plane = yes" ./lisp.config'
-    if (commands.getoutput(cmd) == ""):
+    if (lisp.lisp_external_data_plane() == False):
         lisp_encap_socket = lisp.lisp_open_listen_socket(address,
             str(lisp.LISP_DATA_PORT))
+        lisp.lprint("Listen on {}, port 4341".format(address))
     #endif
 
     #
