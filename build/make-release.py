@@ -13,7 +13,7 @@ import platform
 #------------------------------------------------------------------------------
 
 obfuscate_on = True
-root = "./.." if os.path.exists("./.git") else "~/code"
+root = "./.." if os.path.exists("./.git") else "/Users/dino/code"
 
 #
 # First check that this is running in the build directory and that peer
@@ -158,6 +158,29 @@ else:
 #endif
 
 #
+# Make bin directory.
+#
+os.system("mkdir {}/bin".format(dir))
+
+#
+# First check if lisp-xtr has been previously built. If found and in Linux
+# ELF format, then move to bin directory and *.go files to src directory.
+#
+lisp_xtr = ""
+go_binary = "{}/lisp/lisp-xtr".format(root)
+if (os.path.exists("{}".format(go_binary)) == False):
+    print "Binary 'lisp-xtr' not found, not included in build"
+elif (commands.getoutput("file {} | egrep ELF".format(go_binary)) == ""):
+    print "Binary 'lisp-xtr' not in ELF format, not included in build"
+else:
+    print "Copying go files and go binary 'lisp-xtr'  ... ", 
+    os.system("cp {}/lisp/*.go {}/src/.".format(root, dir))
+    os.system("cp {} {}/.".format(go_binary, dir))
+    print "done"
+    lisp_xtr = "lisp-xtr"
+#endif
+
+#
 # Put the version and date file in the directory.
 #
 os.system('cd ./{}; echo "{}" > lisp-version.txt'.format(dir, version))
@@ -173,7 +196,7 @@ os.system('cp ./py-depend/pip-requirements.txt ./{}/.'.format(dir))
 tar_file = "lispers.net-" + cpu + "-" + dir + ".tgz"
 print "Build tgz file {} ... ".format(tar_file),
 files = "*.pyo *.txt lisp.config.example lisp-cert.pem.default *-LISP " + \
-    "RL-* get-pip.py pslisp lispers.net-geo.html"
+    "RL-* get-pip.py pslisp lispers.net-geo.html {}".format(lisp_xtr)
 command = "cd {}; tar czf {} {}".format(dir, tar_file, files)
 status = os.system(command)
 if (status != 0):
@@ -183,9 +206,12 @@ if (status != 0):
 print "done"
 
 #
-# Put pyo files in the bin/ directory.
+# Put go binary and pyo files in the bin/ directory.
 #
-os.system("mkdir {}/bin; mv {}/*pyo {}/bin/".format(dir, dir, dir))
+os.system("mv {}/*pyo {}/bin/".format(dir, dir))
+if (lisp_xtr != ""):
+    os.system("mv {}/lisp-xtr {}/bin/".format(dir, dir))
+#endif
 
 print "Copying version information to ../lisp directory ... ", 
 command = '''

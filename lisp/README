@@ -1,2 +1,22 @@
 This directory contains all the source code and support files needed to run the
 lispers.net LISP subsystem.
+
+The lispers.net subsystem contains the following general functionality:
+
+(1) A full-featured LISP control-plane written in python 2.7.
+(2) A full-featured LISP data-plane written in python 2.7.
+(3) A full-featured LISP data-plane written in go.
+
+The LISP component functionality includes:
+
+(1) xTR functions ITR, ETR, and RTR for IPv4/IPv6 unicast and multicast EIDs
+    and/or RLOCs.
+(2) Mapping system functions Map-Resolver (MR) and Map-Server (MS).
+(3) Mapping Database Transport LISP-DDT (DDT).
+(3) Support for LISP-NAT is used for LISP-to-non-LISP Interworking.
+
+To compile the go files, run "./build-xtr" from the lisp/ subdirectory. Then
+build/make-release.py will pick up binary lisp-xtr and package it in the
+tarball it creates.
+
+-------------------------------------------------------------------------------

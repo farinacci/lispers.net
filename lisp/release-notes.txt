@@ -1,4 +1,149 @@
 
+                lispers.net Beta Release Version 0.443
+                --------------------------------------
+
+o Release date: Thu Feb 22 14:16:08 PST 2018
+
+o Fix bug where an external data-plane and the lispers.net data-plane encap
+  the same packets causing duplicates to and from sources and destinations.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.442
+                --------------------------------------
+
+o Release date: Wed Feb 21 20:50:23 PST 2018
+
+o Put multicast replication support in lispers.net go data-plane. Not ready
+  for prime time yet. But it works with the decentralized mapping system.
+
+o Make lisp_mapping.rtrs_in_rloc_set() consistent with site_eid.rtrs_in_rloc_
+  set().
+
+o Only write IPv4 or IPv6 EID database-mappings to the external data-plane.
+
+o When a new map-cache entry is created, the lispers.net control-plane believes
+  there is not an RLOC-set change, so it doesn't tell the external data-plane.
+  Fixed now.
+
+o When "decentralized-xtr=yes" is configured and "ipc-data-plane=yes" is
+  configured, make sure the lispers.net data-plane replicates multicast
+  Map-Register messages.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.441
+                --------------------------------------
+
+o Release date: Tue Feb 20 12:20:03 PST 2018
+
+o Put logs.<date> in the logs directory. So the user can put a symbolic link
+  in the lispers.net directory to point the logs directory somewhere else. So
+  all log files from the running system as well as up to 10 logs from previous
+  incarnations of the LISP subsystem are stored.
+
+o When an ITR sends an RLOC-probe Map-Request with one cipher-suite and gets
+  an RLOC-probe Map-Reply with a different cipher-suite, it should use the
+  cipher-suite from the RLOC-probe Map-Reply.
+
+o When an ETR receives an RLOC-probe Map-Request with one cipher-suite and is
+  configured to use different cipher-suite, it should use the cipher-suite from
+  the RLOC-probe Map-Request.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.440
+                --------------------------------------
+
+o Release date: Sat Feb 17 04:31:42 PST 2018
+
+o Syntax error when installing "-t mangle" for virtio bug. Need to checksum-
+  fill tcp and udp packets.
+
+o When a complete RLOC-set is returned from a Map-Server for an (S,G) lookup,
+  have the ITR choose the RTR to cache in its map-cache and have the RTR
+  choose the RLE-set for xTRs in public space and xTRs behind NATs.
+
+o Have an ETR register an (S,G) with lisp_hostname and not socket.
+  gethostbyname().
+
+o We were not doing a (S,G) lookup on a RLOC-probe reply, therefore thinking
+  each RLOC-probe Map-Reply was creating a new map-cache entry. This resulted
+  in triggering another RLOC-probe and the processed looped using a large
+  amount of CPU.
+
+o Ignore Map-Notify in an ITR for an (S,G) if it has an RTR cached. Since the
+  ITR cannot get multicast packets encapsulated to xTRs behind a NAT, there
+  is no point in tracking membership.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.439
+                --------------------------------------
+
+o Release date: Sun Feb 11 16:52:12 PST 2018
+
+o Fix traceback calling lisp_etr_proecss_map_request(). Missing ttl argument.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.438
+                --------------------------------------
+
+o Release date: Thu Feb  1 11:47:02 PST 2018
+
+o Integrate a faster data-plane (written in go) into the LISP subsystem. It
+  is not ready for prime time yet and is disabled in this release. It is called
+  "lisp-xtr". You do not configure this with "ipc-data-plane = yes". If you
+  uncomment "#setenv LISP_RUN_LISP_XTR" in the RUN-LISP script, it gets
+  started up. But DO NOT do this for this release.
+
+o Turn on and off debug logging in the external data-plane lisp-xtr from the
+  lispers.net web interface (or the lisp.config configuration file).
+
+o Get access to the lisp-xtr.log file from the web interface.
+
+o When restarting LISP, the lisp-core process sometimes does not come up due
+  to "Address already in use". Make sure the port 4342 socket is shut down
+  when the LISP subsystem is shut down.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.437
+                --------------------------------------
+
+o Release date: Wed Jan 31 14:02:37 PST 2018
+
+o Process "type" : "statistics" message from an external data-plane.
+
+o Don't IPC write to an external data plane when an RLOC-probe reply does not
+  change keys.
+
+o Change "last-packet" in the "type" : "statistics" message to "seconds-last-
+  packet" to indicate the value is seconds since last packet.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.436
+                --------------------------------------
+
+o Release date: Mon Jan 29 22:06:22 PST 2018
+
+o Include ICV key in "type" equal "decap-keys". Call decryption key keyword
+  "decrypt-key" and ICV key keyword "icv-key".
+
+o Include ICV key in in RLOC and RLE records as well as rename it encryption
+  key keyword to "encrypt-key". Note this is optional in JSON so receiver of
+  message must test for it. Ditto for "icv-key".
+
+o Could not find encryption key so map-cache entry was not including keys
+  to an external data-plane.
+
+o Put keyword "port" with an RLOC json entry. Put a keyword "port" with a
+  "decap-keys" entry. So we can work through NATs.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.435
                 --------------------------------------
 

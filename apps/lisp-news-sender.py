@@ -56,7 +56,13 @@ def get_headlines():
     try:
         u = urllib.urlopen("http://finance.yahoo.com/rss/topfinstories")
     except:
-        u = urllib2.urlopen("http://finance.yahoo.com/rss/topfinstories")
+        try:
+            u = urllib2.urlopen("http://finance.yahoo.com/rss/topfinstories")
+        except:
+            return(None)
+        #endtry
+    #endtry
+
     #endtry
     data = u.read()
     data = data[data.find("<item>")::]
@@ -144,7 +150,7 @@ except:
 #
 while (True):
     messages = get_headlines()
-    send_messages(messages)
+    if (messages != None): send_messages(messages)
 
     print "Delay {} seconds ... ".format(delay),
     sys.stdout.flush()

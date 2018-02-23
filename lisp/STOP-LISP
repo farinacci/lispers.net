@@ -15,7 +15,7 @@ set itr = $status
 # Remove each lispers.net LISP processes. Do not continue until they are 
 # all gone.
 #
-set pids = `./pslisp | egrep python | cut -f 1 -d " "`
+set pids = `./pslisp | egrep "python|lisp-xtr" | cut -f 1 -d " "`
 echo "Stopping LISP processes [$pids] ..."
 foreach p ($pids)
     sudo kill $p
@@ -28,6 +28,11 @@ while 1
         echo "Waiting on processes ["$pids"]"
     endif
 end
+
+#
+# Wait for UDP well-known port sockets to clear.
+echo "Clearing sockets ..."
+sleep 1
 
 #
 # Remove LISP lock files.

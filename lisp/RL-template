@@ -53,8 +53,14 @@ exit
 # EID <eid-from-above> will be used and the lispers.net code will get all
 # packets to encap to destinations LISP sites or non-LISP sites.
 #
-#sudo ip route add default <default-router> src <ipv4-eid-from-above>
+#sudo ip route add default via <default-router> src <ipv4-eid-from-above>
 #sudo ip route add 0::/0 via fe80::1 dev eth0 src <ipv6-eid-from-above>
+
+#
+# Blackhole routes are useful so packets are not routed by kernel and that
+# we can assign the source-EID with the route.
+#
+#ip route add blackhole <prefix> src <local-eid>
 
 # -------------------- IPv6 Default Route Configuration --------------------
 
