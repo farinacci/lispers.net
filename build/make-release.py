@@ -191,13 +191,15 @@ os.system('cp ./py-depend/get-pip.py ./{}/.'.format(dir))
 os.system('cp ./py-depend/pip-requirements.txt ./{}/.'.format(dir))
 
 #
-# Now tar and gzip files for release.
+# Now tar and gzip files for release. COPYFILE is so MacOs does not put in
+# ._<foo> files.
 #
 tar_file = "lispers.net-" + cpu + "-" + dir + ".tgz"
 print "Build tgz file {} ... ".format(tar_file),
 files = "*.pyo *.txt lisp.config.example lisp-cert.pem.default *-LISP " + \
     "RL-* get-pip.py pslisp lispers.net-geo.html {}".format(lisp_xtr)
-command = "cd {}; tar czf {} {}".format(dir, tar_file, files)
+command = "cd {}; export COPYFILE_DISABLE=true; tar czf {} {}".format(dir,
+    tar_file, files)
 status = os.system(command)
 if (status != 0):
     print "failed"
