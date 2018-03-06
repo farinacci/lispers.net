@@ -1,4 +1,65 @@
 
+                lispers.net Beta Release Version 0.446
+                --------------------------------------
+
+o Release date: Mon Mar  5 09:43:00 PST 2018
+
+o Display "[on]xTR log" when "RTR logging enabled" in landing page pull-down
+  menus.
+
+o Do not take minimum of stored map-cache TTL stored with new one that arrived
+  in a Map-Reply. Use the latest. And do not save the last-refresh-time from
+  an existing map-cache entry when creating a new data structure form a Map-
+  Reply should have a last-refresh-time of now.
+
+o Make curve25519 import required. That way all combinations of chacha20, aes,
+  curve25519, poly, and sha256 can be used.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.445
+                --------------------------------------
+
+o Release date: Fri Mar  2 18:39:40 PST 2018
+
+o Show the lisp-xtr state when clicking "Map-Cache" in the ITR or RTR Map-Cache
+  display title. It basically shows the context of local file show-xtr.
+  Whenever there is a change in xtr-parameters, interfaces, database-mappings,
+  nat-etr-port, or map-cache, the file is written by the lisp-xtr process.
+
+o A fundamental bug found where 240.0.0.0/8 was interpreted as a multicast
+  address. Fix now and can use 240 addresses as unicast addresses.
+
+o Fix slot collision bug in lisp_lml_walk().
+
+o Fix lisp-xtr statistics IPC in lisp_stats_thread().
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.444
+                --------------------------------------
+
+o Release date: Tue Feb 27 17:06:27 PST 2018
+
+o Do not tell external data-plane about RLOCs that are not IPv4 or IPv6
+  addresses.
+
+o Handle instance-ID of 0xffffff in lisp_process_punt() so we don't process
+  control packets on this path. Rather use the early part of the lispers.net
+  data-plane to do this.
+
+o Handle external data-plane statistics message with an RLOC of "no-address".
+  This can occur when the lispers.net control-plane passes down a map-cache
+  entry of "native-forward".
+
+o Allow lispers.net control-plane to tell the external data-plane to clear its
+  map-cache.
+
+o The fast go data-plane works as an RTR. It can forward packets to xTRs behind
+  NATs. The lisp-xtr go data-plane is still disabled by default.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.443
                 --------------------------------------
 

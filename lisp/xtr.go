@@ -1,7 +1,7 @@
 //
 // xtr.go
 //
-// This file contains LISP ITR, RTR< and ETR functions that can encapsulate and
+// This file contains LISP ITR, RTR, and ETR functions that can encapsulate and
 // decapsulate packets faster than the python code lisp-itr.py, lisp-etr.py,
 // and lisp-rtr.py.
 //
@@ -32,8 +32,7 @@ import "github.com/google/gopacket/pcap"
 //
 // ---------- Global Variables ----------
 //
-var lisp_rtr = true
-var lisp_rtr_only = false
+var lisp_rtr = false
 var lisp_encap_socket [2]int
 var lisp_decap_socket *net.UDPConn
 
@@ -479,8 +478,13 @@ func lisp_encapsulate(log string, packet []byte, iid int, rloc *Lisp_rloc,
 	// Store values in UDP header.
 	//
 	udp := lisp_udp_header
-	udp[0] = byte((hash >> 8) | 0xf0)
-	udp[1] = byte(hash & 0xff)
+	if (rloc.encap_port == 4341) {
+		udp[0] = byte((hash >> 8) | 0xf0)
+		udp[1] = byte(hash & 0xff)
+	} else {
+		udp[0] = byte(0x10)
+		udp[1] = byte(0xf5)
+	}
 	udp[2] = byte(rloc.encap_port >> 8)
     udp[3] = byte(rloc.encap_port & 0xff)	
 	udp_length := len(packet) + 8
@@ -506,8 +510,8 @@ func lisp_encapsulate(log string, packet []byte, iid int, rloc *Lisp_rloc,
 			return
 		}
 
-		dprint("%s to IPv4 RLOC %s, encap-port %d", log,
-			red(rloc.rloc.lisp_print_address(false)), rloc.encap_port)
+		dprint("%s to IPv4 RLOC %s", log, red(fmt.Sprintf("%s:%d",
+			rloc.rloc.lisp_print_address(false), rloc.encap_port)))
 
 		lisp_log_packet("Encap", packet, true)
 
@@ -515,7 +519,7 @@ func lisp_encapsulate(log string, packet []byte, iid int, rloc *Lisp_rloc,
 		// Send on raw socket.
 		//
 		copy(sa4.Addr[:], rloc.rloc.address)
-		sa4.Port = 0
+		sa4.Port = rloc.encap_port
 		err = syscall.Sendto(lisp_encap_socket[0], packet, 0, &sa4)
 
 	} else if (rloc.rloc.lisp_is_ipv6()) {
@@ -526,8 +530,8 @@ func lisp_encapsulate(log string, packet []byte, iid int, rloc *Lisp_rloc,
 		outer = append(outer, rloc.rloc.address...)
 		packet = append(outer, packet...)
 
-		dprint("%s to IPv6 RLOC %s, encap-port %d", log,
-			red(rloc.rloc.lisp_print_address(false)), rloc.encap_port)
+		dprint("%s to IPv6 RLOC %s", log, red(fmt.Sprintf("%s:%d",
+			rloc.rloc.lisp_print_address(false), rloc.encap_port)))
 
 		lisp_log_packet("Encap", packet, true)
 
@@ -535,7 +539,7 @@ func lisp_encapsulate(log string, packet []byte, iid int, rloc *Lisp_rloc,
 		// Send on raw socket.
 		//
 		copy(sa6.Addr[:], rloc.rloc.address)
-		sa6.Port = 0
+		sa6.Port = rloc.encap_port
 		err = syscall.Sendto(lisp_encap_socket[1], packet, 0, &sa6)
 	} else {
 		return
@@ -697,8 +701,13 @@ func lisp_etr_data_plane(packet []byte, source_rloc string) {
 	inner = packet[8:]
 	inner_version := (inner[0] & 0xf0)
 
+	//
+	// Get instance-id from LISP header. Instance-ID of -1 is an encapsulated
+	// control message, drop it. The lispers.net control-plane will deliver it.
+	//
 	if ((lisp[0] & 0x08) == 0x08) {
 		iid = int(lisp[4]) << 16 + int(lisp[5]) << 8 + int(lisp[6])
+		if (iid == 0xffffff) { return }
 	} else {
 		iid = 0
 	}
@@ -735,19 +744,10 @@ func lisp_etr_data_plane(packet []byte, source_rloc string) {
 	}
 
 	//
-	// Instance-ID of -1 is an encapsulated control message, punt it.
-	//
-	if (iid == 0xffffff) {
-		dprint("Punt data-encapsulated control message")
-		lisp_punt_packet("?", source, dest)
-		return
-	}
-
-	//
 	// Do a lisp_database lookup on the destination to see if its an EID. Don't
-	// do this for a destination multicast address.
+	// do this for a destination multicast address or we are an RTR node.
 	//
-	if (!lisp_rtr_only && !dest.lisp_is_multicast()) {
+	if (!lisp_rtr && !dest.lisp_is_multicast()) {
 		err := lisp_get_database(dest)
 		if (err) {
 			dprint("Destination %s is not a configured EID",

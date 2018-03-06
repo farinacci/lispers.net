@@ -1202,7 +1202,8 @@ def lisp_landing_page():
         count = commands.getoutput("wc -l logs/lisp-xtr.log")
         count = count.replace(" ", "")
         count = count.split("logs")[0]
-        onoff = "on" if dc["itr"] == "yes" or dc["etr"] == "yes" else "off"
+        onoff = "on" if dc["itr"] == "yes" or dc["etr"] == "yes" or \
+            dc["rtr"] == "yes" else "off"
         output += '''<option value="/lisp/show/log/lisp-xtr/100">[{}] XTR 
            log [{}]</option>'''.format(onoff, count)
     #endif
@@ -2563,11 +2564,19 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads):
     keys = '<a href="/lisp/show/{}/keys"><br>RLOC Keys</a>'.format(i_or_r)
 
     #
+    # Create link to /lisp/show/lisp-xtr if lisp-xtr is running.
+    #
+    mc_str = "Map-Cache"
+    if (os.getenv("LISP_RUN_LISP_XTR") != None):
+        mc_str = '<a href="/lisp/show/lisp-xtr">Map-Cache</a>'
+    #endif
+
+    #
     # Show map-cache.
     #
     hover = "{} entries in the map-cache".format( \
         lisp.lisp_map_cache.cache_size())
-    title = "LISP-{} Map-Cache:{}".format(itr_or_rtr, lisp.lisp_space(4))
+    title = "LISP-{} {}:{}".format(itr_or_rtr, mc_str, lisp.lisp_space(4))
     title = lisp.lisp_span(title, hover)
 
     #

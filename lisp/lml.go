@@ -11,6 +11,9 @@ package main
 import "fmt"
 import "net"
 
+//
+// If this is changed, change lml_clear_hash_table() too.
+//
 var lisp_lml_cache [129]*Lisp_hash_table
 
 type Lisp_hash_table struct {
@@ -146,17 +149,34 @@ func lisp_lml_hash(address net.IP, mask_len int) uint {
 // Show internal representation of the LML data structure.
 //
 func lisp_lml_show() {
+	count := 0
+	ht_count := 0
+
 	for i := 0; i < len(lisp_lml_cache); i++ {
 		ht := lisp_lml_cache[i]
 		if (ht == nil || ht.ht_count == 0) { continue }
 
-		fmt.Printf("Hash table %d, count %d\n", i, ht.ht_count)
-		for hash, mc := range ht.hash_table {
-			if (mc == nil) { continue }
-			eid := mc.eid_prefix.lisp_print_address(true)
-			fmt.Printf("  Hash 0x%x, %s\n", hash, eid)
+		fmt.Printf("Hash table /%d, count %d\n", i, ht.ht_count)
+		slot_count := 0
+		for hash, slot := range ht.hash_table {
+			if (slot == nil) { continue }
+
+			slot_count += 1
+			fmt.Printf("  Hash 0x%x: ", hash)
+			ht_count = 0
+			for mc := slot; mc != nil; mc = mc.next_mc {
+				fmt.Printf("%s ", mc.eid_prefix.lisp_print_address(true))
+				count += 1
+				ht_count += 1
+			}
+			fmt.Printf("\n")
+		}
+		if (slot_count != 0) {
+			fmt.Printf("Average slot collision: %d\n", ht_count / slot_count)
 		}
 	}
+
+	fmt.Printf("Found %d entries\n", count)
 }
 
 //
@@ -167,24 +187,29 @@ func lisp_lml_show() {
 // after the pointer passed in. Return nil when end of table.
 //
 func lisp_lml_walk(mc *Lisp_map_cache) *Lisp_map_cache {
-	var found bool
-	
-	if (mc == nil) {
-		found = true
-	} else {
-		found = false
-	}
+	found := (mc == nil)
 
 	for i := 0; i < len(lisp_lml_cache); i++ {
 		ht := lisp_lml_cache[i]
-		if (ht == nil || ht.ht_count == 0) {
-			continue
-		}
-		for _, mce := range ht.hash_table {
-			if (mce == nil) { continue }
-			if (found) { return(mce) }
-			if (mce == mc) { found = true }
+		if (ht == nil || ht.ht_count == 0) { continue }
+
+		for _, slot := range ht.hash_table {
+			for mce := slot; mce != nil; mce = mce.next_mc {
+				if (found) { return(mce) }
+				if (mce == mc) { found = true }
+			}
 		}
 	}
 	return(nil)
+}
+
+//
+// lml_clear_hash_table
+//
+// Remove all entries from LML hash-table.
+//
+func lml_clear_hash_table() {
+	var new_cache [129]*Lisp_hash_table
+
+	lisp_lml_cache = new_cache
 }

@@ -311,6 +311,31 @@ def lisp_show_comamnd_doc():
 #enddef
 
 #
+# lisp_show_lisp_xtr
+#
+# Display the show-xtr file that the go data-plane lisp-xtr writes to.
+#
+@bottle.route('/lisp/show/lisp-xtr', method="get")
+def lisp_show_lisp_xtr():
+    if (lispconfig.lisp_validate_user() == False): 
+        return(lisp_core_login_page())
+    #endif
+
+    f = open("./show-xtr", "r"); lines = f.read(); f.close()
+
+    new = ""
+    lines = lines.split("\n")
+    for line in lines:
+        if (line[0:4] == "    "): new += lisp.lisp_space(4)
+        if (line[0:2] == "  "): new += lisp.lisp_space(2)
+        new += line + "<br>"
+    #endfor
+    new = lisp.convert_font(new)
+
+    return(lisp.lisp_print_sans(new))
+#enddef
+
+#
 # lisp_show_keys
 #
 # Display LISP crypto-key-list to ITR, ETR, RTR.

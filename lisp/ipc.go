@@ -1,5 +1,5 @@
 //
-// lisp.go
+// ipc.go
 //
 // The functions contain in this file are used to interface with the
 // lispers.net control-plane. 
@@ -99,7 +99,11 @@ func lisp_ipc_message_processing() {
 		// Process each JSON type.
 		//
 		if (value == "entire-map-cache") {
-			for _, jj := range jdata["entries"].([]interface{}) {
+			entries := jdata["entries"].([]interface{})
+			if (len(entries) == 0) {
+				lml_clear_hash_table()
+			}
+			for _, jj := range entries {
 				j := jj.(map[string]interface{})
 				lisp_store_map_cache_data(j)
 			}
@@ -152,6 +156,7 @@ func lisp_ipc_message_processing() {
 		} else if (value == "xtr-parameters") {
 			lisp_debug_logging = jdata["control-plane-logging"].(bool)
 			lisp_data_plane_logging = jdata["data-plane-logging"].(bool)
+			lisp_rtr = jdata["rtr"].(bool)
 
 		} else {
 			lprint("JSON '%s' not supported", value)
@@ -229,17 +234,47 @@ func lisp_store_map_cache_data(jdata map[string]interface{}) {
 // Show data structure state.
 //
 func lisp_show_state() string {
+
+	//
+	// Header line followed by blank line.
+	//
 	out := "lispers.net release " + bold(lisp_read_file("./lisp-version.txt"))
 	out += " running at " + lisp_command_output("date") + "\n\n"
+
+	//
+	// xTR state section.
+	//
 	out += fmt.Sprintf("%s\n", bold("LISP xTR State"))
+	e_or_d := "disabled/"
+	if (lisp_debug_logging) { e_or_d = "enabled/" }
+	if (lisp_data_plane_logging) {
+		e_or_d += "enabled"
+	} else {
+		e_or_d += "disabled"
+	}
+    out += fmt.Sprintf("  LISP control/data-plane logging: %s\n", e_or_d)
+	if (lisp_rtr) {
+		out += fmt.Sprintf("  LISP RTR: enabled\n")
+	} else {
+		out += fmt.Sprintf("  LISP RTR: disabled\n")
+	}
 	out += fmt.Sprintf("  LISP ETR NAT Port: %d\n", lisp_etr_nat_port)
+
+	//
+	// Display "lisp interfaces".
+	//
 	out += fmt.Sprintf("  LISP Interfaces: ")
+	if (len(lisp_interfaces) == 0) { out += fmt.Sprintf(" []") }
 	for key, value := range lisp_interfaces {
 		out += fmt.Sprintf("%s:[%d] ", key, value.instance_id)
 	}
 	out += fmt.Sprintf("\n")
- 
-	out += fmt.Sprintf("  LISP Databaase Mappings: ")
+
+	//
+	// Display "lisp database-mappings".
+	//
+	out += fmt.Sprintf("  LISP Database Mappings: ")
+	if (len(lisp_database) == 0) { out += fmt.Sprintf(" []\n") }
 	for i, value := range lisp_database {
 		out += fmt.Sprintf("%s", value.eid_prefix.lisp_print_address(true))
 		if (i == len(lisp_database)-1) {
@@ -248,8 +283,15 @@ func lisp_show_state() string {
 			out += fmt.Sprintf(", ")
 		}
 	}
+
+	//
+	// Section break. Blank line before map-cache display.
+	//
 	out += fmt.Sprintf("\n")
 
+	//
+	// Display map-cache.
+	//
 	out += fmt.Sprintf("%s\n", bold("LISP xTR Map-Cache State"))
 	for mc := lisp_lml_walk(nil); mc != nil; mc = lisp_lml_walk(mc) {
 		if (len(mc.rloc_set) == 0 && len(mc.rle_set) == 0) {
@@ -282,6 +324,10 @@ func lisp_show_state() string {
 			out += fmt.Sprintf("\n")
 		}
 	}
+
+	//
+	// Final blank line.
+	//
 	out += fmt.Sprintf("\n")
 	return(out)
 }
@@ -343,7 +389,7 @@ func lisp_punt_packet(input_interface string, seid Lisp_address,
 	}
 
 	if (input_interface == "?") {
-		iid := string(seid.instance_id)
+		iid := fmt.Sprintf("%d", seid.instance_id)
 		if (seid.instance_id == 0xffffff) {
 			iid = "-1"
 		}
@@ -351,7 +397,7 @@ func lisp_punt_packet(input_interface string, seid Lisp_address,
 	} else {
 		ipc["interface"] = input_interface
 		iid := lisp_interfaces[input_interface].instance_id
-		ipc["instance-id"] = string(iid)
+		ipc["instance-id"] = fmt.Sprintf("%d", iid)
 	}
 	ipc["source-eid"] = seid.lisp_print_address(false)
 	ipc["dest-eid"] = deid.lisp_print_address(false)
@@ -399,8 +445,6 @@ func lisp_send_restart() {
 func lisp_stats_thread() {
 	print_idle := false
 	ipc := make(map[string]interface{}, 0)
-	ipc_eid := make(map[string]interface{}, 0)
-	ipc_rloc := make(map[string]interface{}, 0)
 
 	for {
 		eids := make([]interface{}, 0)
@@ -413,6 +457,7 @@ func lisp_stats_thread() {
 				if (rloc.packets == rloc.last_reported_packets) {
 					continue
 				}
+				ipc_rloc := make(map[string]interface{}, 0)
 				ipc_rloc["rloc"] = rloc.rloc.lisp_print_address(false)
 				ipc_rloc["port"] = fmt.Sprintf("%d", rloc.encap_port)
 				ipc_rloc["packet-count"] = rloc.packets
@@ -426,6 +471,7 @@ func lisp_stats_thread() {
 				continue
 			}
 
+			ipc_eid := make(map[string]interface{}, 0)
 			ipc_eid["instance-id"] =
 				fmt.Sprintf("%d", mc.eid_prefix.instance_id)
 			ipc_eid["eid-prefix"] = mc.eid_prefix.lisp_print_address(false)

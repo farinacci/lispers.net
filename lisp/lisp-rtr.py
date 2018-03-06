@@ -21,6 +21,7 @@ import copy
 #
 lisp_send_sockets = [None, None, None]
 lisp_ipc_listen_socket = None
+lisp_ipc_punt_socket = None
 lisp_ephem_listen_socket = None
 lisp_ephem_port = lisp.lisp_get_ephemeral_port()
 lisp_raw_socket = None
@@ -126,6 +127,10 @@ def lisp_fix_rloc_encap_state_entry(mc, parms):
         #endif
     #endfor
 
+    #
+    # Write change to external data-plane.
+    #
+    lisp.lisp_write_ipc_map_cache(True, mc)
     return(True, parms)
 #enddef
 
@@ -204,6 +209,10 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Print some useful header fields and strip outer headers..
     #
     packet.print_packet("Receive-({})".format(thread_name), True)
+
+    #
+    # Strip outer headers and start inner header forwarding logic.
+    #
     packet.strip_outer_headers()
 
     #
@@ -243,6 +252,15 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             packet = packet[28::]
             lisp.lisp_parse_packet(lisp_send_sockets, packet, source, 0, ttl)
         #endif
+        return
+    #endif
+
+    #
+    # Packets are arriving on pcap interface. Need to check if another data-
+    # plane is running. If so, don't deliver duplicates.
+    #
+    if (lisp.lisp_ipc_data_plane): 
+        lisp.dprint("Drop packet, external data-plane active")
         return
     #endif
 
@@ -560,6 +578,7 @@ def lisp_rtr_process_timer():
 def lisp_rtr_startup():
     global lisp_ipc_listen_socket, lisp_send_sockets, lisp_ephem_listen_socket
     global lisp_raw_socket, lisp_raw_v6_socket, lisp_threads
+    global lisp_ipc_punt_socket
 
     lisp.lisp_i_am("rtr")
     lisp.lisp_set_exception()
@@ -579,6 +598,7 @@ def lisp_rtr_startup():
     lisp_ephem_listen_socket = lisp.lisp_open_listen_socket(address,
         str(lisp_ephem_port))
     lisp_ipc_listen_socket = lisp.lisp_open_listen_socket("", "lisp-rtr")
+    lisp_ipc_punt_socket = lisp.lisp_open_listen_socket("", "lispers.net-itr")
 
     lisp_send_sockets[0] = lisp_ephem_listen_socket
 #   lisp_send_sockets[0] = lisp.lisp_open_send_socket("", lisp.LISP_AFI_IPV4)
@@ -662,6 +682,7 @@ def lisp_rtr_shutdown():
     lisp.lisp_close_socket(lisp_send_sockets[1], "")
     lisp.lisp_close_socket(lisp_ipc_listen_socket, "lisp-rtr")
     lisp.lisp_close_socket(lisp_ephem_listen_socket, "")
+    lisp.lisp_close_socket(lisp_ipc_punt_socket, "lispers.net-itr")
     lisp_raw_socket.close()
 #enddef
 
@@ -823,12 +844,21 @@ if (lisp_rtr_startup() == False):
     exit(1)
 #endif
 
-socket_list = [lisp_ephem_listen_socket, lisp_ipc_listen_socket]
+socket_list = [lisp_ephem_listen_socket, lisp_ipc_listen_socket,
+               lisp_ipc_punt_socket]
 ephem_sockets = [lisp_ephem_listen_socket] * 3
 
 while (True):
     try: ready_list, w, x = select.select(socket_list, [], [])
     except: break
+
+    #
+    # Process Punt signal message from another data-plane (snabb).
+    #
+    if (lisp.lisp_ipc_data_plane and lisp_ipc_punt_socket in ready_list):
+        lisp.lisp_process_punt(lisp_ipc_punt_socket, lisp_send_sockets,
+            lisp_ephem_port)
+    #endif
 
     #
     # Process Map-Reply messages received on ephemeral port.
