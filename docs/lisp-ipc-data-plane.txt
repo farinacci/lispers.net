@@ -1,0 +1,285 @@
+
+                 lispers.net IPC Data-Plane Interface
+                 ------------------------------------
+                     Tue Feb 27 14:33:21 PST 2018
+
+This specification documents how the lispers.net control-plane can be used
+with another data-plane implementation. Another data-plane implementation
+can use any overlay encapsulation method it chooses.
+
+To enable this functionality in the lispers.net code, the following lisp.config
+is required:
+
+lisp xtr-parameters {
+    ipc-data-plane = yes
+}
+
+Map-Cache Population IPC Interface
+----------------------------------
+
+The lispers.net code will use a AF_UNIX/SOCK-DGRAM socket called
+"lisp-ipc-data-plane". The path name of the named socket will be in the 
+lispers.net directory.  The data-plane code will be responsible for creating 
+the named socket in the above directory. The data-plane code will listen on 
+the socket and the lispers.net code will send on the socket. The format of 
+each IPC message sent on the socket from lispers.net to data-plane will be 
+in JSON form:
+
+Unicast form:
+
+{ "type" : "map-cache", "opcode" : "add" | "delete",
+  "instance-id" : "<iid>", "eid-prefix" : "<eid-prefix>", "rlocs" : [ 
+    { "rloc" : <rloc-1>, "port" : "<port>",
+               "priority" : "<p>", "weight" : "<w>", "keys" : [ 
+      { "key-id" : "<key-id>", "encrypt-key" : "<encrypt-key>",
+                               "icv-key" " <icv-key>}, ... ] },
+    { "rloc" : <rloc-n>, "port" : "<port>",
+               "priority" : "<p>", "weight" : "<w>", "keys" : [ 
+      { "key-id" : "<key-id>", "encrypt-key" : "<encrypt-key>",
+                               "icv-key" " <icv-key>}, ... ] }
+}
+
+Multicast form:
+
+{ "type" : "map-cache", "opcode" : "add" | "delete",
+  "instance-id" : "<iid>", "eid-prefix" : "<eid-prefix>", "rles" : [ 
+    { "rle" : <rloc-1>, "port" : "<port>",
+             "priority" : "<p>", "weight" : "<w>", "keys" : [ 
+      { "key-id" : "<key-id>", "encrypt-key" : "<encrypt-key>",
+                               "icv-key" " <icv-key>}, ... ] },
+    { "rle" : <rloc-n>, "port" : "<port>",
+              "priority" : "<p>", "weight" : "<w>", "keys" : [ 
+      { "key-id" : "<key-id>", "encrypt-key" : "<encrypt-key>",
+                               "icv-key" " <icv-key>}, ... ] }
+}
+
+The <iid> is the configured VPN-ID that is assigned to an interface and
+will be used to register MAC address EIDs when they are learned on the
+interface. And will be used for sending Map-Requests for MAC address EIDs
+needing RLOC resolution.
+
+For the unicast form, the <eid-prefix> is a IPv4 address (in the form of
+x.x.x.x/m), an IPv6 address (in the form of x::x/m), or a MAC-address (in 
+the format of aaaa-bbbb-cccc/48). 
+
+For the multicast form, the <eid-prefix> is a IPv4 address (in the form of
+224.x.x.x/m), an IPv6 address (in the form of ff::x/m), or a MAC-address (in 
+the format of ffff-ffff-ffff/48). 
+
+The "rloc" is an IPv4 address (in the form of x.x.x.x) or an IPv6 address (in 
+standard colon format x::x). The "rle" is an IPv6 unicast address in standard 
+colon format. The <encryption-key> is a list of ascii hex digits and used by 
+the data-plane to encrypt and decrypt encapsulated packets. The <p> and <w> 
+values are the priority and weight values that can be used for active/active 
+or active/backup load-splitting. Or, they can be ignored. Note that multiple 
+<rloc><p><w> records can be supplied.
+
+When an entry is in the form of no RLOCs or RLEs:
+
+{ "type" : "map-cache", 
+  "instance-id" : "<iid>", "eid-prefix" : <eid-prefix-in-ascii>, "rlocs" : [] }
+{ "type" : "map-cache", 
+  "instance-id" : "<iid>", "eid-prefix" : <eid-prefix-in-ascii>, "rles" : [] }
+
+The data-plane has the option of removing the entry for [<iid>]<eid-prefix>
+from its forwarding cache.
+
+An example unicast map-cache entry could be:
+
+[251]0001-0002-0003/48 rloc 2001::1111 1 50, 2001::2222 1 50
+
+Which is encoded as an IPC record:
+
+{ "type" : "map-cache", 
+  "instance-id" : "251", "eid-prefix" : "0001-0002-0003/48",
+  "rlocs" : [ { "rloc" : "2001::1111", "priority" : "1", "weight" : "50" },
+              { "rloc" : "2001::2222", "priority" : "1", "weight" : "50" } ] 
+}
+
+Which means the MAC address 0001-0002-0003 is in VPN 251 and is multihomed
+to 2 IPv6 RLOCs 2001::1111 and 2001::2222. And since both have priority 1
+with a weight of 50, flows to this MAC address should be load-split across
+the two RLOCs.
+
+An example multicast map-cache entry could be:
+
+[251]ffff--ffff-ffff/48 rloc 2001::1111 1 50, 2001::2222 1 50
+
+Which is encoded as as IPC record:
+
+{ "type" : "map-cache", 
+  "instance-id" : "251", "eid-prefix" : "ffff-ffff-ffff/48",
+  "rles" : [ { "rle" : "dfdf::1" }, { "rle" : "dfdf::2" } ]
+}
+
+Which means any source that sends to MAC address ffff-ffff-ffff that resides
+in VPN 251 will get the MAC frame replicated to dfdf::1 and dfdf::2. That is,
+the broadcast frame will be unicast encapsulated to each RLOC in the RLE list.
+
+Example map-cache entries that have encryption keys for both the unicast and
+multicast cases:
+
+{ "type" : "map-cache", 
+  "instance-id" : "251", "eid-prefix" : "0001-0002-0003/48", "rlocs" :
+  [ { "rloc" : "2001::1111", "keys" :
+      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : <ikey> }] },
+    { "rloc" : "2001::2222", "keys" :
+      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : <ikey> }] } ]
+}
+{ "type" : "map-cache", 
+  "instance-id" : "251", "eid-prefix" : "ffff-ffff-ffff/48", "rles" :
+  [ { "rle" : "dfdf::1", "keys" :
+      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : <ikey> }] },
+    { "rle" : "dfdf::2", "keys" :
+      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : <ikey> }] } ]
+}
+
+Database-Mapping Source-EID and IID Configuration
+-------------------------------------------------
+
+An ITR needs to know what instance-ID is associated with a received packet's
+interface. And it needs to know the source-EID prefix so it can determine
+which packets should be LISP encapsulated. For each database-mapping entry
+in the lisp.config file, the following is sent to named socket "lisp-ipc-data-
+plane":
+
+{ "type" : "database-mappings", "database-mappings" :
+  [ { "instance-id" : "250", "eid-prefix" : "0001-0002-0003/48" }, ... 
+    { "instance-id" : "251", "eid-prefix" : "1111-2222-3333/48" },
+    { "instance-id" : "251", "eid-prefix" : "0001-0002-3333/48" } ]
+}
+
+{ "type" : "interfaces", "interfaces" : 
+  [ { "interface" : "eth0", "instance-id" : "250" }, ... 
+    { "interface" : "eth1", "instance-id" : "251" } ]
+}
+
+When these IPC messages are sent, they always contain the complete set. There
+are no incremental adds or deletes.
+
+ETR Decryption Key
+------------------
+
+In the last section we described how to pass the encryption-key for an RLOC
+with a map-cache entry. In this section, we describe how the control-plane
+will tell the data-plane what the decryption-key should be for a given
+ITR's RLOC.
+
+The lispers.net control-plane will use the named socket "lisp-ipc-data-plane"
+to send ETR decryption-key information to the data-plane. The following
+JSON formated record will be used when sending an IPC message from the 
+lispers.net control-plane to the data-plane:
+
+{ "type" : "decap-keys", "rloc" : "<itr-rloc-address>", "port" : "<port>",
+           "keys" : [
+  { "key-id" : <key-id-1>", "decrypt-key" : "<dkey>", "icv-key" : "<ikey>" },
+  { "key-id" : <key-id-2>", "decrypt-key" : "<dkey>", "icv-key" : "<ikey>" },
+  { "key-id" : <key-id-3>", "decrypt-key" : "<dkey>", "icv-key" : "<ikey>" } ]
+}
+
+The key-id value must be part of the encapsulation header so the ETR knows
+which key to use for decryption. In the LISP data-plane there is only room
+for 2 bits, or 3 keys (one value is used to indicate there is no encryption).
+
+It is left to the data-plane code to decide how many keys are used.
+
+NAT-Traversal Support
+---------------------
+
+When an xTR is behind a NAT device, an RTR will encapsulate packets to the 
+xTR with a source-port of 4341 to a ephemeral destination-port. The
+lispers.net control-plane sends Info-Requests messages to the RTR with 
+destination-port 4341 and a locally chosen ephemeral source-port. The RTR 
+caches the translated source-port when proessing Info-Requests so the
+tranlsated port can used as a destination-port for encapsulated packets 
+allowing packets to traverse the NAT devices.
+
+Therefore, an external data-plane needs to know the locally chosen ephemeral
+port to perform a socket listen on. The lispers.net control planen will
+send a message to the "lisp-ipc-data-plane" socket with format:
+
+{ "type" : "etr-nat-port", "port" : <port-number> }
+
+Punt IPC Interface
+------------------
+
+The lispers.net code will create a named socket like this:
+
+  s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+  s.bind("lispers.net-itr")
+
+And when it sends an IPC record to the data-plane to populate the map-cache
+or to have the control plane do source EID discovery, the target is 
+"lisp-ipc-data-plane".
+
+For discovering EID addresses and registering them in their respective
+VPNs, the lispers.net code will listen on this socket and the
+data-plane code will send to "lispers.net-itr". The data-plane will
+decide when to send an IPC record for registration. The format of the
+IPC message is in JSON format:
+
+{ "type" : "discovery", "source-eid" : <eid-source-address>, 
+  "dest-eid" : <eid-dest-address>, "interface" : "<device-name>",
+  "instance-id" : "<iid>" }
+
+The <eid-source-address> is the source address of a received packet the 
+data-plane decides should be discovered by the lispers.net code. The 
+<eid-dest-address> is the destination of a received packet where a FIB lookup 
+entry by the data-plane was not found. This invokes a Map-Request to the 
+mapping system by the control-plane.
+
+The <device-name> is typically a Linux device name of the interface the 
+packet from source <eid-source-address> was received on. The instance-ID
+is determined from the incoming interface <device-name>. When an RTR punts
+a packet, <iid> is used to determine the instance-ID for any map-cache or
+mapping system lookups. If both "interface" and "instance-id" is specified,
+the <device-name> is preferred.
+
+The Punt IPC API will support the data-plane to send statistic data
+to the control-plane. The format of the Statistics message is:
+
+{ "type" : "statistics", "entries" :
+  [ { "instance-id" : "<iid>", "eid-prefix" : "<eid>", "rlocs" : [
+    { "rloc" : "<rloc-1>", "packet-count" : <count>, "byte-count" : <bcount>,
+      "seconds-last-packet" : <seconds> },  ...
+    { "rloc" : "<rloc-n>", "packet-count" : <count>, "byte-count" : <bcount>,
+       "seconds-last-packet" : <seconds> } ], ... }
+   ]
+}
+
+Where <seconds> is the number of floating point seconds since the last packet
+was encapsulated to the RLOC.
+
+Restartability of the Data-Plane
+--------------------------------
+
+When the data-plane restarts, it will need a full download of the control-
+plane state so it can operate. The data-plane will send the following message
+to the control-plane "lispers.net-itr" socket:
+
+{ "type" : "restart" }
+
+The lispers.net control-plane will respond by sending the following types
+to the "lisp-ipc-data-plane" socket:
+
+Dynamic data in a bulk message for the map-cache:
+
+{ "type" : "entire-map-cache", "entries" : 
+  [ { "type" : "map-cache", "opcode" : "add" ... } ] }
+
+If the map-cache is cleared manually the array is set to empty. Therefore, the
+JSON message looks like:
+
+{ "type" : "entire-map-cache", "entries" : [] }
+
+In this case the external data-plane should remove all entries from its map-
+cache data structure.
+
+Configuration data sent for its entirety from the lisp.config configuration
+file:
+
+{ "type" : "database-mappings", "database-mappings" : [ ... ] }
+{ "type" : "interfaces", "interfaces" : [ ... ] }
+{ "type" : "etr-nat-port", "port" : <port-number> }
+
+-------------------------------------------------------------------------------
