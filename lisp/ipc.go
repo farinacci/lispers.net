@@ -27,9 +27,10 @@ const lisp_rate_limiter = 200000000
 //
 // Sockets used for control-plane IPC.
 //
-var lisp_ipc_socket  *net.UnixConn
-var lisp_punt_socket *net.UnixConn
-var lisp_last_punt   time.Time
+var lisp_ipc_socket    *net.UnixConn
+var lisp_punt_socket   *net.UnixConn
+var lisp_last_punt     time.Time
+var lisp_config_change int
 
 //
 // Data structures for running the data-plane.
@@ -121,6 +122,7 @@ func lisp_ipc_message_processing() {
 				lisp_database = append(lisp_database, lisp_database_entry)
 			}
 			if (len(lisp_database) != 0 && len(lisp_interfaces) != 0) {
+				lisp_config_change++
 				lisp_start_itr_data_plane()
 			}
 
@@ -137,12 +139,12 @@ func lisp_ipc_message_processing() {
 					new_interfaces[device] = entry
 				} else {
 					lisp_interface.instance_id = int(iid)
-					lisp_interface.thread_started = false
 					new_interfaces[device] = lisp_interface
 				}
 			}
 			lisp_interfaces = new_interfaces
 			if (len(lisp_database) != 0 && len(lisp_interfaces) != 0) {
+				lisp_config_change++
 				lisp_start_itr_data_plane()
 			}
 
@@ -168,7 +170,9 @@ func lisp_ipc_message_processing() {
 		//
 		out := lisp_show_state()
 		lisp_write_file("./show-xtr", out)
-		fmt.Printf(out)
+		if (lisp_debug_logging) {
+			fmt.Printf(out)
+		}
 	}
 }
 
@@ -454,9 +458,8 @@ func lisp_stats_thread() {
 			rlocs := make([]interface{}, 0)
 			for j, _ := range mc.rloc_set {
 				rloc := &mc.rloc_set[j]
-				if (rloc.packets == rloc.last_reported_packets) {
-					continue
-				}
+				if (rloc.packets == 0) { continue }
+
 				ipc_rloc := make(map[string]interface{}, 0)
 				ipc_rloc["rloc"] = rloc.rloc.lisp_print_address(false)
 				ipc_rloc["port"] = fmt.Sprintf("%d", rloc.encap_port)
@@ -464,7 +467,8 @@ func lisp_stats_thread() {
 				ipc_rloc["byte-count"] = rloc.bytes
 				ipc_rloc["seconds-last-packet"] =
 					time.Since(rloc.last_packet).Seconds()
-				rloc.last_reported_packets = rloc.packets
+				rloc.packets = 0
+				rloc.bytes = 0
 				rlocs = append(rlocs, ipc_rloc)
 			}
 			if (len(rlocs) == 0) {

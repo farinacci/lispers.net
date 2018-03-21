@@ -20,6 +20,7 @@ setenv LISP_VIRTIO_BUG
 # Run go data-plane. Called lisp-xtr.
 #
 #setenv LISP_RUN_LISP_XTR
+#setenv LISP_USE_AF_PACKET
 
 #
 # Cipher defaults to chacha20. Comment out lines below if you want AES.
@@ -138,7 +139,11 @@ python -O lisp-core.pyo $1 >& ./logs/lisp-core.log &
 # Run the lisp-xtr golang data-plane.
 #
 if ($?LISP_RUN_LISP_XTR) then
-    sudo ./lisp-xtr >>& ./logs/lisp-xtr.log &
+    if ($?LISP_USE_AF_PACKET) then
+        sudo ./lisp-xtr afpacket >>& ./logs/lisp-xtr.log &
+     else
+        sudo ./lisp-xtr >>& ./logs/lisp-xtr.log &
+     endif
 endif
 
 exit(0)

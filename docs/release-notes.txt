@@ -1,9 +1,46 @@
 
+                lispers.net Beta Release Version 0.448
+                --------------------------------------
+
+o Release date: Fri Mar 16 13:39:13 PDT 2018
+
+o When processing a statistics IPC message, check to see that the key/value
+  pairs that are suppose to be arrays, are actually arrays before referencing
+  them.
+
+o Shut down data-plane threads when new database-mappings or interface
+  IPC messages come. Otherwise, we have more than one go thread receiving
+  packets for the same filters. Which results in duplicates getting
+  encapsulated.
+
+o Put in the AF-PACKET socket interface to get zero-copied packets from the
+  kernel. In this version, however, duplicate packets are coming to a single
+  thread using AF-PACKET v3. Use environment variable LISP_USE_AF_PACKET in
+  RUN-LISP to enable AF-PACKET. It is off by default right now, runs
+  on eth1 only in the lisp_etr_thread(), and does not receive when an xTR
+  is behind a NAT.
+
+o Fix crash in lisp_elp.select_elp_node() to not test for a local RLOC when
+  the system cannot get one (a IPv6 RLOC).
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.447
                 --------------------------------------
 
-o Release date:
+o Release date: Tue Mar  6 15:41:39 PST 2018
 
+o Have data-plane send counters since the last time it told the control-plane.
+
+o If a map-cache entry is about to time out and it has been active from an
+  external data-plane, send a refreshing Map-Request. This is done when the
+  external data-plane sends statistics for one of the RLOCs in the RLOC-set
+  for the map-cache entry.
+
+o When a new encap-keying occurred for existing state, we were not setting
+  the last-rekey-time hence not determining when processing a Map-Reply that
+  new keys need to be told to the external data-plane.
+  
 -------------------------------------------------------------------------------
 
                 lispers.net Beta Release Version 0.446

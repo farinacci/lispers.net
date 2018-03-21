@@ -318,7 +318,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Send Map-Request to see if there is a RLOC change or to refresh an
     # entry that is about to time out.
     #
-    if (mc and mc.is_active and mc.has_ttl_elapsed()):
+    if (mc and mc.is_active() and mc.has_ttl_elapsed()):
         lisp.lprint("Refresh map-cache entry {}".format( \
             lisp.green(mc.print_eid_tuple(), False)))
         lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 

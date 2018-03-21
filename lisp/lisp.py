@@ -2758,6 +2758,12 @@ class lisp_keys():
         # Now compute keys we use for encryption and ICV authentication.
         #
         self.compute_encrypt_icv_keys()
+
+        #
+        # Increment counters and timestamp.
+        #
+        self.rekey_count += 1
+        self.last_rekey = lisp_get_timestamp()
     
     def compute_encrypt_icv_keys(self):
         alg = hashlib.sha256
@@ -3952,8 +3958,6 @@ class lisp_map_request():
                             False)))
                         key.copy_keypair(stored_key)
                         key.uptime = stored_key.uptime
-                        key.rekey_count = stored_key.rekey_count + 1
-                        key.last_rekey = lisp_get_timestamp()
                         stored_key = None
                     #endif
                 #endif
@@ -5017,8 +5021,6 @@ class lisp_rloc_record():
                     key = None
                     remote = bold("Remote encap-unkeying occurred", False)
                     lprint("    {} for {}".format(remote, rloc_name_str))
-                    stored_key.rekey_count += 1
-                    stored_key.last_rekey = lisp_get_timestamp()
                 elif (stored_key.compare_keys(key)):
                     key = stored_key
                     lprint("    Maintain stored encap-keys for {}".format( \
@@ -5027,8 +5029,6 @@ class lisp_rloc_record():
                     if (stored_key.remote_public_key == None):
                         string = "New encap-keying for existing state"
                     else:
-                        stored_key.rekey_count += 1
-                        stored_key.last_rekey = lisp_get_timestamp()
                         string = "Remote encap-rekeying"
                     #endif
                     lprint("    {} for {}".format(bold(string, False), 
@@ -11031,8 +11031,11 @@ class lisp_elp():
         index = None
 
         for elp_node in self.elp_nodes:
-            if (elp_node.address.is_exact_match(v4) or
-                elp_node.address.is_exact_match(v6)):
+            if (v4 and elp_node.address.is_exact_match(v4)):
+                index = self.elp_nodes.index(elp_node)
+                break
+            #endif
+            if (v6 and elp_node.address.is_exact_match(v6)):
                 index = self.elp_nodes.index(elp_node)
                 break
             #endif
@@ -11918,8 +11921,9 @@ class lisp_rloc():
 
         try:
             key = lisp_crypto_keys_by_rloc_encap[addr_str][1]
-            if (key == None or key.last_rekey == None): return(False)
-            return(time.time() - key.last_key < 1)
+            if (key == None): return(False)
+            if (key.last_rekey == None): return(True)
+            return(time.time() - key.last_rekey < 1)
         except:
             return(False)
         #endtry
@@ -16499,9 +16503,13 @@ def lisp_process_data_plane_restart(do_clear=False):
 #    ]
 # }
 #
-def lisp_process_data_plane_stats(msg):
+def lisp_process_data_plane_stats(msg, lisp_sockets, lisp_port):
     if (msg.has_key("entries") == False):
         lprint("No 'entries' in stats IPC message")
+        return
+    #endif
+    if (type(msg["entries"]) != list):
+        lprint("'entries' in stats IPC message must be an array")
         return
     #endif
 
@@ -16533,6 +16541,10 @@ def lisp_process_data_plane_stats(msg):
         if (msg.has_key("rlocs") == False):
             lprint("No 'rlocs' in stats IPC message for {}".format( \
                 eid_str))
+            continue
+        #endif
+        if (type(msg["rlocs"]) != list):
+            lprint("'rlocs' in stats IPC message must be an array")
             continue
         #endif
         ipc_rlocs = msg["rlocs"]
@@ -16569,6 +16581,17 @@ def lisp_process_data_plane_stats(msg):
             lprint("Update stats {}/{}/{}s for {} RLOC {}".format(pc, bc,
                 ts, eid_str, rloc_str))
         #endfor
+
+        #
+        # Check if this map-cache entry needs refreshing.
+        #
+        if (mc.group.is_null() and mc.has_ttl_elapsed()):
+            eid_str = green(mc.print_eid_tuple(), False)
+            lprint("Refresh map-cache entry {}".format(eid_str))
+            lisp_send_map_request(lisp_sockets, lisp_port, None, mc.eid, None)
+        #endif
+    #endif
+
     #endfor
 #enddef
 
@@ -16613,7 +16636,7 @@ def lisp_process_punt(punt_socket, lisp_send_sockets, lisp_ephem_port):
     # Process statistics message.
     #
     if (msg["type"] == "statistics"):
-        lisp_process_data_plane_stats(msg)
+        lisp_process_data_plane_stats(msg, lisp_send_sockets, lisp_ephem_port)
         return
     #endif
 

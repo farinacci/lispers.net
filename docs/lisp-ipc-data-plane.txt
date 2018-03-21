@@ -1,7 +1,7 @@
 
                  lispers.net IPC Data-Plane Interface
                  ------------------------------------
-                     Tue Feb 27 14:33:21 PST 2018
+                     Tue Mar  6 13:34:33 PST 2018
 
 This specification documents how the lispers.net control-plane can be used
 with another data-plane implementation. Another data-plane implementation
@@ -248,7 +248,10 @@ to the control-plane. The format of the Statistics message is:
 }
 
 Where <seconds> is the number of floating point seconds since the last packet
-was encapsulated to the RLOC.
+was encapsulated to the RLOC. Values <count> and <bcount> are counters
+incremented since the last time the external data-plane sent a statistics IPC
+message. Therefore, these counters should be cleared after sending this
+message.
 
 Restartability of the Data-Plane
 --------------------------------

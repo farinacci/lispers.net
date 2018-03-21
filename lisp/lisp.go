@@ -224,7 +224,6 @@ type Lisp_database struct {
 }
 type Lisp_interface struct {
 	instance_id    int
-	thread_started bool
 }
 type Lisp_map_cache struct {
 	next_mc    *Lisp_map_cache
@@ -240,7 +239,6 @@ type Lisp_rloc struct {
 	packets               uint
 	bytes                 uint
 	last_packet           time.Time
-	last_reported_packets uint
 }
 
 //
@@ -434,6 +432,29 @@ func lisp_log_packet(prefix_string string, packet []byte, is_lisp bool) {
 			lisp[i+2], lisp[i+3])
 	}
 	dprint(packet_string)
+}
+
+//
+// lisp_get_local_address
+//
+// Given supplied interface, return locaal IPv4 and IPv6 addresses.
+//
+func lisp_get_local_address(device string) (string, string) {
+	var ipv4 string = ""
+	var ipv6 string = ""
+
+	intf, _ := net.InterfaceByName(device)
+	addrs, _ := intf.Addrs()
+
+	for _, a := range addrs {
+		addr := strings.Split(a.String(), "/")[0]
+		if (addr == "::1") { continue }
+		if (strings.Contains(addr, "fe80")) { continue }
+		if (strings.Contains(addr, "127.0.0.1")) { continue }
+		if (strings.Contains(addr, ":")) { ipv6 = addr }
+		if (strings.Count(addr, ".") == 3) { ipv4 = addr }
+	}
+	return ipv4, ipv6
 }
 
 //-----------------------------------------------------------------------------

@@ -828,9 +828,9 @@ lisp explicit-locator-path {
     elp-name = <name>
     elp-node {
         address = <address>
-	eid = yes | no
-	strict = yes | no
-	probe = yes | no
+    	eid = yes | no
+    	strict = yes | no
+    	probe = yes | no
     }
     ...
 }
