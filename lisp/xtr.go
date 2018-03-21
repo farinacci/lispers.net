@@ -25,9 +25,13 @@ import "strconv"
 import "syscall"
 import "time"
 import "net"
+import "unsafe"
 import "math/rand"
 import "github.com/google/gopacket"
 import "github.com/google/gopacket/pcap"
+import "github.com/google/gopacket/layers"
+import "github.com/google/gopacket/afpacket"
+import "golang.org/x/net/bpf"
 
 //
 // ---------- Global Variables ----------
@@ -35,6 +39,7 @@ import "github.com/google/gopacket/pcap"
 var lisp_rtr = false
 var lisp_encap_socket [2]int
 var lisp_decap_socket *net.UDPConn
+var lisp_use_afpacket = false
 
 //
 // Prebuild LISP and UDP headers. And IPv4 and IPv6 outer headers.
@@ -84,6 +89,16 @@ func lisp_xtr_startup() bool {
 	// Initialize pre-built headers.
 	//
 	lisp_build_headers()
+
+	//
+	// Should we use AF_PACKET interface. Check command line.
+	//
+	if (len(os.Args) >= 2) {
+		lisp_use_afpacket = ("afpacket" == os.Args[1])
+	}
+	if (lisp_use_afpacket) {
+		lprint("Using zero-copy AF_PACKET")
+	}
 
 	//
 	// Create named socket "lispets.net-itr" to punt packets to the lispers.net
@@ -294,12 +309,47 @@ func lisp_start_itr_data_plane() {
 	//
 	// Start thread for new interfaces added to lisp_interfaces.
 	//
-	for device, lisp_if := range lisp_interfaces {
-		if (!lisp_if.thread_started) {
-			lisp_if.thread_started = true
-			go lisp_itr_thread(device, pfilter)
-		}
+	for device, _ := range lisp_interfaces {
+		go lisp_itr_thread(device, pfilter)
 	}
+}
+
+//
+// lisp_create_af_packet_socket
+//
+// Use AF_PACKET interface. Requires the caller to select an interface and
+// a pcap filter string.
+//
+func lisp_create_af_packet_socket(device string, pfilter string) (
+	*afpacket.TPacket) {
+
+	tp, err := afpacket.NewTPacket(afpacket.OptInterface(device),
+		afpacket.TPacketVersion1)
+	if (err != nil) {
+		lprint("afpacket.NewTPacket() failed %s\n", err)
+		return(nil)
+	}
+
+	instructions, err := pcap.CompileBPFFilter(layers.LinkTypeEthernet,
+		1600, pfilter)
+	if (err != nil) {
+		lprint("pcap.CompileBPFFilter() failed %s\n", err)
+		return(nil)
+	}
+
+	//
+	// The pcap and bpf modules don't connect with the same types. Others
+	// have suggested this ugly hack. Types pcap.BPFInstruction is the
+	// same format as bpf.RawInstruction. Need to cast to get this to
+	// compile.
+	//
+	raw_instructions :=	*(*[]bpf.RawInstruction)(unsafe.Pointer(&instructions))
+
+	if (tp.SetBPF(raw_instructions) != nil) {
+		lprint("tp.SetBPF() failed %s\n", err)
+		return(nil)
+	}
+	return(tp)
 }
 
 //
@@ -308,15 +358,45 @@ func lisp_start_itr_data_plane() {
 // Run thread to packet capture packets and try to encapsulate them.
 //
 func lisp_itr_thread(device string, pfilter string) {
-	handle, _ := pcap.OpenLive(device, 1600, true, pcap.BlockForever)
-	handle.SetBPFFilter(pfilter)
+	config_change := lisp_config_change
 
-	lprint("Capturing packets on %s for '%s'", bold(device), pfilter)
+	if (lisp_use_afpacket == false) {
+		lprint("ITR capturing packets on %s for '%s'", bold(device), pfilter)		
+		handle, _ := pcap.OpenLive(device, 1600, true, pcap.BlockForever)
+		handle.SetBPFFilter(pfilter)
 
-	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
-	for packet := range packetSource.Packets() {
-		lisp_itr_data_plane(packet, device)
+		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+		for go_packet := range packetSource.Packets() {
+			packet := go_packet.Data()[14:]
+			lisp_itr_data_plane(packet, device)
+			if (config_change != lisp_config_change) {
+				handle.Close()
+				break
+			}
+		}
+
+	} else {
+
+		tp := lisp_create_af_packet_socket(device, pfilter)
+		if (tp == nil) { return }
+
+		lprint("ITR af_packet capturing on %s for '%s'", bold(device), pfilter)
+
+		for {
+			af_packet, _, _ := tp.ZeroCopyReadPacketData()
+			if (af_packet == nil) { continue }
+			packet := af_packet[14:]
+
+			lisp_itr_data_plane(packet, device)
+
+			if (config_change != lisp_config_change) {
+				tp.Close()
+				break
+			}
+		}
 	}
+
+	lprint("Exit ITR thread for %s", device)
 }
 
 //
@@ -337,17 +417,12 @@ func lisp_itr_thread(device string, pfilter string) {
 //  S / |                 Instance ID/Locator-Status-Bits               |
 //  P   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
-func lisp_itr_data_plane(go_packet gopacket.Packet, input_device string) {
+func lisp_itr_data_plane(packet []byte, input_device string) {
 	var s, d   []byte
 	var iid    int
 	var ttl    byte
 	var source Lisp_address
 	var dest   Lisp_address
-
-	//
-	// Skip over MAC header and point to network layer header.
-	//
-	packet := go_packet.Data()[14:]
 
 	lisp_log_packet("Received on " + bold(input_device), packet, false)
 
@@ -412,6 +487,15 @@ func lisp_itr_data_plane(go_packet gopacket.Packet, input_device string) {
 
 	dprint("Packet EIDs %s -> %s", green(source.lisp_print_address(true)),
 		green(dest.lisp_print_address(true)))
+
+	//
+	// Do self check. ICMP typically sends packet to itself. We don't need LISP
+	// encap to itself.
+	//
+	if (source.address.Equal(dest.address)) {
+		dprint("Discard packet addressed to self")
+		return
+	}
 
 	//
 	// Do destination map-cache lookup.
@@ -607,17 +691,49 @@ func lisp_map_cache_lookup(source Lisp_address,	dest Lisp_address) (*Lisp_rloc,
 // Run thread to listen on port 4341 raw socket.
 //
 func lisp_etr_thread() {
-	lprint("Listening on raw socket port 4341")
+	var source net.IP
 
-	buf := make([]byte, 8192)
-	for {
- 		n, source, err := lisp_decap_socket.ReadFromUDP(buf)
-  		if (err != nil) {
- 			lprint("RecvFromUDP() failed: %s", err)
-  			time.Sleep(100 * time.Millisecond)
-  			continue
-  		}
- 		lisp_etr_data_plane(buf[0:n], source.String())
+	if (lisp_use_afpacket == false) {
+		lprint("Listening on raw socket port 4341")
+
+		buf := make([]byte, 8192)
+		for {
+			n, source, err := lisp_decap_socket.ReadFromUDP(buf)
+			if (err != nil) {
+				lprint("RecvFromUDP() failed: %s", err)
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			lisp_etr_data_plane(buf[0:n], source.String())
+		}
+
+	} else {
+
+		device := "eth1"
+		addr, _ := lisp_get_local_address(device)
+		if (addr == "") {
+			lprint("No RLOC address on interface %s", device)
+			return
+		}
+		pfilter := "ether proto 0x0800 and dst net "
+		pfilter += addr + "/32 and dst port 4341"
+
+		tp := lisp_create_af_packet_socket(device, pfilter)
+		if (tp == nil) { return }
+
+		lprint("ETR af_packet capturing on %s for '%s'", bold(device), pfilter)
+
+		for {
+			af_packet, _, _ := tp.ZeroCopyReadPacketData()
+			if (af_packet == nil) { continue }
+			packet := af_packet[14:]
+
+			source = packet[12:16]
+			source_rloc := source.String() + ":"
+			source_rloc += strconv.Itoa(int(packet[20]) << 8 + int(packet[21]))
+			packet = packet[28:]
+			lisp_etr_data_plane(packet, source_rloc)
+		}
 	}
 }
 
@@ -642,7 +758,7 @@ func lisp_etr_ipv6_thread(pfilter string) {
 
 		source = packet[8:24]
 		source_rloc := source.String() + ":"
-		source_rloc += strconv.Itoa(int(packet[40]) >> 8 + int(packet[41]))
+		source_rloc += strconv.Itoa(int(packet[40]) << 8 + int(packet[41]))
 		packet = packet[48:]
 		lisp_etr_data_plane(packet, source_rloc)
 	}
@@ -667,15 +783,9 @@ func lisp_etr_nat_thread(pfilter string) {
 	for gopacket := range packetSource.Packets() {
 		packet := gopacket.Data()[16:]
 
-		version := packet[0] & 0xf0
-		if (version == 0x40) {
-			source = packet[12:16]
-			packet = packet[28:]
-		} else if (version == 0x60) {
-			source = packet[8:24]
-			packet = packet[48:]
-		}
+		source = packet[12:16]
 		source_rloc := source.String() + ":" + "4341"
+		packet = packet[28:]
 		lisp_etr_data_plane(packet, source_rloc)
 	}
 }
