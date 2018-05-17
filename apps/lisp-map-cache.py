@@ -9,6 +9,17 @@
 import sys
 import os
 
+#
+# Require env variable LISPAPI_USER and LISPAPI_PW to be set. Otherwise,
+# root/"" is used.
+#
+require_creds = False
+
+#
+# Require to type xTRs on command line or interactively.
+#
+require_input = False
+
 #------------------------------------------------------------------------------
 
 #
@@ -59,7 +70,11 @@ def print_map_cache(xtr, map_cache):
 #------------------------------------------------------------------------------
 
 path = os.getenv("LISPAPI_PATH")
-if (path != None): sys.path.append(path)
+if (path != None):
+    sys.path.append(path)
+else:
+    sys.path.append("./")
+#endif
 
 try:
     import lispapi
@@ -77,13 +92,19 @@ except:
 #
 username = os.getenv("LISPAPI_USER")
 if (username == None):
-    print "LISPAPI_USER environment variable needs username setting"
-    exit(0)
+    if (require_creds):
+        print "LISPAPI_USER environment variable needs username setting"
+        exit(0)
+    #endif
+    username = "root"
 #endif
 password = os.getenv("LISPAPI_PW")
 if (password == None):
-    print "LISPAPI_PW environment variable needs password setting"
-    exit(0)
+    if (require_creds):
+        print "LISPAPI_PW environment variable needs password setting"
+        exit(0)
+    #endif
+    password = ""
 #endif
 port = os.getenv("LISPAPI_PORT")
 if (port == None): port = 8080
@@ -98,11 +119,15 @@ if (len(sys.argv) > 1):
     args = sys.argv[1::]
     for host in args: hosts.append([host, None, None])
 else:
-    while (True):
-        host = raw_input("Enter hostname (enter return when done): ")
-        if (host == ""): break
-        hosts.append([host, None, None])
-    #endwhile
+    if (require_input):
+        while (True):
+            host = raw_input("Enter hostname (enter return when done): ")
+            if (host == ""): break
+            hosts.append([host, None, None])
+        #endwhile
+    else:
+        hosts.append(["localhost", None, None])
+    #endif
 #endif
 
 print "Connecting to APIs ...",

@@ -41,8 +41,8 @@ import time
 import os
 import bottle
 from cherrypy import wsgiserver
-from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter
-from OpenSSL import SSL
+from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
+#from OpenSSL import SSL
 import json
 import sys
 import socket
@@ -2015,9 +2015,9 @@ class lisp_ssl_server(bottle.ServerAdapter):
         #endif
 
         server = wsgiserver.CherryPyWSGIServer((self.host, self.port), hand)
-        server.ssl_adapter = BuiltinSSLAdapter(cert, cert, None)
-        context = SSL.Context(SSL.SSLv23_METHOD)
-        server.ssl_adapter.context = context
+        server.ssl_adapter = pyOpenSSLAdapter(cert, cert, None)
+#        context = SSL.Context(SSL.SSLv23_METHOD)
+#        server.ssl_adapter.context = context
         try: 
             server.start()  
         finally: 

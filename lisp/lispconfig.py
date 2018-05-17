@@ -564,6 +564,7 @@ def lisp_setup_kv_pairs(clause):
         kv_pairs["force-ttl"] = [""] * count
         kv_pairs["pitr-proxy-reply-drop"] = [""] * count
         kv_pairs["proxy-reply-action"] = [""] * count
+        kv_pairs["require-signature"] = [""] * count
         kv_pairs["echo-nonce-capable"] = [""] * count
         kv_pairs["policy-name"] = [""] * count
     #endif
@@ -1530,12 +1531,14 @@ def lisp_start_stop_process(process, startstop):
 
     filename = process + ".pyo"
     logfile = "./logs/" + process + ".log"
+    
     if (lisp.lisp_is_ubuntu() or lisp.lisp_is_raspbian() or \
-        lisp.lisp_is_debian()):
+        lisp.lisp_is_debian() or lisp.lisp_is_debian_kali()):
         program = "python -O " + filename + " 2>&1 > " + logfile + " &"
     else:
         program = "python -O " + filename + " >& " + logfile + " &"
     #endif
+
     datestamp = commands.getoutput("date")
     if (startstop and os.path.exists(filename)):
         lisp.lprint("Start process '{}' on {}".format(process, datestamp))
@@ -2349,7 +2352,7 @@ def lisp_display_map_cache(mc, output):
             if (lisp.lisp_crypto_keys_by_rloc_encap.has_key(addr_str)):
                 key = lisp.lisp_crypto_keys_by_rloc_encap[addr_str][1]
                 if (key != None and key.shared_key != None): 
-                    action = "encap-crypto"
+                    action = "encap-crypto-" + key.cipher_suite_string
                 #endif
             #endif
         #endif

@@ -335,7 +335,7 @@ else:
 # a file name for a private key file will add a signature to the Map-Request.
 # lisp_map_request.encode() will check to see if the file exists.
 #
-if (map_request.target_eid.is_ipv6() and source_eid != ""):
+if (map_request.source_eid.is_ipv6() and source_eid != ""):
     map_request.signature_eid = map_request.source_eid
     map_request.privkey_filename = "./lisp-lig.pem"
 #endif

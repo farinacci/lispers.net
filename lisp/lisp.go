@@ -17,6 +17,14 @@ import "strings"
 import "strconv"
 import "time"
 import "net"
+import "hash"
+import "math/rand"
+import "encoding/binary"
+import "crypto/aes"
+import "crypto/cipher"
+import "crypto/sha256"
+import "crypto/hmac"
+import "encoding/hex"
 
 //
 // ---------- Variable Definitions ----------
@@ -50,6 +58,8 @@ type Lisp_address struct {
 // Return string with address. And optionally prepend "[<iid>]"
 //
 func (a *Lisp_address) lisp_print_address(with_iid bool) string {
+	if (a.address_string == "") { a.address_string = a.address.String() }
+
 	if (with_iid) {
 		iid := a.instance_id
 		if (iid == 0xffffff) { iid = -1 }
@@ -99,9 +109,9 @@ func (a *Lisp_address) lisp_store_address(iid int, addr string) bool {
 	a.mask_address = net.CIDRMask(a.mask_len, len(a.address) * 8)
 
 	//
-	// Store string for printing.
-	//
-	a.address_string = addr
+ 	// Store string for printing.
+ 	//
+ 	a.address_string = addr
 	return(true)
 }
 
@@ -124,7 +134,7 @@ func (a *Lisp_address) lisp_is_ipv6() bool {
 }
 
 //
-// lisp_is_multicst
+// lisp_is_multicast
 //
 // Return true if Lisp_address is an IPv4 or IPv6 multicast group address.
 //
@@ -142,14 +152,14 @@ func (a *Lisp_address) lisp_is_multicast() bool {
 // lisp_make_address
 //
 // Store and instance-ID and byte representation of an IPv4 or IPv6 address
-// and store in Lisp_address format.
+// and store in Lisp_address format. Note that Lisp_address.address_string
+// is created when it is needed (in Lisp_address.lisp_print_address()).
 // 
 func (a *Lisp_address) lisp_make_address(iid int, addr []byte) {
 	a.instance_id = iid
 	a.address = addr
 	a.mask_len = len(a.address) * 8
 	a.mask_address = net.CIDRMask(a.mask_len, len(a.address) * 8)
-	a.address_string = a.address.String()
 }
 
 //
@@ -232,13 +242,58 @@ type Lisp_map_cache struct {
 	rle_set    []Lisp_rloc
 }
 type Lisp_rloc struct {
-	rloc                  Lisp_address
-	encap_port            int
-	encrypt_key           string
-	icv_key               string
-	packets               uint
-	bytes                 uint
-	last_packet           time.Time
+	rloc        Lisp_address
+	encap_port  int
+	stats       Lisp_stats
+	keys        [4]*Lisp_keys
+	use_key_id  int
+}
+type Lisp_keys struct {
+	crypto_key string
+	icv_key    string
+	iv         []byte
+	crypto_alg cipher.AEAD
+	hash_alg   hash.Hash
+}
+type Lisp_stats struct {
+	packets     uint64
+	bytes       uint64
+	last_packet time.Time
+}
+
+//
+// lisp_count
+//
+// Increment stats counters. Either do it for an RLOC/RLE entry or for the
+// lisp_decap_stats map. Argument 'key-name' needs to be set if stats is nil.
+//
+func lisp_count(stats *Lisp_stats, key_name string, packet []byte) {
+	if (stats == nil) {
+		s, ok := lisp_decap_stats[key_name]
+		if (!ok) {
+			s = new(Lisp_stats)
+			lisp_decap_stats[key_name] = s
+		}
+		s.packets += 1
+		s.bytes += uint64(len(packet))
+		s.last_packet = time.Now()
+	} else {
+		stats.packets += 1
+		stats.bytes += uint64(len(packet))
+		stats.last_packet = time.Now()
+	}
+}
+
+//
+// lisp_find_rloc
+//
+// Find RLOC entry in map-cache entry based on supplied RLOC address.
+//
+func (mc *Lisp_map_cache) lisp_find_rloc(rloc_addr Lisp_address) (*Lisp_rloc) {
+	for _, rloc := range mc.rloc_set {
+		if (rloc_addr.lisp_exact_match(rloc.rloc)) { return(&rloc) }
+	}
+	return(nil)
 }
 
 //
@@ -377,15 +432,12 @@ func red(str string) string {
 //
 // lisp_log_packet
 //
-// Log a received data packet either native or LISP encapsulated.
+// Log a received data packet either native or LISP encapsulated. This function
+// should be called only when lisp_data_plane_logging is true.
 //
 func lisp_log_packet(prefix_string string, packet []byte, is_lisp bool) {
 	var num       int
 	var udp, lisp []byte
-
-	if (!lisp_data_plane_logging) {
-		return
-	}
 
 	ip := true
 	if (packet[0] == 0x45) {
@@ -455,6 +507,49 @@ func lisp_get_local_address(device string) (string, string) {
 		if (strings.Count(addr, ".") == 3) { ipv4 = addr }
 	}
 	return ipv4, ipv6
+}
+
+//
+// lisp_setup_keys
+//
+// Store crypto and hash data structures so they are ready for encryption and
+// ICV checking.
+//
+func (r *Lisp_keys) lisp_setup_keys(crypto_key string, icv_key string) {
+	r.crypto_key = crypto_key
+	r.icv_key = icv_key
+
+	//
+	// Allocate an IV used for encryption during encapsulation. AES-GCM wants
+	// a 12-byte IV/nonce.
+	//
+	r.iv = make([]byte, 12)
+	binary.BigEndian.PutUint32(r.iv[0:4], rand.Uint32())
+	binary.BigEndian.PutUint64(r.iv[4:12], rand.Uint64())
+
+	ekey, err := hex.DecodeString(crypto_key)
+	if (err != nil) {
+		lprint("hex.DecodeString() failed for crypto-key, err %s", err)
+		return
+	}
+	block, err := aes.NewCipher(ekey)
+	if (err != nil) {
+		lprint("aes.NewCipher() failed, err %s", err)
+		return
+	}
+	r.crypto_alg, err = cipher.NewGCM(block)
+	if (err != nil)  {
+		lprint("cipher.NewGCM() failed, err %s", err)
+		return
+	}
+	ikey, err := hex.DecodeString(icv_key)
+	if (err != nil) {
+		lprint("hex.DecodeString() failed for icv-key, err %s", err)
+		return
+	}
+	r.hash_alg = hmac.New(sha256.New, ikey)
+	lprint("Setup new keys")
+	return
 }
 
 //-----------------------------------------------------------------------------

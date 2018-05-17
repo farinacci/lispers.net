@@ -1138,11 +1138,12 @@ def lisp_itr_xtr_command(kv_pair):
     # need to set source port in RLOC-probe requrests and encapsulated data
     # packets to be the same value.
     #
-    if (lisp.lisp_crypto_ephem_port == None and lisp.lisp_nat_traversal and 
-        lisp.lisp_data_plane_security):
+    if (lisp.lisp_crypto_ephem_port == None and lisp.lisp_data_plane_security):
         port = lisp_ephem_listen_socket.getsockname()[1]
         lisp.lisp_crypto_ephem_port = port
-        lisp.lprint("Use port {} for NAT-based lisp-crypto".format(port))
+        lisp.lprint("Use port {} for lisp-crypto packets".format(port))
+        entry = { "type" : "itr-crypto-port", "port" : port }
+        lisp.lisp_write_to_dp_socket(entry)
     #endif
 
     #

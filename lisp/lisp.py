@@ -386,17 +386,21 @@ LISP_CS_1024    = 0
 LISP_CS_1024_G  = 2
 LISP_CS_1024_P  = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
 
-LISP_CS_2048    = 1
-LISP_CS_2048_G  = 2
-LISP_CS_2048_P   = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
+LISP_CS_2048_CBC   = 1
+LISP_CS_2048_CBC_G = 2
+LISP_CS_2048_CBC_P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
+
+LISP_CS_25519_CBC = 2
+LISP_CS_2048_GCM  = 3
 
 LISP_CS_3072    = 4
 LISP_CS_3072_G  = 2
 LISP_CS_3072_P  = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AAAC42DAD33170D04507A33A85521ABDF1CBA64ECFB850458DBEF0A8AEA71575D060C7DB3970F85A6E1E4C7ABF5AE8CDB0933D71E8C94E04A25619DCEE3D2261AD2EE6BF12FFA06D98A0864D87602733EC86A64521F2B18177B200CBBE117577A615D6C770988C0BAD946E208E24FA074E5AB3143DB5BFCE0FD108E4B82D120A93AD2CAFFFFFFFFFFFFFFFF
 
-LISP_CS_25519_AES    = 5
+LISP_CS_25519_GCM    = 5
 LISP_CS_25519_CHACHA = 6
 
+LISP_4_32_MASK   = 0xFFFFFFFF
 LISP_8_64_MASK   = 0xFFFFFFFFFFFFFFFF
 LISP_16_128_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
@@ -477,6 +481,15 @@ def lisp_is_centos():
 #
 def lisp_is_debian():
     return(platform.dist()[0] == "debian")
+#enddef
+
+#
+# lisp_is_debian
+#
+# Return True if this system is running Debian Jessie.
+#
+def lisp_is_debian_kali():
+    return(platform.dist()[0] == "Kali")
 #enddef
 
 #
@@ -624,6 +637,24 @@ def lisp_print_banner(string):
 def green(string, html):
     if (html): return('<font color="green"><b>{}</b></font>'.format(string))
     return(bold("\033[92m" + string + "\033[0m", html))
+#enddef
+
+#
+# green_last_sec
+#
+# For printing packets in the last 1 second.
+#
+def green_last_sec(string):
+    return(green(string, True))
+#enddef
+
+#
+# green_last_minute
+#
+# For printing packets in the last 1 minute.
+#
+def green_last_min(string):
+    return('<font color="#58D68D"><b>{}</b></font>'.format(string))
 #enddef
 
 #
@@ -1488,16 +1519,35 @@ class lisp_packet():
         iv = key.get_iv()
 
         ts = lisp_get_timestamp()
+        aead = None
         if (key.cipher_suite == LISP_CS_25519_CHACHA):
             encrypt = chacha.ChaCha(key.encrypt_key, iv).encrypt
-            cipher_str = bold("chacha", False)
+        elif (key.cipher_suite == LISP_CS_25519_GCM):
+            k = binascii.unhexlify(key.encrypt_key)
+            try:
+                aesgcm = AES.new(k, AES.MODE_GCM, iv)
+                encrypt = aesgcm.encrypt
+                aead = aesgcm.digest
+            except:
+                lprint("You need AES-GCM, do a 'pip install pycryptodome'")
+                return([self.packet, False])
+            #endtry
         else:
-            encrypt = AES.new(key.encrypt_key, AES.MODE_CBC, iv).encrypt
-            cipher_str = bold("aes", False)
+            k = binascii.unhexlify(key.encrypt_key)
+            encrypt = AES.new(k, AES.MODE_CBC, iv).encrypt
         #endif
+
         ciphertext = encrypt(packet)
+
         if (ciphertext == None): return([self.packet, False])
         ts = int(str(time.time() - ts).split(".")[1][0:6])
+
+        #
+        # GCM requires 16 bytes of an AEAD MAC tag at the end of the
+        # ciphertext. Needed to interoperate with the Go implemenation of
+        # AES-GCM. The MAC digest was computed above.
+        #
+        if (aead != None): ciphertext += aead()
         
         #
         # Compute ICV and append to packet. ICV covers the LISP header, the
@@ -1511,6 +1561,7 @@ class lisp_packet():
         ps = 4 if (key.do_poly) else 8
 
         string = bold("Encrypt", False)
+        cipher_str = bold(key.cipher_suite_string, False)
         addr_str = "RLOC: " + red(addr_str, False)
         auth = "poly" if key.do_poly else "sha256"
         auth = bold(auth, False)
@@ -1563,12 +1614,16 @@ class lisp_packet():
         # Get the IV and use it to decrypt and authenticate..
         #
         if (key.cipher_suite == LISP_CS_25519_CHACHA):
-            iv = packet[0:8]
+            iv_len = 8
             cipher_str = bold("chacha", False)
+        elif (key.cipher_suite == LISP_CS_25519_GCM):
+            iv_len = 12
+            cipher_str = bold("aes-gcm", False)
         else:
-            iv = packet[0:16]
-            cipher_str = bold("aes", False)
+            iv_len = 16
+            cipher_str = bold("aes-cbc", False)
         #endif
+        iv = packet[0:iv_len]
 
         #
         # Compute ICV over LISP header and packet payload.
@@ -1593,8 +1648,7 @@ class lisp_packet():
         #
         # Advance over IV for decryption.
         #
-        packet = packet[8::] if (key.cipher_suite == LISP_CS_25519_CHACHA) \
-            else packet[16::]
+        packet = packet[iv_len::]
 
         #
         # Call AES or chacha cipher. Make sure for AES that
@@ -1602,13 +1656,24 @@ class lisp_packet():
         ts = lisp_get_timestamp()
         if (key.cipher_suite == LISP_CS_25519_CHACHA):
             decrypt = chacha.ChaCha(key.encrypt_key, iv).decrypt
+        elif (key.cipher_suite == LISP_CS_25519_GCM):
+            k = binascii.unhexlify(key.encrypt_key)
+            try:
+                decrypt = AES.new(k, AES.MODE_GCM, iv).decrypt
+            except:
+                self.packet_error = "no-decrypt-key"
+                lprint("You need AES-GCM, do a 'pip install pycryptodome'")
+                return([None, False])
+            #endtry
         else:
             if ((len(packet) % 16) != 0):
                 dprint("Ciphertext not multiple of 16 bytes, packet dropped")
                 return([None, False])
             #endif
-            decrypt = AES.new(key.encrypt_key, AES.MODE_CBC, iv).decrypt
+            k = binascii.unhexlify(key.encrypt_key)
+            decrypt = AES.new(k, AES.MODE_CBC, iv).decrypt
         #endif
+
         plaintext = decrypt(packet)
         ts = int(str(time.time() - ts).split(".")[1][0:6])
 
@@ -2006,7 +2071,6 @@ class lisp_packet():
                 addr_str)
             if (decrypted == False): 
                 if (stats): stats[self.packet_error].increment(orig_len)
-
                 if (lisp_flow_logging): self.log_flow(False)
                 return(None)
             #endif
@@ -2091,12 +2155,6 @@ class lisp_packet():
         # Log a packet that was parsed correctly.
         #
         if (lisp_flow_logging and is_lisp_packet): self.log_flow(False)
-
-        #
-        # Increment global stats.
-        #
-        if (stats): stats["good-packets"].increment(len(packet))
-
         return(self)
 
     def swap_mac(self, mac):
@@ -2645,9 +2703,18 @@ class lisp_keys():
         self.dh_g_value = LISP_CS_1024_G
         self.dh_p_value = LISP_CS_1024_P
         self.curve25519 = None
-        if (do_curve and curve25519):
-            self.cipher_suite = LISP_CS_25519_CHACHA if do_chacha else \
-                LISP_CS_25519_AES
+        self.cipher_suite_string = ""
+        if (do_curve):
+            if (do_chacha):
+                self.cipher_suite = LISP_CS_25519_CHACHA
+                self.cipher_suite_string = "chacha"
+            elif (os.getenv("LISP_USE_AES_GCM") != None):
+                self.cipher_suite = LISP_CS_25519_GCM
+                self.cipher_suite_string = "aes-gcm"
+            else:
+                self.cipher_suite = LISP_CS_25519_CBC
+                self.cipher_suite_string = "aes-cbc"
+            #endif
             self.local_private_key = random.randint(0, 2**128-1)
             key = lisp_hex_string(self.local_private_key).zfill(32)
             self.curve25519 = curve25519.Private(key)
@@ -2659,7 +2726,7 @@ class lisp_keys():
         self.shared_key = None
         self.encrypt_key = None
         self.icv_key = None
-        self.icv = poly1305 if do_poly else hashlib.sha1 
+        self.icv = poly1305 if do_poly else hashlib.sha256 
         self.iv = None
         self.get_iv()
         self.do_poly = do_poly
@@ -2678,6 +2745,10 @@ class lisp_keys():
         iv = self.iv
         if (self.cipher_suite == LISP_CS_25519_CHACHA):
             iv = struct.pack("Q", iv & LISP_8_64_MASK)
+        elif (self.cipher_suite == LISP_CS_25519_GCM):
+            ivh = struct.pack("I", (iv >> 64) & LISP_4_32_MASK)
+            ivl = struct.pack("Q", iv & LISP_8_64_MASK)
+            iv = ivh + ivl
         else:
             iv = struct.pack("QQ", iv >> 64, iv & LISP_8_64_MASK)
         return(iv)
@@ -2803,7 +2874,9 @@ class lisp_keys():
             hash_output = poly(self.encrypt_key, self.icv_key, nonce, packet)
             hash_output = hexlify(hash_output)
         else:
-            hash_output = hmac.new(self.icv_key, packet, self.icv).hexdigest()
+            key = binascii.unhexlify(self.icv_key)
+            hash_output = hmac.new(key, packet, self.icv).hexdigest()
+            hash_output = hash_output[0:40]
         #endif
         return(hash_output)
 
@@ -2913,14 +2986,11 @@ class lisp_keys():
         #
         # Check Cipher Suites supported.
         #
-        cs_list = [LISP_CS_25519_AES, LISP_CS_25519_CHACHA]
-        if (cs in cs_list and curve25519 == None):
-            lprint(("Cannot support Cipher-Suite 4/5, EC library may not " + \
-                "loaded"))
-            packet = packet[key_len::]
-            return(packet)
-        elif (cs not in (cs_list + [LISP_CS_1024])):
-            lprint("Support Cipher-Suites 1/4/5 only, received {}".format(cs))
+        cs_list = [LISP_CS_25519_CBC, LISP_CS_25519_GCM, LISP_CS_25519_CHACHA,
+            LISP_CS_1024]
+        if (cs not in cs_list):
+            lprint("Cipher-suites {} supported, received {}".format(cs_list,
+                cs))
             packet = packet[key_len::]
             return(packet)
         #endif
@@ -3905,9 +3975,11 @@ class lisp_map_request():
                 #
                 # Other side may not do ECDH.
                 #
-                cs_list = [LISP_CS_25519_AES, LISP_CS_25519_CHACHA]
+                cs_list = [LISP_CS_25519_CBC, LISP_CS_25519_GCM,
+                    LISP_CS_25519_CHACHA]
                 if (decode_key.cipher_suite in cs_list):
-                    if (decode_key.cipher_suite == LISP_CS_25519_AES):
+                    if (decode_key.cipher_suite == LISP_CS_25519_CBC or
+                        decode_key.cipher_suite == LISP_CS_25519_GCM):
                         key = lisp_keys(1, do_poly=False, do_chacha=False)
                     #endif
                     if (decode_key.cipher_suite == LISP_CS_25519_CHACHA):
@@ -4959,9 +5031,9 @@ class lisp_rloc_record():
             #
             # Other side may not do ECDH.
             #
-            cs_list = [LISP_CS_25519_AES, LISP_CS_25519_CHACHA]
+            cs_list = [LISP_CS_25519_CBC, LISP_CS_25519_CHACHA]
             if (decode_key.cipher_suite in cs_list):
-                if (decode_key.cipher_suite == LISP_CS_25519_AES):
+                if (decode_key.cipher_suite == LISP_CS_25519_CBC):
                     key = lisp_keys(1, do_poly=False, do_chacha=False)
                 #endif
                 if (decode_key.cipher_suite == LISP_CS_25519_CHACHA):
@@ -5385,7 +5457,8 @@ class lisp_info():
             rloc = rloc[0:-2]
         else:
             req_or_reply = "Info-Request"
-            rloc = ", hostname: {}".format(blue(self.hostname, False))
+            hostname = "<none>" if self.hostname == None else self.hostname
+            rloc = ", hostname: {}".format(blue(hostname, False))
         #endif
         lprint("{} -> nonce: 0x{}{}".format(bold(req_or_reply, False), 
             lisp_hex_string(self.nonce), rloc))
@@ -6790,6 +6863,24 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
     site_name = site_eid.site.site_name
 
     #
+    # If we are requesting for non Crypto-EIDs and signatures are configured
+    # to be requred and no signature is in the Map-Request, bail.
+    #
+    if (is_crypto_hash == False and site_eid.require_signature):
+        sig = map_request.map_request_signature
+        sig_eid = map_request.signature_eid
+        if (sig == None or sig_eid.is_null()):
+            lprint("Signature required for site {}".format(site_name))
+            sig_good = False
+        else:
+            x, pubkey, y = lisp_lookup_public_key(sig_eid)
+            sig_good = map_request.verify_map_request_sig(pubkey)
+            pf = bold("passed", False) if sig_good else bold("failed", False)
+            lprint("Required signature verification {}".format(pf))
+        #endif
+    #endif
+
+    #
     # Check if site-eid is registered.
     #
     if (sig_good and site_eid.registered == False):
@@ -7724,7 +7815,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
     #
     # Process each EID record in Map-Reply message.
     #
-    rloc_key_change = False
+    rloc_key_change = None
     for i in range(map_reply.record_count):
         eid_record = lisp_eid_record()
         packet = eid_record.decode(packet)
@@ -7833,7 +7924,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
             # Did keys change for thie RLOC, flag it if so.
             #
             if (lisp_data_plane_security and rloc.rloc_recent_rekey()):
-                rloc_key_change = True
+                rloc_key_change = rloc
             #endif
         #endfor
 
@@ -7845,7 +7936,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         # behind another NAT or in public space. We want to mark the 
         # private address RLOC unreachable for the two later cases.
         #
-        if (map_reply.rloc_probe == False):
+        if (map_reply.rloc_probe == False and lisp_nat_traversal):
             new_set = []
             log_set = []
             for rloc in rloc_set:
@@ -7939,8 +8030,8 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         # If there were any changes to the RLOC-set or the keys for any
         # existing RLOC in the RLOC-set, tell the external data-plane.
         #
-        if (lisp_ipc_dp_socket and rloc_key_change):
-            lisp_write_ipc_map_cache(True, mc)
+        if (lisp_ipc_dp_socket and rloc_key_change != None):
+            lisp_write_ipc_keys(rloc_key_change)
         #endif
 
         #
@@ -8563,9 +8654,25 @@ def lisp_lookup_public_key(eid):
 def lisp_verify_cga_sig(eid, rloc_record):
 
     #
+    # Use signature-eid if in JSON string. Otherwise, Crypto-EID is signature-
+    # EID.
+    #
+    sig = json.loads(rloc_record.json.json_string)
+
+    if (lisp_get_eid_hash(eid)):
+        sig_eid = eid
+    elif (sig.has_key("signature-eid")):
+        sig_eid_str = sig["signature-eid"]
+        sig_eid = lisp_address(LISP_AFI_IPV6, sig_eid_str, 0, 0)
+    else:
+        lprint("  No signature-eid found in RLOC-record")
+        return(False)
+    #endif
+
+    #
     # Lookup CGA hash in mapping datbase to get public-key.
     #
-    hash_eid, pubkey, lookup_good = lisp_lookup_public_key(eid)
+    hash_eid, pubkey, lookup_good = lisp_lookup_public_key(sig_eid)
 
     found = "found" if lookup_good else bold("not found", False)
     eid_str = green(hash_eid.print_address(), False)
@@ -8584,7 +8691,6 @@ def lisp_verify_cga_sig(eid, rloc_record):
     # Get signature from RLOC-record in a form to let key.verify() do its 
     # thing.
     #
-    sig = json.loads(rloc_record.json.json_string)
     sig_str = sig["signature"]
 
     try:
@@ -8603,7 +8709,7 @@ def lisp_verify_cga_sig(eid, rloc_record):
     #
     # The signature is over the following string: "[<iid>]<eid>".
     #
-    sig_data = eid.print_address()
+    sig_data = sig_eid.print_address()
  
     #
     # Verify signature of CGA and public-key.
@@ -8832,19 +8938,20 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
         #
         cga_good = True
         is_crypto_eid = (lisp_get_eid_hash(eid_record.eid) != None)
-        if (is_crypto_eid):
+        if (is_crypto_eid or site_eid.require_signature):
+            required = "Required " if site_eid.require_signature else ""
             eid_str = green(eid_str, False)
             rloc = lisp_find_sig_in_rloc_set(packet, eid_record.rloc_count)
             if (rloc == None):
                 cga_good = False
-                lprint(("  EID-crypto-hash signature verification {} for " + \
-                    "EID-prefix {}, no signature found").format( \
+                lprint(("  {}EID-crypto-hash signature verification {} " + \
+                    "for EID-prefix {}, no signature found").format(required,
                     bold("failed", False), eid_str))
             else:
                 cga_good = lisp_verify_cga_sig(eid_record.eid, rloc)
                 passfail = bold("passed" if cga_good else "failed", False)
-                lprint(("  EID-crypto-hash signature verification {} for " + \
-                    "EID-prefix {}").format(passfail, eid_str))
+                lprint(("  {}EID-crypto-hash signature verification {} " + \
+                    "for EID-prefix {}").format(required, passfail, eid_str))
             #endif
         #endif
 
@@ -11416,10 +11523,10 @@ class lisp_stats():
 
     def stat_colors(self, c1, c2, html):
         if (self.recent_packet_sec()): 
-            return(green(c1, html), green(c2, html))
+            return(green_last_sec(c1), green_last_sec(c2))
         #endif
         if (self.recent_packet_min()): 
-            return(red(c1, html), red(c2, html))
+            return(green_last_min(c1), green_last_min(c2))
         #endif
         return(c1, c2)
 
@@ -11767,6 +11874,8 @@ class lisp_rloc():
         if (rloc.state != LISP_RLOC_UP_STATE):
             rloc.state = LISP_RLOC_UP_STATE
             rloc.last_state_change = lisp_get_timestamp()
+            mc = lisp_map_cache.lookup_cache(eid, True)
+            if (mc): lisp_write_ipc_map_cache(True, mc)
         #endif
 
         rloc.store_rloc_probe_hops(hop_count, ttl)
@@ -12379,6 +12488,7 @@ class lisp_site_eid():
         self.source_cache = None
         self.inconsistent_registration = False
         self.policy = None
+        self.require_signature = False
 
     def print_eid_tuple(self):
         return(lisp_print_eid_tuple(self.eid, self.group))
@@ -12646,6 +12756,7 @@ class lisp_site_eid():
         self.proxy_reply_action = parent.proxy_reply_action
         self.echo_nonce_capable = parent.echo_nonce_capable
         self.policy = parent.policy
+        self.require_signature = parent.require_signature
 
     def rtrs_in_rloc_set(self):
         for rloc_entry in self.registered_rlocs: 
@@ -14829,6 +14940,15 @@ def lisp_mark_rlocs_for_other_eids(eid_list):
         e = green(eid, False)
         lprint("RLOC {} went {} for EID {}".format(rloc_str, unreach, e))
     #endfor
+
+    #
+    # For each EID, tell external data-plane about new RLOC-set (RLOCs minus
+    # the ones that just went unreachable).
+    #
+    for rloc, e, g in eid_list:
+        mc = lisp_map_cache.lookup_cache(e, True)
+        if (mc): lisp_write_ipc_map_cache(True, mc)
+    #endfor
 #enddef
 
 #
@@ -15961,6 +16081,26 @@ def lisp_write_to_dp_socket(entry):
 #enddef
 
 #
+# lisp_write_ipc_keys
+#
+# Security keys have changed for an RLOC. Find all map-cache entries that are
+# affected. The lisp_rloc_probe_rlocs has the list of EIDs for a given RLOC
+# address. Tell the external data-plane for each one.
+#
+def lisp_write_ipc_keys(rloc):
+    addr_str = rloc.rloc.print_address_no_iid()
+    port = rloc.translated_port
+    if (port != 0): addr_str += ":" + str(port)
+    if (lisp_rloc_probe_list.has_key(addr_str) == False): return
+
+    for r, e, g in lisp_rloc_probe_list[addr_str]:
+        mc = lisp_map_cache.lookup_cache(e, True)
+        if (mc == None): continue
+        lisp_write_ipc_map_cache(True, mc)
+    #endfor
+#enddef
+
+#
 # lisp_write_ipc_map_cache
 #
 # Write a map-cache entry to named socket "lisp-ipc-data-plane".
@@ -16003,6 +16143,7 @@ def lisp_write_ipc_map_cache(add_or_delete, mc, dont_send=False):
             if (rloc.rloc.is_ipv4() == False and rloc.rloc.is_ipv6() == False):
                 continue
             #endif
+            if (rloc.up_state() == False): continue
 
             port = str(4341) if rloc.translated_port == 0 else \
                 str(rloc.translated_port)                       
@@ -16032,7 +16173,7 @@ def lisp_write_ipc_decap_key(rloc_addr, keys):
     #
     # Get decryption key. If there is none, do not send message.
     #
-    if (keys == None or keys[1] == None): return
+    if (keys == None or len(keys) == 0 or keys[1] == None): return
 
     ekey = keys[1].encrypt_key
     ikey = keys[1].icv_key
@@ -16478,6 +16619,8 @@ def lisp_external_data_plane():
 # This function will also clear the external data-plane map-cache when a user
 # clears the map-cache in the lisp-itr or lisp-rtr process.
 #
+# { "type" : "restart" }
+#
 def lisp_process_data_plane_restart(do_clear=False):
     os.system("touch ./lisp.config")
 
@@ -16590,8 +16733,71 @@ def lisp_process_data_plane_stats(msg, lisp_sockets, lisp_port):
             lprint("Refresh map-cache entry {}".format(eid_str))
             lisp_send_map_request(lisp_sockets, lisp_port, None, mc.eid, None)
         #endif
+    #endfor
+#enddef
+
+#
+# lisp_process_data_plane_decap_stats
+#
+# { "type" : "decap-statistics",
+#   "no-decrypt-key" : { "packet-count" : <count>, "byte-count" : <bcount>,
+#        "seconds-last-packet" : <seconds> },
+#   "outer-header-error" : { "packet-count" : <count>, "byte-count" : <bcount>,
+#        "seconds-last-packet" : <seconds> },
+#   "bad-inner-version" : { "packet-count" : <count>, "byte-count" : <bcount>,
+#        "seconds-last-packet" : <seconds> },
+#   "good-packets" : { "packet-count" : <count>, "byte-count" : <bcount>,
+#        "seconds-last-packet" : <seconds> },
+#   "ICV-error" : { "packet-count" : <count>, "byte-count" : <bcount>,
+#        "seconds-last-packet" : <seconds> },
+#   "checksum-error" : { "packet-count" : <count>, "byte-count" : <bcount>,
+#        "seconds-last-packet" : <seconds> }
+# }
+#
+# If are an RTR, we can process the stats directly. If are an ITR we need
+# to send an IPC message the the lisp-etr process.
+#
+def lisp_process_data_plane_decap_stats(msg, lisp_ipc_socket):
+
+    #
+    # Send IPC message to lisp-etr process. Variable 'msg' is a dict array.
+    # Needs to be passed in IPC message as a string.
+    #
+    if (lisp_i_am_itr):
+        lprint("Send decap-stats IPC message to lisp-etr process")
+        ipc = "stats%{}".format(json.dumps(msg))
+        ipc = lisp_command_ipc(ipc, "lisp-itr")
+        lisp_ipc(ipc, lisp_ipc_socket, "lisp-etr")
+        return
     #endif
 
+    #
+    # Process stats counters in lisp-etr and lisp-rtr processes. Variable 'msg'
+    # is a dictionary array when the ITR/RTR is processing msg. When an ETR
+    # is processing it, it recevied a json string from the ITR so it needs
+    # to convert to a dictionary array.
+    #
+    ipc = bold("IPC", False)
+    lprint("Process decap-stats {} message: '{}'".format(ipc, msg))
+
+    if (lisp_i_am_etr): msg = json.loads(msg)
+    
+    key_names = ["good-packets", "ICV-error", "checksum-error",
+        "lisp-header-error", "no-decrypt-key", "bad-inner-version",
+        "outer-header-error"]
+
+    for key_name in key_names:
+        pc = 0 if msg.has_key(key_name) == False else \
+            msg[key_name]["packet-count"]
+        lisp_decap_stats[key_name].packet_count += pc
+
+        bc = 0 if msg.has_key(key_name) == False else \
+            msg[key_name]["byte-count"]
+        lisp_decap_stats[key_name].byte_count += bc
+
+        ts = 0 if msg.has_key(key_name) == False else \
+            msg[key_name]["seconds-last-packet"]
+        lisp_decap_stats[key_name].last_increment = lisp_get_timestamp() - ts
     #endfor
 #enddef
 
@@ -16599,21 +16805,16 @@ def lisp_process_data_plane_stats(msg, lisp_sockets, lisp_port):
 # lisp_process_punt
 #
 # Another data-plane is punting a packet to us so we can discover a source
-# EID, send a map-request, or store statistics data.
-# The format of the JSON message is:
+# EID, send a map-request, or store statistics data. The format of the JSON
+# messages are for types: "discovery", "restart", "statistics", and "decap-
+# statistics". This function calls functions for the stats and restart types
+# but this function processes logic for:
 #
 # { "type" : "discovery", "source-eid" : <eid-source-address>, 
 #   "dest-eid" : <eid-dest-address>, "interface" : "<device-name>",
 #   "instance-id" : <iid> }
-# 
-# [ { "type" : "statistics", "eid-prefix" : "<eid-prefix>", "rlocs" : [
-#     { "rloc" : <rloc-1>, "packet-count" : <count>, "byte-count" : <bcount>,
-#       "last-packet" : "<timestamp>" },  ...
-#     { "rloc" : <rloc-n>, "packet-count" : <count>, "byte-count" : <bcount>,
-#        "last-packet" : "<timestamp>" }
-# }, ... ]
 #
-# { "type" : "restart" }
+# And:
 #
 def lisp_process_punt(punt_socket, lisp_send_sockets, lisp_ephem_port):
     message, source = punt_socket.recvfrom(4000)
@@ -16637,6 +16838,10 @@ def lisp_process_punt(punt_socket, lisp_send_sockets, lisp_ephem_port):
     #
     if (msg["type"] == "statistics"):
         lisp_process_data_plane_stats(msg, lisp_send_sockets, lisp_ephem_port)
+        return
+    #endif
+    if (msg["type"] == "decap-statistics"):
+        lisp_process_data_plane_decap_stats(msg, punt_socket)
         return
     #endif
 

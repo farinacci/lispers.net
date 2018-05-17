@@ -27,6 +27,8 @@ import "time"
 import "net"
 import "unsafe"
 import "math/rand"
+import "encoding/binary"
+import "crypto/hmac"
 import "github.com/google/gopacket"
 import "github.com/google/gopacket/pcap"
 import "github.com/google/gopacket/layers"
@@ -89,6 +91,11 @@ func lisp_xtr_startup() bool {
 	// Initialize pre-built headers.
 	//
 	lisp_build_headers()
+
+	//
+	// Initialize the decap stats slice.
+	//
+ 	lisp_decap_stats = make(map[string]*Lisp_stats)
 
 	//
 	// Should we use AF_PACKET interface. Check command line.
@@ -361,7 +368,8 @@ func lisp_itr_thread(device string, pfilter string) {
 	config_change := lisp_config_change
 
 	if (lisp_use_afpacket == false) {
-		lprint("ITR capturing packets on %s for '%s'", bold(device), pfilter)		
+		lprint("ITR capturing packets on %s for '%s'", bold(device), pfilter)
+
 		handle, _ := pcap.OpenLive(device, 1600, true, pcap.BlockForever)
 		handle.SetBPFFilter(pfilter)
 
@@ -424,7 +432,9 @@ func lisp_itr_data_plane(packet []byte, input_device string) {
 	var source Lisp_address
 	var dest   Lisp_address
 
-	lisp_log_packet("Received on " + bold(input_device), packet, false)
+	if (lisp_data_plane_logging) {
+		lisp_log_packet("Received on " + bold(input_device), packet, false)
+	}
 
 	ipv4 := (packet[0] & 0xf0 == 0x40)
 	ipv6 := (packet[0] & 0xf0 == 0x60)
@@ -435,6 +445,7 @@ func lisp_itr_data_plane(packet []byte, input_device string) {
 			return
 		}
 		if (!lisp_ip_checksum(packet[0:20], true)) {
+			lisp_count(nil, "checksum-error", packet)
 			dprint("IPv4 header checksum failed, discard packet")
 			return
 		}
@@ -485,8 +496,10 @@ func lisp_itr_data_plane(packet []byte, input_device string) {
 	}
 	dest.lisp_make_address(iid, d)
 
-	dprint("Packet EIDs %s -> %s", green(source.lisp_print_address(true)),
-		green(dest.lisp_print_address(true)))
+	if (lisp_data_plane_logging) {
+		dprint("Packet EIDs %s -> %s", green(source.lisp_print_address(true)),
+			green(dest.lisp_print_address(true)))
+	}
 
 	//
 	// Do self check. ICMP typically sends packet to itself. We don't need LISP
@@ -513,19 +526,120 @@ func lisp_itr_data_plane(packet []byte, input_device string) {
 	// the packet will be copied so a unique packet will be transmitted.
 	//
 	for _, rle := range rles {
-		rle.packets += 1
-		rle.bytes += uint(len(packet))
-		rle.last_packet = time.Now()
+		lisp_count(&rle.stats, "", packet)
 		lisp_encapsulate("Replicate", packet, dest.instance_id, &rle, ttl,
 			hash)
 	}
 	if (rloc != nil) {
-		rloc.packets += 1
-		rloc.bytes += uint(len(packet))
-		rloc.last_packet = time.Now()
+		lisp_count(&rloc.stats, "", packet)
 		lisp_encapsulate("Encapsulate", packet, dest.instance_id, rloc, ttl,
 			hash)
 	}
+}
+
+//
+// lisp_encrypt
+//
+// Encrypt byte array supplied in function call. Return empty array if any
+// errors occurred in crypto libraries.
+//
+func lisp_encrypt(plaintext []byte, lisp []byte, rloc *Lisp_rloc) (
+	ciphertext []byte) {
+	
+	key := rloc.keys[rloc.use_key_id]
+
+	//
+	// Increment IV stored in Lisp_keys. aes.Seal() wants a 12-byte nonce.
+	//
+	iv := binary.BigEndian.Uint64(key.iv[4:12]) + 1
+	binary.BigEndian.PutUint64(key.iv[4:12], iv)
+
+	//
+	// Encrypt.
+	//
+	ciphertext = key.crypto_alg.Seal(nil, key.iv, plaintext, nil)
+
+	//
+	// Set key-id in LISP header.
+	//
+	flags := int(lisp[0])
+	lisp[0] = byte(flags | rloc.use_key_id)
+
+	//
+	// Prepend IV to packet.
+	//
+	ciphertext = append(key.iv, ciphertext...)
+
+	//
+	// Compute ICV over the LISP header, IV, and ciphertext. Then append the
+	// ICV value to the ciphertext.
+	//
+	icv_data := append(lisp, ciphertext...)
+
+	//
+	// Run hash.
+	//
+	key.hash_alg.Reset()
+	key.hash_alg.Write(icv_data)
+	icv := key.hash_alg.Sum(nil)
+	icv = icv[0:20]
+	return(append(ciphertext, icv...))
+}
+
+//
+// lisp_decrypt
+//
+// First check ICV and then decrypt the packet.
+//
+func lisp_decrypt(packet []byte, key_id int, srloc string) (plaintext []byte) {
+
+	//
+	// Are we doing crypto?
+	//
+	rloc := lisp_decap_keys[srloc]
+	if (rloc == nil) {
+		lisp_count(nil, "no-decrypt-key", packet)
+		dprint("No keys found for source RLOC %s", srloc)
+		return(nil)
+	}
+	key := rloc.keys[rloc.use_key_id]
+	if (key == nil) {
+		lisp_count(nil, "no-decrypt-key", packet)
+		dprint("Key-id %d not found for source RLOC %s", key_id, srloc)
+		return(nil)
+	}
+
+	//
+	// Compute ICV over the LISP header, IV, and ciphertext that is included
+	// in the 'ciphertext' []byte slice.
+	//
+	icv_len := 20
+	packet_icv := packet[len(packet)-icv_len:]
+	packet = packet[0:len(packet)-icv_len]
+	key.hash_alg.Reset()
+	key.hash_alg.Write(packet)
+	computed_icv := key.hash_alg.Sum(nil)
+	computed_icv = computed_icv[0:20]
+	if (!hmac.Equal(packet_icv, computed_icv)) {
+		lisp_count(nil, "ICV-error", packet)
+		dprint("ICV failed for key-id %d icv-key %s", key_id , key.icv_key)
+		return(nil)
+	}
+
+	//
+	// Decrypt. Skip past LISP header and IV.
+	//
+	lisp := packet[0:8]
+	iv := packet[8:8+12]
+	packet = packet[20:]
+	plaintext, err := key.crypto_alg.Open(nil, iv, packet, nil)
+	if (err != nil)  {
+		lisp_count(nil, "ICV-error", packet)
+		dprint("Decrypt failed for key-id %d crypto-key %s", key_id,
+			key.crypto_key)
+		return(nil)
+	}
+	return(append(lisp, plaintext...))
 }
 
 //
@@ -556,15 +670,37 @@ func lisp_encapsulate(log string, packet []byte, iid int, rloc *Lisp_rloc,
 	lisp[4] = byte((iid >> 16) & 0xff)
 	lisp[5] = byte((iid >> 8) & 0xff)
 	lisp[6] = byte(iid & 0xff)
+
+	//
+	// Encrypt the inner header and payload if a keys are stored in the RLOC
+	// entry.
+	//
+	if (rloc.use_key_id == 0) {
+		flags := int(lisp[0])
+		lisp[0] = byte(flags & 0xfc)
+	} else {
+		packet = lisp_encrypt(packet, lisp, rloc)
+	}
+
+	//
+	// Prepend LISP header.
+	//
 	packet = append(lisp, packet...)
 
 	//
-	// Store values in UDP header.
+	// Store values in UDP header. Source port uses 5-tuple hash unless
+	// lisp-crypto is running and we negotiated keys with the RLOC, then use
+	// same port as RLOC-probes.
 	//
 	udp := lisp_udp_header
 	if (rloc.encap_port == 4341) {
-		udp[0] = byte((hash >> 8) | 0xf0)
-		udp[1] = byte(hash & 0xff)
+		if (rloc.use_key_id == 0) {
+			udp[0] = byte((hash >> 8) | 0xf0)
+			udp[1] = byte(hash & 0xff)
+		} else {
+			udp[0] = byte(lisp_itr_crypto_port >> 8)
+			udp[1] = byte(lisp_itr_crypto_port & 0xff)
+		}
 	} else {
 		udp[0] = byte(0x10)
 		udp[1] = byte(0xf5)
@@ -594,10 +730,19 @@ func lisp_encapsulate(log string, packet []byte, iid int, rloc *Lisp_rloc,
 			return
 		}
 
-		dprint("%s to IPv4 RLOC %s", log, red(fmt.Sprintf("%s:%d",
-			rloc.rloc.lisp_print_address(false), rloc.encap_port)))
+		//
+		// Do string manipulation only when data-plane logging enabled.
+		//
+		if (lisp_data_plane_logging) {
+			dprint("%s to IPv4 RLOC %s", log, red(fmt.Sprintf("%s:%d",
+				rloc.rloc.lisp_print_address(false), rloc.encap_port)))
 
-		lisp_log_packet("Encap", packet, true)
+			if (rloc.use_key_id == 0) {
+				lisp_log_packet(bold("Encap"), packet, true)
+			} else {
+				lisp_log_packet(bold("Encrypt/Encap"), packet, true)
+			}
+		}
 
 		//
 		// Send on raw socket.
@@ -614,10 +759,19 @@ func lisp_encapsulate(log string, packet []byte, iid int, rloc *Lisp_rloc,
 		outer = append(outer, rloc.rloc.address...)
 		packet = append(outer, packet...)
 
-		dprint("%s to IPv6 RLOC %s", log, red(fmt.Sprintf("%s:%d",
-			rloc.rloc.lisp_print_address(false), rloc.encap_port)))
+		//
+		// Do string manipulation only when data-plane logging enabled.
+		//
+		if (lisp_data_plane_logging) {
+			dprint("%s to IPv6 RLOC %s", log, red(fmt.Sprintf("%s:%d",
+				rloc.rloc.lisp_print_address(false), rloc.encap_port)))
 
-		lisp_log_packet("Encap", packet, true)
+			if (rloc.use_key_id == 0) {
+				lisp_log_packet(bold("Encap"), packet, true)
+			} else {
+				lisp_log_packet(bold("Encrypt/Encap"), packet, true)
+			}
+		}
 
 		//
 		// Send on raw socket.
@@ -798,18 +952,26 @@ func lisp_etr_nat_thread(pfilter string) {
 func lisp_etr_data_plane(packet []byte, source_rloc string) {
 	var inner, lisp  []byte
 	var source, dest Lisp_address
-	var sa4          syscall.SockaddrInet4
 	var socket, iid  int
 	var ttl          byte
 
-	lisp_log_packet("Decap from " + red(source_rloc), packet, true)
-
 	//
-	// Get header pointers. Get instance-ID from LISP header when I-bit is set.
+	// Isolate LISP header and get key-id to determine if we are decrypting.
 	//
 	lisp = packet[0:8]
-	inner = packet[8:]
-	inner_version := (inner[0] & 0xf0)
+	key_id := int(lisp[0] & 0x3)
+	if (key_id != 0) {
+		if (lisp_data_plane_logging) {
+			lisp_log_packet(bold("Decap/Decrypt ") + red(source_rloc), packet,
+				true)
+		}
+		packet = lisp_decrypt(packet, key_id, source_rloc)
+		if (packet == nil) { return }
+	} else {
+		if (lisp_data_plane_logging) {
+			lisp_log_packet(bold("Decap ") + red(source_rloc), packet, true)
+		}
+	}
 
 	//
 	// Get instance-id from LISP header. Instance-ID of -1 is an encapsulated
@@ -823,17 +985,23 @@ func lisp_etr_data_plane(packet []byte, source_rloc string) {
 	}
 
 	//
+	// Position packet to inner packet header.
+	//
+	inner = packet[8:]
+	inner_version := (inner[0] & 0xf0)
+
+	//
 	// Check TTL before parsing addresses.
 	//
 	if (inner_version == 0x40) {
 		if (!lisp_ip_checksum(inner[0:20], true)) {
+			lisp_count(nil, "checksum-error", packet)
 			dprint("IPv4 header checksum failed, discard packet")
 			return
 		}
 		err := lisp_ttl_check(&inner[8])
-		if (err) {
-			return
-		}
+		if (err) { return }
+
 		lisp_ip_checksum(inner[0:20], false)
 		source.lisp_make_address(iid, inner[12:16])
 		dest.lisp_make_address(iid, inner[16:20])
@@ -841,14 +1009,14 @@ func lisp_etr_data_plane(packet []byte, source_rloc string) {
 		socket = 0
 	} else if (inner_version == 0x60) {
 		err := lisp_ttl_check(&inner[7])
-		if (err) {
-			return
-		}
+		if (err) { return }
+
 		source.lisp_make_address(iid, inner[8:24])
 		dest.lisp_make_address(iid, inner[24:40])
 		ttl = inner[7]
 		socket = 1
 	} else {
+		lisp_count(nil, "bad-inner-version", packet)
 		dprint("Invalid inner IP header version 0x%x", inner_version)
 		return
 	}
@@ -862,19 +1030,10 @@ func lisp_etr_data_plane(packet []byte, source_rloc string) {
 		if (err) {
 			dprint("Destination %s is not a configured EID",
 				dest.lisp_print_address(true))
-		} else {
-			s := green(source.lisp_print_address(true))
-			d := green(dest.lisp_print_address(true))
-			dprint("Forward packet %s -> %s", s, d)
-
-			copy(sa4.Addr[:], dest.address)
-			sa4.Port = 0
-			err := syscall.Sendto(lisp_encap_socket[socket], inner, 0, &sa4)
-			if (err != nil) {
-				dprint("syscall.Sendto() to EID %s failed: %s", d, err)
-			}
 			return
 		}
+		lisp_send(socket, inner, source, dest)
+		return
 	}
 
 	//
@@ -895,6 +1054,8 @@ func lisp_etr_data_plane(packet []byte, source_rloc string) {
 		return
 	}
 
+	lisp_count(nil, "good-packets", inner)
+
 	//
 	// Increment packet counters, prepend outer headers, and send. Check to
 	// see if we are replicating to a set of RLOCs or sending to just one. For
@@ -902,18 +1063,54 @@ func lisp_etr_data_plane(packet []byte, source_rloc string) {
 	// the packet will be copied so a unique packet will be transmitted.
 	//
 	for _, rle := range rles {
-		rle.packets += 1
-		rle.bytes += uint(len(packet))
-		rle.last_packet = time.Now()
+        lisp_count(&rle.stats, "", packet)
 		lisp_encapsulate("Replicate", inner, dest.instance_id, &rle, ttl, hash)
 	}
 	if (rloc != nil) {
-		rloc.packets += 1
-		rloc.bytes += uint(len(packet))
-		rloc.last_packet = time.Now()
+        lisp_count(&rloc.stats, "", packet)
 		lisp_encapsulate("Encapsulate", inner, dest.instance_id, rloc, ttl,
 			hash)
 	}
+}
+
+//
+// lisp_send
+//
+// Send packet after its been decapsulated.
+//
+func lisp_send(socket int, inner []byte, s Lisp_address, d Lisp_address) {
+	var sa4    syscall.SockaddrInet4
+	var sa6    syscall.SockaddrInet6
+	var source string
+	var dest   string
+
+	if (lisp_data_plane_logging) {
+		source = green(s.lisp_print_address(true))
+		dest = green(d.lisp_print_address(true))
+		dprint("Forward packet %s -> %s", source, dest)
+	}
+
+	send_socket := lisp_encap_socket[socket]
+
+	if (socket == 0) {
+		copy(sa4.Addr[:], d.address)
+		sa4.Port = 0
+		err := syscall.Sendto(send_socket, inner, 0, &sa4)
+		if (err != nil) {
+			dprint("syscall.Sendto() to IPv4 EID %s failed: %s", dest, err)
+			return
+		}
+	} else {
+		copy(sa6.Addr[:], d.address)
+		sa6.Port = 0
+		err := syscall.Sendto(send_socket, inner, 0, &sa6)
+		if (err != nil) {
+			dprint("syscall.Sendto() to IPv6 EID %s failed: %s", dest, err)
+			return
+		}
+	}
+	lisp_count(nil, "good-packets", inner)
+	return
 }
 
 //

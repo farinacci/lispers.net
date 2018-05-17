@@ -50,10 +50,11 @@ except:
 # Get input parameter.
 #
 if (len(sys.argv) != 2):
-    find_eid = raw_input("Enter EID to watch: ")
+    find_eid = raw_input("Enter EID-prefix to watch: ")
 else:
     find_eid = sys.argv[1]
 #endif
+password = raw_input("Enter xTR password: ")
 
 router = lispapi.api_init(router, username, password, port=port)
 if (router == None):

@@ -145,6 +145,14 @@ def lisp_site_command(kv_pairs):
                 site_eid.proxy_reply_action = v
             #endfor
         #endif
+        if (kw == "require-signature"):
+            for i in range(len(allowed_eid_set)):
+                site_eid = allowed_eid_set[i]
+                v = value[i]
+                yes_or_no = True if (v == "yes") else False
+                site_eid.require_signature = yes_or_no
+            #endfor
+        #endif
         if (kw == "policy-name"):
             for i in range(len(allowed_eid_set)):
                 site_eid = allowed_eid_set[i]
@@ -494,6 +502,10 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
         yes = lisp.lisp_print_cour("yes")
         output += "{}RLOCs are echo-nonce capable: {}<br>".format(indent4, yes)
     #endif
+
+    yesno = "yes" if site_eid.require_signature else "no"
+    yesno = lisp.lisp_print_cour(yesno)
+    output += "{}Require signatures: {}<br>".format(indent4, yesno)
 
     #
     # Print configured allowed RLOC-sets, if any.
@@ -992,6 +1004,7 @@ lisp_ms_commands = {
         "force-ttl" : [True, 0, 0x7fffffff],
         "pitr-proxy-reply-drop" : [True, "yes", "no"],
         "proxy-reply-action" : [True, "native-forward", "drop"],
+        "require-signature" : [True, "yes", "no"],
         "allowed-rloc" : [],
         "address" : [True], 
         "priority" : [True, 0, 255], 

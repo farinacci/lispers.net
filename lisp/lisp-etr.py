@@ -1198,6 +1198,11 @@ def lisp_etr_data_plane(parms, not_used, packet):
     #endif
 
     #
+    # Increment global stats.
+    #
+    lisp.lisp_decap_stats["good-packets"].increment(len(packet.packet))
+
+    #
     # Strip outer headers and start inner header forwarding logic.
     #
     packet.strip_outer_headers()
@@ -1301,6 +1306,7 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     # Store outer source RLOC address so if we are doing lisp-crypto across
     # NAT-traversal, we can find the decryption key.
     #
+
     packet.outer_source = lisp.lisp_address(lisp.LISP_AFI_IPV4, source, 
         lisp.LISP_IPV4_HOST_MASK_LEN, 0)
 
@@ -1362,6 +1368,11 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
         lisp.dprint("Drop packet, external data-plane active")
         return
     #endif
+
+    #
+    # Increment global stats.
+    #
+    lisp.lisp_decap_stats["good-packets"].increment(len(packet.packet))
 
     #
     # Check if database-mapping exists for our local destination.
@@ -1970,6 +1981,9 @@ while (True):
                 lisp_etr_process_nonce_ipc(packet)
             elif (packet.find("clear%") != -1):
                 lispconfig.lisp_clear_decap_stats(packet)
+            elif (packet.find("stats%") != -1):
+                packet = packet.split("%")[-1]
+                lisp.lisp_process_data_plane_decap_stats(packet, None)
             else:
                 lispconfig.lisp_process_command(lisp_ipc_listen_socket, 
                     opcode, packet, "lisp-etr", [lisp_etr_commands])

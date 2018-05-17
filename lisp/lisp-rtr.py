@@ -237,7 +237,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             # Store/refresh NAT state and Fix map-cache entries if there was
             # a change.
             #
-            h = info.hostname
+            h = info.hostname if (info.hostname != None) else ""
             s = packet.outer_source
             p = packet.udp_sport
             if (lisp.lisp_store_nat_info(h, s, p)):
@@ -263,6 +263,11 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         lisp.dprint("Drop packet, external data-plane active")
         return
     #endif
+
+    #
+    # Increment global stats.
+    #
+    lisp.lisp_decap_stats["good-packets"].increment(len(packet.packet))
 
     #
     # Process inner header (checksum and decrement ttl).
@@ -713,7 +718,7 @@ def lisp_rtr_map_resolver_command(kv_pair):
 # the RLOC-probing timer if "rloc-probing = yes".
 #
 def lisp_rtr_xtr_command(kv_pair):
-    global lisp_ephem_listen_socket, lisp_raw_socket
+    global lisp_ephem_listen_socket, lisp_raw_socket, lisp_ephem_port
 
     rloc_probing = lisp.lisp_rloc_probing
 
@@ -730,6 +735,8 @@ def lisp_rtr_xtr_command(kv_pair):
         lisp_sockets = [lisp_ephem_listen_socket, lisp_ephem_listen_socket,
             None, lisp_raw_socket]
         lisp.lisp_start_rloc_probe_timer(1, lisp_sockets)
+        entry = { "type" : "itr-crypto-port", "port" : lisp_ephem_port }
+        lisp.lisp_write_to_dp_socket(entry)
     #endif
 
     #

@@ -1,7 +1,7 @@
 
                  lispers.net IPC Data-Plane Interface
                  ------------------------------------
-                     Tue Mar  6 13:34:33 PST 2018
+                     Mon Apr  9 13:45:49 PDT 2018
 
 This specification documents how the lispers.net control-plane can be used
 with another data-plane implementation. Another data-plane implementation
@@ -122,16 +122,16 @@ multicast cases:
 { "type" : "map-cache", 
   "instance-id" : "251", "eid-prefix" : "0001-0002-0003/48", "rlocs" :
   [ { "rloc" : "2001::1111", "keys" :
-      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : <ikey> }] },
+      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : "<ikey>" }] },
     { "rloc" : "2001::2222", "keys" :
-      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : <ikey> }] } ]
+      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : "<ikey>" }] } ]
 }
 { "type" : "map-cache", 
   "instance-id" : "251", "eid-prefix" : "ffff-ffff-ffff/48", "rles" :
   [ { "rle" : "dfdf::1", "keys" :
-      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : <ikey> }] },
+      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : "<ikey>" }] },
     { "rle" : "dfdf::2", "keys" :
-      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : <ikey> }] } ]
+      [{ "key-id" : "1", "encrypt-key" : "<ekey>", "icv-key" : "<ikey>" }] } ]
 }
 
 Database-Mapping Source-EID and IID Configuration
@@ -200,6 +200,17 @@ send a message to the "lisp-ipc-data-plane" socket with format:
 
 { "type" : "etr-nat-port", "port" : <port-number> }
 
+Crypto Port Support
+-------------------
+
+When RLOC-probes are sent to negotiate lisp-crypto data-plane keys, the ETR
+will create state based on the RLOC source address and port of the
+Map-Request RLOC-probe message. The ITR must send encrypted encapsulated
+packets from this same source port. The lispers.net control-plane will send
+the following IPC message to the external data-plane:
+
+{ "type" : "itr-crypto-port", "port" : <port-number> }
+
 Punt IPC Interface
 ------------------
 
@@ -245,6 +256,21 @@ to the control-plane. The format of the Statistics message is:
     { "rloc" : "<rloc-n>", "packet-count" : <count>, "byte-count" : <bcount>,
        "seconds-last-packet" : <seconds> } ], ... }
    ]
+}
+
+{ "type" : "decap-statistics",
+  "no-decrypt-key" : { "packet-count" : <count>, "byte-count" : <bcount>,
+       "seconds-last-packet" : <seconds> },
+  "outer-header-error" : { "packet-count" : <count>, "byte-count" : <bcount>,
+       "seconds-last-packet" : <seconds> },
+  "bad-inner-version" : { "packet-count" : <count>, "byte-count" : <bcount>,
+       "seconds-last-packet" : <seconds> },
+  "good-packets" : { "packet-count" : <count>, "byte-count" : <bcount>,
+       "seconds-last-packet" : <seconds> },
+  "ICV-error" : { "packet-count" : <count>, "byte-count" : <bcount>,
+       "seconds-last-packet" : <seconds> },
+  "checksum-error" : { "packet-count" : <count>, "byte-count" : <bcount>,
+       "seconds-last-packet" : <seconds> }
 }
 
 Where <seconds> is the number of floating point seconds since the last packet

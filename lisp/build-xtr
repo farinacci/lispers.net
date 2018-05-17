@@ -1,1 +1,22 @@
-go build -o lisp-xtr xtr.go ipc.go lisp.go lml.go
+#!/bin/sh
+#
+# build-xtr
+#
+# Build the lisp-xtr go binary for ubuntu Linux or Alpine Linux.
+#    
+if [ "$1" = "" ] ; then
+    echo "Build go binary lisp-xtr ..."
+    go build -o lisp-xtr xtr.go ipc.go lisp.go lml.go
+    exit
+fi
+if [ "$1" = "alpine" ] ; then
+    echo "Build go binary lisp-xtr.alpine ..."
+    go build -o lisp-xtr.alpine xtr.go ipc.go lisp.go lml.go
+    exit
+fi
+
+#
+# Fall through.
+#    
+echo "Nothing built"
+exit

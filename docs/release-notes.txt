@@ -1,4 +1,195 @@
 
+                lispers.net Beta Release Version 0.460
+                --------------------------------------
+
+o Release date: Tue May 15 12:35:17 PDT 2018
+
+o Have python data-plane add 16-bytes of AEAD to an AES-GCM encrypted packet.
+  This is to interopeate with Go data-planes that use the crypto/aes and
+  crypto/cipher libraries.
+
+o Instead of displaying "encap-crypto", display "encap-crypto-chacha",
+  "encap-crypto-aes-gcm", or "encap-crypto-aes-cbc" depending on what cipher-
+  suite is negoitated during xTR key exchange.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.459
+                --------------------------------------
+
+o Release date: Tue May  8 18:58:35 PDT 2018
+
+o Compile a go binary lisp-xtr for Alpine Linux. Call it lisp-xtr.alpine and
+  include it in a release tarball.
+
+o Make is-lisp-running.py work for Alpine Linux.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.458
+                --------------------------------------
+
+o Release date: Wed May  2 11:30:53 PDT 2018
+
+o Fix traceback in lisp_store_nat_info() which prints the hostname which may
+  not exist in a Info-Request message.
+
+o For packet counter stats received in the last minute, change color from
+  red to light green while keeping dark green color for last second packets.
+  Red is used in other parts of the UI to alert user.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.457
+                --------------------------------------
+
+o Release date: Mon Apr 30 09:54:05 PDT 2018
+
+o Fix ssl_builtin.py issue #1499 Exception in BuiltinSSLAdapter "The handshake
+  operation timed out". The fix is included in CherryPy 8.2.0. This release
+  is built with a pip-requirements.txt points to ChrryPy to 8.2.0.
+
+o For this release please do a "sudo pip install cherrypy==8.2.0".
+
+o Fix bug in is-lisp-running.py if the first line of logs/lisp-core.log gets
+  corrupted.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.456
+                --------------------------------------
+
+o Release date: Thu Apr 26 13:24:35 PDT 2018
+
+o Don't optimized the RLOC-set for private addresses in NAT-traversal logic
+  when "nat-traversal = no" is set.
+
+o Do not pass "packet,packet" to len() but "packet.packet". ;-)
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.455
+                --------------------------------------
+
+o Release date: Fri Apr 20 15:39:53 PDT 2018
+
+o Introduce the "require-signature = yes | no" command to the "allowed-prefix"
+  clause of a "lisp site" command. When configured to "yes", Map-Registers
+  must include signatures and are verified before accepting any EID
+  registrations. As well as, any Map-Requests must include signatures that are
+  verified before returning any mapping system data. This feature implements
+  any EID type to be authenticated for registration and lookups and is spec'ed
+  in draft-farinacci-lisp-ecdsa-auth-02.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.454
+                --------------------------------------
+
+o Release date: Thu Apr 12 10:21:59 PDT 2018
+
+o Don't have is-lisp-running.py use the API to find running version. Use the
+  first line in logs/lisp-core.log to determine the running version. It is
+  faster and doesn't require web credentials.
+
+o Fix residue bug in lisp_decap_stats.
+
+o When an RLOC goes unreachable, have the lispers.net control-plane tell the
+  external data-plane the RLOC is no longer forwarding RLOC-set.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.453
+                --------------------------------------
+
+o Release date: Tue Apr 10 14:49:42 PDT 2018
+
+o Put "good-packets" counting in RTR when it decaps and reencaps.
+
+o Fix crash in lisp_process_data_plane_decap_stats() where a test needs to be
+  done if a dictionary array is passed versus a json string.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.452
+                --------------------------------------
+
+o Release date: Tue Apr 10 10:05:05 PDT 2018
+
+o Make go data-plane go faster. Do not do any string manipulation in the data
+  path.
+
+o Report decapsulation statistics from go data-plane to python lispers.net
+  control-plane. The ETR and RTR displays via the web interface will show
+  the decap counters.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.451
+                --------------------------------------
+
+o Release date: Mon Apr  9 09:46:30 PDT 2018
+
+o It is important to note that if you run release 0.450 or more recent with
+  the go data-plane and want to use lisp-crypto, you need 'pycryptodome"
+  installed.
+
+o Do not crash when 'pycryptodome' not installed. Issue log message to tell
+  user that AES-GCM cannot be used unless a "pip install pycryptodome" is
+  entered.
+
+o Modify lispers-net-test-install.py to check to see of pycryptodome is
+  installed on the system.
+
+o Add pycryptodome to the pip-requirements.txt file so the lispers.net-install-
+  ubuntu.py script can install it.
+
+o Fix traceback in lisp_write_ipc_decap_key().
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.450
+                --------------------------------------
+
+o Release date: Sat Apr  7 11:15:19 PDT 2018
+
+o Go data-plane needs to clear the ICV io buffer or else it cannot interoperate
+  with the python lisp-crypto implementation.
+
+o Change ICV for cipher-suites 2 and 5 from sha1 to sha256 to be compatible
+  with the (lisp-crypto) RFC8061 defined cipher-suites.
+ 
+o We already supported AES-CBC which is cipher-suite codepoint 2. We now
+  support in the python data-plane AES-GCM which is cipher-suite 5. Cipher
+  suite 5 interoperates with the go data-plane since it only supports AES-GCM.
+  
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.449
+                --------------------------------------
+
+o Release date: Tue Apr  3 15:23:45 PDT 2018
+
+o Do a test for the Debian Kali variant so when lisp-core starts processes, it
+  can use the correct file direction syntax.
+
+o The lispers.net go data-plane can now support AES encryption with sha256 ICV
+  checks. Slowing down the data-plane.  ;-)  This works for all combinations
+  of IPv4/IPv6 inner headers encapsulated with IPv4/IPv6 outer headers.
+
+o Add support in "type" : "statistics" message to report decapsulation errors.
+
+o Fix traceback in lisp_info.print_info(). There are cases when an Info-Request
+  message does not contain a hostname.
+
+o Have go data-plane update keys in all RLOC data structures for the same RLOC
+  address.
+
+o Call lisp_show_state() no more often than once per 2 seconds. Will reduce
+  log size in logs/lisp-xtr.log.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.448
                 --------------------------------------
 
