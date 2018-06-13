@@ -623,6 +623,10 @@ def lisp_setup_kv_pairs(clause):
     if (count != 0):
         kv_pairs["decentralized-xtr"] = [""] * count
     #endif
+    count = clause.count("register-all-rtrs =")
+    if (count != 0):
+        kv_pairs["register-all-rtrs"] = [""] * count
+    #endif
 
     #
     # There is a special case here where there are no sub-clauses but
@@ -2446,7 +2450,7 @@ def lisp_display_nat_info(output, dc):
             hostname = nat_info.hostname
             port = nat_info.port
 
-            if ((time.time() - uptime) >= (lisp.LISP_INFO_INTERVAL * 2)):
+            if (nat_info.timed_out()):
                 uptime = lisp.red(lisp.lisp_print_elapsed(uptime), True)
             else:
                 uptime = lisp.lisp_print_elapsed(uptime)
@@ -2770,6 +2774,9 @@ def lisp_xtr_command(kv_pair):
         #endif
         if (kw == "decentralized-xtr"):
             lisp.lisp_decent_configured = (value == "yes")
+        #endif
+        if (kw == "register-all-rtrs"):
+            lisp.lisp_register_all_rtrs = (value == "yes")
         #endif
     #endfor
 #enddef

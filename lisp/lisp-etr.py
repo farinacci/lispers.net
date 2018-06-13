@@ -349,12 +349,25 @@ def lisp_build_map_register_records(quiet, db, eid, group, ttl):
 
     #
     # Don't include RTR-list if there is no NAT in the path but nat-traversal
-    # is configured and NAT in path is tested.
+    # is configured and NAT in path is tested. When there is a NAT, include
+    # all RTRs if lisp_register_all_rtrs is configured. Otherwise, if the
+    # array element is None, then the RTR is down and should be excluded in
+    # the list to register.
     #
     rtr_list = {}
     for rloc_entry in db.rloc_set:
         if (rloc_entry.translated_rloc.is_null()): continue
-        rtr_list = lisp.lisp_rtr_list
+
+        for rtr_str in lisp.lisp_rtr_list:
+            rtr = lisp.lisp_rtr_list[rtr_str]
+            if (lisp.lisp_register_all_rtrs == False and rtr == None):
+                lisp.lprint("  Exclude unreachable RTR {}".format( \
+                    lisp.red(rtr_str, False)))
+                continue
+            #endif
+            if (rtr == None): continue
+            rtr_list[rtr_str] = rtr
+        #endif
         break
     #endfor
 
@@ -595,6 +608,7 @@ def lisp_etr_process_info_timer(ms):
     #
     allow_private = (os.getenv("LISP_RTR_BEHIND_NAT") == None)
     for rtr in lisp.lisp_rtr_list.values():
+        if (rtr == None): continue
         if (rtr.is_private_address() and allow_private == False):
             r = lisp.red(rtr.print_address_no_iid(), False)
             lisp.lprint("Skip over RTR private address {}".format(r))
@@ -733,6 +747,15 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     if (lisp.lisp_nat_traversal): rloc_name = lisp.lisp_hostname
 
     #
+    # Count number of RTRs reachable so we know allocation count.
+    #
+    rtr_count = 0
+    for rtr in lisp.lisp_rtr_list.values():
+        if (rtr == None): continue
+        rtr_count += 1
+    #endfor
+
+    #
     # Run through multicast entry array.
     #
     eid_records = ""
@@ -744,7 +767,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         if (ms_list.has_key(ms_name) == False): continue
 
         eid_record = lisp.lisp_eid_record()
-        eid_record.rloc_count = 1 + len(lisp.lisp_rtr_list)
+        eid_record.rloc_count = 1 + rtr_count
         eid_record.authoritative = True
         eid_record.record_ttl = lisp.LISP_REGISTER_TTL if joinleave else 0
         eid_record.eid = lisp.lisp_address(afi, source, 0, iid)
@@ -794,6 +817,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         # priority 1. And set the global RLOCs to priority 254.
         #
         for rtr in lisp.lisp_rtr_list.values():
+            if (rtr == None): continue
             rloc_record = lisp.lisp_rloc_record()
             rloc_record.rloc.copy_address(rtr)
             rloc_record.priority = 254
@@ -1800,6 +1824,32 @@ def lisp_etr_discover_eid(ipc):
 #enddef
 
 #
+# lisp_etr_process_rtr_updown
+#
+# Process IPC message from lisp-itr. It is telling the lisp-etr process if
+# RLOC-probing has determined if the RTR has gone up or down. And therefore
+# if it should be registered to the mapping system.
+#
+def lisp_etr_process_rtr_updown(ipc):
+    if (lisp.lisp_register_all_rtrs): return
+
+    opcode, rtr_str, status = ipc.split("%")
+    if (lisp.lisp_rtr_list.has_key(rtr_str) == False): return
+
+    lisp.lprint("Process ITR IPC message, RTR {} has gone {}".format(
+        lisp.red(rtr_str, False), lisp.bold(status, False)))
+    
+    rtr = lisp.lisp_rtr_list[rtr_str]
+    if (status == "down"):
+        lisp.lisp_rtr_list[rtr_str] = None
+        return
+    #endif
+
+    rtr = lisp.lisp_address(lisp.LISP_AFI_IPV4, rtr_str, 32, 0)
+    lisp.lisp_rtr_list[rtr_str] = rtr
+#enddef
+
+#
 # lisp_etr_process_nonce_ipc
 #
 # Process an nonce IPC message from the ITR. It wants to know when a nonce
@@ -1838,6 +1888,7 @@ lisp_etr_commands = {
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
         "decentralized-xtr" : [True, "yes", "no"],
+        "register-all-rtrs" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 
     "lisp interface" : [lispconfig.lisp_interface_command, {
@@ -1981,6 +2032,8 @@ while (True):
                 lisp_etr_process_nonce_ipc(packet)
             elif (packet.find("clear%") != -1):
                 lispconfig.lisp_clear_decap_stats(packet)
+            elif (packet.find("rtr%") != -1):
+                lisp_etr_process_rtr_updown(packet)
             elif (packet.find("stats%") != -1):
                 packet = packet.split("%")[-1]
                 lisp.lisp_process_data_plane_decap_stats(packet, None)

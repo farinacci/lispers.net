@@ -598,9 +598,14 @@ func lisp_decrypt(packet []byte, key_id int, srloc string) (plaintext []byte) {
 	//
 	rloc := lisp_decap_keys[srloc]
 	if (rloc == nil) {
-		lisp_count(nil, "no-decrypt-key", packet)
-		dprint("No keys found for source RLOC %s", srloc)
-		return(nil)
+		s := strings.Split(srloc, ":")[0]
+		rloc = lisp_decap_keys[s]
+		if (rloc == nil) {
+			dprint("No keys found for source RLOC %s", srloc)
+			lisp_count(nil, "no-decrypt-key", packet)
+			return(nil)
+		}
+		srloc = s
 	}
 	key := rloc.keys[rloc.use_key_id]
 	if (key == nil) {
@@ -622,7 +627,8 @@ func lisp_decrypt(packet []byte, key_id int, srloc string) (plaintext []byte) {
 	computed_icv = computed_icv[0:20]
 	if (!hmac.Equal(packet_icv, computed_icv)) {
 		lisp_count(nil, "ICV-error", packet)
-		dprint("ICV failed for key-id %d icv-key %s", key_id , key.icv_key)
+		dprint("ICV failed from %s for key-id %d icv-key %s", srloc, key_id ,
+			key.icv_key)
 		return(nil)
 	}
 
@@ -635,8 +641,8 @@ func lisp_decrypt(packet []byte, key_id int, srloc string) (plaintext []byte) {
 	plaintext, err := key.crypto_alg.Open(nil, iv, packet, nil)
 	if (err != nil)  {
 		lisp_count(nil, "ICV-error", packet)
-		dprint("Decrypt failed for key-id %d crypto-key %s", key_id,
-			key.crypto_key)
+		dprint("Decrypt failed from %s for key-id %d crypto-key %s", srloc,
+			key_id, key.crypto_key)
 		return(nil)
 	}
 	return(append(lisp, plaintext...))

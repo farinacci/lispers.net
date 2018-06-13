@@ -125,10 +125,12 @@ lisp_pitr = False
 lisp_l2_overlay = False
 
 #
-# RLOC-probing variables.
+# RLOC-probing variables. And for NAT-traversal, register only reachable
+# RTRs which is determined from the lisp_rloc_probe_list.
 #
 lisp_rloc_probing = False
 lisp_rloc_probe_list = {}
+lisp_register_all_rtrs = False
 
 #
 # Nonce Echo variables.
@@ -241,6 +243,13 @@ lisp_pubsub_cache = {}
 # looped back to the lisp-ms process.
 #
 lisp_decent_configured = False
+
+#
+# lisp.lisp_ipc_socket is used by the lisp-itr process during RLOC-probing
+# to send the lisp-etr process status about RTRs learned. This is part of
+# NAT-traversal support.
+#
+lisp_ipc_socket = None
 
 #------------------------------------------------------------------------------
 
@@ -1639,8 +1648,9 @@ class lisp_packet():
             fail = bold("ICV failed ({})".format(funcs), False)
             addr_str = red(addr_str, False)
             icv_str = "packet-ICV {} != computed-ICV {}".format(p_icv, c_icv)
-            dprint("{} from RLOC {}, key-id: {}, packet dropped, {}".format( \
-                fail, addr_str, key.key_id, icv_str))
+            dprint(("{} from RLOC {}, receive-port: {}, key-id: {}, " + \
+                "packet dropped, {}").format(fail, addr_str, self.udp_sport,
+                key.key_id, icv_str))
             dprint("{}".format(key.print_keys()))
             return([None, False])
         #endif
@@ -5663,6 +5673,11 @@ class lisp_nat_info():
         self.hostname = hostname
         self.port = port
         self.uptime = lisp_get_timestamp()
+
+    def timed_out(self):
+        elapsed = time.time() - self.uptime
+        return(elapsed >= (LISP_INFO_INTERVAL * 2))
+
 #endclass
 
 class lisp_info_source():
@@ -8637,7 +8652,13 @@ def lisp_lookup_public_key(eid):
     for rloc in site_eid.registered_rlocs:
         json_pubkey = rloc.json
         if (json_pubkey == None): continue
-        json_pubkey = json.loads(json_pubkey.json_string)
+        try:
+            json_pubkey = json.loads(json_pubkey.json_string)
+        except:
+            lprint("Registered RLOC JSON format is invalid for {}".format( \
+                pubkey_hash))
+            return([hash_eid, None, False])
+        #endtry
         if (json_pubkey.has_key("public-key") == False): continue
         pubkey = json_pubkey["public-key"]
         break
@@ -11722,14 +11743,49 @@ class lisp_rloc():
         rloc = self.rloc
         if (rloc.is_null() == False):
             nat_info = lisp_get_nat_info(rloc, self.rloc_name)
-            if (nat_info): 
+            if (nat_info):
                 port = nat_info.port
-                rloc_name_str = self.rloc_name
-                if (rloc_name_str): rloc_name_str = blue(self.rloc_name, False)
-                lprint(("    Store translated encap-port {} for RLOC " + \
-                    "{}, rloc-name {}").format(port, 
-                    red(rloc.print_address_no_iid(), False), rloc_name_str))
-                self.store_translated_rloc(rloc, port)
+                head = lisp_nat_state_info[self.rloc_name][0]
+                addr_str = rloc.print_address_no_iid()
+                rloc_str = red(addr_str, False)
+                rloc_nstr = "" if self.rloc_name == None else \
+                   blue(self.rloc_name, False)
+
+                #
+                # Don't use timed-out state. And check if the RLOC from the
+                # RLOC-record is different than the youngest NAT state.
+                #
+                if (nat_info.timed_out()):
+                    lprint(("    Matched stored NAT state timed out for " + \
+                        "RLOC {}:{}, {}").format(rloc_str, port, rloc_nstr))
+
+                    nat_info = None if (nat_info == head) else head
+                    if (nat_info and nat_info.timed_out()):
+                        port = nat_info.port
+                        rloc_str = red(nat_info.address, False)
+                        lprint(("    Youngest stored NAT state timed out " + \
+                            " for RLOC {}:{}, {}").format(rloc_str, port,
+                            rloc_nstr))
+                        nat_info = None
+                    #endif
+                #endif
+
+                #
+                # Check to see if RLOC for map-cache is same RLOC for NAT
+                # state info.
+                #
+                if (nat_info):
+                    if (nat_info.address != addr_str):
+                        lprint("RLOC conflict, RLOC-record {}, NAT state {}". \
+                            format(rloc_str, red(nat_info.address, False)))
+                        self.rloc.store_address(nat_info.address)
+                    #endif
+                    rloc_str = red(nat_info.address, False)
+                    port = nat_info.port
+                    lprint("    Use NAT translated RLOC {}:{} for {}". \
+                        format(rloc_str, port, rloc_nstr))
+                    self.store_translated_rloc(rloc, port)
+                #endif
             #endif
         #endif
 
@@ -11872,6 +11928,7 @@ class lisp_rloc():
         rloc.compute_rloc_probe_rtt()
         state_string = rloc.print_state_change("up")
         if (rloc.state != LISP_RLOC_UP_STATE):
+            lisp_update_rtr_updown(rloc.rloc, True)
             rloc.state = LISP_RLOC_UP_STATE
             rloc.last_state_change = lisp_get_timestamp()
             mc = lisp_map_cache.lookup_cache(eid, True)
@@ -13893,6 +13950,7 @@ def lisp_update_default_routes(map_resolver, iid, rtr_list):
     
     new_rtr_list = {}
     for rloc in rtr_list:
+        if (rloc == None): continue
         addr = rtr_list[rloc]
         if (ignore_private and addr.is_private_address()): continue
         new_rtr_list[rloc] = addr
@@ -13985,7 +14043,10 @@ def lisp_process_info_reply(source, packet, store):
     new_rtr_set = False
     for rtr in info.rtr_list:
         addr_str = rtr.print_address_no_iid()
-        if (lisp_rtr_list.has_key(addr_str)): continue
+        if (lisp_rtr_list.has_key(addr_str)):
+            if (lisp_register_all_rtrs == False): continue
+            if (lisp_rtr_list[addr_str] != None): continue
+        #endif
         new_rtr_set = True
         lisp_rtr_list[addr_str] = rtr
     #endfor
@@ -15038,6 +15099,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                             d, n = rloc.rloc_next_hop
                             rloc.state = LISP_RLOC_UNREACH_STATE
                             rloc.last_state_change = lisp_get_timestamp()
+                            lisp_update_rtr_updown(rloc.rloc, False)
                         #endif
                         unreach = bold("unreachable", False)
                         lprint("Next-hop {}({}) for RLOC {} is {}".format(n, d,
@@ -15068,6 +15130,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                     unreach = bold("unreachable", False)
                     lprint("RLOC {} went {}, nonce-echo failed".format( \
                         red(addr_str, False), unreach))
+                    lisp_update_rtr_updown(rloc.rloc, False)
                     continue
                 #endif
 
@@ -15093,6 +15156,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                         delta >= LISP_RLOC_PROBE_REPLY_WAIT):
                         rloc.state = LISP_RLOC_UNREACH_STATE
                         rloc.last_state_change = lisp_get_timestamp()
+                        lisp_update_rtr_updown(rloc.rloc, False)
                         unreach = bold("unreachable", False)
                         lprint("RLOC {} went {}, probe it".format( \
                             red(addr_str, False), unreach))
@@ -15182,6 +15246,46 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
     #endfor
 
     lprint("---------- End RLOC Probing ----------")
+#enddef
+
+#
+# lisp_update_rtr_updown
+#
+# The lisp-itr process will send an IPC message to the lisp-etr process for
+# the RLOC-probe status change for an RTR. 
+#
+def lisp_update_rtr_updown(rtr, updown):
+    global lisp_ipc_socket
+
+    #
+    # This is only done on an ITR.
+    #
+    if (lisp_i_am_itr == False): return
+
+    #
+    # When the xtr-parameter indicates to register all RTRs, we are doing it
+    # conditionally so we don't care about the status. Suppress IPC messages.
+    #
+    if (lisp_register_all_rtrs): return
+
+    rtr_str = rtr.print_address_no_iid()
+
+    #
+    # Check if RTR address is in LISP the lisp-itr process learned from the
+    # map-server.
+    #
+    if (lisp_rtr_list.has_key(rtr_str) == False): return
+
+    updown = "up" if updown else "down"
+    lprint("Send ETR IPC message, RTR {} has done {}".format(
+        red(rtr_str, False), bold(updown, False)))
+
+    #
+    # Build IPC message.
+    #
+    ipc = "rtr%{}%{}".format(rtr_str, updown)
+    ipc = lisp_command_ipc(ipc, "lisp-itr")
+    lisp_ipc(ipc, lisp_ipc_socket, "lisp-etr")
 #enddef
 
 #
@@ -16181,8 +16285,12 @@ def lisp_write_ipc_decap_key(rloc_addr, keys):
     #
     # Write record in JSON format. Store encryption key.
     #
-    r, p = rloc_addr.split(":")
-    entry = { "type" : "decap-keys", "rloc" : r, "port" : p }
+    rp = rloc_addr.split(":")
+    if (len(rp) == 1):
+        entry = { "type" : "decap-keys", "rloc" : rp[0] }
+    else:
+        entry = { "type" : "decap-keys", "rloc" : rp[0], "port" : rp[1] }
+    #endif
     entry = lisp_build_json_keys(entry, ekey, ikey, "decrypt-key")
 
     lisp_write_to_dp_socket(entry)

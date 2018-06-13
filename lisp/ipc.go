@@ -167,13 +167,17 @@ func lisp_ipc_message_processing() {
 			keys_set := jdata["keys"]
 			if (keys_set == nil) { continue }
 			addr := jdata["rloc"].(string)
-			port := jdata["port"].(string)
 
 			rloc := new(Lisp_rloc)
 			rloc.rloc.lisp_store_address(0, addr)
 			lisp_store_keys(nil, rloc, "decrypt-key", keys_set.([]interface{}))
 
-			index := addr + ":" + port
+			//
+			// If there is no port, decap will do a second lookup.
+			//
+			index := addr
+			port, ok := jdata["port"].(string) 
+			if (ok) { index += ":" + port }
 			lisp_decap_keys[index] = rloc
 
 		} else if (value == "xtr-parameters") {

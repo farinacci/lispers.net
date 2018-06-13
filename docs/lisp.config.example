@@ -354,6 +354,7 @@ lisp xtr-parameters {
     checkpoint-map-cache = yes | no
     ipc-data-plane = yes | no
     decentralized-xtr = yes | no
+    register-all-rtrs = yes | no
 }
 
 Command Description:
@@ -439,6 +440,13 @@ Command Description:
         address in the "lisp map-server" command and the "lisp group-mapping"
         command. There is a template file called lisp.config.decent-xtr
         available for use. The default setting for this sub-command is "no".
+
+    register-all-rtrs
+        When this is set to "yes" and NAT-traversal is in use, an xTR will
+        register all RTRs it learns from a Map-Server regardless of the RTR's
+        reachability status. The default setting is"no", which means if 
+        RLOC-probe reachability determines the RTR is unreachable, the RTR
+        will not be included in Map-Register messages sent to the Map-Server.
 
 Example:
 

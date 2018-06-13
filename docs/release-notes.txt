@@ -1,4 +1,60 @@
 
+                lispers.net Beta Release Version 0.463
+                --------------------------------------
+
+o Release date: Wed Jun 13 11:04:55 PDT 2018
+
+o Fix crash in map-server when a public-key being registered has invalid
+  JSON format.
+
+o When a map-server provides a list of RTRs in an Info-Reply message, an
+  xTR behind-a-NAT registers them as RLOCs with its global translated RLOC.
+  The ITR side of the xTR will know which RTRs are reachable via RLOC-probing
+  and the map-cache reflects which RLOCs to encapsulate to. However, remote
+  ITRs that may encapsulate to any of these RTRs do not know if those RTRs
+  can reach the ETR side of the xTR. The xTR needs to register the RTRs that
+  can actually reach it. When the lisp-itr process determines an RTR RLOC is
+  not reachable via RLOC-probing, it will send an IPC message to the lisp-etr
+  process to indicate that is should be excluded in Map-Register messages. If
+  the RTR becomes reachable later, then it will be included.
+
+o A new parameter for the "lisp xtr-parameters" command has been introduced
+  called "register-all-rtrs = yes | no" which defaults to "no". Meaning RTRs
+  are only included in Map-Register messages when they are reachable.
+
+o In 'ICV failed" log message, display receive port numnber to debug crypto
+  errors.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.462
+                --------------------------------------
+
+o Release date: Fri Jun  8 09:52:13 PDT 2018
+
+o Don't have remove-lisp-locks.pyo remove file "lisp-ztr".
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.461
+                --------------------------------------
+
+o Release date: Fri May 18 14:47:27 PDT 2018
+
+o The go data-plane cannot find decryption keys for an xTR that is not behind
+  a NAT. Have it do the same logic as the python data-plane. That is, don't
+  use port number to find the decap-key entry.
+
+o When a map-server and RTR are behind different NATs, an xTR will register
+  the global RLOC of the map-server NAT not allowing the RTR to send packets
+  through the NAT. Have the RTR populate its map-cache with the RLOC from
+  the NAT-traversal cache when the RLOCs differ. If the NAT-traversal cache
+  entry has timed out, then use the RLOC from the registered RLOC. This was
+  found when GCP placed different NATs along side lispers.net infrastructure
+  components (i.e. g-ms2 and g-rtr1).
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.460
                 --------------------------------------
 

@@ -267,6 +267,14 @@ def lisp_itr_startup():
     #endif
 
     #
+    # This is used by the ITR to send RTR status change information to the
+    # ETR. Since RLOC-probing runs inside the lisp library, when state changes
+    # occur, an IPC will have to be sent from the timer thread. This is the
+    # only use-case for lisp.lisp_ipc_socket.
+    #
+    lisp.lisp_ipc_socket = lisp_ipc_listen_socket
+
+    #
     # Start map-cache timeout timer.
     #
     threading.Thread(target=lisp_itr_get_capture_info).start()
@@ -1221,6 +1229,7 @@ lisp_itr_commands = {
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
         "decentralized-xtr" : [True, "yes", "no"],
+        "register-all-rtrs" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 
     "lisp interface" : [lispconfig.lisp_interface_command, {
