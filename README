@@ -7,7 +7,8 @@ Locator/ID Separation Protocol (LISP). The implementation runs on the
 following OS platforms:
 
     Ubuntu, Debian, Centos, MacOS
-    Raspbian, Alpine Linux, and Docker
+    Raspbian, Alpine Linux
+    Docker (running guest-OS Ubuntu, Debian, or Centos)
 
 The lispers.net implementation supports the following IETF LISP Working Group
 created RFCs and Internet-Drafts:
