@@ -7,7 +7,8 @@ Locator/ID Separation Protocol (LISP). The implementation runs on the
 following OS platforms:
 
     Ubuntu, Debian, Centos, MacOS
-    Raspbian, Alpine Linux, and Docker
+    Raspbian, Alpine Linux
+    Docker (running guest-OS Ubuntu, Debian, or Centos)
 
 The lispers.net implementation supports the following IETF LISP Working Group
 created RFCs and Internet-Drafts:
@@ -23,6 +24,7 @@ RFC 8061 - Locator/ID Separation Protocol (LISP) Data-Plane Confidentiality
 RFC 8111 - Locator/ID Separation Protocol Delegated Database Tree (LISP-DDT)
 RFC 8112 - Locator/ID Separation Protocol Delegated Database Tree (LISP-DDT) Referral Internet Groper (RIG)
 RFC 8378 - Signal-Free Locator/ID Separation Protocol (LISP) Multicast
+RFC 8439 - ChaCha20 and Poly1305 for IETF Protocols    
 
 draft-ietf-lisp-rfc6830bis - The Locator/ID Separation Protocol (LISP)
 draft-ietf-lisp-rfc6833bis - Locator/ID Separation Protocol (LISP) Control-Plane
