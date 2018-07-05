@@ -102,6 +102,8 @@ lisp_crypto_keys_by_nonce = {}
 lisp_crypto_keys_by_rloc_encap = {}       # Key is "<rloc>:<port>" tuple
 lisp_crypto_keys_by_rloc_decap = {}       # Key is "<rloc>:<port>" tuple
 lisp_data_plane_security = False
+lisp_search_decap_keys = True
+
 lisp_data_plane_logging = False
 lisp_frame_logging = False
 lisp_flow_logging = False
@@ -130,7 +132,13 @@ lisp_l2_overlay = False
 #
 lisp_rloc_probing = False
 lisp_rloc_probe_list = {}
-lisp_register_all_rtrs = False
+
+#
+# Command "lisp xtr-parameters" register-reachabile-rtrs has opposite polarity
+# to lisp_register_all_rtrs. So by default we do not consider RLOC-probing
+# reachability status in registering RTRs to the mapping system.
+#
+lisp_register_all_rtrs = True
 
 #
 # Nonce Echo variables.
@@ -1371,6 +1379,27 @@ def lisp_get_all_addresses():
     return(address_list)
 #enddef
 
+#
+# lisp_get_all_multicast_rles
+#
+# Grep lisp.config and get all multicast RLEs that appear in the configuration.
+# Returns either an empty array or filled with one or more multicast addresses.
+#
+def lisp_get_all_multicast_rles():
+    rles = []
+    out = commands.getoutput('egrep "rle-address =" ./lisp.config')
+    if (out == ""): return(rles)
+
+    lines = out.split("\n")
+    for line in lines:
+        if (line[0] == "#"): continue
+        rle = line.split("rle-address = ")[1]
+        rle_byte = int(rle.split(".")[0])
+        if (rle_byte >= 224 and rle_byte < 240): rles.append(rle)
+    #endfor
+    return(rles)
+#enddef
+
 #------------------------------------------------------------------------------
 
 #
@@ -1646,12 +1675,18 @@ class lisp_packet():
             self.packet_error = "ICV-error"
             funcs = cipher_str + "/" + hash_str
             fail = bold("ICV failed ({})".format(funcs), False)
-            addr_str = red(addr_str, False)
             icv_str = "packet-ICV {} != computed-ICV {}".format(p_icv, c_icv)
             dprint(("{} from RLOC {}, receive-port: {}, key-id: {}, " + \
-                "packet dropped, {}").format(fail, addr_str, self.udp_sport,
-                key.key_id, icv_str))
+                "packet dropped, {}").format(fail, red(addr_str, False),
+                 self.udp_sport, key.key_id, icv_str))
             dprint("{}".format(key.print_keys()))
+
+            #
+            # This is the 4-tuple NAT case. There another addr:port that
+            # should have the crypto-key the encapsulator is using. This is
+            # typically done on the RTR.
+            #
+            lisp_retry_decap_keys(addr_str, lisp + packet, iv, packet_icv)
             return([None, False])
         #endif
 
@@ -8559,7 +8594,14 @@ def lisp_find_sig_in_rloc_set(packet, rloc_count):
         packet = rloc_record.decode(packet, None)
         json_sig = rloc_record.json
         if (json_sig == None): continue
-        json_sig = json.loads(json_sig.json_string)
+
+        try:
+            json_sig = json.loads(json_sig.json_string)
+        except:
+            lprint("Found corrupted JSON signature")
+            continue
+        #endtry
+
         if (json_sig.has_key("signature") == False): continue
         return(rloc_record)
     #endfor
@@ -11455,8 +11497,9 @@ class lisp_rle():
             port = rle_node.translated_port
             rle_name_str = blue(rle_node.rloc_name, html) if \
                 rle_node.rloc_name != None else ""
-            rle_str += "{}{}(L{}){}, ".format( \
-                rle_node.address.print_address_no_iid(), "" if port == 0 \
+            addr_str = rle_node.address.print_address_no_iid()
+            if (rle_node.address.is_local()): addr_str = red(addr_str, html)
+            rle_str += "{}{}(L{}){}, ".format(addr_str, "" if port == 0 \
                 else "-" + str(port), rle_node.level, 
                 "" if rle_node.rloc_name == None else rle_name_str)
         #endfor
@@ -11477,6 +11520,11 @@ class lisp_rle():
         for rle_node in self.rle_nodes:
             if (rle_node.level == level or (level == 0 and 
                 rle_node.level == 128)):
+                if (lisp_i_am_rtr == False and rle_node.address.is_local()):
+                    addr_str = rle_node.address.print_address_no_iid()
+                    lprint("Exclude local RLE RLOC {}".format(addr_str))
+                    continue
+                #endif
                 self.rle_forwarding_list.append(rle_node)
             #endif
         #endfor
@@ -16232,7 +16280,7 @@ def lisp_write_ipc_map_cache(add_or_delete, mc, dont_send=False):
     
     if (multicast):
         if (len(mc.rloc_set) >= 1 and mc.rloc_set[0].rle):
-            for rle_node in mc.rloc_set[0].rle.rle_nodes:
+            for rle_node in mc.rloc_set[0].rle.rle_forwarding_list:
                 addr = rle_node.address.print_address_no_iid()
                 port = str(4341) if rle_node.translated_port == 0 else \
                     str(rle_node.translated_port)                       
@@ -17129,6 +17177,59 @@ def lisp_itr_discover_eid(db, eid, input_interface, routed_interface,
     ipc = lisp_command_ipc(ipc, "lisp-itr")
     lisp_ipc(ipc, lisp_ipc_listen_socket, "lisp-etr")
     return
+#enddef
+
+#
+# lisp_retry_decap_keys
+#
+# A decap-key was copied from x.x.x.x:p to x.x.x.x, but it was the wrong one.
+# Copy x.x.x.x.q to x.x.x.x. This is an expensive function. But it is hardly
+# used. And once it is used for a particular addr_str, it shouldn't be used
+# again.
+#
+# This function is only used when an ICV error occurs when x.x.x.x is the
+# crypto-key used.
+#
+def lisp_retry_decap_keys(addr_str, packet, iv, packet_icv):
+    if (lisp_search_decap_keys == False): return
+
+    #
+    # Only use this function when the key matched was not port based.
+    #
+    if (addr_str.find(":") != -1): return
+
+    parent = lisp_crypto_keys_by_rloc_decap[addr_str]
+
+    for key in lisp_crypto_keys_by_rloc_decap:
+
+        #
+        # Find entry that has same source RLOC.
+        #
+        if (key.find(addr_str) == -1): continue
+
+        #
+        # Skip over parent entry.
+        #
+        if (key == addr_str): continue
+
+        #
+        # If crypto-keys the same, go to find next one.
+        #
+        entry = lisp_crypto_keys_by_rloc_decap[key]
+        if (entry == parent): continue
+
+        #
+        # Try ICV check. If works, then go to this key.
+        #
+        crypto_key = entry[1]
+        if (packet_icv != crypto_key.do_icv(packet, iv)):
+            lprint("Test ICV with key {} failed".format(red(key, False)))
+            continue
+         #endif
+
+        lprint("Changing decap crypto key to {}".format(red(key, False)))
+        lisp_crypto_keys_by_rloc_decap[addr_str] = entry
+    #endif
 #enddef
 
 #------------------------------------------------------------------------------

@@ -160,8 +160,13 @@ def lisp_etr_show_command(clause):
         for gm in lisp.lisp_group_mapping_list.values():
             sources = ""
             for s in gm.sources: sources += s + ", "
+            if (sources == ""):
+                sources = "*"
+            else:
+                sources = sources[0:-2]
+            #endif
             output += lispconfig.lisp_table_row(gm.group_name, 
-                gm.group_prefix.print_prefix(), sources[0:-2], gm.use_ms_name)
+                gm.group_prefix.print_prefix(), sources, gm.use_ms_name)
         #endfor
         output += lispconfig.lisp_table_footer()
     #endif
@@ -326,7 +331,9 @@ def lisp_group_mapping_command(kv_pairs):
             ms_name = value[0]
         #endif
         if (kw == "address"):
-            for source in value: sources.append(source)
+            for source in value:
+                if (source != ""): sources.append(source)
+            #endfor
         #endif
         if (kw == "rle-address"):
             if (rle_address == None):
@@ -665,12 +672,15 @@ def lisp_process_register_timer(lisp_sockets):
 # lisp_is_group_more_specific
 #
 # Take group address in string format and see if it is more specific than
-# the group-prefix in class lisp_group_mapping().
+# the group-prefix in class lisp_group_mapping(). If more specific, return
+# mask-length, otherwise return -1.
 #
 def lisp_is_group_more_specific(group_str, group_mapping):
     iid = group_mapping.group_prefix.instance_id
-    group = lisp.lisp_address(lisp.LISP_AFI_NONE, group_str, 0, iid)
-    return(group.is_more_specific(group_mapping.group_prefix))
+    mask_len = group_mapping.group_prefix.mask_len
+    group = lisp.lisp_address(lisp.LISP_AFI_IPV4, group_str, 32, iid)
+    if (group.is_more_specific(group_mapping.group_prefix)): return(mask_len)
+    return(-1)
 #enddef
 
 #
@@ -685,8 +695,6 @@ def lisp_is_group_more_specific(group_str, group_mapping):
 def lisp_send_multicast_map_register(lisp_sockets, entries):
     length = len(entries)
     if (length == 0): return
-
-    lisp.lprint("Build Map-Register for {} multicast entries".format(length))
 
     afi = None
     if (entries[0][1].find(":") != -1): afi = lisp.LISP_AFI_IPV6 
@@ -707,22 +715,42 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         g_entries.append([group, joinleave])
     #endfor
 
+    entries = []
     for group, joinleave in g_entries: 
-        entries.remove([None, group, joinleave])
         ms_gm = None
         for gm in lisp.lisp_group_mapping_list.values():
-            if (lisp_is_group_more_specific(group, gm)): ms_gm = gm
+            mask_len = lisp_is_group_more_specific(group, gm)
+            if (mask_len == -1): continue
+            if (ms_gm == None or mask_len > ms_gm.group_prefix.mask_len):
+                ms_gm = gm
+            #endif
         #endfor
-        if (ms_gm):
-            iid = ms_gm.group_prefix.instance_id
-            ms_name = ms_gm.use_ms_name
-            rle = ms_gm.rle_address
-            for s in ms_gm.sources: 
-                entries.append([s, group, iid, ms_name, rle, joinleave])
-            #endfor
+        if (ms_gm == None):
+            lisp.lprint("No group-mapping for {}, could be underlay group". \
+                format(group))
+            continue
         #endif
+
+        lisp.lprint("Use group-mapping '{}' {} for group {}".format( \
+            ms_gm.group_name, ms_gm.group_prefix.print_prefix(), group))
+        iid = ms_gm.group_prefix.instance_id
+        ms_name = ms_gm.use_ms_name
+        rle = ms_gm.rle_address
+
+        if (len(ms_gm.sources) == 0): 
+            entries.append(["0.0.0.0", group, iid, ms_name, rle, joinleave])
+            continue
+        #endif
+        for s in ms_gm.sources: 
+            entries.append([s, group, iid, ms_name, rle, joinleave])
+        #endfor
     #endfor
                 
+    length = len(entries)
+    if (length == 0): return
+
+    lisp.lprint("Build Map-Register for {} multicast entries".format(length))
+
     #
     # Build RLE node for RLOC-record encoding. If behind a NAT, we need to
     # insert a global address as the RLE node address. We will do that in
@@ -1449,7 +1477,9 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
 def lisp_register_ipv6_group_entries(group, joinleave):
     ms_gm = None
     for gm in lisp.lisp_group_mapping_list.values():
-        if (lisp_is_group_more_specific(group, gm)): ms_gm = gm
+        mask_len = lisp_is_group_more_specific(group, gm)
+        if (mask_len == -1): continue
+        if (ms_gm == None or mask_len > ms_gm.mask_len): ms_gm = gm
     #endfor
     if (ms_gm == None): return
 
@@ -1553,6 +1583,12 @@ def lisp_etr_process():
     if (lisp.lisp_myrlocs[0] == None): return
 
     #
+    # Find all multicast RLEs so we can receive packets on underlay multicast
+    # groups.
+    #
+    rles = lisp.lisp_get_all_multicast_rles()
+
+    #
     # We need to listen on en0 when doing IGMP testing on MacOS.
     #
     device = "any"
@@ -1561,14 +1597,15 @@ def lisp_etr_process():
 
     pcap = pcappy.open_live(device, 1600, 0, 100)
 
-    pfilter = "(proto 2) or (udp dst port 4342 and ip[28] == 0x12) or "
+    pfilter = "(proto 2) or "
 
     pfilter += "((dst host "
-    for addr in lisp.lisp_get_all_addresses():
+    for addr in lisp.lisp_get_all_addresses() + rles:
         pfilter += "{} or ".format(addr)
     #endif
     pfilter = pfilter[0:-4]
     pfilter += ") and ((udp dst port 4341 or 8472 or 4789) or "
+    pfilter += "(udp dst port 4342 and ip[28] == 0x12) or "
     pfilter += "(proto 17 and (ip[6]&0xe0 == 0x20 or " + \
         "(ip[6]&0xe0 == 0 and ip[7] != 0)))))"
 
@@ -1888,7 +1925,7 @@ lisp_etr_commands = {
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
         "decentralized-xtr" : [True, "yes", "no"],
-        "register-all-rtrs" : [True, "yes", "no"],
+        "register-reachable-rtrs" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 
     "lisp interface" : [lispconfig.lisp_interface_command, {

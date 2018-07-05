@@ -57,7 +57,7 @@ if (os.path.exists("/etc/alpine-release")):
         items = line.split()
         pid = items[0].ljust(8)
         cpu = items[2].ljust(8)
-        process = items[-1]
+        process = items[3] if (items[3].find("lisp-ztr") != -1) else items[-1]
         if (process.isdigit()): process = items[-2] + " " + process
         print "{}{}{}".format(pid, cpu, process)
     #endfor
@@ -78,7 +78,17 @@ for line in lines:
     pid = items[1].ljust(8)
     cpu = items[2].ljust(8)
     mem = items[3].ljust(8)
-    process = " ".join(items[10::])
+
+    if (line.find("lisp-core.py") != -1):
+        process = items[-2] + " " + items[-1]
+    elif (line.find("lisp-join.py") != -1):
+        group = items[-1]
+        if (group.count(".") != 3): group = items[-2] + " " + group
+        process = "lisp-join.py " + group
+    else:
+        process = items[-1]
+    #endif
+
     print "{}{}{}{}".format(pid, cpu, mem, process)
 #endfor
 exit(0)

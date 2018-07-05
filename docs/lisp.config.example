@@ -51,19 +51,24 @@ lisp user-account {
 }
 lisp xtr-parameters {
     rloc-probing = no
-    data-plane-security = no
     nat-traversal = no
+    data-plane-security = no
     nonce-echoing = no
-    data-plane-logging = no
-    flow-logging = no
     checkpoint-map-cache = no
+    ipc-data-plane = no
+    decentralized-xtr = no
+    register-reachable-rtrs = no
+    frame-logging = no
+    flow-logging = no
+    data-plane-logging = no
 }
-
 #-----------------------------------------------------------------------------#
+
+===============================================================================
 
                     lispers.net LISP Command Guide
                     ------------------------------
-	      Last updated: Mon Dec  5 14:31:59 PST 2016
+              Last updated: Thu Jun 21 10:03:32 PDT 2018
 
 This document contains the command syntax defintions that go into configuration
 file lisp.config. You can copy, paste, and edit the clauses below into your
@@ -73,14 +78,55 @@ See details in the header of the lisp.config file on how to interact with
 the LISP subsystem configuration system.
 
 Note where you see "..." below means the clause or sub-clause can be repeated.
+And where you see angle brackets, user provided data must be supplied.
 
 -------------------------------------------------------------------------------
 
-                           System Commands
-                           ---------------
+                            Shell Commands
+                            --------------
 
-Enabling LISP Network Components
----------------------------------
+Run from the lispers.net directory:
+
+RUN-LISP
+    This command starts the lispers.net LISP subsystem when it has not been
+    previously started and is called from RESTART-LISP.
+    
+STOP-LISP
+    This command stops the LISP subsystem and is called from RESTART-LISP.
+
+RESTART-LISP
+    This command will stop and run the lispers.net LISP subsystem. It first
+    calls script STOP-LISP then script RUN-LISP.
+    
+RL
+    This command is a wrapper script to RESTART-LISP. It is used to tailor
+    where the lispers.net directory is installed and how to configure the
+    kernel for any EID addresses local to the system. The user creates their
+    own copy and can find a template in RL-template.
+    
+pslisp
+    Displays each running lispers.net LISP process running as part of the
+    LISP subsystem.
+
+log-packets [force]
+    Toggles "itr = yes|no", "etr = yes|no", "rtr = yes|no" from the "lisp
+    debug" command clause as well as toggle "data-plane-logging = yes|no"
+    from the "lisp xtr-parameters" command clause. Use "force" keyword to do
+    the  toggle if control-plane logging was previously turned on (meaning
+    "data-plane-logging" was set to "no").
+
+more show-xtr
+    When the GO data-plane is running, the show-xtr file displays state that
+    is required to run the LISP data-plane. This file can be displayed from the
+    web interface by clicking on either the "LISP ITR Map-Cache" or "LISP RTR
+    Map-Cache" title. The GO data-plane is a faster less feature-rich LISP
+    data-plane compared to the Python data-plane. To enable the GO data-plane
+    uncomment the LISP_RUN_XTR env variable line in the RUN-LISP script.
+
+-------------------------------------------------------------------------------
+
+                   Enabling LISP Network Components
+                  ---------------------------------
 
 Command syntax:
 
@@ -105,8 +151,10 @@ lisp enable {
     map-resolver = yes
 }
 
-Enabling Debug Logging
-----------------------
+-------------------------------------------------------------------------------
+
+                        Enabling Debug Logging
+                        ----------------------
 
 Command syntax:
 
@@ -134,8 +182,10 @@ lisp debug {
     ddt-node = yes
 }
 
-Configuring Account for Web and API Access
-------------------------------------------
+-------------------------------------------------------------------------------
+
+              Configuring Account for Web and API Access
+              ------------------------------------------
 
 Command syntax:
 
@@ -165,25 +215,27 @@ lisp user-account {
     super-user = no
 }
 
-Configuring LISP Specific Policies
-----------------------------------
+-------------------------------------------------------------------------------
+
+                  Configuring LISP Specific Policies
+                  ----------------------------------
 
 Command syntax:
 
 lisp policy {
     policy-name = <policy-name>
     match {
-	    instance-id = <iid>
+        instance-id = <iid>
         source-eid = <prefix>
         destination-eid = <prefix> | <source-prefix>-><group-prefix>
-	    source-rloc = <prefix>
+        source-rloc = <prefix>
         destination-rloc = <prefix>
-	    rloc-record-name = <name>
-	    geo-name = <geo-name>
-	    elp-name = <elp-name>
-	    rle-name = <rle-name>
-	    json-name = <json-name>
-	    datetime-range = <yyyy-mm-dd-hh:mm:ss> <yyyy-mm-dd-hh:mm:ss>
+        rloc-record-name = <name>
+        geo-name = <geo-name>
+        elp-name = <elp-name>
+        rle-name = <rle-name>
+        json-name = <json-name>
+        datetime-range = <yyyy-mm-dd-hh:mm:ss> <yyyy-mm-dd-hh:mm:ss>
     }
     ...
     set-action = process | drop
@@ -217,8 +269,11 @@ lisp policy {
     set-action = drop
 }
 
-Configuring Interface Specific Parameters
------------------------------------------
+-------------------------------------------------------------------------------
+
+              Configuring Interface Specific Parameters
+              -----------------------------------------
+
 
 Command syntax:
 
@@ -335,11 +390,8 @@ lisp interface {
 
 -------------------------------------------------------------------------------
 
-                           xTR Commands
-                           ------------
-
-Configuring ITR, ETR, or RTR Parameters
----------------------------------------
+               Configuring ITR, ETR, or RTR Parameters
+               ---------------------------------------
 
 Command syntax:
 
@@ -354,7 +406,7 @@ lisp xtr-parameters {
     checkpoint-map-cache = yes | no
     ipc-data-plane = yes | no
     decentralized-xtr = yes | no
-    register-all-rtrs = yes | no
+    register-reachable-rtrs = yes | no
 }
 
 Command Description:
@@ -407,12 +459,12 @@ Command Description:
         device, it is assigned an private IP RLOC address. This address cannot
         be registered to the mapping system so a global/public address needs
         to be obtained. That is what "nat-traversal = yes" achieves. If there
-	    is no NAT on path, the ETR will register its local RLOCs (which are
-	    public addresses) but keep sending Info-Request messages to anticipate
-	    a NAT being placed in between the xTR and the Internet at a later time.
-	    When private addresses are in "rloc" clauses for the "lisp database-
+        is no NAT on path, the ETR will register its local RLOCs (which are
+        public addresses) but keep sending Info-Request messages to anticipate
+        a NAT being placed in between the xTR and the Internet at a later time.
+        When private addresses are in "rloc" clauses for the "lisp database-
         mapping" commands, they can be used by other xTRs behind the same
-	    NATs for local encapsulation (packets do not hair-pin through the RTR).
+        NATs for local encapsulation (packets do not hair-pin through the RTR).
 
     checkpoint-map-cache
         Write map-cache entries to a checkpoint file periodically. And when
@@ -424,29 +476,30 @@ Command Description:
         a external data-plane that may use any packet encapsulation it sees
         fit. This allows the lispers.net control-plane to be used with faster
         software forwarding or hardware forwarding implementations. When this
-	    feature is used, the lispers.net data-plane does not execute.
+        feature is used, the lispers.net data-plane does not execute.
 
     decentralized-xtr
         When this is set to "yes", an xTR will run a Decentrailzed Mapping 
-	    System (DMS). That is an xTR is configured as an ITR, ETR, Map-Resolver
-	    and Map-Server. The "lisp map-server" command must supply a group
-	    address for the peer-group. Details of the design can be found in the
-	    Internet Draft draft-farinacci-lisp-decent. All xTRs will have a
-	    synchronized mapping system realized by draft-ietf-lisp-signal-free-
+        System (DMS). That is an xTR is configured as an ITR, ETR, Map-Resolver
+        and Map-Server. The "lisp map-server" command must supply a group
+        address for the peer-group. Details of the design can be found in the
+        Internet Draft draft-farinacci-lisp-decent. All xTRs will have a
+        synchronized mapping system realized by draft-ietf-lisp-signal-free-
         multicast. There is no dependence on a third-party mapping system. The
-	    xTRs contribute to maintaining a mapping system for their own use. For 
+        xTRs contribute to maintaining a mapping system for their own use. For 
         initial testing, you must create a file "join-<group-address>" in the 
         lispers.net directory. The <group-address> must match the group
         address in the "lisp map-server" command and the "lisp group-mapping"
         command. There is a template file called lisp.config.decent-xtr
         available for use. The default setting for this sub-command is "no".
 
-    register-all-rtrs
+    register-reachable-rtrs
         When this is set to "yes" and NAT-traversal is in use, an xTR will
-        register all RTRs it learns from a Map-Server regardless of the RTR's
-        reachability status. The default setting is"no", which means if 
-        RLOC-probe reachability determines the RTR is unreachable, the RTR
-        will not be included in Map-Register messages sent to the Map-Server.
+        register reachabile RTRs. Only reachable RTRs determine by RLOC-probing
+        will be registered to the mapping system. The default setting is "no",
+        which means all RTRs learned via Info-Reply messages from Map-Servers
+        will be registered to the mapping system regardless of their
+        reachability status.
 
 Example:
 
@@ -460,11 +513,8 @@ lisp xtr-parameters {
 
 -------------------------------------------------------------------------------
 
-                           ITR Commands
-                           ------------
-
-Configure the Map-Resolver address on an ITR and RTR
-----------------------------------------------------
+         Configure the Map-Resolver address on an ITR and RTR
+         ----------------------------------------------------
 
 Command syntax:
 
@@ -495,8 +545,10 @@ lisp map-resolver {
     dns-name = mr2.lispers.net
 }
 
-Configure a Static Map-Cache Entry
-----------------------------------
+-------------------------------------------------------------------------------
+
+                  Configure a Static Map-Cache Entry
+                  ----------------------------------
 
 Command syntax:
 
@@ -505,15 +557,15 @@ lisp map-cache {
         instance-id = <0 - 4294967295>
         eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
         group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
-	    send-map-request = yes | no
+        send-map-request = yes | no
     }
     rloc {
         address = x.x.x.x | xxxx:yyyy::zzzz | xxxx-xxxx-xxxx
-	    rloc-record-name = <name>
-	    elp-name = <elp-name>
-	    rle-name = <rle-name>
-	    priority = <0 - 255>
-	    weight = <0 - 100>
+        rloc-record-name = <name>
+        elp-name = <elp-name>
+        rle-name = <rle-name>
+        priority = <0 - 255>
+        weight = <0 - 100>
     }
     ...
 }
@@ -559,40 +611,37 @@ lisp map-cache {
 lisp map-cache {
     prefix {
         eid-prefix = fd00::/8
-	    send-map-request = yes
+        send-map-request = yes
     }
 }
 
 -------------------------------------------------------------------------------
 
-                           ETR Commands
-                           ------------
-
-Configure a Database-Mapping for Registration in an ETR
--------------------------------------------------------
+       Configure a Database-Mapping for Registration in an ETR
+       -------------------------------------------------------
 
 lisp database-mapping {
     prefix {
         mr-name = <map-resolver-name>
-	    ms-name = <map-server-name>
+        ms-name = <map-server-name>
         instance-id = <0 - 4294967295> | <iid1> <iid2> ... <iidn>
         eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml |
-            '<distinguished-name>' | +<E.164-number> | <geo-prefix>
-	    group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
-	    dynamic-eid = yes | no
-	    secondary-instance-id = <0 - 4294967295>
+                     '<distinguished-name>' | +<E.164-number> | <geo-prefix>
+        group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+        dynamic-eid = yes | no
+        secondary-instance-id = <0 - 4294967295>
         signature-eid = yes | no
     }
     rloc {
         address = x.x.x.x | xxxx:yyyy::zzzz | xxxx-xxxx-xxxx
         interface = <device-name>
-	    rloc-record-name = <name>
-	    geo-name = <geo-name>
-	    elp-name = <elp-name>
-	    rle-name = <rle-name>
-	    json-name = <json-name>
-	    priority = <0 - 255>
-	    weight = <0 - 100>
+        rloc-record-name = <name>
+        geo-name = <geo-name>
+        elp-name = <elp-name>
+        rle-name = <rle-name>
+        json-name = <json-name>
+        priority = <0 - 255>
+        weight = <0 - 100>
     }
     ...
 }
@@ -787,9 +836,10 @@ lisp database-mapping {
     }
 }
 
+-------------------------------------------------------------------------------
 
-Configure the Address of a Map-Server in an ETR
------------------------------------------------
+           Configure the Address of a Map-Server in an ETR
+           -----------------------------------------------
 
 lisp map-server {
     ms-name = <map-server-name>
@@ -828,8 +878,10 @@ lisp map-server {
     authentication-key = subnets-suck
 }
 
-Configure an Explicit Locator Path to be used as an RLOC in the ETR
--------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+     Configure an Explicit Locator Path to be used as an RLOC in the ETR
+     -------------------------------------------------------------------
 
 lisp explicit-locator-path {
     elp-name = <name>
@@ -856,32 +908,34 @@ lisp explicit-locator-path {
     elp-name = west-to-east
     elp-node {
         address = 1.1.1.1
-	    strict = no
-	    probe = no
-	    eid = no
+        strict = no
+        probe = no
+        eid = no
     }
     elp-node {
         address = 2.2.2.2
-	    strict = no
-	    probe = no
-	    eid = no
+        strict = no
+        probe = no
+        eid = no
     }
     elp-node {
         address = 10.1.1.1
-	    strict = no
-	    probe = no
-	    eid = yes
+        strict = no
+        probe = no
+        eid = yes
     }
 }
 
-Configure a Replication List Entry to be used as an RLOC in an ETR
-------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+      Configure a Replication List Entry to be used as an RLOC in an ETR
+      ------------------------------------------------------------------
 
 lisp replication-list-entry {
     rle-name = <name>
     rle-node {
         address = <address>
-	    level = <0-255>
+        level = <0-255>
     }
     ...
 }
@@ -902,28 +956,30 @@ lisp replication-list-entry {
     rle-name = att
     rle-node {
         address = 1.1.1.1
-	    level = 0
+        level = 0
     }
     rle-node {
         address = 2.2.2.2
-	    level = 0
+        level = 0
     }
     rle-node {
         address = 11.11.11.11
-	    level = 1
+        level = 1
     }
     rle-node {
         address = 22.22.22.22
-	    level = 1
+        level = 1
     }
 }
 
-Configure Geo Coordinates to be used as an RLOC in an ETR
----------------------------------------------------------
+-------------------------------------------------------------------------------
+
+         Configure Geo Coordinates to be used as an RLOC in an ETR
+         ---------------------------------------------------------
 
 lisp geo-coordinates {
-     geo-name = <geo-name>
-     geo-tag = <d-m-s-northsouth>-<d-m-s-eastwest>-[<altitude>][/<km>]
+    geo-name = <geo-name>
+    geo-tag = <d-m-s-northsouth>-<d-m-s-eastwest>-[<altitude>][/<km>]
 }
 
 Command Description: 
@@ -956,8 +1012,10 @@ lisp geo-coordinates {
     geo-tag = 37-11-41-N-121-49-0-W/100
 }
 
-Configure a JSON dictionary array to be used as an RLOC-record in an ETR
-------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+   Configure a JSON dictionary array to be used as an RLOC-record in an ETR
+   ------------------------------------------------------------------------
 
 lisp json {
     json-name = <json-name>
@@ -981,8 +1039,10 @@ lisp database-mapping {
     }
 }
 
-Configure a Group Mapping so Source/Group pairs are Registered by an ETR
-------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+    Configure a Group Mapping so Source/Group pairs are Registered by an ETR
+    ------------------------------------------------------------------------
 
 lisp group-mapping {
     group-name = <group-name>
@@ -1001,9 +1061,9 @@ Command Description:
     system for groups contained in <group-prefix> are IGMP/MLD joined. Multiple
     sources can be configured. For the example below, when IGMP joins 
     224.1.1.1, the ETR will register (1.1.1.1, 224.1.1.1) and (2.2.2.2,
-    224.1.1.1) to the mapping database system. When "address = 0.0.0.0" or
-    "address = 0::0" is configured, then a (*,G) entry is registered as
-    (0.0.0.0/0, G) or (0::0/0, G).
+    224.1.1.1) to the mapping database system. When no source command clause
+    is configured, then a (*,G) entry is registered as (0.0.0.0/0, G) or
+    (0::0/0, G).
 
 Example:
 
@@ -1012,24 +1072,18 @@ lisp group-mapping {
     group-prefix = 224.1.1.1/32
     sources {
         address = 1.1.1.1
-	    address = 2.2.2.2
+        address = 2.2.2.2
     }
 }
 lisp group-mapping {
     group-name = join-star-g
     group-prefix = 224.1.1.1/32
-    sources {
-        address = 0.0.0.0
-    }
 }
 
 -------------------------------------------------------------------------------
 
-                        Map-Resolver Commands
-                        ---------------------
-
-Configure the Address of the DDT root node for a Map-Resolver
--------------------------------------------------------------
+        Configure the Address of the DDT root node for a Map-Resolver
+        -------------------------------------------------------------
 
 lisp ddt-root {
     address = x.x.x.x | xxxx:yyyy::zzzz
@@ -1056,9 +1110,10 @@ lisp ddt-root {
     weight = 50
 }
 
+-------------------------------------------------------------------------------
 
-Configure a Static Referral-Cache Entry in a Map-Resolver
----------------------------------------------------------
+          Configure a Static Referral-Cache Entry in a Map-Resolver
+          ---------------------------------------------------------
 
 lisp referral-cache {
     prefix {
@@ -1068,8 +1123,8 @@ lisp referral-cache {
     }
     referral {
         address = x.x.x.x | xxxx:yyyy::zzzz
-	    priority = <0 - 255>
-	    weight = <0 - 100>
+        priority = <0 - 255>
+        weight = <0 - 100>
     }
     ...
 }
@@ -1095,11 +1150,8 @@ lisp referral-cache {
 
 -------------------------------------------------------------------------------
 
-                         Map-Server Commands
-                         --------------------
-
-Configure a LISP Site to Accept Registrations in a Map-Server
--------------------------------------------------------------
+         Configure a LISP Site to Accept Registrations in a Map-Server
+         -------------------------------------------------------------
 
 lisp site {
     site-name = <string>
@@ -1108,17 +1160,17 @@ lisp site {
     authentication-key = [<key-id-0-255>]<string> ... [<key-id-0-255>]<string>
     allowed-prefix {
         instance-id = <0 - 4294967295> | <iid>-<iid>
- 	    eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
-	    group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
-	    accept-more-specifics = yes | no
-	    force-proxy-reply = yes | no
- 	    force-nat-proxy-reply = yes | no
-	    pitr-proxy-reply-drop = yes | no
-	    proxy-reply-action = native-forward | drop
-	    force-ttl = <seconds>
-	    echo-nonce-capable = yes | no
+        eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+        group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+        accept-more-specifics = yes | no
+        force-proxy-reply = yes | no
+        force-nat-proxy-reply = yes | no
+        pitr-proxy-reply-drop = yes | no
+        proxy-reply-action = native-forward | drop
+        force-ttl = <seconds>
+        echo-nonce-capable = yes | no
         require-signature = yes | no
-	    policy-name = <policy-name>
+        policy-name = <policy-name>
     }
     ... 
     allowed-rloc {
@@ -1209,7 +1261,7 @@ Command Description:
 	    policy-name = <policy-name>
             Configures the policy defined in the "lisp policy" command clause.
 
-    allowed-rloc {
+    allowed-rloc
         Multiple allowed-rloc clauses can be configured so EID registrations
         can be further contstrained based on the RLOC which is sending the
         Map-Register message. 
@@ -1296,8 +1348,10 @@ lisp site {
     }
 }
 
-Configure a Map-Server-Peer in Map-Servers that run LISP-DDT
-------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+         Configure a Map-Server-Peer in Map-Servers that run LISP-DDT
+         ------------------------------------------------------------
 
 lisp map-server-peer {
     prefix {
@@ -1340,8 +1394,10 @@ lisp map-server-peer {
     }
 }
 
-Configure an Authoritative Prefix in Map-Servers that run LISP-DDT
-------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+      Configure an Authoritative Prefix in Map-Servers that run LISP-DDT
+      ------------------------------------------------------------------
 
 lisp ms-authoritative-prefix {
     instance-id = <0 - 4294967295> | <iid>-<iid>
@@ -1364,8 +1420,10 @@ lisp ms-authoritative-prefix {
     eid-prefix = 2001:0001::/32
 }
 
-Configure a RTR List that Map-Servers provide to ETRs behind NATs
------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+      Configure a RTR List that Map-Servers provide to ETRs behind NATs
+      -----------------------------------------------------------------
 
 lisp rtr-list {
     address = <rtr-rloc>
@@ -1386,8 +1444,10 @@ lisp rtr-list {
     address = 2.2.2.2
 }
 
-Configure Crypto Hash Values for Authenticated IPv6 EID Support
----------------------------------------------------------------
+-------------------------------------------------------------------------------
+        
+       Configure Crypto Hash Values for Authenticated IPv6 EID Support
+       ---------------------------------------------------------------
 
 lisp eid-crypto-hash {
     instance-id = <0 - 4294967295> | *
@@ -1423,11 +1483,8 @@ lisp eid-crypto-hash {
 
 -------------------------------------------------------------------------------
 
-                          DDT-Node Commands
-                          -----------------
-
-Configure an Authoritative Prefix in a LISP-DDT Node
-----------------------------------------------------
+           Configure an Authoritative Prefix in a LISP-DDT Node
+           ----------------------------------------------------
 
 lisp ddt-authoritative-prefix {
     instance-id = <0 - 4294967295> | <iid>-<iid>
@@ -1451,8 +1508,10 @@ lisp ddt-authoritative-prefix {
     eid-prefix = 2001:0001::/32
 }
 
-Configure a EID-Prefix Delegation in a LISP-DDT Node
-----------------------------------------------------
+-------------------------------------------------------------------------------
+
+           Configure a EID-Prefix Delegation in a LISP-DDT Node
+           ----------------------------------------------------
     
 lisp delegation {
     prefix {
@@ -1573,4 +1632,5 @@ lisp site {
     }    
 }
 
------------------------------------------------------------------------------
+===============================================================================
+

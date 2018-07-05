@@ -733,7 +733,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         #
         level = rle.rle_nodes[0].level
         orig_len = len(packet.packet)
-        for node in rle.rle_nodes:
+        for node in rle.rle_forwarding_list:
             if (node.level != level): return
 
             packet.outer_dest.copy_address(node.address)
@@ -877,7 +877,8 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
     # leading the EIDs.
     #
     add = "sudo ip{}tables -t raw -A lisp -j ACCEPT -d {}"
-    addr_set = ["127.0.0.1", "::1", "224.0.0.0/4", "ff00::/8", "fe80::/16"]
+    addr_set = ["127.0.0.1", "::1", "224.0.0.0/4 -p igmp", "ff00::/8",
+        "fe80::/16"]
     addr_set += sources + lisp.lisp_get_all_addresses()
     for addr in addr_set:
         six = "" if addr.find(":") == -1 else "6"
@@ -1229,7 +1230,7 @@ lisp_itr_commands = {
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
         "decentralized-xtr" : [True, "yes", "no"],
-        "register-all-rtrs" : [True, "yes", "no"],
+        "register-reachable-rtrs" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 
     "lisp interface" : [lispconfig.lisp_interface_command, {

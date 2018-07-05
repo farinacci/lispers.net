@@ -17,6 +17,7 @@ import hashlib
 import select
 import copy
 import math
+from json import dumps as json_dumps
 
 #------------------------------------------------------------------------------
 
@@ -147,7 +148,7 @@ def lisp_banner_bottom():
 
     banner = '''<br><hr style="border: none; border-bottom: 1px solid gray;">
         <i><font size="2">{} - Uptime 
-        {}, Version {}<br>Copyright 2013-2017 - all rights reserved by
+        {}, Version {}<br>Copyright 2013-2018 - all rights reserved by
         <a href="http://www.lispers.net"><b>lispers.net</b></a> LLC<br>
         Features/Bugs go to <a href=
 "mailto:support@lispers.net?subject=lispers.net v{} bug-report from '{}'">
@@ -623,9 +624,9 @@ def lisp_setup_kv_pairs(clause):
     if (count != 0):
         kv_pairs["decentralized-xtr"] = [""] * count
     #endif
-    count = clause.count("register-all-rtrs =")
+    count = clause.count("register-reachable-rtrs =")
     if (count != 0):
-        kv_pairs["register-all-rtrs"] = [""] * count
+        kv_pairs["register-reachable-rtrs"] = [""] * count
     #endif
 
     #
@@ -2573,8 +2574,9 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads):
     #
     # Create link to /lisp/show/lisp-xtr if lisp-xtr is running.
     #
+    zededa = os.path.exists("./show-ztr")
     mc_str = "Map-Cache"
-    if (os.getenv("LISP_RUN_LISP_XTR") != None):
+    if (os.getenv("LISP_RUN_LISP_XTR") != None or zededa):
         mc_str = '<a href="/lisp/show/lisp-xtr">Map-Cache</a>'
     #endif
 
@@ -2775,8 +2777,8 @@ def lisp_xtr_command(kv_pair):
         if (kw == "decentralized-xtr"):
             lisp.lisp_decent_configured = (value == "yes")
         #endif
-        if (kw == "register-all-rtrs"):
-            lisp.lisp_register_all_rtrs = (value == "yes")
+        if (kw == "register-reachable-rtrs"):
+            lisp.lisp_register_all_rtrs = (value == "no")
         #endif
     #endfor
 #enddef
@@ -3209,12 +3211,12 @@ def lisp_put_clause_for_api(data):
     #
     append = False
     if (replace_only_command == False):
-        append = commands.getoutput("egrep '{}' ./lisp.config".format(command))
-        if (append == ""):
-            append = True
-        else:
-            append = (append[0] == ">" or append[0] == "<")
-        #endif
+        append = True
+        out = commands.getoutput("egrep '{}' ./lisp.config".format(command))
+        out = out.split("\n")
+        for line in out: 
+            if (line[0:len(command)] == command): append = False
+        #endfor
     #endif
 
     #
@@ -3233,7 +3235,9 @@ def lisp_put_clause_for_api(data):
     #
     for parm in parms:
         if (type(parms) == dict):
-            clause += "    " + parm + " = " + parms[parm] + "\n"
+            value = parms[parm]
+            if (type(value) == dict): value = json_dumps(value)
+            clause += "    " + parm + " = " + value + "\n"
             continue
         #endif
 
@@ -3288,7 +3292,7 @@ def lisp_put_clause_for_api(data):
         # We are inserting or maybe replacing an existing clause.
         #
         if (found_command == False and lisp_begin_clause(line) and 
-            line.find(command) != -1):
+            line[0:len(command)] == command):
             if (replace_only_command == False):
                 wf.write(line)
                 for nline in clause: wf.write(nline)
@@ -3317,7 +3321,7 @@ def lisp_put_clause_for_api(data):
         # Here we do a replace if the command is a single instance and can
         # be replaced. 
         #
-        if (lisp_begin_clause(line) and line.find(command) != -1):
+        if (lisp_begin_clause(line) and line[0:len(command)] == command):
             if (replace_only_command):
                 skip = True
                 for nline in clause: wf.write(nline)

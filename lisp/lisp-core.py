@@ -321,7 +321,15 @@ def lisp_show_lisp_xtr():
         return(lisp_core_login_page())
     #endif
 
-    f = open("./show-xtr", "r"); lines = f.read(); f.close()
+    #
+    # Special case to look for a Zededa data-plane. If it does not exist, check
+    # the lispers.net go data-plane.
+    #
+    if (os.path.exists("./show-ztr")):
+        f = open("./show-ztr", "r"); lines = f.read(); f.close()
+    else:
+        f = open("./show-xtr", "r"); lines = f.read(); f.close()
+    #endif
 
     new = ""
     lines = lines.split("\n")
@@ -741,8 +749,8 @@ def lisp_clear_conf_verify_command():
 def lisp_get_port_on_command_line():
     port = ""
 
-    for p in ["443", "-8080"]:
-        c = 'ps auxww | egrep "lisp-core.pyo {}" | egrep -v egrep'.format(p)
+    for p in ["443", "-8080", "8080"]:
+        c = 'ps auxww | egrep "lisp-core.pyo {}" | egrep -v grep'.format(p)
         output = commands.getoutput(c)
         if (output == ""): continue
 
@@ -2287,6 +2295,12 @@ def lisp_core_startup(bottle_port):
     lisp.lprint("Listen on {}, port 4342".format(address))
 
     #
+    # Check if we are a map-server listening on a multicast group. This
+    # is a decentralized-xtr with a multicast map-server address.
+    #
+    lisp_check_decent_xtr_multicast(lisp_control_listen_socket)
+
+    #
     # Open datagram socket for 4341. We will not listen on it. We just don't
     # want the kernel to send port unreachables to ITRs and PITRs. If another
     # data-plane is running, it may listen on the data port 4341. Let it.
@@ -2368,6 +2382,57 @@ def lisp_core_shutdown():
     lisp.lisp_close_socket(lisp_ipc_control_socket, "lisp-core-pkt")
     lisp.lisp_close_socket(lisp_control_listen_socket, "")
     lisp.lisp_close_socket(lisp_encap_socket, "")
+#enddef
+
+#
+# lisp_check_decent_xtr_multicast
+#
+# Check to see if "decentralized-xtr = yes" and if any map-server clause has
+# a multicast address configured. If so, setsockopt so we can receive
+# multicast Map-Register messages.
+#
+def lisp_check_decent_xtr_multicast(lisp_socket):
+
+    #
+    # Is this a decent-xtr?
+    #
+    out = commands.getoutput('egrep "decentralized-xtr = yes" ./lisp.config')
+    if (out == ""): return
+    if (out[1] == "#"): return
+
+    #
+    # Find multicast map-server addresses.
+    #
+    cmd = 'egrep -A 2 "lisp map-server {" ./lisp.config | egrep "address = "'
+    out = commands.getoutput(cmd)
+    if (out == ""): return
+
+    lines = out.split("\n")
+    group = None
+    for line in lines:
+        group = line.split("address = ")[1]
+        ho_byte = int(group.split(".")[0])
+        if (ho_byte >= 224 and ho_byte < 240): break
+        group = None
+    #endfor
+    if (group == None): return
+
+    #
+    # Find eth0 IP address.
+    #
+    out = commands.getoutput('ifconfig eth0 | egrep "inet "')
+    if (out == ""): return
+    intf_addr = out.split()[1]
+
+    #
+    # Set socket options on socket.
+    #
+    i = socket.inet_aton(intf_addr)
+    g = socket.inet_aton(group)
+    lisp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    lisp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, i)
+    lisp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, g + i)
+    lisp.lprint("Setting multicast listen socket for group {}".format(group))
 #enddef
 
 #------------------------------------------------------------------------------

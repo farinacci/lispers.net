@@ -65,8 +65,8 @@ print("done")
 # Check and ask if you want to build release with debug code in it.
 #
 print "Checking for any lisp.debug() calls ... ", 
-command = 'egrep "debug\(" {}/lisp/*py | egrep -v "def|self" > /dev/null'. \
-    format(root)
+command = ('egrep "debug\(" {}/lisp/*py | egrep -v "def|self|_debug" > ' + \
+    '/dev/null').format(root)
 status = os.system(command)
 print("done")
 if (status == 0):
@@ -89,7 +89,7 @@ os.system("rm latest; ln -sf {} latest".format(dir))
 
 print "Copying files from ../lisp to " + dir + " build directory ...",
 command = '''
-cp ../lisp/lispapi.txt ../lisp/*py ../lisp/*-LISP ../lisp/RL-* ../lisp/*.pem.default ../lisp/release-notes.txt ../lisp/pslisp ../lisp/lispers.net-geo.html ./{}/.
+cp ../lisp/lispapi.txt ../lisp/*py ../lisp/*-LISP ../lisp/RL-* ../lisp/*.pem.default ../lisp/release-notes.txt ../lisp/pslisp ../lisp/log-packets ../lisp/lispers.net-geo.html ./{}/.
 '''.format(dir)
 
 status = os.system(command)
@@ -198,7 +198,8 @@ os.system('cp ./py-depend/pip-requirements.txt ./{}/.'.format(dir))
 tar_file = "lispers.net-" + cpu + "-" + dir + ".tgz"
 print "Build tgz file {} ... ".format(tar_file),
 files = "*.pyo *.txt lisp.config.example lisp-cert.pem.default *-LISP " + \
-    "RL-* get-pip.py pslisp lispers.net-geo.html {}".format(lisp_xtr)
+    "RL-* get-pip.py pslisp log-packets lispers.net-geo.html {}".format( \
+    lisp_xtr)
 command = "cd {}; export COPYFILE_DISABLE=true; tar czf {} {}".format(dir,
     tar_file, files)
 status = os.system(command)

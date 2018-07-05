@@ -15,13 +15,13 @@ set itr = $status
 # Remove each lispers.net LISP processes. Do not continue until they are 
 # all gone.
 #
-set pids = `./pslisp | egrep "python|lisp-xtr" | cut -f 1 -d " "`
+set pids = `./pslisp | egrep "lisp-" | egrep -v "lisp-ztr" | cut -f 1 -d " "`
 echo "Stopping LISP processes [$pids] ..."
 foreach p ($pids)
     sudo kill $p
 end
 while 1
-    set pids = `./pslisp | egrep python | cut -f 1 -d " "`
+    set pids = `./pslisp | egrep "lisp-" | egrep -v "lisp-ztr" | cut -f 1 -d " "`
     if ($pids == "") then
         break
     else

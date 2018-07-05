@@ -1,4 +1,156 @@
 
+                lispers.net Beta Release Version 0.471
+                --------------------------------------
+
+o Release date: Thu Jul  5 11:03:10 PDT 2018
+
+o Fix displaying local RLOC in RLE as red.
+
+o When a map-server is searching for a signature JSON string in an RLOC-record,
+  protect itself from a corrupted JSON format.
+
+o Have the decentralized-xtr support Map-Registering to a multicast map-server
+  that is distributed via underlay multicast. Each xTR is configured with a
+  single "lisp map-server" command that points to the underlay multicast
+  group and a single "lisp map-resolver" that points to localhost.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.470
+                --------------------------------------
+
+o Release date: Mon Jul  2 14:20:21 PDT 2018
+
+o When looking up configured group mappings, do longest match. We found a
+  longer group prefix but continued through the loop and matched on the shorter
+  group prefix so used the shorter one in error.
+
+o When a (*,G) is desired to be joined, do not require a "sources" clause
+  in the "lisp group-mapping" command.
+
+o When the app lisp-join.py is running, have it killed when STOP-LISP is used
+  and have it show up in the ./pslisp display.
+
+o When a multicast address RLE is configured in a "lisp group-mapping"
+  command, the ETR side of the xTR must pcap on it so it can receive packets
+  addressed to multicast groups with port 4341. Adding this puts support
+  for underlay multicast in the lispers.net implementation avoiding head-end-
+  replication when underlay multicast is availble.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.469
+                --------------------------------------
+
+o Release date: Tue Jun 26 17:25:37 PDT 2018
+
+o On all variations of Linux systems, have pslisp print process name and not
+  "python <process-name>". Then there will be a consistent display among all
+  LISP processes that may have been implemented with different programming
+  languages.
+
+o Have STOP-LISP stop all lispers.net processes but not any external data-plane
+  processes that have a process name that starts with "lisp-".
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.468
+                --------------------------------------
+
+o Release date: Mon Jun 25 16:24:47 PDT 2018
+
+o If a external data-plane is active, from the map-cache display, show the
+  file "show-ztr" if it exists.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.467
+                --------------------------------------
+
+o Release date: Thu Jun 21 17:39:25 PDT 2018
+
+o Fix critial API bug introduced in release 0.466. The system is stable as
+  long you don't issue and API calls to change "lisp debug" or "lisp xtr-
+  parameters". Fixed now.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.466
+                --------------------------------------
+
+o Release date: Thu Jun 21 15:57:22 PDT 2018
+
+o Have tool ./log-packets check for env variable LISP_PW when the local system
+  is password protected. Assumes root is username.
+
+o Added shell commands to the Documentation Page and did some reformatting.
+
+o When parsing "json-string" as a keyword in the transmitted message, the
+  value fields is a dictionary array and not a string. This allows to have
+  nested json support.
+
+o Make sure when a lisp.config command name appears in a comment, we don't
+  think it is a replacement versus an append.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.465
+                --------------------------------------
+
+o Release date: Wed Jun 20 14:37:39 PDT 2018
+
+o Add 2018 to copyright notice on landing page.
+
+o Tighten up the RLOC-probe request filter so an ETR gets RLOC-probes only
+  addressed to its RLOC.
+
+o A new tool called "./log-packets [force]" is available in the lispers.net
+  directory to enable or disable data-plane logging. The command is a toggle
+  to turn on and off logging of encapsulated and decapsulated packets in an
+  ITR, ETR, xTR, or RTR. The command does nothing if control-plane logging is
+  enabled. You can use the "force" keyword to go from control-plane logging
+  to both control-plane and data-plane logging.
+
+o When restarting the LISP subsystem from the web interface, it is mistakenly
+  restarting the lisp-core process with port 443 and not the port that was
+  running with the process at the time of restart. Fixed now.
+
+o Do not include a local RLOC in an RLE list for a non-RTR xTR. This can
+  happen when a local source sending to a group, also joins the group. This
+  could happen for (S,G) or (*,G) mapping entries.
+
+o Have the LISP control-plane send RLE entries from the rle.rle_forwarding_
+  list rather than from the rle.rle_nodes list. The former has been filtered
+  to not create loops.
+
+o Make sure that the kernel only delivers IGMP packets that are addressed
+  to multicast groups. All data groups are sent via LISP. That is add a
+  "-p igmp" to the iptables rules for the lisp-itr process.
+
+o Display a local RLOC in a RLE list as red, so it stands out that it is not
+  part of the forwarding list.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.464
+                --------------------------------------
+
+o Release date: Mon Jun 18 15:47:24 PDT 2018
+
+o When a NAT/firewall device does port mapping based on a distinct 4-tuple, a
+  decapsulator looks up the wrong lisp-crypto state since the source-port
+  of the packet is different than the crypto-key negotiated port number. Have
+  a fall back plan so when the packet source-port plus source-RLOC lookup is
+  not found in the decap-key-cache, use source-RLOC. The source-RLOC always
+  has a copy of the last negoitated crypto-keys.
+
+o Change 'lisp xtr-parameters" command parameter "register-all-rtrs = yes|no"
+  introduced in last release. I want the functionality to default the other
+  way. So the new parameter name is "register-reachable-rtrs = yes|no" which
+  defaults to "no".
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.463
                 --------------------------------------
 
