@@ -1,4 +1,33 @@
 
+                lispers.net Beta Release Version 0.473
+                --------------------------------------
+
+o Release date: Sat Jul 21 11:41:02 CDT 2018
+
+o Fix crash in lisp_process_api() when a URL for a API request does not have
+  parameters.
+
+o Handle the case where a "signature-eid" may not be a crypto-EID. That is,
+  not an IPv6 address or one with a non-matching EID hash length.
+
+o Map-Requests were not being signed when sent for IPv4 EIDs and a signature-
+  EID was configured.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.472
+                --------------------------------------
+
+o Release date: Tue Jul 10 12:00:46 PDT 2018
+
+o Return last bidirectional hop-count in RLOC data from map-cache read API.
+
+o Return recent bidirectional hop-count in RLOC data from map-cache read API.
+
+o Return recent RLOC-probe RTTs in RLOC data from map-cache read API.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.471
                 --------------------------------------
 

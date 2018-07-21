@@ -3887,12 +3887,14 @@ class lisp_map_request():
         #
         if (json_string.has_key("source-eid") == False): return(packet)
         eid = json_string["source-eid"]
-        if (eid.count(":") != 7): 
+        afi = LISP_AFI_IPV4 if eid.count(".") == 3 else LISP_AFI_IPV6 if \
+              eid.count(":") == 7 else None
+        if (afi == None):
             lprint("Bad JSON 'source-eid' value: {}".format(eid))
             return(None)
         #endif
 
-        self.source_eid.afi = LISP_AFI_IPV6
+        self.source_eid.afi = afi
         self.source_eid.store_address(eid)
 
         if (json_string.has_key("signature-eid") == False): return(packet)
@@ -6867,9 +6869,9 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
                 "no signature found").format(bold("failed", False)))
         else:
             sig_eid = map_request.signature_eid
-            x, pubkey, y = lisp_lookup_public_key(sig_eid)
-            sig_good = map_request.verify_map_request_sig(pubkey)
-            pf = bold("passed", False) if sig_good else bold("failed", False)
+            hash_eid, pubkey, good = lisp_lookup_public_key(sig_eid)
+            if (good): good = map_request.verify_map_request_sig(pubkey)
+            pf = bold("passed", False) if good else bold("failed", False)
             lprint("EID-crypto-hash signature verification {}".format(pf))
         #endif
     #endif
@@ -6923,9 +6925,10 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
             lprint("Signature required for site {}".format(site_name))
             sig_good = False
         else:
-            x, pubkey, y = lisp_lookup_public_key(sig_eid)
-            sig_good = map_request.verify_map_request_sig(pubkey)
-            pf = bold("passed", False) if sig_good else bold("failed", False)
+            sig_eid = map_request.signature_eid
+            hash_eid, pubkey, good = lisp_lookup_public_key(sig_eid)
+            if (good): good = map_request.verify_map_request_sig(pubkey)
+            pf = bold("passed", False) if good else bold("failed", False)
             lprint("Required signature verification {}".format(pf))
         #endif
     #endif
@@ -8677,6 +8680,8 @@ def lisp_lookup_public_key(eid):
     # as a distinguished-name EID.
     #
     pubkey_hash = lisp_get_eid_hash(eid)
+    if (pubkey_hash == None): return([None, None, False])
+
     pubkey_hash = "hash-" + pubkey_hash
     hash_eid = lisp_address(LISP_AFI_NAME, pubkey_hash, len(pubkey_hash), iid)
     group = lisp_address(LISP_AFI_NONE, "", 0, iid)
@@ -8736,6 +8741,11 @@ def lisp_verify_cga_sig(eid, rloc_record):
     # Lookup CGA hash in mapping datbase to get public-key.
     #
     hash_eid, pubkey, lookup_good = lisp_lookup_public_key(sig_eid)
+    if (hash_eid == None):
+        eid_str = green(sig_eid.print_address(), False)
+        lprint("  Could not parse hash in EID {}".format(eid_str))
+        return(False)
+    #endif
 
     found = "found" if lookup_good else bold("not found", False)
     eid_str = green(hash_eid.print_address(), False)
@@ -13603,18 +13613,16 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc):
     #endif
 
     #
-    # If lookup is for an IPv6 EID and there is a private key file in current
-    # directory, tell lisp_map_request() to sign Map-Request. For an RTR,
-    # we want to verify its map-request signature, so it needs to include its
-    # own IPv6 EID that matches the private-key file.
+    # If lookup is for an IPv6 EID or there is a signature key configured and
+    # there is a private key file in current directory, tell lisp_map_request()
+    # to sign Map-Request. For an RTR, we want to verify its map-request
+    # signature, so it needs to include its own IPv6 EID that matches the
+    # private-key file.
     #
-    if (map_request.target_eid.is_ipv6() and map_request.rloc_probe == False):
+    if (map_request.rloc_probe == False):
         db = lisp_get_signature_eid()
         if (db):
             map_request.signature_eid.copy_address(db.eid)
-            map_request.privkey_filename = "./lisp-sig.pem"
-        elif (seid != None):
-            map_request.signature_eid.copy_address(seid)
             map_request.privkey_filename = "./lisp-sig.pem"
         #endif
     #endif
@@ -14647,10 +14655,12 @@ def lisp_process_api(process, lisp_socket, data_structure):
         #endif
     #endif
     if (api_name ==  "map-server"):
-        data = lisp_process_api_ms_or_mr(True, json.loads(parms))
+        parms = {} if (parms == "") else json.loads(parms)
+        data = lisp_process_api_ms_or_mr(True, parms)
     #endif
     if (api_name ==  "map-resolver"):
-        data = lisp_process_api_ms_or_mr(False, json.loads(parms))
+        parms = {} if (parms == "") else json.loads(parms)
+        data = lisp_process_api_ms_or_mr(False, parms)
     #endif
 
     #
@@ -14731,6 +14741,12 @@ def lisp_gather_map_cache_data(mc, data):
             r["last-rloc-probe-reply"] = lisp_print_elapsed(reply)
             r["rloc-probe-rtt"] = str(rloc.rloc_probe_rtt)
         #endif
+        r["rloc-hop-count"] = rloc.rloc_probe_hops
+        r["recent-rloc-hop-counts"] = rloc.recent_rloc_probe_hops
+
+        recent_rtts = []
+        for rtt in rloc.recent_rloc_probe_rtts: recent_rtts.append(str(rtt))
+        r["recent-rloc-probe-rtts"] = recent_rtts
 
         rloc_set.append(r)
     #endfor
