@@ -1,4 +1,38 @@
 
+                lispers.net Beta Release Version 0.475
+                --------------------------------------
+
+o Release date:
+
+o When copying lisp.config.example to lisp.config, stop copying after "#----
+  ... ----#". This is only a problem if you use a lispers.net supplied
+  Dockerfile. This only happens when no lisp.config file exists when you
+  start ./RESTART-LISP.
+
+o Add LISP_DNS_LOOKUP in the RUN-LISP script so a user can tell the lisp-rtr
+  process when it should do a DNS lookup for NAT hostnames. On certain
+  platforms the DNS lookup takes too long and times out the IPC wait time
+  to display the RTR output page. If you want to disable DNS lookups, you
+  comment out this line in the RUN-LISP startup script.
+
+o When receiving RLOC-probe requests or replies on a UDP socket, log the fact
+  they are not processed. They are processed by an ITR/ETR/RTR on the pcap
+  receive path so they can examine the IP header TTL for hop-count
+  measurements.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.474
+                --------------------------------------
+
+o Release date: Thu Jul 26 18:33:17 PDT 2018
+
+o Do not call lisp_check_decent_xtr_multicast() if a lisp.config file doesn't
+  exist. Have lisp_startup_core() create the file from lisp.config.example
+  before lisp_check_decent_xtr_multicast() is called.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.473
                 --------------------------------------
 

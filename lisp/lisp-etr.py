@@ -2034,7 +2034,10 @@ while (True):
         if (port == lisp.LISP_DATA_PORT):
             lisp_etr_nat_data_plane(lisp_raw_socket, packet, source)
         else:
-            if (lisp.lisp_is_rloc_probe_request(packet[0])): continue
+            if (lisp.lisp_is_rloc_probe_request(packet[0])):
+                lisp.lprint("ETR ignoring RLOC-probe request, using pcap")
+                continue
+            #endif
             send_register = lisp.lisp_parse_packet(lisp_send_sockets, packet, 
                 source, port)
 
@@ -2081,7 +2084,10 @@ while (True):
         elif (opcode == "api"):
             lisp.lisp_process_api("lisp-etr", lisp_ipc_listen_socket, packet)
         else:
-            if (lisp.lisp_is_rloc_probe_request(packet[0])): continue
+            if (lisp.lisp_is_rloc_probe_request(packet[0])):
+                lisp.lprint("ETR ignoring RLOC-probe request, using pcap")
+                continue
+            #endif
             lisp.lisp_parse_packet(lisp_send_sockets, packet, source, port)
         #endif
     #endif

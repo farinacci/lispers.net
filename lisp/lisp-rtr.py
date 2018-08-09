@@ -874,8 +874,14 @@ while (True):
         opcode, source, port, packet = lisp.lisp_receive(ephem_sockets[0],
             False)
         if (source == ""): break
-        if (lisp.lisp_is_rloc_probe_request(packet[0])): continue
-        if (lisp.lisp_is_rloc_probe_reply(packet[0])): continue
+        if (lisp.lisp_is_rloc_probe_request(packet[0])):
+            lisp.lprint("RTR ignoring RLOC-probe request, using pcap")
+            continue
+        #endif
+        if (lisp.lisp_is_rloc_probe_reply(packet[0])):
+            lisp.lprint("RTR ignoring RLOC-probe reply, using pcap")
+            continue
+        #endif
         lisp.lisp_parse_packet(ephem_sockets, packet, source, port)
     #endif
 
@@ -904,8 +910,14 @@ while (True):
         elif (opcode == "data-packet"):
             lisp_rtr_data_plane(packet, "")
         else:
-            if (lisp.lisp_is_rloc_probe_request(packet[0])): continue
-            if (lisp.lisp_is_rloc_probe_reply(packet[0])): continue
+            if (lisp.lisp_is_rloc_probe_request(packet[0])):
+                lisp.lprint("RTR ignoring RLOC-probe request, using pcap")
+                continue
+            #endif
+            if (lisp.lisp_is_rloc_probe_reply(packet[0])):
+                lisp.lprint("RTR ignoring RLOC-probe reply, using pcap")
+                continue
+            #endif
             lisp.lisp_parse_packet(lisp_send_sockets, packet, source, port)
         #endif
     #endif

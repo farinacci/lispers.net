@@ -2456,11 +2456,14 @@ def lisp_display_nat_info(output, dc):
             else:
                 uptime = lisp.lisp_print_elapsed(uptime)
             #endif
-            try:
-                nat = socket.gethostbyaddr(addr)[0]
-            except:
-                nat = "--"
-            #endtry
+            nat = "--"
+            if (os.getenv("LISP_DNS_LOOKUP") != None):
+                try:
+                    nat = socket.gethostbyaddr(addr)[0]
+                except:
+                    nat = "?"
+                #endtry
+            #endif
             output += lisp_table_row(hostname, addr, port, uptime, nat)
         #endfor
     #endfor

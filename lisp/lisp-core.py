@@ -709,7 +709,7 @@ def lisp_clear_conf_command():
 
     os.system("cp ./lisp.config ./lisp.config.before-clear")
     lisp.lisp_ipc_lock.acquire()
-    os.system("cp ./lisp.config.example ./lisp.config")
+    lisp_core_cp_lisp_config()
     lisp.lisp_ipc_lock.release()
 
     output = "Configuration cleared, a backup copy is stored in "
@@ -2239,6 +2239,27 @@ def lisp_core_control_packet_process(lisp_ipc_control_socket, lisp_sockets):
 #enddef
 
 #
+# lisp_cp_lisp.config
+#
+# The file ./lisp.config does not exist. Copy all commands from file
+# lisp.config.example up to the dashed line.
+#
+def lisp_core_cp_lisp_config():
+    f = open("./lisp.config.example", "r"); lines = f.read(); f.close()
+    f = open("./lisp.config", "w")
+    lines = lines.split("\n")
+    for line in lines:
+        f.write(line + "\n")
+        if (line[0] == "#" and line[-1] == "#" and len(line) >= 4):
+            dashes = line[1:-2]
+            dash_check = len(dashes) * "-"
+            if (dashes == dash_check): break
+        #endif
+    #endfor
+    f.close()
+#enddef
+
+#
 # lisp_core_startup
 #
 # Intialize this LISP core process. This function returns a LISP network
@@ -2295,12 +2316,6 @@ def lisp_core_startup(bottle_port):
     lisp.lprint("Listen on {}, port 4342".format(address))
 
     #
-    # Check if we are a map-server listening on a multicast group. This
-    # is a decentralized-xtr with a multicast map-server address.
-    #
-    lisp_check_decent_xtr_multicast(lisp_control_listen_socket)
-
-    #
     # Open datagram socket for 4341. We will not listen on it. We just don't
     # want the kernel to send port unreachables to ITRs and PITRs. If another
     # data-plane is running, it may listen on the data port 4341. Let it.
@@ -2342,8 +2357,14 @@ def lisp_core_startup(bottle_port):
     if (os.path.exists("./lisp.config") == False):
         lisp.lprint(("./lisp.config does not exist, creating a copy " + \
             "from lisp.config.example"))
-        os.system("cp ./lisp.config.example ./lisp.config")
+        lisp_core_cp_lisp_config()
     #endif
+
+    #
+    # Check if we are a map-server listening on a multicast group. This
+    # is a decentralized-xtr with a multicast map-server address.
+    #
+    lisp_check_decent_xtr_multicast(lisp_control_listen_socket)
 
     threading.Thread(target=lispconfig.lisp_config_process, 
         args=[lisp_ipc_socket]).start()

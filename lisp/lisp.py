@@ -16672,7 +16672,7 @@ def lisp_set_ttl(lisp_socket, ttl):
 #
 # Pass LISP first byte to test for 0x12, a Map-Request RLOC-probe.
 #
-def  lisp_is_rloc_probe_request(lisp_type):
+def lisp_is_rloc_probe_request(lisp_type):
     lisp_type = struct.unpack("B", lisp_type)[0]
     return(lisp_type == 0x12)
 #enddef
@@ -16682,7 +16682,7 @@ def  lisp_is_rloc_probe_request(lisp_type):
 #
 # Pass LISP first byte to test for 0x28, a Map-Reply RLOC-probe.
 #
-def  lisp_is_rloc_probe_reply(lisp_type):
+def lisp_is_rloc_probe_reply(lisp_type):
     lisp_type = struct.unpack("B", lisp_type)[0]
     return(lisp_type == 0x28)
 #enddef

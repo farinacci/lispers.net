@@ -87,7 +87,14 @@ exit
 # from the mapping versus its own address it could mistakenly select as an 
 # ETR RLOC because the RTR is comparing its local address to its global 
 # address in the mapping, when it isn't the same. So use the commands below
-# to start the RTR..
+# to start the RTR.
+#
+# There is also situations where an RTR may supply a private address in an
+# RLOC-probe reply. If it is behind a NAT, it needs to supply a global RLOC
+# address because if lisp-crypto is being used you want the decap-keys on an
+# xTR to reflect the same address that is being used for encapsulation from
+# the RTR. So the global address needs to be assignerd to the loopback
+# interface and the command line below needs to be "./RESTART-LISP 8080 lo".
 #
 #sudo ip addr add <rtr-translated-rloc>/32 dev lo >& /dev/null
 #sudo ip addr add 130.211.169.66/32 dev lo >& /dev/null
