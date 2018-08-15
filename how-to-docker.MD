@@ -9,7 +9,7 @@
 
     docker build -t tritium .
 
-    This will build a docker image called "tritium".
+This will build a docker image called "tritium".
 
 (3) To create and start the container, type:
 
@@ -23,19 +23,19 @@
 
     Control-P Control-Q
 
-    If you type control-D or exit, the container will stop.
+If you type control-D or exit, the container will stop.
 
 (6) To look at your docker build images, type:
 
     docker images
 
-    You should see an image called "tritium" in the list.
+You should see an image called "tritium" in the list.
 
 (7) To look at your created containers, type:
 
     docker ps
 
-    You should see a container named "nexus"
+You should see a container named "nexus"
 
 When the container is started, the Nexus daemon and the LISP subsystem will
 be operational.
