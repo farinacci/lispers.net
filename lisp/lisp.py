@@ -11902,9 +11902,7 @@ class lisp_rloc():
         self.translated_port = port
 
     def is_rloc_translated(self):
-        if (self.interface == None): return(True)
-        if (self.translated_rloc.is_null()): return(False)
-        return(True)
+        return(self.translated_rloc.is_null() == False)
 
     def rloc_exists(self):
         if (self.rloc.is_null() == False): return(True)
@@ -14724,6 +14722,7 @@ def lisp_gather_map_cache_data(mc, data):
         if (rloc.translated_port != 0):
             r["encap-port"] = str(rloc.translated_port)
         #endif
+        r["state"] = rloc.print_state()
         if (rloc.geo): r["geo"] = rloc.geo.print_geo()
         if (rloc.elp): r["elp"] = rloc.elp.print_elp(False)
         if (rloc.rle): r["rle"] = rloc.rle.print_rle(False)

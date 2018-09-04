@@ -33,11 +33,13 @@ exit
 #
 # If you want to set an EID on the loopback interface for IPv4 and IPv6
 # respectively substitute the "x" with meaningful values. 2001:5:3::/48
-# is RIPE allocated to lispers.net for IPv6 EID experimentation.
+# is RIPE allocated to lispers.net for IPv6 EID experimentation. Note in
+# docker containers, an IPv6 EID MUST NOT be configured on the lo interface
+# (on Linux).
 #
 #sudo ip addr add x.x.x.x/32 dev lo >& /dev/null
-#sudo ip addr add x::x/128 dev lo >& /dev/null
-#sudo ip addr add 2001:5:3::x/128 dev lo >& /dev/null
+#sudo ip addr add x::x/128 dev eth0 >& /dev/null
+#sudo ip addr add 2001:5:3::x/128 eth0 lo >& /dev/null
 
 #
 # MacOS syntax for configuring addresses.

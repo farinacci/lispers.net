@@ -1,4 +1,23 @@
 
+                lispers.net Beta Release Version 0.476
+                --------------------------------------
+
+o Release date: Tue Aug 21 09:27:36 EDT 2018
+
+o Add comments to RL-tempalte indicating that if an RTR is behind a NAT that
+  it needs its global address configured on the loopback interface so RLOC-
+  probe replies can contain the global address.
+
+o In restful call to https://<host>:<port>/lisp/api/data/map-cache, return
+  RLOC state in JSON as "state" : "<state-string>".
+
+o When 2 "rloc" clauses are used for a "lisp database-mapping" command, where
+  one is an "address" parameter and another is a "interface" parameter for
+  the SAME interface, the address RLOC loses its address and registers
+  "no-address". Fixed now.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.475
                 --------------------------------------
 

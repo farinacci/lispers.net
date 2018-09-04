@@ -127,7 +127,7 @@ def lisp_api_get(command = "", data_structure=""):
 
     data = lispconfig.lisp_get_clause_for_api(command)
     return(json.dumps(data))
-#endif
+#enddef
 
 #
 # lisp_get_api_system
