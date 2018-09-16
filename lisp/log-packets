@@ -1,0 +1,12 @@
+#!/bin/tcsh
+#
+# log-packets [force]
+#
+# Just a wrapper to call python source or binary.
+#
+ls ./lisp-log-packets.pyo >& /dev/null
+if ($status == "0") then
+    python -O ./lisp-log-packets.pyo $1
+else
+    python ./lisp-log-packets.py $1
+endif
