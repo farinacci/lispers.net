@@ -45,6 +45,18 @@ def lisp_rtr_show_command(parameter):
 #enddef
 
 #
+# lisp_rtr_show_command_nodns
+#
+# Display state in an RTR but pass in boolean to not do a DNS lookup.
+#
+def lisp_rtr_show_command_nodns(parameter):
+    global lisp_threads
+
+    return(lispconfig.lisp_itr_rtr_show_command(parameter, "RTR", 
+        lisp_threads, False))
+#enddef
+
+#
 # lisp_rtr_show_keys_command
 #
 # Call lispconfig.lisp_show_crypto_list().
@@ -837,7 +849,8 @@ lisp_rtr_commands = {
 
     "show rtr-rloc-probing" : [lisp_rtr_show_rloc_probe_command, { }],
     "show rtr-keys" : [lisp_rtr_show_keys_command, {}],
-    "show rtr-map-cache" : [lisp_rtr_show_command, { }]
+    "show rtr-map-cache" : [lisp_rtr_show_command, {}],
+    "show rtr-map-cache-nodns" : [lisp_rtr_show_command_nodns, {}]
 }
 
 #------------------------------------------------------------------------------

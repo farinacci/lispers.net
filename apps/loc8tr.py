@@ -2,13 +2,18 @@
 #
 # loc8tr.py - Locator Traceroute - Traceroute paths to LISP RLOCs
 #
-# Last update: Fri Sep  7 17:03:44 PDT 2018
+# Last update: Wed Sep 26 14:13:59 PDT 2018
 #
-# Usage: python loc8tr.py [-n] [-u <username>:<password>]
+# Usage: python loc8tr.py [-n] [-d] [-hp <host>:<port>]
+#                                   [-up <username>:<password>]
 #
 #   -n:
 #       Do not do DNS lookups on traceroute hops
-#   -u <username>:<password>:
+#   -d:
+#       Produce more output.
+#   -hp <host>:<port>:
+#       Host address and Port number to get to lispers.net restful API.
+#   -up <username>:<password>:
 #       Supply username and password for lispers.net map-cache query.
 #
 # This application is run on an xTR. Typically a ITR or RTR so the map-cache
@@ -53,11 +58,27 @@ import datetime
 # Caller allowed to supply username/password for curling to lispers.net.
 #
 userpw = "root:"
-if ("-u" in sys.argv):
-    userpw = sys.argv.index("-u")
+if ("-up" in sys.argv):
+    userpw = sys.argv.index("-up")
     userpw = sys.argv[userpw+1]
+    check = userpw.split(":")
+    if (len(check) == 1):
+        print "Invalid syntax for username:password pair"
+        exit(1)
+    #endif
 #endif    
-curl_command = 'curl --silent --insecure -u "{}" https://localhost:8080/lisp/api/data/map-cache'.format(userpw)
+
+hp = "localhost:8080"
+if ("-hp" in sys.argv):
+    hp = sys.argv.index("-hp")
+    hp = sys.argv[hp+1]
+    check = hp.split(":")
+    if (len(check) == 1 or check[1].isdigit() == False):
+        print "Invalid syntax for host:port pair"
+        exit(1)
+    #endif
+#endif    
+curl_command = 'curl --silent --insecure -u "{}" https://{}/lisp/api/data/map-cache'.format(userpw, hp)
 
 #
 # The parameters we use for traceroute.
@@ -90,6 +111,7 @@ HOPS       = 3
 EIDS       = 4
 
 no_dns = ("-n" in sys.argv)
+debug = ("-d" in sys.argv)
 
 #
 # ---------- Internal Function Definitions ----------
@@ -188,7 +210,10 @@ build_logfiles()
 #
 # Get map-cache data from lispers.net ITR or RTR.
 #
+if (debug): Print("Run '{}' ...".format(bold(curl_command)))
 map_cache = commands.getoutput(curl_command)
+if (debug): Print("curl returned '{}'".format(map_cache))
+    
 if (map_cache == ""):
     Print("curl returned empty string")
     exit(1)
@@ -199,10 +224,14 @@ if (type(map_cache) != list):
     Print("Could not retrieve map-cache")
     exit(1)
 #endif    
+if (map_cache == []):
+    Print("No map-cache entries returned")
+    exit(1)
+#endif    
 if (len(map_cache) == 1 and map_cache[0].has_key("?")):
     Print("Authentication failed while retrieving map-cache")
     exit(1)
-#endif    
+#endif
 
 #
 # Build rloc_cache data structure with IPv4 and IPv6 RLOC-types only.

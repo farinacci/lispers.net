@@ -1231,13 +1231,19 @@ def lisp_show_itr_map_cache_lookup():
 # Have the lisp-rtr process show the map-cache.
 #
 @bottle.route('/lisp/show/rtr/map-cache')
-def lisp_show_rtr_map_cache_command():
+@bottle.route('/lisp/show/rtr/map-cache/<nodns>')
+def lisp_show_rtr_map_cache_command(nodns = ""):
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
 
-    return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
-        "show rtr-map-cache"))
+    if (nodns == "nodns"):
+        return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
+            "show rtr-map-cache-nodns"))
+    else:
+        return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
+            "show rtr-map-cache"))
+    #endif
 #enddef
 
 #

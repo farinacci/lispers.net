@@ -1,5 +1,5 @@
 
-	     How to use lispers.net Network Applications
+             How to use lispers.net Network Applications
              -------------------------------------------
 
 (1) Get the tgz file from lispers.net. 
@@ -26,7 +26,7 @@
     lispers.net directory.
 
 -------------------------------------------------------------------------------
-		Updated: Thu Jan 15 16:16:58 PST 2015
+                Updated: Thu Jan 15 16:16:58 PST 2015
 
 
 

@@ -58,6 +58,7 @@ lisp_commands = {
     "show itr-map-cache"            : ["lisp-itr"],
     "show itr-rloc-probing"         : ["lisp-itr"],
     "show rtr-map-cache"            : ["lisp-rtr"],
+    "show rtr-map-cache-nodns"      : ["lisp-rtr"],
     "show rtr-rloc-probing"         : ["lisp-rtr"],
     "show database-mapping"         : ["lisp-etr"],
     "show referral-cache"           : ["lisp-mr"],
@@ -2434,7 +2435,7 @@ def lisp_show_myrlocs(output):
 #
 # Display the lisp.lisp_nat_state_info table.
 #
-def lisp_display_nat_info(output, dc):
+def lisp_display_nat_info(output, dc, dodns):
     length = len(lisp.lisp_nat_state_info)
     if (length == 0): return(output)
 
@@ -2457,7 +2458,7 @@ def lisp_display_nat_info(output, dc):
                 uptime = lisp.lisp_print_elapsed(uptime)
             #endif
             nat = "--"
-            if (os.getenv("LISP_DNS_LOOKUP") != None):
+            if (dodns):
                 try:
                     nat = socket.gethostbyaddr(addr)[0]
                 except:
@@ -2477,7 +2478,7 @@ def lisp_display_nat_info(output, dc):
 #
 # Display state in an ITR or RTR.
 #
-def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads):
+def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dodns=True):
 
     #
     # Do lookup if there is a parameter supplied.
@@ -2626,7 +2627,9 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads):
     #
     # Show NAT-traversal lisp_nat_state_info table for an RTR.
     #
-    if (itr_or_rtr == "RTR"): output = lisp_display_nat_info(output, "Data")
+    if (itr_or_rtr == "RTR"):
+        output = lisp_display_nat_info(output, "Data", dodns)
+    #endif
 
     #
     # Return output so header and footer for page can be added.
