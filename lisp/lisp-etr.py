@@ -202,6 +202,8 @@ def lisp_map_server_command(kv_pairs):
     want = False
     site_id = 0
     ms_name = None
+    ekey_id = 0
+    ekey = None
 
     for kw in kv_pairs.keys():
         value = kv_pairs[kw]
@@ -243,6 +245,11 @@ def lisp_map_server_command(kv_pairs):
         if (kw == "site-id"):
             site_id = int(value)
         #endif
+        if (kw == "encryption-key"):
+            ekey = lisp.lisp_parse_auth_key(value)
+            ekey_id = ekey.keys()[0]
+            ekey = ekey[ekey_id]
+        #Endif
     #endfor
 
     #
@@ -252,12 +259,12 @@ def lisp_map_server_command(kv_pairs):
     for addr_str in addresses:
         if (addr_str == ""): continue
         ms = lisp.lisp_ms(addr_str, None, ms_name, alg_id, key_id, password, 
-            proxy_reply, merge, refresh, want, site_id)
+            proxy_reply, merge, refresh, want, site_id, ekey_id, ekey)
     #endfor
     for name in dns_names:
         if (name == ""): continue
         ms = lisp.lisp_ms(None, name, ms_name, alg_id, key_id, password, 
-            proxy_reply, merge, refresh, want, site_id)
+            proxy_reply, merge, refresh, want, site_id, ekey_id, ekey)
     #endfor
 
     #
@@ -557,9 +564,11 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
             map_register.map_notify_requested = ms.want_map_notify
             map_register.xtr_id = ms.xtr_id
             map_register.site_id = ms.site_id
+            map_register.encrypt_bit = (ms.ekey != None)
             if (ms.refresh_registrations): 
                 map_register.map_register_refresh = refresh
             #endif
+            if (ms.ekey != None): map_register.encryption_key_id = ms.ekey_id
             packet = map_register.encode()
             map_register.print_map_register()
 
@@ -896,6 +905,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         map_register.alg_id = ms.key_id
         map_register.xtr_id = ms.xtr_id
         map_register.site_id = ms.site_id
+        map_register.encrypt_bit = (ms.ekey != None)
         packet = map_register.encode()
         map_register.print_map_register()
 
@@ -1333,7 +1343,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
     # Send out.
     #
     packet.send_packet(raw_socket, packet.inner_dest)
-#endif
+#enddef
 
 #
 # lisp_etr_nat_data_plane
@@ -1943,6 +1953,7 @@ lisp_etr_commands = {
         "dns-name" : [True], 
         "authentication-type" : [False, "sha1", "sha2"],
         "authentication-key" : [False], 
+        "encryption-key" : [False], 
         "proxy-reply" : [False, "yes", "no"],
         "want-map-notify" : [False, "yes", "no"],
         "merge-registrations" : [False, "yes", "no"],

@@ -1,4 +1,65 @@
 
+                lispers.net Beta Release Version 0.480
+                --------------------------------------
+
+o Release date: Tue Oct  9 09:35:21 PDT 2018
+
+o Default Map-Request count to 1 for lisp-lig. Sending less packets is better.
+  User can send up to 5 to test varying latency to mapping system.
+
+o Support Map-Register encryption. The entire Map-Register payload not
+  including the first 4 bytes is ChaCha20 encrypted by an ETR and decrypted
+  by a Map-Server. There is no key exchange. Shared passwords are used and
+  configured on each side of the security association. A new command called
+  "lisp encryption-keys" is introduced on the Map-Server. And a subcommand
+  "encryption-key = [<key-id>]string" of the "lisp map-server" command is used
+  on the ETR. See the "Command Documentation" button on the lispers.net
+  web interface landing page.
+
+o This release has been tested with a newly formatted lisp-sig.pem file format.
+  A comment header documenting the crypto-EID is prepended to the Private Key
+  PEM encoding and the Public Key PEM encoding is appended. This way if a
+  public-key is lost either in the mapping system configuration files or
+  the lisp.config file on the xTR, we can salvage the crypto-EID and key-pair.
+  This is for an effort to make crypto-EIDs more persistent to reloads and
+  other key management failures.
+
+o There is a lispers.net created app program called "make-crypto-eid.py" that
+  is available in source form to be used to generate crypto-EIDs and key-pairs.
+  The program generates lispers.net configuration commands that can be easily
+  inserted into lisp.config files.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.479
+                --------------------------------------
+
+o Release date: Wed Oct  3 17:16:41 PDT 2018
+
+o On Alpine Linux, default showing the RTR map-cache page with "nodns" since
+  it appears to time-out DNS lookups rather long.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.478
+                --------------------------------------
+
+o Release date: Mon Oct  1 12:04:56 PDT 2018
+
+o Have lisp.lisp_get_local_rloc() always return IP address for default
+  router's interface regardless if it is a private IPv4 address or not. This
+  was causing lisp-lig.py to not include a ITR-RLOC in a Map-Request and
+  hence the map-server could not return a Map-Reply.
+
+o Have DNS lookups work for all command-line parameters for lig and rig for
+  Alpine Linux.
+
+o Local variable used to set signature failure which didn't set variable
+  that tests for sendingn a auth-failure. Therefore, a failed signature
+  retunred an RLOC-set. Ooops. Fixed now.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.477
                 --------------------------------------
 

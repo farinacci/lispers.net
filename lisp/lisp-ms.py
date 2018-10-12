@@ -379,6 +379,20 @@ def lisp_ms_eid_crypto_hash_command(kv_pair):
 #enddef
 
 #
+# lisp_ms_encryption_keys_command
+#
+# Process the "lisp encryption-keys" command.
+#
+def lisp_ms_encryption_keys_command(kv_pair):
+    for kw in kv_pair.keys():
+        value = kv_pair[kw]
+        if (kw == "map-register-key"): 
+            lisp.lisp_ms_encryption_keys = lisp.lisp_parse_auth_key(value)
+        #endif
+    #endfor
+#enddef
+
+#
 # lisp_ms_show_site_detail_command
 #
 # Show LISP site information for a particular EID-prefix..
@@ -1028,6 +1042,9 @@ lisp_ms_commands = {
     "lisp eid-crypto-hash" : [lisp_ms_eid_crypto_hash_command, {
         "instance-id" : [True, 0, 0xffffffff],  
         "eid-prefix" : [False] }],
+
+    "lisp encryption-keys" : [lisp_ms_encryption_keys_command, {
+        "map-register-key" : [False] }],
 
     "lisp geo-coordinates" : [lispconfig.lisp_geo_command, {
         "geo-name" : [False],

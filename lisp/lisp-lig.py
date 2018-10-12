@@ -214,20 +214,20 @@ for g in geos:
 #endfor
 
 if (dist_name == False and geo_string == False):
-    try:
-        dest_eid = lisp.lisp_gethostbyname(dest_eid)
-    except:
+    deid = lisp.lisp_gethostbyname(dest_eid)
+    if (deid == ""):
         print "Cannot resolve EID name '{}'".format(dest_eid)
         exit(1)
     #endtry
+    dest_eid = deid
 #endif
 
-try: 
-    mr = lisp.lisp_gethostbyname(mr)
-except:
+mr_addr = lisp.lisp_gethostbyname(mr)
+if (mr_addr == ""):
     print "Cannot resolve Map-Resolver name '{}'".format(mr)
     exit(1)
-#endtry
+#endif
+mr = mr_addr
 
 #
 # Was more internal debugging requested by user?
@@ -237,7 +237,7 @@ lisp.lisp_debug_logging = True if "debug" in sys.argv else False
 #
 # Default count if it was not supplied.
 #
-if (count == ""): count = "3"
+if (count == ""): count = "1"
 
 lisp.lisp_i_am("lig")
 
@@ -324,6 +324,12 @@ else:
 if (source_eid == ""): 
     map_request.source_eid.afi = lisp.LISP_AFI_NONE
 else:
+    seid = lisp.lisp_gethostbyname(source_eid)
+    if (seid == ""):
+        print "Cannot resolve source EID name '{}'".format(source_eid)
+        exit(1)
+    #endif
+    source_eid = seid
     map_request.source_eid.afi = lisp.LISP_AFI_IPV6 if \
         source_eid.count(":") == 7 else lisp.LISP_AFI_IPV4
     map_request.source_eid.store_address(source_eid)
@@ -365,6 +371,7 @@ mr = lisp.lisp_address(afi, mr, ml, 0)
 #
 global_address = None
 local_address = lisp.lisp_get_local_rloc()
+
 if (local_address == None):
     print("Cannot obtain a local address")
     lisp_lig_close_sockets(lisp_sockets)

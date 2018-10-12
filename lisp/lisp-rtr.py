@@ -557,7 +557,7 @@ def lisp_rtr_pcap_thread(lisp_thread):
     #
     pcap.loop(-1, lisp_rtr_pcap_process_packet, [device, lisp_thread])
     return
-#endif
+#enddef
 
 #
 # lisp_rtr_process_timer

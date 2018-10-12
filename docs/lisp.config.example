@@ -68,7 +68,7 @@ lisp xtr-parameters {
 
                     lispers.net LISP Command Guide
                     ------------------------------
-              Last updated: Thu Jun 21 10:03:32 PDT 2018
+              Last updated: Mon Oct  8 15:08:27 PDT 2018
 
 This document contains the command syntax defintions that go into configuration
 file lisp.config. You can copy, paste, and edit the clauses below into your
@@ -849,6 +849,7 @@ lisp map-server {
     ...
     authentication-type = sha1 | sha2
     authentication-key = [<key-id-0-255>]<string>
+    encryption-key = [<key-id-0-255>]<string>
     proxy-reply = yes | no
     merge-registrations = yes | no
     refresh-registrations = yes | no
@@ -876,6 +877,16 @@ lisp map-server {
     address = 2001:1:1:1::1
     authentication-type = sha1
     authentication-key = subnets-suck
+}
+
+#
+# Encrypt Map-Register message with key-id 3 sent to map-server 3.3.3.3. The
+# "lisp encryption-keys" command must have "map-register-key" equal to
+#  "[3]differnt-from-auth-key".   
+#        
+lisp map-server {
+    address = 3.3.3.3
+    encryption-key = [3]differnt-from-auth-key
 }
 
 -------------------------------------------------------------------------------
@@ -1481,6 +1492,38 @@ lisp eid-crypto-hash {
     eid-prefix = 2001:5:3::/48
 }
 
+-------------------------------------------------------------------------------
+
+        Conifgure Map-Register Encryption Keys on a Map-Server
+        ------------------------------------------------------
+
+lisp encryption-keys {
+    map-register-key = [<key-id-0-7>]<string> ... [<key-id-0-7>]<string>
+}    
+
+Command Description:
+    Configures what keys to be used to decrypt a Map-Register message. The
+    first bytes of the Map-Register contains a key-id and is not encrypted.
+    The rest of the payload is encrypted by a sending ETR. The same key-id
+    and password string on this command must match what is configured on the
+    "encryption-key" subcommand of the "lisp map-server" command in the ETR.
+
+    By allowing multiple encryption keys, a mapping system can deprovision
+    a group of ETRs when it believes it needs to do so. If a packet is
+    decrypted incorrectly, it cannot be process and is dropped. A log message
+    will be issued in this case.
+
+Example:
+
+#
+# Configure 4 key-ids 0 through 4, each with their own decryption password.
+# When a Map-Register is received by the Map-Server, the Map-Register key-id
+# encoded will determine which configured password should be used.
+#        
+lisp encryption-keys {
+    map-register-key = [0]foo [1]bar [2]group3 [3]group4
+}    
+    
 -------------------------------------------------------------------------------
 
            Configure an Authoritative Prefix in a LISP-DDT Node

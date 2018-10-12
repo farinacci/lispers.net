@@ -335,7 +335,7 @@ def lisp_ddt_show_delegations_command(parameter):
     output = lisp.lisp_ddt_cache.walk_cache(lisp_ddt_walk_ddt_cache, output)
     output += lispconfig.lisp_table_footer()
     return(output)
-#endclass
+#enddef
 
 #
 # lisp_ddt_startup

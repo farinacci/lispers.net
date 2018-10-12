@@ -76,19 +76,23 @@ class api_init():
             self.get_debug()
             self.get_xtr_parameters()
         #endif
+    #enddef
 
     def api_print(self):
         """ Print contents of lispapi class. Returns a string. """
         print("url: {}@{}, enable-status: {}, debug-status: {}".format( \
             self.user, self.url, self.enable_status, self.debug_status))
+    #enddef
 
     def api_enable_debug(self):
         """ Enable debug output for this LISP API. """
         self.api_debug = True
+    #enddef
 
     def api_disable_debug(self):
         """ Disable debug output for this LISP API. """
         self.api_debug = False
+    #enddef
 
     def get_enable(self, force_query=False):
         """ Returns "lisp enable" status for system. Returns a dictionary
@@ -100,6 +104,7 @@ class api_init():
         data = self.__get("lisp enable")
         self.enable_status = data
         return(data)
+    #enddef
 
     def get_debug(self):
         """ Returns "lisp debug" status for system. Returns a dictionary
@@ -109,6 +114,7 @@ class api_init():
         data = self.__get("lisp debug")
         self.debug_status = data
         return(data)
+    #enddef
 
     def get_xtr_parameters(self):
         """ Returns the "lisp xtr-parameters" settings for the system. Returns
@@ -118,47 +124,70 @@ class api_init():
         data = self.__get("lisp xtr-parameters")
         self.xtr_parameters = data
         return(data)
+    #enddef
 
     def is_itr_enabled(self):
         """ Return True if ITR is enabled on system. """
         return(self.enable_status and self.enable_status["itr"] == "yes")
+    #enddef
+
     def is_etr_enabled(self):
         """ Return True if ETR is enabled on system. """
         return(self.enable_status and self.enable_status["etr"] == "yes")
+    #enddef
+
     def is_rtr_enabled(self):
         """ Return True if RTR is enabled on system. """
         return(self.enable_status and self.enable_status["rtr"] == "yes")
+    #enddef
+
     def is_mr_enabled(self):
         """ Return True if MR is enabled on system. """
         return(self.enable_status and 
             self.enable_status["map-resolver"] == "yes")
+    #enddef
+
     def is_ms_enabled(self):
         """ Return True if Map-Server is enabled on system. """
         return(self.enable_status and 
             self.enable_status["map-server"] == "yes")
+    #enddef
+
     def is_ddt_enabled(self):
         """ Return True if DDT-node is enabled on system. """
         return(self.enable_status and self.enable_status["ddt-node"] == "yes")
+    #enddef
 
     def is_itr_debug_enabled(self):
         """ Return True if ITR debug looging is enabled on system. """
         return(self.debug_status and self.debug_status["itr"] == "yes")
+    #enddef
+
     def is_etr_debug_enabled(self):
         """ Return True if ETR debug looging is enabled on system. """
         return(self.debug_status and self.debug_status["etr"] == "yes")
+    #enddef
+
     def is_rtr_debug_enabled(self):
         """ Return True if RTR debug looging is enabled on system. """
         return(self.debug_status and self.debug_status["rtr"] == "yes")
+    #enddef
+
     def is_mr_debug_enabled(self):
         """ Return True if Map-Resolver debug looging is enabled on system. """
         return(self.debug_status and 
             self.debug_status["map-resolver"] == "yes")
+    #enddef
+
     def is_ms_debug_enabled(self):
         """ Return True if Map-Server debug looging is enabled on system. """
         return(self.debug_status and self.debug_status["map-server"] == "yes")
+    #enddef
+
     def is_ddt_debug_enabled(self):
         """ Return True if DDT-node debug looging is enabled on system. """
         return(self.debug_status and self.debug_status["ddt-node"] == "yes")
+    #enddef
 
     def enable_itr(self):
         """ Activate ITR functionality on system. """
@@ -167,6 +196,7 @@ class api_init():
         self.enable_status["itr"] = "yes"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_etr(self):
         """ Activate ETR functionality on system. """
@@ -175,6 +205,7 @@ class api_init():
         self.enable_status["etr"] = "yes"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_rtr(self):
         """ Activate RTR functionality on system. """
@@ -183,6 +214,7 @@ class api_init():
         self.enable_status["rtr"] = "yes"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_mr(self):
         """ Activate Map-Resolver functionality on system. """
@@ -191,6 +223,7 @@ class api_init():
         self.enable_status["map-resolver"] = "yes"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_ms(self):
         """ Activate Map-Server functionality on system. """
@@ -199,6 +232,7 @@ class api_init():
         self.enable_status["map-server"] = "yes"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_ddt(self):
         """ Activate DDT-node functionality on system. """
@@ -207,6 +241,7 @@ class api_init():
         self.enable_status["ddt-node"] = "yes"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_itr(self):
         """ Deactivate ITR functionality on system. """
@@ -215,6 +250,7 @@ class api_init():
         self.enable_status["itr"] = "no"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_etr(self):
         """ Deactivate ETR functionality on system. """
@@ -223,6 +259,7 @@ class api_init():
         self.enable_status["etr"] = "no"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_rtr(self):
         """ Deactivate RTR functionality on system. """
@@ -231,6 +268,7 @@ class api_init():
         self.enable_status["rtr"] = "no"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_mr(self):
         """ Deactivate Map-Resolver functionality on system. """
@@ -239,6 +277,7 @@ class api_init():
         self.enable_status["map-resolver"] = "no"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_ms(self):
         """ Deactivate Map-Server functionality on system. """
@@ -247,6 +286,7 @@ class api_init():
         self.enable_status["map-server"] = "no"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_ddt(self):
         """ Deactivate DDT-node functionality on system. """
@@ -255,6 +295,7 @@ class api_init():
         self.enable_status["ddt-node"] = "no"
         data = self.__put("lisp enable", self.enable_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_core_debug(self):
         """ Activate the LISP core process debug logging. """
@@ -263,6 +304,7 @@ class api_init():
         self.debug_status["core"] = "yes"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_itr_debug(self):
         """ Activate ITR debug logging. """
@@ -271,6 +313,7 @@ class api_init():
         self.debug_status["itr"] = "yes"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_etr_debug(self):
         """ Activate ETR debug logging. """
@@ -279,6 +322,7 @@ class api_init():
         self.debug_status["etr"] = "yes"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_rtr_debug(self):
         """ Activate RTR debug logging. """
@@ -287,6 +331,7 @@ class api_init():
         self.debug_status["rtr"] = "yes"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_mr_debug(self):
         """ Activate Map-Resolver debug logging. """
@@ -295,6 +340,7 @@ class api_init():
         self.debug_status["map-resolver"] = "yes"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_ms_debug(self):
         """ Activate Map-Server debug logging. """
@@ -303,6 +349,7 @@ class api_init():
         self.debug_status["map-server"] = "yes"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def enable_ddt_debug(self):
         """ Activate DDT-node debug logging. """
@@ -311,6 +358,7 @@ class api_init():
         self.debug_status["ddt-node"] = "yes"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_core_debug(self):
         """ Deactivate the LISP core process debug logging. """
@@ -319,6 +367,7 @@ class api_init():
         self.debug_status["core"] = "no"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_itr_debug(self):
         """ Deactivate ITR debug logging. """
@@ -327,6 +376,7 @@ class api_init():
         self.debug_status["itr"] = "no"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_etr_debug(self):
         """ Deactivate ETR debug logging. """
@@ -335,6 +385,7 @@ class api_init():
         self.debug_status["etr"] = "no"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_rtr_debug(self):
         """ Deactivate RTR debug logging. """
@@ -343,6 +394,7 @@ class api_init():
         self.debug_status["rtr"] = "no"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_mr_debug(self):
         """ Deactivate Map-Resolver debug logging. """
@@ -351,6 +403,7 @@ class api_init():
         self.debug_status["map-resolver"] = "no"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_ms_debug(self):
         """ Deactivate Map-Server debug logging. """
@@ -359,6 +412,7 @@ class api_init():
         self.debug_status["map-server"] = "no"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def disable_ddt_debug(self):
         """ Deactivate DDT-node debug logging. """
@@ -367,6 +421,7 @@ class api_init():
         self.debug_status["ddt-node"] = "no"
         data = self.__put("lisp debug", self.debug_status)
         return(self.__error(data) == False)
+    #enddef
 
     def add_user_account(self, username, password):
         """ Configures a user-account command. Returns True if successful. """
@@ -375,6 +430,7 @@ class api_init():
         data = self.__put("lisp user-account", 
             { "username" : username, "password" : password})
         return(self.__error(data) == False)
+    #enddef
 
     def delete_user_account(self, username):
         """ Removes a user-account command. Returns True if successful. """
@@ -382,6 +438,7 @@ class api_init():
 
         data = self.__delete("lisp user-account", { "username" : username })
         return(self.__error(data) == False)
+    #enddef
 
     def enable_itr_security(self):
         """ Enable AES encryption for packets ITRs or RTRs encapsulate. """
@@ -391,6 +448,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def disable_itr_security(self):
         """ Disable AES encryption for packets ITRs or RTRs encapsulate. """
@@ -400,6 +458,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def enable_xtr_nat_traversal(self):
         """ Enable NAT-traversal functionality on ITR and ETR. Make sure
@@ -411,6 +470,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def disable_xtr_nat_traversal(self):
         """ Disable NAT-traversal functionality in an ITR and ETR."""
@@ -420,6 +480,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def enable_xtr_rloc_probing(self):
         """ Enable RLOC-probing functionality on an ITR or RTR."""
@@ -429,6 +490,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def disable_xtr_rloc_probing(self):
         """ Disable RLOC-probing functionality on an ITR and RTR."""
@@ -438,6 +500,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def enable_xtr_nonce_echoing(self):
         """ Enable Nonce-Echoing functionality on an ITR or RTR."""
@@ -447,6 +510,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def disable_xtr_nonce_echoing(self):
         """ Disable Nonce-Echoing functionality on an ITR and RTR."""
@@ -456,6 +520,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def enable_xtr_data_plane_logging(self):
         """ Enable data-plane logging functionality on an xTR."""
@@ -465,6 +530,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def disable_xtr_data_plane_logging(self):
         """ Disable data-plane logging functionality on an xTR."""
@@ -474,6 +540,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def enable_xtr_flow_logging(self):
         """ Enable packet flow logging functionality on an xTR."""
@@ -483,6 +550,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def disable_xtr_flow_logging(self):
         """ Disable packet flow logging functionality on an xTR."""
@@ -492,6 +560,7 @@ class api_init():
         data = self.__put("lisp xtr-parameters", self.xtr_parameters)
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def add_mr_ddt_root(self, address=""):
         """ Configure the address of a LISP-DDT root node. Variable 'address'
@@ -508,6 +577,7 @@ class api_init():
         data = self.__put("lisp ddt-root", { "address" : address })
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def delete_mr_ddt_root(self, address=""):
         """ Deconfigure the address of a LISP-DDT root node. Variable 'address'
@@ -524,6 +594,7 @@ class api_init():
         data = self.__delete("lisp ddt-root", { "address" : address })
         if (self.__error(data)): return("delete error")
         return("good")
+    #enddef
 
     def add_mr_referral(self, iid="0", prefix="", group="", referral_set=[]):
         """ Configure a referral EID-prefix. First argument is an instance-ID
@@ -557,6 +628,7 @@ class api_init():
 
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
        
     def delete_mr_referral(self, iid="0", prefix="", group=""):
         """ Deconfigure a referral EID-prefix. The 'prefix' and 'group' 
@@ -579,6 +651,7 @@ class api_init():
 
         if (self.__error(data)): return("delete error")
         return("good")
+    #enddef
 
     def add_ddt_delegation(self, iid="0", prefix="", group="", 
         referral_set=[]):
@@ -614,6 +687,7 @@ class api_init():
 
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def delete_ddt_delegation(self, iid="0", prefix="", group=""):
         """ Deconfigure a LISP-DDT delegation EID-prefix. The 'prefix'
@@ -636,6 +710,7 @@ class api_init():
 
         if (self.__error(data)): return("delete error")
         return("good")
+    #enddef
 
     def add_ddt_auth_prefix(self, iid="0", auth_prefix="", group=""):
         """ Configure a LISP-DDT authoritative-prefix for a DDT-node.
@@ -658,6 +733,7 @@ class api_init():
 
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def delete_ddt_auth_prefix(self, iid="0", auth_prefix="", group=""):
         """ Deconfigure a LISP-DDT authoritative-prefix for a DDT-node.
@@ -679,6 +755,7 @@ class api_init():
 
         if (self.__error(data)): return("delete error")
         return("good")
+    #enddef
 
     def add_ms_map_server_peer(self, iid="0", prefix="", group="", 
         peer_set=[]):
@@ -719,6 +796,7 @@ class api_init():
 
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def delete_ms_map_server_peer(self, iid="0", prefix="", group=""):
         """ Deconfigure a Map-Server peer EID-prefix in a Map-Server. The 
@@ -741,6 +819,7 @@ class api_init():
 
         if (self.__error(data)): return("delete error")
         return("good")
+    #enddef
 
     def add_ms_site(self, site_name, auth_key, prefix_list, description=""):
         """ Add LISP site with allowed EID-prefix list. Array prefix_list
@@ -763,6 +842,7 @@ class api_init():
 
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def build_ms_site_allowed_prefix(self, prefix_list, iid="0", prefix="", 
         group="", ams=False, fpr=False, fnpr=False, pprd=False, pra=""):
@@ -796,6 +876,7 @@ class api_init():
 
         prefix_list.append(data)
         return("good")
+    #enddef
 
     def delete_ms_site(self, site_name):
         """ Delete LISP site and all allowed EID-prefixes previously added
@@ -808,6 +889,7 @@ class api_init():
         data = self.__delete("lisp site", { "site-name" : site_name })
         if (self.__error(data)): return("delete error")
         return("good")
+    #enddef
 
     def add_etr_database_mapping(self, iid="0", prefix="", group="", 
         rloc_set=[]):
@@ -852,6 +934,7 @@ class api_init():
 
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def delete_etr_database_mapping(self, iid="0", prefix="", group=""):
         """ Remove database-mapping for LISP site from ETR."""
@@ -870,6 +953,7 @@ class api_init():
 
         if (self.__error(data)): return("delete error")
         return("good")
+    #enddef
 
     def add_etr_map_server(self, address="", auth_key=None, 
         address_is_name=False):
@@ -898,6 +982,7 @@ class api_init():
 
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def get_etr_map_server(self, address, address_is_name=False):
         """ Get Map-Server info from ETR at LISP site. If parameter
@@ -919,6 +1004,7 @@ class api_init():
 
         data = self.__get_data("lisp map-server", { name_or_addr : address })
         return(data)
+    #enddef
 
     def delete_etr_map_server(self, address, address_is_name=False):
         """ Remove Map-Server address from ETR at LISP site. If parameter
@@ -941,6 +1027,7 @@ class api_init():
         data = self.__delete("lisp map-server", { name_or_addr : address })
         if (self.__error(data)): return("delete error")
         return("good")
+    #enddef
 
     def add_itr_map_resolver(self, address, address_is_name=False):
         """ Add Map-Resolver info to RTR, or ITR at LISP site. If parameter
@@ -963,6 +1050,7 @@ class api_init():
         data = self.__put("lisp map-resolver", { name_or_addr : address })
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def get_itr_map_resolver(self, address, address_is_name=False):
         """ Get Map-Resolver info from RTR, or ITR at LISP site. If parameter
@@ -984,6 +1072,7 @@ class api_init():
 
         data = self.__get_data("lisp map-resolver", { name_or_addr : address })
         return(data)
+    #enddef
 
     def delete_itr_map_resolver(self, address, address_is_name=False):
         """ Remove Map-Resolver address from RTR, or ITR at LISP site. If 
@@ -1006,6 +1095,7 @@ class api_init():
         data = self.__delete("lisp map-resolver", { name_or_addr : address })
         if (self.__error(data)): return("delete error")
         return("good")
+    #enddef
 
     def build_rloc_record(self, rloc_or_int, upriority, uweight, 
         rloc_name=None, mpriority=255, mweight=0, rloc_set=[]):
@@ -1025,6 +1115,7 @@ class api_init():
 #       rloc_rec["meight"] = mweight
         rloc_set.append(rloc_rec)
         return(rloc_set)
+    #enddef
 
     def add_itr_map_cache(self, iid="0", prefix="", group="", rloc_set=[]):
         """ Add map-cache entry to ITR or RTR. The rloc-set can be an array
@@ -1058,6 +1149,7 @@ class api_init():
 
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def delete_itr_map_cache(self, iid="0", prefix="", group=""):
         """ Delete map-cache from ITR or RTR."""
@@ -1075,6 +1167,7 @@ class api_init():
         data = self.__delete("lisp map-cache", data)
         if (self.__error(data)): return("delete error")
         return("good")
+    #enddef
 
     def get_system(self):
         """ Return system information for a lispers.net system. A dictionary
@@ -1084,6 +1177,7 @@ class api_init():
 
         data = self.__get_data("lisp system", "")
         return(data)
+    #enddef
 
     def get_map_cache(self):
         """ Return the entire map-cache from an ITR or RTR. The returned format
@@ -1094,6 +1188,7 @@ class api_init():
 
         data = self.__get_data("lisp map-cache", "")
         return(data)
+    #enddef
 
     def get_map_cache_entry(self, iid="", prefix="", group=""):
         """ Do a longest match lookup in the map-cache from an ITR or RTR.
@@ -1114,6 +1209,7 @@ class api_init():
         data = self.__build_prefix_tuple(iid, prefix, group)
         data = self.__get_data("lisp map-cache", data)
         return(data)
+    #enddef
 
     def get_site_cache(self):
         """ Return the entire site-cache from a Map-Server. The returned format
@@ -1124,6 +1220,7 @@ class api_init():
 
         data = self.__get_data("lisp site-cache", "")
         return(data)
+    #enddef
 
     def get_site_cache_entry(self, iid="", prefix="", group=""):
         """ Do a longest match lookup in the site-cache from a Map-Server.
@@ -1143,6 +1240,7 @@ class api_init():
         data = self.__build_prefix_tuple(iid, prefix, group)
         data = self.__get_data("lisp site-cache", data)
         return(data)
+    #enddef
 
     def add_policy(self, policy_name, match_iid="0", match_seid="", 
         match_deid="", match_srloc="", match_drloc="", match_rloc_name="" ,
@@ -1268,6 +1366,7 @@ class api_init():
 
         if (self.__error(data)): return("put error")
         return("good")
+    #enddef
 
     def delete_policy(self, policy_name):
         """ Delete a LISP policy. The policy is referenced by policy name."""
@@ -1276,6 +1375,7 @@ class api_init():
         data = self.__delete("lisp policy", {"policy-name" : policy_name})
         if (self.__error(data)): return("delete error")
         return("good")
+    #enddef
 
     #
     # All functions below here are private functions.
@@ -1295,6 +1395,7 @@ class api_init():
         if (r.text == ""): return(None)
 
         return(self.__unicode_to_ascii(command, r.text))
+    #enddef
  
     def __get_data(self, command, data):
         url = self.url + "data/" + command.split(" ")[1]
@@ -1318,6 +1419,7 @@ class api_init():
 
         data = r.text.encode()
         return(json.loads(data))
+    #enddef
 
     def __put(self, command, data):
         url = self.url + command.split(" ")[1]
@@ -1335,6 +1437,7 @@ class api_init():
         if (r.text == ""): return(None)
 
         return(self.__unicode_to_ascii(command, r.text))
+    #enddef
 
     def __delete(self, command, data):
         url = self.url + command.split(" ")[1]
@@ -1352,6 +1455,7 @@ class api_init():
         if (r.text == ""): return(None)
 
         return(self.__unicode_to_ascii(command, r.text))
+    #enddef
     
     def __unicode_to_ascii(self, command, rtext):
         
@@ -1383,6 +1487,7 @@ class api_init():
             #endfor
         #endif
         return(ascii_data)
+    #enddef
 
     def __walk_dict_array(self, udata, u_dict):
         for key in u_dict: 
@@ -1404,6 +1509,7 @@ class api_init():
             #
             udata[unicode(key)] = value
         #endfor
+    #enddef
 
     def __ascii_to_unicode(self, command, ascii_data):
         was_dict = (type(ascii_data) == dict)
@@ -1434,15 +1540,18 @@ class api_init():
         unicode_data = {}
         unicode_data[unicode(command)] = udata[0] if was_dict else udata
         return(json.dumps(unicode_data))
+    #enddef
 
     def __error(self, data):
         if (data == None): return(True)
         if (data.has_key("!")): return(False)
         return(True)
+    #enddef
 
     def __api_debug(self, string):
         if (self.api_debug): print "lispapi[{}@{}]: {}".format(self.user,
             self.host, string)
+    #enddef
 
     def __check_prefix_syntax(self, prefix):
 
@@ -1454,6 +1563,7 @@ class api_init():
         index = prefix.find("/")
         if (index == -1): return(False)
         return(self.__check_address_syntax(prefix[0:index]))
+    #enddef
 
     def __check_prefix_list(self, prefix_list):
         if (type(prefix_list) != list): return("prefix_list must be an array")
@@ -1467,6 +1577,7 @@ class api_init():
             return("prefix_list is incorrectly formated")
         #endif
         return(True)
+    #enddef
 
     def __check_address_set_syntax(self, address_set, allow_interfaces):
         for addr in address_set:
@@ -1482,6 +1593,7 @@ class api_init():
             return(False)
         #endfor
         return(True)
+    #enddef
 
     def __is_dist_name(self, addr_str):
 
@@ -1489,6 +1601,7 @@ class api_init():
         # Distinguished-Name as an eid-prefix orrloc-record-name.
         #
         return(addr_str[0] == "'" and addr_str[-1] == "'")
+    #enddef
 
     def __check_address_syntax(self, address):
 
@@ -1535,6 +1648,7 @@ class api_init():
             return(True)
         #endif
         return(False)
+    #enddef
 
     def __build_prefix_tuple(self, iid, eid_prefix, group, kw="prefix"):
         data = {}
@@ -1542,7 +1656,7 @@ class api_init():
         data["eid-prefix"] = eid_prefix
         if (group != ""): data["group-prefix"] = group
         return({kw : data})
-
+    #enddef
 #endclass
 
 #-----------------------------------------------------------------------------

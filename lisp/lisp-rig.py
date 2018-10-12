@@ -109,20 +109,20 @@ for g in geos:
 #endfor
 
 if (dist_name == False and geo_string == False):
-    try:
-        dest_eid = lisp.lisp_gethostbyname(dest_eid)
-    except:
+    deid = lisp.lisp_gethostbyname(dest_eid)
+    if (deid == ""):
         print "Cannot resolve EID name '{}'".format(dest_eid)
         exit(1)
     #endtry
+    dest_eid = deid
 #endif
 
-try:
-    ddt_node = lisp.lisp_gethostbyname(ddt_node)
-except:
+ddt_node_addr = lisp.lisp_gethostbyname(ddt_node)
+if (ddt_node_addr == ""):
     print "Cannot resolve DDT-node name '{}'".format(ddt_node)
     exit(1)
-#endtry
+#endif
+ddt_node = ddt_node_addr
 
 #
 # Was more internal debugging requested by user?

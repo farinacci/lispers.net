@@ -50,6 +50,7 @@ lisp_commands = {
     "lisp referral-cache"           : ["lisp-mr"],
     "lisp site"                     : ["lisp-ms"],
     "lisp eid-crypto-hash"          : ["lisp-ms"],
+    "lisp encryption-keys"          : ["lisp-ms"],
     "lisp map-server-peer"          : ["lisp-ms"],
     "lisp ms-authoritative-prefix"  : ["lisp-ms"],
     "lisp ddt-authoritative-prefix" : ["lisp-ddt"],
@@ -135,7 +136,7 @@ def lisp_banner_top(no_hover):
         lisp.bold("Scalable Open Overlay Networking", True), hostname)
 
     return(banner)
-#endif
+#enddef
 
 #
 # lisp_banner_bottom
@@ -158,7 +159,7 @@ def lisp_banner_bottom():
         lisp.lisp_version, hostname)
 
     return(banner)
-#endif
+#enddef
 
 #
 # lisp_show_wrapper
@@ -294,7 +295,7 @@ def lisp_write_line(line):
 #
 def lisp_not_supported():
     return(lisp_show_wrapper(""))
-#endif
+#enddef
 
 #
 # lisp_hash_password
@@ -305,7 +306,7 @@ def lisp_not_supported():
 def lisp_hash_password(plaintext):
     ciphertext = hmac.new("lispers.net", plaintext, hashlib.sha1).hexdigest()
     return(ciphertext)
-#endef
+#enddef
 
 #
 # lisp_validate_input_address_string

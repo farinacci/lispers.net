@@ -216,7 +216,7 @@ def lisp_get_api_data(data_structure, data):
     opcode, source, port, output = lisp.lisp_receive(lisp_ipc_socket, True)
     lisp.lisp_ipc_lock.release()
     return(output)
-#endif
+#endef
 
 #
 # lisp_api_put_delete
@@ -287,7 +287,7 @@ def lisp_api_put_delete(command = ""):
     lisp.lisp_ipc_lock.release()
 
     return(json.dumps(data))
-#endif
+#enddef
 
 #
 # lisp_show_api_doc
@@ -403,7 +403,7 @@ def lisp_show_geo_map(geo_prefix):
 @bottle.route('/lisp/login', method="get")
 def lisp_core_login_page():
     return(lispconfig.lisp_login_page())
-#endif
+#enddef
 
 #
 # lisp_core_do_login
@@ -493,7 +493,7 @@ def lisp_core_not_supported():
     #endif
 
     return(lispconfig.lisp_not_supported())
-#endif
+#enddef
 
 #
 # lisp_show_status_command
@@ -1236,6 +1236,11 @@ def lisp_show_rtr_map_cache_command(nodns = ""):
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
+
+    #
+    # For Alpine Linux (Zededa deployment), default to not doing DNS lookups.
+    #
+    if (lisp.lisp_is_alpine()): nodns = "nodns"
 
     if (nodns == "nodns"):
         return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
