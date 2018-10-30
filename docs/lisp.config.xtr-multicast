@@ -27,7 +27,7 @@
 #-----------------------------------------------------------------------------
 lisp enable {
     itr = yes
-    etr = no
+    etr = yes
     rtr = no
     map-server = no
     map-resolver = no
@@ -58,17 +58,32 @@ lisp xtr-parameters {
 lisp map-resolver {
     dns-name = <dns-name-of-map-resolver>
 }
+lisp map-server {
+    dns-name = <dns-name-of-map-server>
+    authentication-key = <authentication-key-configured-in-map-server>
+}
 lisp database-mapping {
     prefix {
-        instance-id = 0
-    	eid-prefix = 0.0.0.0/0
+        instance-id = <non-zero-if-configuring-vpn>
+    	eid-prefix = <you-fill-in-any-address-family-prefix>
     }
     prefix {
-        instance-id = 0
-    	eid-prefix = 0::/0
+        instance-id = <non-zero-if-configuring-vpn>
+    	eid-prefix = '<you-fill-in-an-eid-distinguished-name>'
     }
     rloc {
         address = <you-fill-in-a-routable-address-on-one-of-your-interfaces>
     }    
 }
+lisp group-mapping {
+    group-name = ipv4-multicast
+    group-prefix = 224.0.0.0/4
+    instance-id = <0 - 4294967295>
+}
+lisp group-mapping {
+    group-name = ipv6-multicast
+    group-prefix = ff00::/8
+    instance-id = <0 - 4294967295>
+}
+
 #-----------------------------------------------------------------------------#

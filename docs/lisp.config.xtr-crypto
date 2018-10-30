@@ -27,7 +27,7 @@
 #-----------------------------------------------------------------------------
 lisp enable {
     itr = yes
-    etr = no
+    etr = yes
     rtr = no
     map-server = no
     map-resolver = no
@@ -58,17 +58,52 @@ lisp xtr-parameters {
 lisp map-resolver {
     dns-name = <dns-name-of-map-resolver>
 }
+lisp map-server {
+    dns-name = <dns-name-of-map-server>
+    authentication-key = <authentication-key-configured-in-map-server>
+}
+lisp json {
+    json-name = signature
+    json-string = { "signature-eid" : "[1000]<ipv6-crypto-eid>", "signature" : "<signature-string>" }
+}
+
+#
+# All 4 EIDs (across differnte IIDs) below will be signed with json-string
+# above. 
+#    
 lisp database-mapping {
     prefix {
-        instance-id = 0
-    	eid-prefix = 0.0.0.0/0
+        instance-id = 1000
+    	eid-prefix = <ipv6-crypto-eid>
+        signature-eid = yes
     }
     prefix {
-        instance-id = 0
-    	eid-prefix = 0::/0
+        instance-id = 1000
+    	eid-prefix = <ipv4-eid>
     }
     rloc {
         address = <you-fill-in-a-routable-address-on-one-of-your-interfaces>
+    }    
+    rloc {
+        json-name = signature
+        priority = 255
+    }    
+}
+lisp database-mapping {
+    prefix {
+        instance-id = 2000
+    	eid-prefix = <ipv6-eid>
+    }
+    prefix {
+        instance-id = 2000
+    	eid-prefix = <ipv4-eid>
+    }
+    rloc {
+        address = <you-fill-in-a-routable-address-on-one-of-your-interfaces>
+    }    
+    rloc {
+        json-name = signature
+        priority = 255
     }    
 }
 #-----------------------------------------------------------------------------#

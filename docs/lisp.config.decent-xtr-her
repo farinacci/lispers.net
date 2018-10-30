@@ -27,10 +27,10 @@
 #-----------------------------------------------------------------------------
 lisp enable {
     itr = yes
-    etr = no
+    etr = yes
     rtr = no
-    map-server = no
-    map-resolver = no
+    map-server = yes
+    map-resolver = yes
     ddt-node = no
 }
 lisp debug {
@@ -48,27 +48,63 @@ lisp user-account {
     super-user = yes
 }
 lisp xtr-parameters {
-    rloc-probing = no
+    rloc-probing = yes
     data-plane-security = no
     nat-traversal = no
     nonce-echoing = no
     data-plane-logging = no
     flow-logging = no
+    decentralized-xtr = yes
 }
 lisp map-resolver {
-    dns-name = <dns-name-of-map-resolver>
+    dns-name = localhost
 }
+lisp map-server {
+    address = <any-one-peer-rloc-address>
+    authentication-key = <key>
+}
+lisp map-server {
+    address = <group-address>
+    authentication-key = <key>
+}
+#
+# All EIDs for this xTR are registered to the core-peer-group address
+# <group-address>.
+#
 lisp database-mapping {
     prefix {
-        instance-id = 0
-    	eid-prefix = 0.0.0.0/0
+        instance-id = <iid>
+    	eid-prefix = <eid-prefix>
     }
     prefix {
-        instance-id = 0
-    	eid-prefix = 0::/0
+        instance-id = <iid>
+    	eid-prefix = '<xtr-name>'
     }
     rloc {
-        address = <you-fill-in-a-routable-address-on-one-of-your-interfaces>
+        interface = <inteface>
     }    
+}
+#
+# Note that you must touch a file in the lispers.net directory named
+# "join-<group-address>". That causes IGMP joins for <group-address> and
+# therefore causes (0.0.0.0/0, <group-address>) Map-Registers to be sent
+# to the unicast map-servers above..
+#
+lisp group-mapping {
+    group-name = core-peer-group
+    instance-id = <iid>
+    group-prefix = <group-address>/32
+    sources {
+        address = 0.0.0.0
+   }
+}
+lisp site {
+    site-name = <site-name>
+    authentication-key = <key>
+    allowed-prefix {
+        instance-id = <iid>
+    	accept-more-specifics = yes
+    	force-proxy-reply = yes
+    }
 }
 #-----------------------------------------------------------------------------#
