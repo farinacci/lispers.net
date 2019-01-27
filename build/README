@@ -39,6 +39,9 @@ and go libraries by doing:
     go get github.com/google/gopacket/pcap
     go get golang.org/x/net/bpf
 
+After building the lisp-xtr go binary, make-release.py picks it up from
+lisp/ directory to include in the tarball file.
+
 The script:
 
     python make-apps-release.py
