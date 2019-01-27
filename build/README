@@ -1,18 +1,18 @@
 This directory is used to build lispers.net images. The script:
 
-    python make-release.py <release-number>
+    > python make-release.py <release-number>
 
-builds a compressed tarball with obfuscated pyo files. The script depends on 
-the program pyobfuscate. So it will need to be on your system to build a 
-lispers.net tarball.
+builds a compressed tarball with obfuscated pyo files. The name of the
+tarball file is lispers.net-x86-release-<release-number>.tgz.
 
 This script must be run in this build/ directory and depends on peer 
 directories docs/ and lisp/. It also depends on a sub-directory called 
 py-depend/.
 
-When building a new release, make sure you update the top of build/release-
-notes.txt so the lispers.net web page can tell you the notes (new features,
-bugfixes, or notes) for the latest release.
+When building a new release, make sure you edit the top of the file
+build/release-notes.txt to include a brief description what you added or
+fixed in the release. This file is displayed in the lispers.net landing page
+when the "system status" button is clicked on.
 
 The last built release directory will always have a symbolic-link called 
 "latest" pointing to it.
@@ -27,24 +27,31 @@ And to build lisp-xtr go binary in the lisp/ directory by doing a:
 
     ./build-xtr
 
-you need go compiler:
+you need the go compiler:
 
+    > go version
     go version go1.10.4 linux/amd64
 
 and go libraries by doing:
 
-    go get github.com/google/gopacket
-    go get github.com/google/gopacket/afpacket
-    go get github.com/google/gopacket/layers
-    go get github.com/google/gopacket/pcap
-    go get golang.org/x/net/bpf
+    > go get github.com/google/gopacket
+    > go get github.com/google/gopacket/afpacket
+    > go get github.com/google/gopacket/layers
+    > go get github.com/google/gopacket/pcap
+    > go get golang.org/x/net/bpf
 
 After building the lisp-xtr go binary, make-release.py picks it up from
-lisp/ directory to include in the tarball file.
+lisp/ directory to include in the tarball file. Note the lisp-xtr go binary
+is a faster LISP data-plane forwarding engine but less feature-rich than
+the python data-plane forwarding engine. When it is enabled by uncommenting
+the LISP_RUN_LISP_XTR environment variable in the lisp/RUN-LISP startup script.
+When the go-based lisp-xtr runs the python data-plane does not.
+
+-------------------------------------------------------------------------------
 
 The script:
 
-    python make-apps-release.py
+    > python make-apps-release.py
 
 will build a compressed tarball image with all the apps in the apps/ directory.
 
