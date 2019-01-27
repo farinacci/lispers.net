@@ -45,15 +45,15 @@ def lisp_rtr_show_command(parameter):
 #enddef
 
 #
-# lisp_rtr_show_command_nodns
+# lisp_rtr_show_command_dns
 #
 # Display state in an RTR but pass in boolean to not do a DNS lookup.
 #
-def lisp_rtr_show_command_nodns(parameter):
+def lisp_rtr_show_command_dns(parameter):
     global lisp_threads
 
-    return(lispconfig.lisp_itr_rtr_show_command(parameter, "RTR", 
-        lisp_threads, False))
+    return(lispconfig.lisp_itr_rtr_show_command(parameter, "RTR", lisp_threads,
+        True))
 #enddef
 
 #
@@ -72,7 +72,7 @@ def lisp_rtr_show_keys_command(parameter):
 #
 def lisp_rtr_database_mapping_command(kv_pair):
     lispconfig.lisp_database_mapping_command(kv_pair)
-#endef
+#enddef
 
 #
 # lisp_rtr_show_rloc_probe_command
@@ -477,7 +477,7 @@ def lisp_rtr_worker_thread(lisp_thread):
 def lisp_triage(thread):
     seed = (time.time() % thread.number_of_pcap_threads)
     return(int(seed) == thread.thread_number)
-#endef
+#enddef
 
 #
 # lisp_rtr_pcap_process_packet
@@ -514,7 +514,7 @@ def lisp_rtr_pcap_process_packet(parms, not_used, packet):
         lisp_thread.lisp_packet.packet = packet
         lisp_rtr_data_plane(lisp_thread.lisp_packet, lisp_thread.thread_name)
     #endif
-#endef
+#enddef
 
 #
 # lisp_rtr_pcap_thread
@@ -720,7 +720,6 @@ def lisp_rtr_map_resolver_command(kv_pair):
             [lisp_send_sockets, lisp_ephem_port])
         lisp.lisp_test_mr_timer.start()
     #endif
-
 #enddef
 
 #
@@ -850,7 +849,7 @@ lisp_rtr_commands = {
     "show rtr-rloc-probing" : [lisp_rtr_show_rloc_probe_command, { }],
     "show rtr-keys" : [lisp_rtr_show_keys_command, {}],
     "show rtr-map-cache" : [lisp_rtr_show_command, {}],
-    "show rtr-map-cache-nodns" : [lisp_rtr_show_command_nodns, {}]
+    "show rtr-map-cache-dns" : [lisp_rtr_show_command_dns, {}]
 }
 
 #------------------------------------------------------------------------------

@@ -216,7 +216,7 @@ def lisp_get_api_data(data_structure, data):
     opcode, source, port, output = lisp.lisp_receive(lisp_ipc_socket, True)
     lisp.lisp_ipc_lock.release()
     return(output)
-#endef
+#enddef
 
 #
 # lisp_api_put_delete
@@ -914,7 +914,7 @@ def lisp_log_flows_command():
     out = "<a href='/lisp/show/log/lisp-flow/100'>logs/lisp-flows.log</a>"
     output += lisp.lisp_print_cour(out)
     return(lispconfig.lisp_show_wrapper(output))
-#endef
+#enddef
 
 #
 # lisp_search_log_command
@@ -1023,26 +1023,30 @@ def lisp_debug_menu_command(name = ""):
     #
     if (name == "disable%all"):
         data = lispconfig.lisp_get_clause_for_api("lisp debug")
-        new = []
-        for entry in data[0]["lisp debug"]:
-            key = entry.keys()[0]
-            new.append({ key : "no" })
-        #endfor
-        new = { "lisp debug" : new }
-        lispconfig.lisp_put_clause_for_api(new)
+        if (data[0].has_key("lisp debug")):
+            new = []
+            for entry in data[0]["lisp debug"]:
+                key = entry.keys()[0]
+                new.append({ key : "no" })
+            #endfor
+            new = { "lisp debug" : new }
+            lispconfig.lisp_put_clause_for_api(new)
+        #endif
 
         data = lispconfig.lisp_get_clause_for_api("lisp xtr-parameters")
-        new = []
-        for entry in data[0]["lisp xtr-parameters"]:
-            key = entry.keys()[0]
-            if (key in ["data-plane-logging", "flow-logging"]): 
-                new.append({ key : "no" })
-            else:
-                new.append({ key : entry[key] })
-            #endif
-        #endfor
-        new = { "lisp xtr-parameters" : new }
-        lispconfig.lisp_put_clause_for_api(new)
+        if (data[0].has_key("lisp xtr-parameters")):
+            new = []
+            for entry in data[0]["lisp xtr-parameters"]:
+                key = entry.keys()[0]
+                if (key in ["data-plane-logging", "flow-logging"]): 
+                    new.append({ key : "no" })
+                else:
+                    new.append({ key : entry[key] })
+                #endif
+            #endfor
+            new = { "lisp xtr-parameters" : new }
+            lispconfig.lisp_put_clause_for_api(new)
+        #endif
 
         return(lispconfig.lisp_landing_page())
     #endif
@@ -1231,20 +1235,15 @@ def lisp_show_itr_map_cache_lookup():
 # Have the lisp-rtr process show the map-cache.
 #
 @bottle.route('/lisp/show/rtr/map-cache')
-@bottle.route('/lisp/show/rtr/map-cache/<nodns>')
-def lisp_show_rtr_map_cache_command(nodns = ""):
+@bottle.route('/lisp/show/rtr/map-cache/<dns>')
+def lisp_show_rtr_map_cache_command(dns = ""):
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
 
-    #
-    # For Alpine Linux (Zededa deployment), default to not doing DNS lookups.
-    #
-    if (lisp.lisp_is_alpine()): nodns = "nodns"
-
-    if (nodns == "nodns"):
+    if (dns == "dns"):
         return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
-            "show rtr-map-cache-nodns"))
+            "show rtr-map-cache-dns"))
     else:
         return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
             "show rtr-map-cache"))
@@ -1740,7 +1739,7 @@ def lisp_get_info_source(addr_str, port, nonce):
     #endif
 
     return(None)
-#endef
+#enddef
 
 #
 # lisp_nat_proxy_map_request
@@ -2054,6 +2053,9 @@ class lisp_ssl_server(bottle.ServerAdapter):
 # 443   - run web server on port 443 using SSL
 # -8080 - run web server on port 8080 with no SSL (no secure connection).
 #
+# Any other port is accepted and used with SSL. If a "-" precedes it, it is
+# used with no SSL.
+#
 def lisp_bottle_ipv4_process(bottle_port):
     lisp.lisp_set_exception()
 
@@ -2061,8 +2063,8 @@ def lisp_bottle_ipv4_process(bottle_port):
     # No security. Usually for testing purposes or complexities installing
     # OpenSSL.
     #
-    if (bottle_port == "-8080"):
-        bottle.run(host="0.0.0.0", port="8080")
+    if (bottle_port < 0):
+        bottle.run(host="0.0.0.0", port=-bottle_port)
         return
     #endif
 
@@ -2125,7 +2127,6 @@ def lisp_check_processes(lisp_socket):
             #endif
         #endfor
     #endwhile
-
 #enddef
 
 #
@@ -2167,7 +2168,6 @@ def lisp_timeout_info_sources():
             lisp.lisp_info_sources_by_address.pop(key)
         #endfor
     #endwhile
-
 #enddef
 
 #
@@ -2423,31 +2423,57 @@ def lisp_core_shutdown():
 # a multicast address configured. If so, setsockopt so we can receive
 # multicast Map-Register messages.
 #
+# This function is robust enough for when a user copies lisp.config.example
+# into lisp.config. We have to ignore text after "#- ... -#".
+#
 def lisp_check_decent_xtr_multicast(lisp_socket):
 
-    #
-    # Is this a decent-xtr?
-    #
-    out = commands.getoutput('egrep "decentralized-xtr = yes" ./lisp.config')
-    if (out == ""): return
-    if (out[1] == "#"): return
+    f = open("./lisp.config", "r"); lines = f.read(); f.close()
+    lines = lines.split("\n")
 
     #
-    # Find multicast map-server addresses.
+    # Check if "decentralized-xtr = yes" is in the "lisp xtr-parameters"
+    # command clause.
     #
-    cmd = 'egrep -A 2 "lisp map-server {" ./lisp.config | egrep "address = "'
-    out = commands.getoutput(cmd)
-    if (out == ""): return
-
-    lines = out.split("\n")
-    group = None
+    decent_xtr = False
     for line in lines:
-        group = line.split("address = ")[1]
-        ho_byte = int(group.split(".")[0])
-        if (ho_byte >= 224 and ho_byte < 240): break
-        group = None
+        if (line[0:1] == "#-" and line[-2:-1] == "-#"): break
+        if (line == "" or line[0] == "#"): continue
+        if (line.find("decentralized-xtr = yes") == -1): continue
+        decent_xtr = True
+        break
     #endfor
-    if (group == None): return
+    if (decent_xtr == False): return
+    
+    #
+    # Check if "lisp map-server" command clauses have multicast addresses
+    # configured.
+    #
+    groups = []
+    in_clause = False
+    for line in lines:
+        if (line[0:1] == "#-" and line[-2:-1] == "-#"): break
+        if (line == "" or line[0] == "#"): continue
+            
+        if (line.find("lisp map-server") != -1):
+            in_clause = True
+            continue
+        #endif
+        if (line[0] == "}"):
+            in_clause = False
+            continue
+        #endif
+
+        #
+        # Parse address. Look at high-order byte.
+        #
+        if (in_clause and line.find("address = ") != -1):
+            group = line.split("address = ")[1]
+            ho_byte = int(group.split(".")[0])
+            if (ho_byte >= 224 and ho_byte < 240): groups.append(group)
+        #endif
+    #endfor
+    if (group == []): return
 
     #
     # Find eth0 IP address.
@@ -2460,16 +2486,19 @@ def lisp_check_decent_xtr_multicast(lisp_socket):
     # Set socket options on socket.
     #
     i = socket.inet_aton(intf_addr)
-    g = socket.inet_aton(group)
-    lisp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    lisp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, i)
-    lisp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, g + i)
-    lisp.lprint("Setting multicast listen socket for group {}".format(group))
+    for group in groups:
+        lisp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        lisp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, i)
+        g = socket.inet_aton(group) + i
+        lisp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, g)
+        lisp.lprint("Setting multicast listen socket for group {}".format( \
+            group))
+    #endfor
 #enddef
 
 #------------------------------------------------------------------------------
 
-bottle_port = sys.argv[1] if (len(sys.argv) > 1) else 8080
+bottle_port = int(sys.argv[1]) if (len(sys.argv) > 1) else 8080
 
 #
 # Main entry point for process.

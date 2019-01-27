@@ -1,4 +1,97 @@
 
+                lispers.net Beta Release Version 0.485
+                --------------------------------------
+
+o Release date: Sun Jan 27 13:43:29 PST 2019
+
+o In lisp_check_decent_xtr_multicast() make sure when we grep out "address"
+  lines that in the for loop we check if the line contains "address" in it.
+  The -A2 on egrep command could give us an non "address" line.
+
+o Keep one location for release-notes.txt. Pull it from the docs directory
+  into the release tarball.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.484
+                --------------------------------------
+
+o Release date: Mon Jan 14 16:17:00 PST 2019
+
+o Convert bottle port to integer when passed on command line. Not doing this
+  is causing non https connections to user supplied port number to not work.
+
+o There is a strange situation with entering IPv6 addresses. If fe::/8 is
+  entered, 0xfe is not the high-order byte of the 128 bit quantity. If fe00::/8
+  is entered the high-order byte is 0xfe. But we want the user to enter it
+  either way. So detect this odd-byte case in both prefixes and addresses,
+  accept "xx::" or "xx00::" and always display "xx::". There were cases when
+  fe00::/8 is in the map-cache and a lookup for fe::1 or fe00::1 won't find
+  it. The IPv6 print libraries will always print fe00::/8 (which compounds the
+  problem) but in longest match lookups only the high-order 8 bits are tested.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.483
+                --------------------------------------
+
+o Release date: Wed Dec  5 17:10:43 PST 2018
+
+o Put a comment in lisp_itr_kernel_filter() to indicate that a docker
+  container ip6tables command will not work if the host debian system does
+  not have "sudo modprobe ip6table_filter". This causes TCP checksum errors
+  for TCP packets over IPv6.
+
+o Put a comment in how-to-install.txt letting user know about this little
+  nugget.
+
+o Fix crash in lisp_bottle_ipv4_process() when the web server port passed
+  in is an integer and not a string.
+
+o In this release we tried allowing the lisp-rtr process to accept and
+  process "lisp interface" commands so it can be a PxTR supporting LISP-NAT.
+  There were no fixes that went in to try to support this. It can't work
+  and is being documented her. The problem is that both the lisp-itr and
+  lisp-rtr processes will send RLOC-probes where the RLOC-probe replies
+  don't know how to be dispatched to the correct process. It almost worked
+  bidirectionally until the ITR's map-cache RLOC for the xTR went
+  unreachable and stayed that way.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.482
+                --------------------------------------
+
+o Release date: Tue Nov 27 09:59:00 PST 2018
+
+o Allow "-" precede any port number supplied on the RESTART-LISP command.
+  Previously "-8080" was supported. Now we can do this trick for any port
+  number. This will have the web server listen on the port number without
+  using SSL. This is a workaround until someone in the world fixes "curl
+  --insecure" on the latest MacOS releases.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.481
+                --------------------------------------
+
+o Release date: Mon Nov 19 12:29:51 PST 2018
+
+o Print signature JSON string when Map-Request signatures fail when sending
+  a signed Map-Request.
+
+o Reverse the polarity of "nodns" committed in release 0.479. By default,
+  the code will not do DNS lookups in the RTR map-cache display where the
+  NAT-traversal table displayed the DNS name of a NAT device. The column will
+  not appear by default. But when the https://<rtr>:8080/lisp/show/rtr/
+  map-cache/dns is entered the column will appear. And if the DNS lookups
+  timeout, the column will display "?".
+
+o In lisp_debug_menu_command() make sure we test for "lisp debug" and "lisp
+  xtr-parameters" exist as commands before trying to set values.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.480
                 --------------------------------------
 

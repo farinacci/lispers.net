@@ -59,7 +59,7 @@ lisp_commands = {
     "show itr-map-cache"            : ["lisp-itr"],
     "show itr-rloc-probing"         : ["lisp-itr"],
     "show rtr-map-cache"            : ["lisp-rtr"],
-    "show rtr-map-cache-nodns"      : ["lisp-rtr"],
+    "show rtr-map-cache-dns"        : ["lisp-rtr"],
     "show rtr-rloc-probing"         : ["lisp-rtr"],
     "show database-mapping"         : ["lisp-etr"],
     "show referral-cache"           : ["lisp-mr"],
@@ -1036,7 +1036,7 @@ def lisp_validate_user():
         LISP_USER_TIMEOUT
     bottle.response.set_cookie("lisp-login", username, max_age=age)
     return(True)
-#endef
+#enddef
 
 #
 # lisp_get_user
@@ -1562,7 +1562,7 @@ def lisp_start_stop_process(process, startstop):
         os.system("rm " + process)
         return
     #endif
-#endef
+#enddef
 
 #
 # lisp_enable_command
@@ -1732,7 +1732,7 @@ def lisp_user_account_command(clause):
     #endif
 
     return(new_clause)
-#endef
+#enddef
 
 #
 # lisp_rtr_list_command
@@ -2050,7 +2050,6 @@ def lisp_send_commands(lisp_socket, process):
         #endif
         capture = False
     #endfor
-
 #enddef
 
 #
@@ -2078,7 +2077,6 @@ def lisp_config_process(lisp_socket):
         #endif
         time.sleep(1)
     #endwhile
-
 #enddef
 
 #------------------------------------------------------------------------------
@@ -2442,9 +2440,16 @@ def lisp_display_nat_info(output, dc, dodns):
 
     hover = "{} entries in the NAT-traversal port table".format(length)
     title = lisp.lisp_span("NAT-Traversed xTR Information:", hover)
-    output += lisp_table_header(title, "xTR Hostname", "Translated<br>Address",
-        "Translated<br>{} Port".format(dc), "Last<br>Info-Request", 
-        "NAT DNS Name")
+
+    if (dodns):
+        output += lisp_table_header(title, "xTR Hostname",
+            "Translated<br>Address", "Translated<br>{} Port".format(dc),
+            "Last<br>Info-Request", "NAT DNS Name")
+    else:
+        output += lisp_table_header(title, "xTR Hostname",
+            "Translated<br>Address", "Translated<br>{} Port".format(dc),
+            "Last<br>Info-Request")
+    #endif
 
     for xtr_array in lisp.lisp_nat_state_info.values():
         for nat_info in xtr_array:
@@ -2458,15 +2463,17 @@ def lisp_display_nat_info(output, dc, dodns):
             else:
                 uptime = lisp.lisp_print_elapsed(uptime)
             #endif
-            nat = "--"
+
             if (dodns):
                 try:
                     nat = socket.gethostbyaddr(addr)[0]
                 except:
                     nat = "?"
                 #endtry
+                output += lisp_table_row(hostname, addr, port, uptime, nat)
+            else:
+                output += lisp_table_row(hostname, addr, port, uptime)
             #endif
-            output += lisp_table_row(hostname, addr, port, uptime, nat)
         #endfor
     #endfor
 
@@ -2479,7 +2486,7 @@ def lisp_display_nat_info(output, dc, dodns):
 #
 # Display state in an ITR or RTR.
 #
-def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dodns=True):
+def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
 
     #
     # Do lookup if there is a parameter supplied.
@@ -2629,7 +2636,7 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dodns=True):
     # Show NAT-traversal lisp_nat_state_info table for an RTR.
     #
     if (itr_or_rtr == "RTR"):
-        output = lisp_display_nat_info(output, "Data", dodns)
+        output = lisp_display_nat_info(output, "Data", dns)
     #endif
 
     #
@@ -2923,7 +2930,6 @@ def lisp_elp_command(kv_pair):
     #
     elp.elp_nodes = elp_nodes
     lisp.lisp_elp_list[elp.elp_name] = elp
-
 #enddef
 
 #
@@ -2973,7 +2979,6 @@ def lisp_rle_command(kv_pair):
     rle.rle_nodes = rle_nodes
     rle.build_forwarding_list()
     lisp.lisp_rle_list[rle.rle_name] = rle
-
 #enddef
 
 #

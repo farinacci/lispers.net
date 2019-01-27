@@ -821,7 +821,7 @@ def lisp_itr_pcap_process_packet(device, not_used, packet):
     if (lisp.lisp_l2_overlay): offset = 0
 
     lisp_itr_data_plane(packet[offset::], device, interface, macs, my_sa)
-#endef
+#enddef
 
 #
 # lisp_itr_kernel_filter
@@ -929,6 +929,11 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
     # Check if we need to put in a iptables rule workaround for the virtio TCP
     # checksum corruption problem for KVM guest OSes. Check environmnt 
     # variable LISP_VIRTIO_BUG.
+    #
+    # Note a debian host system that runs docker will need the following
+    # command so ip6tables works inside of the docker container:
+    #
+    #   sudo modprobe ip6table_filter
     #
     if (os.getenv("LISP_VIRTIO_BUG") != None):
         c = ("sudo iptables -A POSTROUTING -t mangle -p tcp -j " + \
@@ -1103,7 +1108,7 @@ def lisp_itr_map_resolver_command(kv_pair):
 #
 def lisp_itr_database_mapping_command(kv_pair):
     lispconfig.lisp_database_mapping_command(kv_pair)
-#endef
+#enddef
 
 #
 # lisp_itr_xtr_command

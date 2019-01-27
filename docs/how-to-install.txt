@@ -5,7 +5,7 @@
 The lispers.net LISP subsystem software implements "Routing as an Application".
 It runs on Ubuntu, Fedora, CentOS, and Debian Linux distros as well as MacOS 
 and Raspbian. And can run on these platforms in Docker containers. There
-are docker images available so you can avoid doing the installation procudures
+are docker images available so you can avoid doing the installation procedures
 below.
 
 This implementation is the world's richest feature set of the open IETF LISP 
@@ -151,8 +151,14 @@ Installation Problems?
 
     sudo apt-get install libpcap-dev
 
+(9) Note that if ip6tables does not work (but is installed), you may need
+    to load the IPv6 filter kernel module. Do that with command "sudo
+    modprobe ip6table_filter". The symptom that shows when the kernel module
+    is not loaded are TCP checksum errors over IPv6.
+
 -------------------------------------------------------------------------------
-                 Last updated: Fri Oct 27 18:17:33 PDT 2017
+                 Last updated: Mon Dec  3 10:01:11 PST 2018
+
 
 
 

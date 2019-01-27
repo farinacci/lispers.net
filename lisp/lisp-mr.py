@@ -403,7 +403,7 @@ def lisp_timeout_referral_entry(referral, delete_list):
     #
     delete_list.append(referral)
     return([True, delete_list])
-#endef
+#enddef
 
 #
 # lisp_timeout_referral_cache_walk

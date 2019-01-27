@@ -612,7 +612,7 @@ def lprint(*args):
     print ""
     try: sys.stdout.flush()
     except: pass
-#endef
+#enddef
 
 #
 # dprint
@@ -3182,7 +3182,7 @@ class lisp_thread():
         self.input_queue = Queue.Queue()
         self.input_stats = lisp_stats()
         self.lisp_packet = lisp_packet(None)
-    #endef
+    #enddef
 #endclass
 
 #------------------------------------------------------------------------------
@@ -6165,7 +6165,6 @@ def lisp_ipc(packet, send_socket, node):
         offset += segment_len
         length -= segment_len
     #endwhile
-
 #enddef
 
 #
@@ -6288,7 +6287,7 @@ def lisp_receive_segments(lisp_socket, packet, source, total_length):
     #endwhile
 
     return([True, packet])
-#endef
+#enddef
 
 #
 # lisp_bit_stuff
@@ -7079,6 +7078,9 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
             hash_eid, pubkey, sig_good = lisp_lookup_public_key(sig_eid)
             if (sig_good):
                 sig_good = map_request.verify_map_request_sig(pubkey)
+            else:
+                lprint("Public-key lookup failed for sig-eid {}, hash-eid {}".\
+                    format(sig_eid.print_address(), hash_eid.print_address()))
             #endif
             pf = bold("passed", False) if sig_good else bold("failed", False)
             lprint("EID-crypto-hash signature verification {}".format(pf))
@@ -7138,6 +7140,9 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
             hash_eid, pubkey, sig_good = lisp_lookup_public_key(sig_eid)
             if (sig_good):
                 sig_good = map_request.verify_map_request_sig(pubkey)
+            else:
+                lprint("Public-key lookup failed for sig-eid {}, hash-eid {}".\
+                    format(sig_eid.print_address(), hash_eid.print_address()))
             #endif
             pf = bold("passed", False) if sig_good else bold("failed", False)
             lprint("Required signature verification {}".format(pf))
@@ -7457,7 +7462,7 @@ def lisp_find_negative_mask_len(eid, entry_prefix, neg_prefix):
     #endfor
 
     if (mask_len > neg_prefix.mask_len): neg_prefix.mask_len = mask_len
-#endef
+#enddef
 
 #
 # lisp_neg_prefix_walk
@@ -7486,7 +7491,7 @@ def lisp_neg_prefix_walk(entry, parms):
     #
     lisp_find_negative_mask_len(eid, entry.eid, neg_prefix)
     return([True, parms])
-#endef
+#enddef
 
 #
 # lisp_ddt_compute_neg_prefix
@@ -8057,7 +8062,6 @@ def lisp_store_mr_stats(source, nonce):
         mr.last_nonce = 0
     #endif
     if ((mr.neg_map_replies_received % 10) == 0): mr.last_nonce = 0
-
 #enddef
 
 #
@@ -8355,7 +8359,7 @@ def lisp_hash_me(packet, alg_id, password, do_hex):
         hashval = hmac.new(password, packet, hashalg).digest()
     #endif
     return(hashval)
-#endef
+#enddef
 
 #
 # lisp_verify_auth
@@ -10926,21 +10930,33 @@ class lisp_address():
 
             #
             # There will be a common IPv6 address input mistake that will 
-            # occur. The address ff::/8 is actually encoded as 0x00ff as the 
-            # high-order 16-bits. The correct way to specify the prefix is 
-            # ff00::/8 but one would wonder why the lower order 0x00 bits are 
-            # needed if a /8 is used. So to summarize:
+            # occur. The address ff::/8 (or an address ff::1) is actually
+            # encoded as 0x00ff as the high-order 16-bits. The correct way to
+            # specify the prefix is ff00::/8 but one would wonder why the
+            # lower order 0x00 bits are needed if a /8 is used. So to
+            # summarize:
             #
-            #     Entering ff::/8 will give you the 0::/0 prefix.
-            #     Entering ff00::/8 is not the same as ff00::/16.
+            # Entering ff::/8 will give you the 0::/8 prefix.
+            # Entering ff00::/8 is not the same as ff00::/16.
             #
+            # Allow user to specify ff::/8 which allows for placing the the
+            # byte in the high-order byte of the 128-bit quantity. Check
+            # for double-colon in the input string to detect the single byte
+            # and then below byte-swap the first 2-bytes.
+            #
+            odd_byte = (addr_str[2:4] == "::")
             try:
                 addr_str = socket.inet_pton(socket.AF_INET6, addr_str)
             except:
                 addr_str = socket.inet_pton(socket.AF_INET6, "0::0")
             #endtry
             addr_str = binascii.hexlify(addr_str)
+
+            if (odd_byte):
+                addr_str = addr_str[2:4] + addr_str[0:2] + addr_str[4::]
+            #endif
             self.address = int(addr_str, 16)
+
         elif (self.is_geo_prefix()):
             geo = lisp_geo(None)
             geo.name = "geo-prefix-{}".format(geo)
@@ -11047,6 +11063,13 @@ class lisp_address():
             addr_str = lisp_hex_string(self.address).zfill(32)
             addr_str = binascii.unhexlify(addr_str)
             addr_str = socket.inet_ntop(socket.AF_INET6, addr_str)
+
+            #
+            # For the odd zero byte in front of "::", never print "xx00:: ...".
+            #
+            if (addr_str[2:6] == "00::"):
+                addr_str = addr_str[0:2] + addr_str[4::]
+            #endif
             return("{}".format(addr_str))
         elif (self.is_geo_prefix()): 
             return("{}".format(self.address.print_geo()))
@@ -15507,7 +15530,7 @@ def lisp_start_rloc_probe_timer(interval, lisp_sockets):
     timer = threading.Timer(interval, func, [lisp_sockets])
     lisp_rloc_probe_timer = timer
     timer.start()
-#endef
+#enddef
 
 #
 # lisp_show_rloc_probe_list

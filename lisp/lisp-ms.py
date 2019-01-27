@@ -1110,7 +1110,7 @@ def lisp_timeout_site_eid(site_eid, delete_list):
     #
     delete_list.append(site_eid)
     return(delete_list)
-#endef
+#enddef
 
 #
 # lisp_timeout_individuals
