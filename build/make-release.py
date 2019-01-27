@@ -104,7 +104,7 @@ os.system("rm latest; ln -sf {} latest".format(dir))
 
 print "Copying files from ../lisp to " + dir + " build directory ...",
 command = '''
-cp ../lisp/lispapi.txt ../lisp/*py ../lisp/*-LISP ../lisp/RL-* ../lisp/*.pem.default ../docs/release-notes.txt ../lisp/pslisp ../lisp/log-packets ../lisp/lispers.net-geo.html ./{}/.
+cp ../lisp/lispapi.txt ../lisp/*py ../lisp/*-LISP ../lisp/RL-* ../lisp/*.pem.default ../build/release-notes.txt ../lisp/pslisp ../lisp/log-packets ../lisp/lispers.net-geo.html ./{}/.
 '''.format(dir)
 
 status = os.system(command)

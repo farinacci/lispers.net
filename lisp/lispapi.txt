@@ -4,7 +4,7 @@ NAME
     lispapi
 
 FILE
-    /Users/dino/code/lisp/lispapi.py
+    lispers.net/lisp/lispapi.py
 
 DESCRIPTION
     This python module is called by client network applications that want to
