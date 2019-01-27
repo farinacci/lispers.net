@@ -13,7 +13,22 @@ import platform
 #------------------------------------------------------------------------------
 
 obfuscate_on = True
-root = "./.." if os.path.exists("./.git") else "/Users/dino/code"
+root = "./.."
+
+#
+# Check that pyflakes and pyobfuscate are installed.
+#
+pyflakes = commands.getoutput("pyflakes -h")
+if (pyflakes.find("not found") != -1):
+    print "Need to 'apt-get install pyflakes'"
+    exit(1)
+#endif    
+pyobfuscate = commands.getoutput("pyobfuscate -h")
+if (obfuscate_on and pyobfuscate.find("not found") != -1):
+    print "Need pyobfuscate, turn off or install via at " + \
+        "'https://github.com/astrand/pyobfuscate'"
+    exit(1)
+#endif    
 
 #
 # First check that this is running in the build directory and that peer
@@ -176,9 +191,12 @@ else:
     print "Copying go files and go binary 'lisp-xtr*'  ... ", 
     os.system("cp {}/lisp/*.go {}/src/.".format(root, dir))
     os.system("cp {} {}/.".format(go_binary, dir))
-    os.system("cp {} {}/.".format(go_binary + ".alpine", dir))
+    lisp_xtr = "lisp-xtr"
+    if (os.path.exists("{}".format(go_binary + ".alpine"))):
+        os.system("cp {} {}/.".format(go_binary + ".alpine", dir))
+        lisp_xtr += " lisp-xtr.alpine"
+    #endif
     print "done"
-    lisp_xtr = "lisp-xtr lisp-xtr.alpine"
 #endif
 
 #

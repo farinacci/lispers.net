@@ -10,12 +10,34 @@ This script must be run in this build/ directory and depends on peer
 directories docs/ and lisp/. It also depends on a sub-directory called 
 py-depend/.
 
-When building a new release, make sure you update the top of lisp/release-
+When building a new release, make sure you update the top of docs/release-
 notes.txt so the lispers.net web page can tell you the notes (new features,
 bugfixes, or notes) for the latest release.
 
 The last built release directory will always have a symbolic-link called 
 "latest" pointing to it.
+
+The build machine that make-release.py runs on depends on the following tools
+to be installed:
+
+    pyflakes
+    pyobfuscate
+
+And to build lisp-xtr go binary in the lisp/ directory by doing a:
+
+    ./build-xtr
+
+you need go compiler:
+
+    go version go1.10.4 linux/amd64
+
+and go libraries by doing:
+
+    go get github.com/google/gopacket
+    go get github.com/google/gopacket/afpacket
+    go get github.com/google/gopacket/layers
+    go get github.com/google/gopacket/pcap
+    go get golang.org/x/net/bpf
 
 The script:
 
