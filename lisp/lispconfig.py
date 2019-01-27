@@ -896,12 +896,12 @@ def lisp_process_command(lisp_socket, opcode, clause, process, command_set):
     #endif
     command = command[0] + " " + command[1]
 
-    for commands in command_set:
-        if (commands.has_key(command)): 
-            command_processor, kv_pairs = commands[command]
+    for cmds in command_set:
+        if (cmds.has_key(command)): 
+            command_processor, kv_pairs = cmds[command]
             break
         #endif
-        if (commands == command_set[-1]):
+        if (cmds == command_set[-1]):
             lisp.lprint("Invalid command found '{}'".format(command))
             return
         #endif
