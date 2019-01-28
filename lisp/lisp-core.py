@@ -480,7 +480,8 @@ def lisp_core_traceback_page():
     #
     if (clean):
         output = ""
-        log_files = commands.getoutput("egrep -c Traceback ./logs/*.log")
+        cmd = "egrep --with-filename Traceback ./logs/*.log"
+        log_files = commands.getoutput(cmd)
         log_files = log_files.split("\n")
         for lf in log_files:
             line = lf.split(":")
