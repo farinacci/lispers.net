@@ -2,6 +2,15 @@
                 lispers.net Beta Release Version 0.485
                 --------------------------------------
 
+o Release date:
+
+o When looking for Tracebacks in log files use --with-filename versus -c.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.485
+                --------------------------------------
+
 o Release date: Sun Jan 27 13:43:29 PST 2019
 
 o In lisp_check_decent_xtr_multicast() make sure when we grep out "address"

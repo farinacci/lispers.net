@@ -168,7 +168,7 @@ def lisp_banner_bottom():
 
     banner = '''<br><hr style="border: none; border-bottom: 1px solid gray;">
         <i><font size="2">{} - Uptime 
-        {}, Version {}<br>Copyright 2013-2018 - all rights reserved by
+        {}, Version {}<br>Copyright 2013-2019 - all rights reserved by
         <a href="http://www.lispers.net"><b>lispers.net</b></a> LLC<br>
         Features/Bugs go to <a href=
 "mailto:support@lispers.net?subject=lispers.net v{} bug-report from '{}'">
