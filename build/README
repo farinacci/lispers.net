@@ -1,3 +1,6 @@
+
+Building the lispers.net LISP Subssytem
+
 This directory is used to build lispers.net images. The script:
 
     > python make-release.py <release-number>
@@ -49,6 +52,37 @@ When the go-based lisp-xtr runs the python data-plane does not.
 
 -------------------------------------------------------------------------------
 
+Building Docker Images
+    
+You can build docker images by using the dockerfile in build/Dockerfile. When
+lispers.net is run in a docker container, all lispers.net dependencies are
+installed and the LISP subsystem is brought up when container starts. It
+will have an unconfigured system but the lisp-core process will run and the
+web page is accessible. You can then attach to the container and configure
+any LISP functionality you need.
+
+In the build/ directory type:
+
+    > docker build -t lispers.net/ubuntu .
+
+If you want to build container images based on centos or debian, modify the
+top of the build/Dockerfile. To start a docker container that runs the
+lispers.net LISP subsystem, create aliases like:
+
+alias drun-ubuntu 'docker run -p 8080 --privileged --name \!* -h \!* -v /Users/dino:/dino -ti lispers.net/ubuntu'
+alias drun-centos 'docker run -p 8080 --privileged --name \!* -h \!* -v /Users/dino:/dino -ti lispers.net/centos'
+alias drun-debian 'docker run -p 8080 --privileged --name \!* -h \!* -v /Users/dino:/dino -ti lispers.net/debian'
+
+and simply type:
+
+    > drun-ubuntu <my-lisp-container-name>
+
+Modify your -v parameters to your liking or leave it off all together.
+
+-------------------------------------------------------------------------------
+
+Building LISP Application Releases
+    
 The script:
 
     > python make-apps-release.py
