@@ -12,7 +12,7 @@ o Have Dockerfile pick up lispers.net release image from a release directory
   in the git repo at location build/latest/lispers.net.tgz. Default to getting
   from Dropbox.
 
-o Readying code for open-sourcing ght git repo.
+o Readying code for open-sourcing git repo.
 
 -------------------------------------------------------------------------------
 
