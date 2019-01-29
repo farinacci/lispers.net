@@ -2042,7 +2042,6 @@ class lisp_ssl_server(bottle.ServerAdapter):
             server.stop()  
         #endtry
     #enddef
-    return
 #endclass
 
 #
