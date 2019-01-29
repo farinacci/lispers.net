@@ -1,6 +1,7 @@
 
-Building the lispers.net LISP Subssytem
-
+Building the lispers.net LISP Subsystem
+---------------------------------------
+    
 This directory is used to build lispers.net images. The script:
 
     > python make-release.py <release-number>
@@ -53,7 +54,8 @@ When the go-based lisp-xtr runs the python data-plane does not.
 -------------------------------------------------------------------------------
 
 Building Docker Images
-    
+----------------------    
+
 You can build docker images by using the dockerfile in build/Dockerfile. When
 lispers.net is run in a docker container, all lispers.net dependencies are
 installed and the LISP subsystem is brought up when container starts. It
@@ -82,6 +84,7 @@ Modify your -v parameters to your liking or leave it off all together.
 -------------------------------------------------------------------------------
 
 Building LISP Application Releases
+----------------------------------    
     
 The script:
 
