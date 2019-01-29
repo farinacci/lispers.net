@@ -86,8 +86,7 @@ def lisp_ddt_auth_prefix_command(kv_pair):
 #
 # lisp_ddt_delegation_command
 #
-# Create a ddt-cache entrye-or-more EID-prefixes assocaited-
-# or-more child referrals.
+# Create a ddt-cache entry for a delegation to a child referral.
 #
 def lisp_ddt_delegation_command(kv_pair):
     prefix_set = []
@@ -194,7 +193,7 @@ def lisp_ddt_delegation_command(kv_pair):
             ddt_entry.delegation_set.append(child)
         #endfor
     #endfor
-
+    return
 #enddef
 
 #
@@ -281,7 +280,6 @@ def lisp_ddt_display_ddt_cache(ddt_entry, output):
             mrs = ""
         #endif
     #endfor
-
     return([True, output])
 #enddef
 
@@ -381,7 +379,6 @@ def lisp_ddt_startup():
     lisp_send_sockets[0] = lisp.lisp_open_send_socket("", lisp.LISP_AFI_IPV4)
     lisp_send_sockets[1] = lisp.lisp_open_send_socket("", lisp.LISP_AFI_IPV6)
     lisp_send_sockets[2] = lisp_ipc_listen_socket
-
     return
 #enddef
 
@@ -398,6 +395,7 @@ def lisp_ddt_shutdown():
     lisp.lisp_close_socket(lisp_send_sockets[0], "")
     lisp.lisp_close_socket(lisp_send_sockets[1], "")
     lisp.lisp_close_socket(lisp_ipc_listen_socket, "lisp-ddt")
+    return
 #enddef
 
 #

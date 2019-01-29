@@ -56,6 +56,7 @@ def lisp_close_all_sockets():
         name = "/tmp/lisp-rig" if (s == lisp_ipc_socket) else ""
         lisp.lisp_close_socket(s, name)
     #endfor
+    return
 #enddef
 
 #------------------------------------------------------------------------------

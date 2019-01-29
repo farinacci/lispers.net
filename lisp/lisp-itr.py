@@ -135,6 +135,7 @@ def lisp_itr_process_timer(lisp_sockets, lisp_ephem_port):
     lisp_periodic_timer = threading.Timer(60, lisp_itr_process_timer, 
         [lisp_sockets, lisp_ephem_port])
     lisp_periodic_timer.start()
+    return
 #enddef
 
 #
@@ -194,6 +195,7 @@ def lisp_itr_timeout_dynamic_eids(lisp_socket):
     #
     threading.Timer(lisp.LISP_DEFAULT_DYN_EID_TIMEOUT, 
         lisp_itr_timeout_dynamic_eids, [lisp_socket]).start()
+    return
 #enddef
 
 #
@@ -319,7 +321,6 @@ def lisp_itr_startup():
     #
     threading.Timer(lisp.LISP_DEFAULT_DYN_EID_TIMEOUT, 
         lisp_itr_timeout_dynamic_eids, [lisp_ipc_listen_socket]).start()
-
     return(True)
 #enddef
 
@@ -341,7 +342,6 @@ def lisp_itr_count_eid_prefixes():
         if (line[0] == " " and line.find("prefix {") != -1): count += 1
     #endif
     f.close()
-
     return(count)
 #enddef
 
@@ -498,6 +498,7 @@ def lisp_itr_get_capture_info():
             device))
         threading.Thread(target=lisp_itr_pcap_thread, args=args).start() 
     #endfor
+    return
 #enddef
 
 #
@@ -521,6 +522,7 @@ def lisp_itr_shutdown():
     lisp.lisp_close_socket(lisp_ephem_nat_socket, "")
     lisp.lisp_close_socket(lisp_ipc_listen_socket, "lisp-itr")
     lisp.lisp_close_socket(lisp_ipc_punt_socket, "lispers.net-itr")
+    return
 #enddef
 
 #
@@ -783,6 +785,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     # Don't need packet structure anymore.
     #
     del(packet)
+    return
 #enddef
 
 #
@@ -839,6 +842,7 @@ def lisp_itr_pcap_process_packet(device, not_used, packet):
     if (lisp.lisp_l2_overlay): offset = 0
 
     lisp_itr_data_plane(packet[offset::], device, interface, macs, my_sa)
+    return
 #enddef
 
 #
@@ -966,6 +970,7 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
         virtio = lisp.bold("virtio", False)
         lisp.lprint("{} bug workaround, configure '{}'".format(virtio, c))
     #endif
+    return
 #enddef
 
 #
@@ -1059,6 +1064,7 @@ def lisp_itr_pcap_thread(device, pfilter, pcap_lock):
 
     pcap.filter = pfilter
     pcap.loop(-1, lisp_itr_pcap_process_packet, device)
+    return
 #enddef
 
 #
@@ -1090,6 +1096,7 @@ def lisp_itr_process_info_timer():
     lisp_itr_info_timer = threading.Timer(lisp.LISP_INFO_INTERVAL, 
         lisp_itr_process_info_timer, [])
     lisp_itr_info_timer.start()
+    return
 #enddef
 
 #
@@ -1116,6 +1123,7 @@ def lisp_itr_map_resolver_command(kv_pair):
     #
     lisp_itr_info_timer = threading.Timer(0, lisp_itr_process_info_timer, [])
     lisp_itr_info_timer.start()
+    return
 #enddef
 
 #
@@ -1126,6 +1134,7 @@ def lisp_itr_map_resolver_command(kv_pair):
 #
 def lisp_itr_database_mapping_command(kv_pair):
     lispconfig.lisp_database_mapping_command(kv_pair)
+    return
 #enddef
 
 #
@@ -1183,6 +1192,7 @@ def lisp_itr_xtr_command(kv_pair):
     #
     lisp.lisp_ipc_write_xtr_parameters(lisp.lisp_debug_logging,
         lisp.lisp_data_plane_logging)
+    return
 #enddef
 
 #
@@ -1236,6 +1246,7 @@ def lisp_itr_process_nonce_ipc(ipc):
                 lisp.red(echo_nonce.rloc_str, False), rns))
         #endif
     #endif
+    return
 #enddef
 
 #

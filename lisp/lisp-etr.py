@@ -134,11 +134,13 @@ def lisp_etr_show_command(clause):
             "N" if ms.want_map_notify else "n",
             "R" if ms.refresh_registrations else "r")
 
-        registers_sent = ms.map_registers_sent + ms.map_registers_multicast_sent
+        registers_sent = ms.map_registers_sent + \
+            ms.map_registers_multicast_sent
 
         output += lispconfig.lisp_table_row(addr_str, 
            "sha1" if (ms.alg_id == lisp.LISP_SHA_1_96_ALG_ID) else  "sha2",
-            xtr_id, ms.site_id, flags, registers_sent, ms.map_notifies_received)
+            xtr_id, ms.site_id, flags, registers_sent,
+            ms.map_notifies_received)
     #endfor
     output += lispconfig.lisp_table_footer()
 
@@ -322,6 +324,7 @@ def lisp_map_server_command(kv_pairs):
             lisp_process_register_timer, [lisp_send_sockets])
         lisp_trigger_register_timer.start()
     #endif
+    return
 #enddef
 
 #
@@ -370,6 +373,7 @@ def lisp_group_mapping_command(kv_pairs):
     gm = lisp.lisp_group_mapping(group_name, ms_name, group_prefix, sources,
         rle_address)
     gm.add_group()
+    return
 #enddef
 
 #
@@ -614,6 +618,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         # 
         if (ms_only != None and ms == ms_only): break
     #endfor
+    return
 #enddef
 
 #
@@ -659,6 +664,7 @@ def lisp_etr_process_info_timer(ms):
     lisp_etr_info_timer = threading.Timer(lisp.LISP_INFO_INTERVAL, 
         lisp_etr_process_info_timer, [None])
     lisp_etr_info_timer.start()
+    return
 #enddef
 
 #
@@ -693,6 +699,7 @@ def lisp_process_register_timer(lisp_sockets):
     lisp_register_timer = threading.Timer(LISP_MAP_REGISTER_INTERVAL, 
         lisp_process_register_timer, [lisp_send_sockets])
     lisp_register_timer.start()
+    return
 #enddef
 
 #
@@ -947,6 +954,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         #
         time.sleep(.001)
     #endfor
+    return
 #enddef
 
 #
@@ -1187,6 +1195,7 @@ def lisp_process_igmp_packet(packet):
     if (len(register_entries) != 0):
         lisp_send_multicast_map_register(lisp_send_sockets, register_entries)
     #endif
+    return
 #enddef
 
 #
@@ -1361,6 +1370,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
     # Send out.
     #
     packet.send_packet(raw_socket, packet.inner_dest)
+    return
 #enddef
 
 #
@@ -1494,6 +1504,7 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     # Send out on raw socket.
     #
     packet.send_packet(raw_socket, packet.inner_dest)
+    return
 #enddef
 
 #
@@ -1517,6 +1528,7 @@ def lisp_register_ipv6_group_entries(group, joinleave):
     #endfor
 
     lisp_send_multicast_map_register(lisp_send_sockets, sg)
+    return
 #enddef
 
 #
@@ -1596,6 +1608,7 @@ def lisp_etr_join_leave_process():
         #endfor
         time.sleep(10)
     #endwhile
+    return
 #enddef
 
 #
@@ -1778,6 +1791,7 @@ def lisp_etr_shutdown():
     lisp.lisp_close_socket(lisp_send_sockets[0], "")
     lisp.lisp_close_socket(lisp_send_sockets[1], "")
     lisp.lisp_close_socket(lisp_ipc_listen_socket, "lisp-etr")
+    return
 #enddef
 
 #
@@ -1886,6 +1900,7 @@ def lisp_etr_discover_eid(ipc):
             os.system(cmd)
         #endif
     #endif
+    return
 #enddef
 
 #
@@ -1912,6 +1927,7 @@ def lisp_etr_process_rtr_updown(ipc):
 
     rtr = lisp.lisp_address(lisp.LISP_AFI_IPV4, rtr_str, 32, 0)
     lisp.lisp_rtr_list[rtr_str] = rtr
+    return
 #enddef
 
 #
@@ -1936,6 +1952,7 @@ def lisp_etr_process_nonce_ipc(ipc):
         lisp.lprint("Sent echo-nonce 0x{} to {}".format( \
             lisp.lisp_hex_string(nonce), lisp.red(echo_nonce.rloc_str, False)))
     #endif
+    return
 #enddef
 
 #

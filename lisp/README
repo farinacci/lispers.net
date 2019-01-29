@@ -13,10 +13,10 @@ The LISP component functionality includes:
     and/or RLOCs.
 (2) Mapping system functions Map-Resolver (MR) and Map-Server (MS).
 (3) Mapping Database Transport LISP-DDT (DDT).
-(3) Support for LISP-NAT is used for LISP-to-non-LISP Interworking.
+(4) Support for LISP-NAT is used for LISP-to-non-LISP Interworking.
 
 To compile the go files, run "./build-xtr" from the lisp/ subdirectory. Then
-build/make-release.py will pick up binary lisp-xtr and package it in the
+build/make-release.py will pick up binary lisp-xtr and package it into the
 tarball it creates.
 
 -------------------------------------------------------------------------------

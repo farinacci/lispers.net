@@ -126,6 +126,7 @@ def process_eid_records(record_count, nonce, packet):
         #endfor
         print ""
     #endfor
+    return
 #enddef
 
 #
@@ -137,6 +138,7 @@ def lisp_lig_close_sockets(lisp_sockets):
         name = "/tmp/lisp-lig" if (s == lisp_ipc_socket) else ""
         lisp.lisp_close_socket(s, name)
     #endfor
+    return
 #enddef
 
 #------------------------------------------------------------------------------

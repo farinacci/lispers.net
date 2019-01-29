@@ -47,7 +47,6 @@ def more_specific(agg, prefix):
     if (prefix.find("/") != -1): prefix = prefix.split("/")[0]
     ms = prefix.split(".")
     ms = int(ms[0]) << 24 | int(ms[1]) << 16 | int(ms[2]) << 8 | int(ms[3])
-
     return((ms & mask) == (ls & mask))
 #enddef
 

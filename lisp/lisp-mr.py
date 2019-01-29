@@ -50,6 +50,7 @@ lisp_ephem_port = lisp.lisp_get_ephemeral_port()
 #
 def lisp_clear_referral_cache():
     lisp.lisp_referral_cache = lisp.lisp_cache()
+    return
 #enddef
 
 #
@@ -201,6 +202,7 @@ def lisp_referral_cache_command(kv_pair):
         #endfor
         referral.add_cache()
     #endfor
+    return
 #enddef
 
 #
@@ -252,7 +254,6 @@ def lisp_display_referral_cache(ref, output):
             ref_type = ""
         #endif
     #endfor
-
     return([True, output])
 #enddef
 
@@ -308,7 +309,6 @@ def lisp_mr_show_referral_cache_lookup(eid_str):
                 lisp.lisp_print_cour(ts))))
     #endif
     output += "<br>"
-
     return(output)
 #enddef
 
@@ -475,6 +475,7 @@ def lisp_timeout_referral_cache():
         lisp.LISP_REFERRAL_TIMEOUT_CHECK_INTERVAL, lisp_timeout_referral_cache,
             [])
     lisp_referral_timer.start()
+    return
 #enddef
 
 #
@@ -533,6 +534,7 @@ def lisp_mr_shutdown():
     lisp.lisp_close_socket(lisp_ephem_listen_socket, "")
     lisp.lisp_close_socket(lisp_send_internal_socket, "lisp-mrms")
     lisp.lisp_close_socket(lisp_ipc_listen_socket, "lisp-mr")
+    return
 #enddef
 
 #
@@ -592,6 +594,7 @@ def lisp_mr_parse_packet(packet, source_str, sport):
     #
     lisp.lprint("Map-Resolver received an unexpected LISP packet, type: {}". \
         format(header.type))
+    return
 #enddef
 
 #------------------------------------------------------------------------------

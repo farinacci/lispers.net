@@ -230,6 +230,7 @@ def lisp_site_command(kv_pairs):
     # Sort the site.allowed_preifxes{} array.
     #
     site.allowed_prefixes_sorted = sorted(site.allowed_prefixes)
+    return
 #enddef
 
 #
@@ -271,6 +272,7 @@ def lisp_ms_auth_prefix_command(kv_pair):
     # Store in ddt-cache data structure.
     #
     ddt_entry.add_cache()
+    return
 #enddef
 
 #
@@ -366,7 +368,7 @@ def lisp_ms_map_server_peer_command(kv_pair):
             ddt_entry.delegation_set.append(peer)
         #endfor
     #endfor
-
+    return
 #enddef
 
 #
@@ -394,6 +396,7 @@ def lisp_ms_eid_crypto_hash_command(kv_pair):
     # Add to data structure.
     #
     lisp.lisp_eid_hashes.append(address)
+    return
 #enddef
 
 #
@@ -408,6 +411,7 @@ def lisp_ms_encryption_keys_command(kv_pair):
             lisp.lisp_ms_encryption_keys = lisp.lisp_parse_auth_key(value)
         #endif
     #endfor
+    return
 #enddef
 
 #
@@ -669,7 +673,6 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
         output += "<br>"
     #endif
     output += "</font>"
-
     return(output)
 #enddef
 
@@ -698,7 +701,6 @@ def lisp_ms_display_ddt_cache(ddt_entry, output):
             mrs = ""
         #endif
     #endfor
-
     return([True, output])
 #enddef
 
@@ -822,7 +824,6 @@ def lisp_ms_show_site_lookup(input_str):
                 neg_prefix)
         #endif
     #endif
-
     return(output + "<br>")
 #enddef
 
@@ -900,7 +901,6 @@ def lisp_display_site_eid_entry(site_eid, site, first, output):
 
     output += lispconfig.lisp_table_row(site_name, eid_str, registered,
         registerer, lts, fts, flags)
-
     return(output)
 #enddef
 
@@ -1144,7 +1144,6 @@ def lisp_timeout_individuals(parent, rle_list):
     if (len(delete_list) != 0 and parent.merge_in_site_eid(None)):
         rle_list.append([parent.eid, parent.group])
     #endif
-
     return(rle_list)
 #enddef
 
@@ -1203,6 +1202,7 @@ def lisp_timeout_sites():
     lisp_site_timer = threading.Timer(lisp.LISP_SITE_TIMEOUT_CHECK_INTERVAL, 
         lisp_timeout_sites, [])
     lisp_site_timer.start()
+    return
 #enddef
 
 #
@@ -1254,6 +1254,7 @@ def lisp_timeout_pubsub():
     lisp_pubsub_timer = threading.Timer( \
         lisp.LISP_PUBSUB_TIMEOUT_CHECK_INTERVAL, lisp_timeout_pubsub, [])
     lisp_pubsub_timer.start()
+    return
 #enddef
 
 #
@@ -1319,6 +1320,7 @@ def lisp_ms_shutdown():
     lisp.lisp_close_socket(lisp_send_sockets[0], "")
     lisp.lisp_close_socket(lisp_send_sockets[1], "")
     lisp.lisp_close_socket(lisp_ipc_listen_socket, "lisp-ms")
+    return
 #enddef
 
 #------------------------------------------------------------------------------

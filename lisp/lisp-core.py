@@ -40,7 +40,7 @@
 #        |              |              |              |              |
 #        +--------------+--------------+--------------+--------------+
 #                                      |
-#                                      |
+#                                      | for dispatching control messages
 #                                +-----------+
 #                                | lisp-core |
 #                                +-----------+
@@ -303,7 +303,6 @@ def lisp_api_put_delete(command = ""):
         data = lispconfig.lisp_put_clause_for_api(data)
     #endif
     lisp.lisp_ipc_lock.release()
-
     return(json.dumps(data))
 #enddef
 
@@ -340,7 +339,7 @@ def lisp_show_lisp_xtr():
     #endif
 
     #
-    # Special case to look for a Zededa data-plane. If it does not exist, check
+    # Special case to look for a other data-planes. If it does not exist, check
     # the lispers.net go data-plane.
     #
     if (os.path.exists("./show-ztr")):
@@ -357,7 +356,6 @@ def lisp_show_lisp_xtr():
         new += line + "<br>"
     #endfor
     new = lisp.convert_font(new)
-
     return(lisp.lisp_print_sans(new))
 #enddef
 
@@ -383,7 +381,6 @@ def lisp_show_keys(xtr):
         return(lispconfig.lisp_show_wrapper(lisp.lisp_print_cour(output)))
     #endif
     command = "show {}-keys".format(xtr)
-
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket, command))
 #enddef
 
@@ -426,7 +423,7 @@ def lisp_core_login_page():
 #
 # lisp_core_do_login
 #
-# Get login infor entered in forms data. Validate and add to cookie database.
+# Get login info entered in forms data. Validate and add to cookie database.
 # If valid, take user to landing page. Othereise, go back to login page.
 #
 @bottle.route('/lisp/login', method="post")
@@ -510,7 +507,6 @@ def lisp_core_not_supported():
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
-
     return(lispconfig.lisp_not_supported())
 #enddef
 
@@ -675,7 +671,6 @@ def lisp_show_conf_command():
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
-
     return(bottle.static_file("lisp.config", root="./", mimetype="text/plain"))
 #enddef
 
@@ -689,7 +684,6 @@ def lisp_show_diff_command():
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
-
     return(bottle.static_file("lisp.config.diff", root="./", 
         mimetype="text/plain"))
 #enddef
@@ -754,7 +748,6 @@ def lisp_clear_conf_verify_command():
     yes = lisp.lisp_button("yes", "/lisp/clear/conf")
     cancel = lisp.lisp_button("cancel", "/lisp")
     output += yes + cancel + "<br>"
-
     return(lispconfig.lisp_show_wrapper(output))
 #enddef
 
@@ -778,7 +771,6 @@ def lisp_get_port_on_command_line():
         if (output[-2] == "lisp-core.pyo" and output[-1] == p): port = p
         break
     #endfor
-
     return(port)
 #enddef
 
@@ -839,7 +831,6 @@ def lisp_restart_verify_command():
     yes = lisp.lisp_button("yes", "/lisp/restart")
     cancel = lisp.lisp_button("cancel", "/lisp")
     output += yes + cancel + "<br>"
-
     return(lispconfig.lisp_show_wrapper(output))
 #enddef
 
@@ -889,7 +880,6 @@ def lisp_install_command():
     string = "Install request for file {} {}".format(image,
         "succeeded" if (status == 0) else "failed")
     lisp.lprint(lisp.bold(string, False))
-
     return(lispconfig.lisp_show_wrapper(output))
 #enddef
 
@@ -1093,7 +1083,6 @@ def lisp_debug_menu_command(name = ""):
         new = { clause_name: new }
         lispconfig.lisp_put_clause_for_api(new)
     #endif
-
     return(lispconfig.lisp_landing_page())
 #enddef
 
@@ -1190,7 +1179,6 @@ def lisp_show_database_command():
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
-
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
         "show database-mapping"))
 #enddef
@@ -1205,7 +1193,6 @@ def lisp_show_itr_map_cache_command():
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
-
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
         "show itr-map-cache"))
 #enddef
@@ -1220,7 +1207,6 @@ def lisp_show_itr_rloc_probing_command():
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
-
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
         "show itr-rloc-probing"))
 #enddef
@@ -1279,7 +1265,6 @@ def lisp_show_rtr_rloc_probing_command():
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
-
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
         "show rtr-rloc-probing"))
 #enddef
@@ -1317,7 +1302,6 @@ def lisp_show_referral_command():
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
-
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
         "show referral-cache"))
 #enddef
@@ -1354,7 +1338,6 @@ def lisp_show_delegations_command():
     if (lispconfig.lisp_validate_user() == False): 
         return(lisp_core_login_page())
     #endif
-
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
         "show delegations"))
 #enddef
@@ -1522,7 +1505,6 @@ def lisp_lig_command():
     output = output.replace("elp:", elp)
     rle = lisp.space(4) + "rle:"
     output = output.replace("rle:", rle)
-
     return(lispconfig.lisp_show_wrapper(lisp.lisp_print_cour(output)))
 #enddef
 
@@ -1575,7 +1557,6 @@ def lisp_rig_command():
 
     ref = lisp.space(2) + "Referrals:"
     output = output.replace("Referrals:", ref)
-
     return(lispconfig.lisp_show_wrapper(lisp.lisp_print_cour(output)))
 #enddef
 
@@ -1756,7 +1737,6 @@ def lisp_get_info_source(addr_str, port, nonce):
         if (nonce not in lisp.lisp_info_sources_by_nonce): return(None)
         return(lisp.lisp_info_sources_by_nonce[nonce])
     #endif
-
     return(None)
 #enddef
 
@@ -2025,6 +2005,7 @@ def lisp_core_dispatch_packet(lisp_sockets, source, sport, packet):
         #endif
         lisp.lisp_ipc(packet, lisp_ipc_socket, process)
     #endif
+    return
 #enddef
 
 #
@@ -2061,6 +2042,7 @@ class lisp_ssl_server(bottle.ServerAdapter):
             server.stop()  
         #endtry
     #enddef
+    return
 #endclass
 
 #
@@ -2098,6 +2080,7 @@ def lisp_bottle_ipv4_process(bottle_port):
     except:
         bottle.run(host="0.0.0.0", port=bottle_port, fast=True)
     #endtry
+    return
 #enddef
 
 #
@@ -2146,6 +2129,7 @@ def lisp_check_processes(lisp_socket):
             #endif
         #endfor
     #endwhile
+    return
 #enddef
 
 #
@@ -2187,6 +2171,7 @@ def lisp_timeout_info_sources():
             lisp.lisp_info_sources_by_address.pop(key)
         #endfor
     #endwhile
+    return
 #enddef
 
 #
@@ -2266,10 +2251,11 @@ def lisp_core_control_packet_process(lisp_ipc_control_socket, lisp_sockets):
         #
         lisp.lisp_send(lisp_sockets, addr, port, packet)
     #endwhile
+    return
 #enddef
 
 #
-# lisp_cp_lisp.config
+# lisp_cp_lisp_config
 #
 # The file ./lisp.config does not exist. Copy all commands from file
 # lisp.config.example up to the dashed line.
@@ -2287,6 +2273,7 @@ def lisp_core_cp_lisp_config():
         #endif
     #endfor
     f.close()
+    return
 #enddef
 
 #
@@ -2433,6 +2420,7 @@ def lisp_core_shutdown():
     lisp.lisp_close_socket(lisp_ipc_control_socket, "lisp-core-pkt")
     lisp.lisp_close_socket(lisp_control_listen_socket, "")
     lisp.lisp_close_socket(lisp_encap_socket, "")
+    return
 #enddef
 
 #
@@ -2513,6 +2501,7 @@ def lisp_check_decent_xtr_multicast(lisp_socket):
         lisp.lprint("Setting multicast listen socket for group {}".format( \
             group))
     #endfor
+    return
 #enddef
 
 #------------------------------------------------------------------------------

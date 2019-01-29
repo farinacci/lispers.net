@@ -206,7 +206,6 @@ def lisp_table_header(title, *args):
         '''.format(arg)
     #endfor
     output += "</tr>"
-
     return(output)
 #enddef
 
@@ -223,7 +222,6 @@ def lisp_table_row(*args):
         '''.format(arg)
     #endfor
     output += "</tr>"
-
     return(output)
 #enddef
 
@@ -246,6 +244,7 @@ def lisp_write_last_changed_date(new, line):
     l = line.find(":")
     line = line[0:l+1] + " " + ts + "\n"
     new.write(line)
+    return
 #enddef
 
 #
@@ -375,7 +374,6 @@ def lisp_validate_input_address_string(input_str):
         good = lisp_valid_prefix_format(addr_str)
     #endif
     if (good == False): return(False)
-    
     return(True)
 #enddef
 
@@ -401,7 +399,6 @@ def lisp_valid_iid_format(iid_str):
         value = iid_str[start+1:end-1]
     #endif
     if (value.isdigit() == False): return(-1)
-
     return(end + 1)
 #enddef
 
@@ -420,7 +417,6 @@ def lisp_valid_prefix_format(prefix):
         if (prefix.find("'") == -1): return(False)
         addr = [prefix, len(prefix)]
     #endif
-
     return(lisp.lisp_valid_address_format("address", addr[0]))
 #enddef
 
@@ -859,7 +855,6 @@ def lisp_syntax_check(kv_pairs, clause):
         new_clause = new_clause.replace("#", "")
         new_clause = new_clause.replace("%", "#")
     #endif
-
     return([error, new_clause, new_kv_pairs])
 #enddef
 
@@ -1487,6 +1482,7 @@ def lisp_drain_socket(lisp_socket, process):
             saved_output = output
         #endif
     #endwhile
+    return
 #enddef
 
 #
@@ -1541,7 +1537,6 @@ def lisp_process_show_command(lisp_socket, command):
         output = lisp_drain_socket(lisp_socket, process)
         if (output == None): output = "<i>Fatal error, retry later</i><br>"
     #endif
-
     return(lisp_show_wrapper(output))
 #enddef
 
@@ -1580,6 +1575,7 @@ def lisp_start_stop_process(process, startstop):
         os.system("rm " + process)
         return
     #endif
+    return
 #enddef
 
 #
@@ -1678,7 +1674,6 @@ def lisp_debug_command(lisp_socket, clause, single_process):
         lisp.lisp_ipc(command, lisp_socket, process)
         if (single_process): break
     #endfor
-
     return(new_clause)
 #enddef
 
@@ -1748,7 +1743,6 @@ def lisp_user_account_command(clause):
     if (error == False):
         new_clause = lisp_replace_password_in_clause(new_clause, "password =")
     #endif
-
     return(new_clause)
 #enddef
 
@@ -1887,6 +1881,7 @@ def lisp_process_command_lines(lisp_socket, old, new, line):
             write_once = True
         #endif
     #endfor
+    return
 #enddef
 
 #
@@ -1981,6 +1976,7 @@ def lisp_process_config_file(lisp_socket, file_name, startup):
     #
     os.system("cp {} {}; rm -f {}; cp {} {}".format(new_name, file_name, 
         new_name, file_name, backup_name))
+    return
 #enddef
 
 #
@@ -2068,6 +2064,7 @@ def lisp_send_commands(lisp_socket, process):
         #endif
         capture = False
     #endfor
+    return
 #enddef
 
 #
@@ -2095,6 +2092,7 @@ def lisp_config_process(lisp_socket):
         #endif
         time.sleep(1)
     #endwhile
+    return
 #enddef
 
 #------------------------------------------------------------------------------
@@ -2126,6 +2124,7 @@ def lisp_map_resolver_command(kv_pair):
             #endfor
         #endif
     #endfor
+    return
 #enddef
 
 #
@@ -2248,6 +2247,7 @@ def lisp_map_cache_command(kv_pair):
         mc.add_cache()
         rloc_set = copy.deepcopy(rloc_set)
     #endfor
+    return
 #enddef
 
 #
@@ -2388,7 +2388,6 @@ def lisp_display_map_cache(mc, output):
         if (eid_str != ""): eid_str = ""
         if (ts != ""): ts, ttl, source = ("", "", "")
     #endfor
-
     return([True, output])
 #enddef
 
@@ -2604,9 +2603,9 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
     #
     # Create link to /lisp/show/lisp-xtr if lisp-xtr is running.
     #
-    zededa = os.path.exists("./show-ztr")
+    ztr = os.path.exists("./show-ztr")
     mc_str = "Map-Cache"
-    if (os.getenv("LISP_RUN_LISP_XTR") != None or zededa):
+    if (os.getenv("LISP_RUN_LISP_XTR") != None or ztr):
         mc_str = '<a href="/lisp/show/lisp-xtr">Map-Cache</a>'
     #endif
 
@@ -2813,6 +2812,7 @@ def lisp_xtr_command(kv_pair):
             lisp.lisp_register_all_rtrs = (value == "no")
         #endif
     #endfor
+    return
 #enddef
 
 #
@@ -2901,6 +2901,7 @@ def lisp_geo_command(kv_pair):
     # Put in list by name.
     #
     lisp.lisp_geo_list[geo_name] = geo
+    return
 #enddef
 
 #
@@ -2948,6 +2949,7 @@ def lisp_elp_command(kv_pair):
     #
     elp.elp_nodes = elp_nodes
     lisp.lisp_elp_list[elp.elp_name] = elp
+    return
 #enddef
 
 #
@@ -2997,6 +2999,7 @@ def lisp_rle_command(kv_pair):
     rle.rle_nodes = rle_nodes
     rle.build_forwarding_list()
     lisp.lisp_rle_list[rle.rle_name] = rle
+    return
 #enddef
 
 #
@@ -3015,6 +3018,7 @@ def lisp_json_command(kv_pair):
 
     json = lisp.lisp_json(json_name, json_string)
     json.add()
+    return
 #enddef
 
 #
@@ -3066,7 +3070,6 @@ def lisp_get_lookup_string(input_str):
             group_exact = True
         #endif
     #endif
-
     return([eid, eid_exact, group, group_exact])
 #enddef
 
@@ -3104,7 +3107,6 @@ def lisp_show_map_cache_lookup(eid_str):
             lisp.lisp_print_cour(ts))
     #endif
     output += "<br>"
-
     return(output)
 #enddef
 
@@ -3508,6 +3510,7 @@ def lisp_u2a_walk_dict_array(adata, a_dict):
             adata[key.encode()] = a_dict[key].encode()
         #endif
     #endfor
+    return
 #enddef
 
 #
@@ -4069,6 +4072,7 @@ def lisp_interface_command(kv_pair):
     # Write to data-plane.
     #
     lisp.lisp_write_ipc_interfaces()
+    return
 #enddef
 
 #

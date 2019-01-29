@@ -1,10 +1,18 @@
 
-                lispers.net Beta Release Version 0.485
+                lispers.net Beta Release Version 0.486
                 --------------------------------------
 
-o Release date:
+o Release date: <not yet>
 
 o When looking for Tracebacks in log files use --with-filename versus -c.
+
+o Add 2019 to copyright notice display on web pages.
+
+o Have Dockerfile pick up lispers.net release image from a release directory
+  in the git repo at location build/latest/lispers.net.tgz. Default to getting
+  from Dropbox.
+
+o Readying code for open-sourcing ght git repo.
 
 -------------------------------------------------------------------------------
 

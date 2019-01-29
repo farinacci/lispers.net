@@ -195,6 +195,7 @@ def lisp_fix_rloc_encap_state_walk(mc, parms):
 def lisp_fix_rloc_encap_state(sockets, hostname, rloc, port):
     lisp.lisp_map_cache.walk_cache(lisp_fix_rloc_encap_state_walk, 
         [sockets, rloc, port, hostname])
+    return
 #enddef
 
 #
@@ -453,6 +454,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Don't need packet structure anymore.
     #
     del(packet)
+    return
 #enddef
 
 #
@@ -484,6 +486,7 @@ def lisp_rtr_worker_thread(lisp_thread):
         #
         lisp_rtr_data_plane(lisp_thread.lisp_packet, lisp_thread.thread_name)
     #endwhile
+    return
 #enddef
 
 #
@@ -532,6 +535,7 @@ def lisp_rtr_pcap_process_packet(parms, not_used, packet):
         lisp_thread.lisp_packet.packet = packet
         lisp_rtr_data_plane(lisp_thread.lisp_packet, lisp_thread.thread_name)
     #endif
+    return
 #enddef
 
 #
@@ -603,6 +607,7 @@ def lisp_rtr_process_timer():
     #
     lisp_periodic_timer = threading.Timer(60, lisp_rtr_process_timer, [])
     lisp_periodic_timer.start()
+    return
 #enddef
 
 #
@@ -719,6 +724,7 @@ def lisp_rtr_shutdown():
     lisp.lisp_close_socket(lisp_ephem_listen_socket, "")
     lisp.lisp_close_socket(lisp_ipc_punt_socket, "lispers.net-itr")
     lisp_raw_socket.close()
+    return
 #enddef
 
 #
@@ -738,6 +744,7 @@ def lisp_rtr_map_resolver_command(kv_pair):
             [lisp_send_sockets, lisp_ephem_port])
         lisp.lisp_test_mr_timer.start()
     #endif
+    return
 #enddef
 
 #
@@ -773,6 +780,7 @@ def lisp_rtr_xtr_command(kv_pair):
     #
     lisp.lisp_ipc_write_xtr_parameters(lisp.lisp_debug_logging,
         lisp.lisp_data_plane_logging)
+    return
 #enddef
 
 #
