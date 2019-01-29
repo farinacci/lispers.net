@@ -29,7 +29,7 @@ to be installed:
 
 And to build lisp-xtr go binary in the lisp/ directory by doing a:
 
-    ./build-xtr
+    > ./build-xtr
 
 you need the go compiler:
 
