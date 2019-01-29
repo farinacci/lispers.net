@@ -9,10 +9,10 @@ o When looking for Tracebacks in log files use --with-filename versus -c.
 o Add 2019 to copyright notice display on web pages.
 
 o Have Dockerfile pick up lispers.net release image from a release directory
-  in the git repo at location build/latest/lispers.net.tgz. Default to getting
-  from Dropbox.
+  in the git repo at location build/latest/lispers.net.tgz. Defaults to getting
+  tarball from Dropbox.
 
-o Readying code for open-sourcing git repo.
+o Readying code for open-sourcing lispers.net git repo.
 
 -------------------------------------------------------------------------------
 
@@ -9127,7 +9127,7 @@ o Fix parameter problem for call to lisp_process_map_request(). Found by Paul.
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.38
+                lispers.net Beta Release Version 0.38
                 -------------------------------------
 
 o Release date: Mon Jul  8 20:58:50 PDT 2013
@@ -9140,7 +9140,7 @@ o Fix lisp_address.is_ipv4_link_local() and lisp_address.is_ipv6_loopback().
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.37
+                lispers.net Beta Release Version 0.37
                 -------------------------------------
 
 o Release date: Mon Jul  8 19:16:12 PDT 2013
@@ -9191,7 +9191,7 @@ o Fix "lprint()" tracebacks in all places that is not the lisp.py module.
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.36
+                lispers.net Beta Release Version 0.36
                 -------------------------------------
 
 o Release date: Mon Jul  1 20:51:12 PDT 2013
@@ -9207,7 +9207,7 @@ o Put in code to timeout map-cache entries in the ITR and ETR.
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.35
+                lispers.net Beta Release Version 0.35
                 -------------------------------------
 
 o Release date: Sat Jun 29 10:12:09 PDT 2013
@@ -9233,7 +9233,7 @@ o The ETR and RTR can now run at the same time. Since we are using pcap to
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.34
+                lispers.net Beta Release Version 0.34
                 -------------------------------------
 
 o Release date: Sat Jun 22 20:53:22 PDT 2013
@@ -9256,7 +9256,7 @@ o Have the "/show/sites" display lookup EIDs in the DDT and site cache. When
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.33
+                lispers.net Beta Release Version 0.33
                 -------------------------------------
 
 o Release date: Fri Jun 21 21:36:46 PDT 2013
@@ -9265,7 +9265,7 @@ o Set L-bit in LISP data header to 0.
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.32
+                lispers.net Beta Release Version 0.32
                 -------------------------------------
 
 o Release date: Fri Jun 21 21:20:12 PDT 2013
@@ -9278,7 +9278,7 @@ o Do not have lisp_data_header.encode() prepend an UDP header. Keep code
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.31
+                lispers.net Beta Release Version 0.31
                 --------------------------------------
 
 o Release date: Fri Jun 21 17:24:36 PDT 2013
@@ -9294,7 +9294,7 @@ o When adding default routes to the cache, they should have an internal mask-
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.30
+                lispers.net Beta Release Version 0.30
                 --------------------------------------
 
 o Release date: Thu Jun 20 17:56:41 PDT 2013
@@ -9313,7 +9313,7 @@ o The RTR (and also the ETR) were stripping too many inner header bytes. It
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.29
+                lispers.net Beta Release Version 0.29
                 --------------------------------------
 
 o Release date: Thu Jun 20 11:48:44 PDT 2013
@@ -9326,7 +9326,7 @@ o Fixing locking issue by using a multiprocessing.Lock() that is shared
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.28
+                lispers.net Beta Release Version 0.28
                 --------------------------------------
 
 o Release date: Wed Jun 19 18:18:28 PDT 2013
@@ -9339,7 +9339,7 @@ o Create an ipc-lock so the lisp-core process has only one thread sending to
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.27
+                lispers.net Beta Release Version 0.27
                 --------------------------------------
 
 o Release date: Wed Jun 19 15:23:01 PDT 2013
@@ -9353,7 +9353,7 @@ o Do not display html output when a LISP component process returns show
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.26
+                lispers.net Beta Release Version 0.26
                 --------------------------------------
 
 o Release date: Tue Jun 18 21:47:11 PDT 2013
@@ -9382,7 +9382,7 @@ o Actually compute average RTT from an ITR's or RTR's perspective. This will
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.25
+                lispers.net Beta Release Version 0.25
                 --------------------------------------
 
 o Release date: Tue Jun 18 10:13:55 PDT 2013
@@ -9396,7 +9396,7 @@ o When a message is being received that is broken up into fragments but not
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.24
+                lispers.net Beta Release Version 0.24
                 -------------------------------------
 
 o Release date: Thu Jun 13 23:04:34 PDT 2013
@@ -9444,7 +9444,7 @@ o Create a button for the RTR's map-cache. In this release, you actually can
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.23
+                lispers.net Beta Release Version 0.23
                 -------------------------------------
 
 o Release date: Tue Jun 11 10:37:37 PDT 2013
@@ -9467,7 +9467,7 @@ o Display register-flags for each EID-prefix displayed in "/lisp/show/site".
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.22
+                lispers.net Beta Release Version 0.22
                 -------------------------------------
 
 o Release date: Sun Jun  9 20:52:54 PDT 2013
@@ -9491,7 +9491,7 @@ o So segmentation of packets that the lisp-core process gets addressed to
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.21
+                lispers.net Beta Release Version 0.21
                 -------------------------------------
 
 o Release date: Thu Jun  6 21:50:06 PDT 2013
@@ -9506,7 +9506,7 @@ o Fully tested both a DDT-node and an MS compute delegation-hole negative
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.20
+                lispers.net Beta Release Version 0.20
                 -------------------------------------
 
 o Release date: Wed Jun  5 15:07:53 PDT 2013
@@ -9515,7 +9515,7 @@ o Bug fixes after more testing of Merged Map-Notify messages.
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.19
+                lispers.net Beta Release Version 0.19
                 -------------------------------------
 
 o Release date: Wed Jun  5 10:45:44 PDT 2013
@@ -9525,7 +9525,7 @@ o Fix bug in lisp_convert)6to4(). Caused crash in all LISP subsystem
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.18
+                    lispers.net Beta Release Version 0.18
                 -------------------------------------
 
 o Release date: Wed Jun  5 10:45:44 PDT 2013
@@ -9537,7 +9537,7 @@ o IP and UDP packet lengths computed wrong for ECM messages.
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.17
+                lispers.net Beta Release Version 0.17
                 -------------------------------------
 
 o Release date: Tue Jun  4 16:17:52 PDT 2013
@@ -9552,7 +9552,7 @@ o Header checksum the inner IP header in an ECM message.
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.16
+                lispers.net Beta Release Version 0.16
                 -------------------------------------
 
 o Release date: Tue Jun  4 09:18:27 PDT 2013
@@ -9591,7 +9591,7 @@ o Change back "Uptime" to "First Registered" because when the site is not
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.15
+                lispers.net Beta Release Version 0.15
                 -------------------------------------
 
 o Release date: Sat Jun  1 15:48:38 PDT 2013
@@ -9607,7 +9607,7 @@ o Do not build a new map-notify-queue entry and queue to retransmit-queue if
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.14
+                lispers.net Beta Release Version 0.14
                 -------------------------------------
 
 o Release date: Fri May 31 17:32:07 PDT 2013
@@ -9623,7 +9623,7 @@ o Get more info for the authentication padding of a 0 byte in the last 4 bytes
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.13
+                lispers.net Beta Release Version 0.13
                 -------------------------------------
 
 o Release date: Fri May 31 16:02:50 PDT 2013
@@ -9648,7 +9648,7 @@ o Hopefully fix crash found in ms1 and ms2 in lisp_retransmit_map_notify()
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.12
+                lispers.net Beta Release Version 0.12
                 -------------------------------------
 
 o Release date: Fri May 31 10:42:24 PDT 2013
@@ -9667,7 +9667,7 @@ o Combine the 2 ITR buttons so the map-resolvers (since a small table) is
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.11
+                lispers.net Beta Release Version 0.11
                 -------------------------------------
 
 o Release date: Thu May 30 21:26:05 PDT 2013
@@ -9720,7 +9720,7 @@ o Allow command-line lig and rig to take bracket format so from anywhere you
 
 -------------------------------------------------------------------------------
 
-		lispers.net Beta Release Version 0.10
+                lispers.net Beta Release Version 0.10
                 -------------------------------------
 
 o Release date: Mon May 27 22:19:18 PDT 2013
@@ -9738,7 +9738,7 @@ o Find out why "show process" output is broken.
 
 -------------------------------------------------------------------------------
 
-		 lispers.net Beta Release Version 0.9
+                 lispers.net Beta Release Version 0.9
                  ------------------------------------
 
 o Release date: Sat May 25 11:29:26 PDT 2013
@@ -9772,7 +9772,7 @@ o Fix the way we store MAC EIDs internally.
 
 -------------------------------------------------------------------------------
 
-		 lispers.net Beta Release Version 0.8
+                 lispers.net Beta Release Version 0.8
                  ------------------------------------
 
 o Release date: Tue May 21 22:16:08 PDT 2013
@@ -9795,7 +9795,7 @@ o Fix crash in lisp-mr when processing a delegation hole.
 
 -------------------------------------------------------------------------------
 
-		 lispers.net Beta Release Version 0.7
+                 lispers.net Beta Release Version 0.7
                  ------------------------------------
 
 o Release date: Tue May 21 17:40:59 PDT 2013
@@ -9805,7 +9805,7 @@ o Do not pad off the password for sha1 or sha2 hashes. Trying to interoperate
 
 -------------------------------------------------------------------------------
 
-		 lispers.net Beta Release Version 0.6
+                 lispers.net Beta Release Version 0.6
                  ------------------------------------
 
 o Release date: Tue May 21 16:17:34 PDT 2013
@@ -9826,7 +9826,7 @@ o Put slash notation for prefixes in the lisp comamnd documentation.
 
 -------------------------------------------------------------------------------
 
-		 lispers.net Beta Release Version 0.5
+                 lispers.net Beta Release Version 0.5
                  ------------------------------------
 
 o Release date: Tue May 21 11:08:15 PDT 2013
@@ -9849,7 +9849,7 @@ o Only need one ephemeral socket in the lisp-itr process.
 
 -------------------------------------------------------------------------------
 
-		 lispers.net Beta Release Version 0.4
+                 lispers.net Beta Release Version 0.4
                  ------------------------------------
 
 o Release date: Mon May 20 17:33:04 PDT 2013
@@ -9881,7 +9881,7 @@ o Do repr() on the concatentation of packet and password before calling the
 
 -------------------------------------------------------------------------------
 
-		 lispers.net Beta Release Version 0.3
+                 lispers.net Beta Release Version 0.3
                  ------------------------------------
 
 o Release date: Fri May 17 15:17:59 PDT 2013
@@ -9891,7 +9891,7 @@ o Have bottle listen on socket.gethostname() so remote access to the
 
 -------------------------------------------------------------------------------
 
-		 lispers.net Beta Release Version 0.2
+                 lispers.net Beta Release Version 0.2
                  ------------------------------------
 
 o Release date: Fri May 17 14:37:01 PDT 2013
@@ -9901,7 +9901,7 @@ o Do quick build to listen on `hostname` for ports 4341 and 4342. Released
 
 -------------------------------------------------------------------------------
 
-		 lispers.net Beta Release Version 0.1
+                 lispers.net Beta Release Version 0.1
                  ------------------------------------
 
 o Release date: Fri May 17 12:47:23 PDT 2013
