@@ -15,3 +15,39 @@ See the License for the specific language governing permissions and
 limitations under the License.    
 
 -------------------------------------------------------------------------------
+
+lisp/chacha.py
+
+An implementation of ChaCha in about 130 operative lines 
+of 100% pure Python code.
+
+Copyright (c) 2009-2011 by Larry Bugbee, Kent, WA
+ALL RIGHTS RESERVED.
+
+chacha.py IS EXPERIMENTAL SOFTWARE FOR EDUCATIONAL
+PURPOSES ONLY.  IT IS MADE AVAILABLE "AS-IS" WITHOUT 
+WARRANTY OR GUARANTEE OF ANY KIND.  USE SIGNIFIES 
+ACCEPTANCE OF ALL RISK.  
+
+To make your learning and experimentation less cumbersome, 
+chacha.py is free for any use.      
+
+This implementation is intended for Python 2.x.
+
+Larry Bugbee
+May 2009     (Salsa20)
+August 2009  (ChaCha)
+rev June 2010
+rev March 2011  - tweaked _quarterround() to get 20-30% speed gain
+
+-------------------------------------------------------------------------------
+
+lisp/poly1305.py
+
+Poly1305-AES in python.
+
+This is a PEP-compliant implementation of D.J. Berstein's Poly1305-Algorithm.
+Some parts of the code are taken from Ken Raeburn's python implementation
+from http://cr.yp.to/mac/poly1305aes.py.
+
+-------------------------------------------------------------------------------
