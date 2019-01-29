@@ -10,12 +10,6 @@ FROM ubuntu:latest
 #FROM centos:latest
 
 #
-# Get latest lispers.net release from Dropbox. Symlink path never changes
-# but what it points to can.    
-#
-ENV LISP_URL https://www.dropbox.com/s/0t36qe03lh1t9c1/lispers.net.tgz
-
-#
 # Install tools we need for a networking geek.
 #
 RUN apt-get update && apt-get install -y \
@@ -24,9 +18,25 @@ RUN apt-get update && apt-get install -y \
     net-tools procps emacs vim jq
 
 #
-# Install LISP release in /lispers.net directory.
+# Install LISP release in /lispers.net directory. Two options exist to get
+# a lispers.net release. Get tarball from Dropbox or from git repo in
+# build/latest/lispers.net.tgz. Default is Dropbox. One of the two needs
+# to be commented out or you get the git repo option.    
 #
-RUN mkdir /lispers.net; cd /lispers.net; curl --insecure -L $LISP_URL | gzip -dc | tar -xf - 
+RUN mkdir /lispers.net
+        
+#
+# Dropbox option.
+#        
+ENV LISP_URL https://www.dropbox.com/s/0t36qe03lh1t9c1/lispers.net.tgz
+RUN cd /lispers.net; curl --insecure -L $LISP_URL | gzip -dc | tar -xf - 
+
+#
+# Git repo option.
+#        
+#ENV LISP_TGZ ./latest/lispers.net.tgz
+#COPY $LISP_TGZ /lispers.net/.
+#RUN cd /lispers.net; cat `basename $LISP_TGZ` | gzip -dc | tar -xf - 
 
 #
 # Install python modules the lispers.net directory depends on.
@@ -48,3 +58,4 @@ WORKDIR /lispers.net
 COPY ./RL.docker /lispers.net/RL
 CMD /lispers.net/RL; sleep 1; /lispers.net/pslisp; tcsh
 
+#------------------------------------------------------------------------------

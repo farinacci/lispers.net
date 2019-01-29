@@ -260,6 +260,7 @@ command = '''
     cp lisp-build-date.txt ../../lisp/.;
     chmod -R 555 *;
     chmod 444 lispers.net*tgz;
+    ln -s lispers.net*tgz lispers.net.tgz;
     cd ../;
 '''.format(dir)
 status = os.system(command)
