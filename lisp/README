@@ -5,7 +5,7 @@ The lispers.net subsystem contains the following general functionality:
 
 (1) A full-featured LISP control-plane written in python 2.7.
 (2) A full-featured LISP data-plane written in python 2.7.
-(3) A full-featured LISP data-plane written in go.
+(3) A full-featured LISP data-plane written in golang.
 
 The LISP component functionality includes:
 
@@ -16,7 +16,14 @@ The LISP component functionality includes:
 (4) Support for LISP-NAT is used for LISP-to-non-LISP Interworking.
 
 To compile the go files, run "./build-xtr" from the lisp/ subdirectory. Then
-build/make-release.py will pick up binary lisp-xtr and package it into the
-tarball it creates.
+build/make-release.py will pick up binary file 'lisp-xtr' to package it into
+the tarball it creates.
+
+Prebuilt images are created by the repo owner/admin and will be placed in
+directories build/release-<xx> (where "<xx>" is the release number) and a
+symlink 'latest' will point to the latest release directory. File
+build/latest/lispers.net.tgz can always be used to get the most recent built
+tarball independent of specifying the release number. This is useful for doing
+Docker builds.        
 
 -------------------------------------------------------------------------------
