@@ -13,7 +13,7 @@
     development.
 
 (4) The branch 'bugfixes' can be used and shared by contributors to fix bugs
-    they find. The 'master' branch will be sync to the "bugfixes' branch
+    they find. The 'master' branch will be sync'ed to the "bugfixes' branch
     periodically.
 
 (5) Pull requests are sent by contributors when they desire to commit changes
