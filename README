@@ -7,9 +7,9 @@ Locator/ID Separation Protocol (LISP).
 
 Refer to lispers.net/docs/lisp-runs-on.pdf for a comprehensive list of LISP
 use-cases. The code in this git repo is an implementation of LISP in python
-and golang to be run as "routing-as-an-application". LISP is an open scalable
-overlay architecture and set of protocols developed by 100s of people dating
-back to the fall of 2006.
+and golang to run in a "routing-as-an-application" mode. LISP is an open
+scalable overlay architecture and set of protocols developed by 100s of people
+dating back to the fall of 2006.
 
 For more information, go to http://www.lispers.net. For questions, comments,
 or support on LISP deployment, send email to support@lispers.net.
@@ -21,7 +21,7 @@ The implementation runs on the following OS platforms:
     Docker (running guest-OS Ubuntu, Debian, Centos, or Alpine Linux)
 
 The lispers.net implementation supports the following IETF LISP Working Group
-created RFCs and Internet-Drafts:
+RFCs and Internet-Drafts:
 
 RFC 6830                            - The Locator/ID Separation Protocol (LISP)
 RFC 6831                            - The Locator/ID Separation Protocol (LISP) for Multicast Environments
