@@ -2,11 +2,18 @@
                              lispers.net
                              -----------
 
-This directory contains the world's most feature-rich implementation of
-the Locator/ID Separation Protocol (LISP). For more information, go to
-http://www.lispers.net. For questions, comments, or support, send email
-to support@lispers.net.
+This directory contains the world's most feature-rich implementation of the
+Locator/ID Separation Protocol (LISP).
 
+Refer to lispers.net/docs/lisp-runs-on.pdf for a comprehensive list of LISP
+use-cases. The code in this git repo is an implementation of LISP in python
+and golang to be run as "routing-as-an-application". LISP is an open scalable
+overlay architecture and set of protocols developed by 100s of people dating
+back to the fall of 2006.
+
+For more information, go to http://www.lispers.net. For questions, comments,
+or support on LISP deployment, send email to support@lispers.net.
+    
 The implementation runs on the following OS platforms:
 
     Ubuntu, Debian, Centos, MacOS
