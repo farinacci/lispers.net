@@ -1,4 +1,13 @@
 
+                lispers.net Beta Release Version 0.487
+                --------------------------------------
+
+o Release date:
+
+o Fix LISP LinkedIn group URL link on landing page.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.486
                 --------------------------------------
 

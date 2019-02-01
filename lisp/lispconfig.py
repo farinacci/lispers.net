@@ -1395,7 +1395,7 @@ def lisp_landing_page():
     lfg = lisp.lisp_button("LISP Facebook Group", 
         "https://www.facebook.com/groups/407716795982512")
     llg = lisp.lisp_button("LISP LinkedIn Group", 
-        "http://www.linkedin.com/groups/LISP-3776183")
+        "http://www.linkedin.com/groups/3776183")
 
     s = lisp.lisp_space(2)
     output += '''     
