@@ -1,8 +1,7 @@
 
-			Feature Release 0.xxx
-			---------------------
-		     Thu Dec  7 14:41:04 PST 2017
-		  (features between 3.0.1 and 0.424)
+                    Features through Release 0.486
+                    ------------------------------
+                     Thu Jan 31 21:42:41 PST 2019
 
 (1) Add readability for all log messages. Bold face text will emphasize 
     important events, green color-coded text will signify EID addresses and
@@ -111,6 +110,20 @@
      not hair-pin to an RTR.
 
 (30) Support for lispers.net code on alpine Linux.
+
+(31) Support for using the lispers.net control-plane with external data-planes.
+
+(32) Support a fast golang implementaiton of the LISP data-plane. Supports
+     unicast and multicast encap/decap with lisp-crypto and NAT-traversal.
+
+(33) Support a decentralized mapping system documented in draft-farinacci-
+     lisp-decent. Can work with underlay multicast or head-end-replication
+     by using the LISP data-plane.
+
+(34) Support Map-Register encryption so EID-to-RLOC mappings can be registered
+     privately. Uses the ChaCha20 cipher.
+
+(35) Open sourcing the lispers.net implementation on Feb 1, 2019.
 
 ===============================================================================
 
