@@ -4,9 +4,10 @@
 
 (1) The master branch remains stable always.
 
-(2) lispers.net releases are built from the master branch by code owners.
-    Refer to current code owners at http://github.com/farinacci/lispers.net/
-    CODEOWNERS.
+(2) lispers.net releases are built from the master branch by code owners. Refer
+    to current code owners file at:
+
+    https://github.com/farinacci/lispers.net/blob/master/CODEOWNERS
 
 (3) Contributors can create their own branches for bug fixes and feature
     development.
