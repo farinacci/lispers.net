@@ -1,0 +1,24 @@
+
+           Governance Rules for the lispers.net Repository
+           -----------------------------------------------
+
+(1) The master branch remains stable always.
+
+(2) lispers.net releases are built from the master branch by code owners.
+    Refer to current code owners at http://github.com/farinacci/lispers.net/
+    CODEOWNERS.
+
+(3) Contributors can create their own branches for bug fixes and feature
+    development.
+
+(4) The branch 'bugfixes' can be used and shared by contributors to fix bugs
+    they find. The 'master' branch will be sync to the "bugfixes' branch
+    periodically.
+
+(5) Pull requests are sent by contributors when they desire to commit changes
+    to the lispers.net repo. At the CODEOWNERs discretion, the code may be
+    merged into the master branch.
+
+(6) Please use the  Issues tracker for communication. Thanks.
+    
+-------------------------------------------------------------------------------
