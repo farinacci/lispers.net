@@ -21,7 +21,11 @@ fixed in the release. This file is displayed in the lispers.net landing page
 when the "system status" button is clicked on.
 
 The last built release directory will always have a symbolic-link called 
-"latest" pointing to it.
+"latest" pointing to it. If you see a release number like "0.486" pointed
+to by symlink "latest", it is a generally available release. If you see
+"dashed releases" like "0.486-2" or "0.485-20" (a lot of tries), these are
+interim releases which should not be used. They are built to verify bugfixes
+for a specific use-case.        
 
 The build machine that make-release.py runs on depends on the following tools
 to be installed:
