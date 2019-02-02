@@ -1,3 +1,4 @@
+lisp/TAGS
 lisp/*pyc
 lisp/*pyo
 lisp/lisp-xtr*
@@ -7,4 +8,3 @@ apps/*pyc
 apps/*pyo
 build/release*
 build/latest
-    
