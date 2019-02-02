@@ -1,0 +1,39 @@
+#!/bin/tcsh
+#
+# commit-release
+#
+# After a "python make-release.py <release-numbrer>" is peformed in the
+# lispers.net/build directory, use this script to commit the release directory
+# and tag the repo with the <release-number>.
+# 
+# Usage: commit-release <release-number>
+#
+
+set REL=release-$1
+echo -n "Commit and tag release $REL? (y/n): "
+set yn = $<
+if ($yn != "y") then
+    exit
+endif
+
+ls $REL >& /dev/null
+if ($status != "0") then
+    echo "Release directory $REL does not exist"
+    exit
+endif
+
+echo "git add -f $REL ..."
+git add -f $REL
+
+echo "git commit ..."
+git commit .
+
+echo "git push ..."
+git push
+
+echo "git tag -a $REL ..."
+git tag -a $REL
+
+echo "git push origin $REL ..."
+git push origin $REL
+exit
