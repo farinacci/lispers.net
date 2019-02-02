@@ -5,6 +5,16 @@
 #   docker build -t lispers.net/debian .
 #   docker build -t lispers.net/centos .
 #
+# Then to run one of the above docker images in a container, type:
+#
+# docker run -p 8080 --privileged --name <name> -h <name> \
+#            -v <host-dir>:/hostOS -ti lispers.net/ubuntu
+#
+# where:
+#   <name> is a container name you select                                
+#   <host-dir> is directory on your host OS that maps to directory called
+#              /hostOS inside your container for easy file movement
+#
 FROM ubuntu:latest
 #FROM debian:latest
 #FROM centos:latest
