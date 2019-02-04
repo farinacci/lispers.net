@@ -32,7 +32,7 @@
 # variable LISP_PW is set, the value is the password that is used to connect.
 # to the LISP API.
 #
-# Usage: python -O lisp-log-packets.py [force]
+# Usage: python -O lisp-log-packets.py [force] [<api-port>] [help]
 #
 #------------------------------------------------------------------------------
 
@@ -40,7 +40,19 @@ import lispapi
 import sys
 import os
 
-force = ("force" in sys.argv)
+#
+# Get command-line parameters.
+#
+force = True
+api_port = 8080
+for arg in sys.argv[1::]:
+    if (arg == "help"):
+        print "Usage: log-packets [force] [<api-port>] [help]"
+        exit(0)
+    #endif
+    if (arg == "force"): force = True
+    if (arg.isdigit()): api_port = int(arg)
+#endfor    
 
 #
 # Get user supplied password, if any.
@@ -51,7 +63,7 @@ if (pw == None): pw = ""
 #
 # Open API to localhost. If debug status dict array None, the open failed.
 #
-lisp = lispapi.api_init("localhost", "root", pw)
+lisp = lispapi.api_init("localhost", "root", pw, port=api_port)
 if (lisp.debug_status == None):
     print "Could not connect to API, is lispers.net running or LISP_PW set?"
     exit(1)
