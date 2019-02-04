@@ -1,4 +1,22 @@
 
+                lispers.net Beta Release Version 0.488
+                --------------------------------------
+
+o Release date: <not yet>
+
+o Have tool "log-packets" accept two new parameters, one is "help" to display
+  the usage of the command and the other is <api-port> which is the port
+  number used to connect to the lispers.net API when the default 8080 is not
+  used.
+
+o Fix and clarify comment text in lisp.config.example.
+
+o Create build/stable as a symlink pointing to a lispers.net release that
+  has been tested a lot and regarded as stale. It will be less than or
+  equal to the the symlink build/latest.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.487
                 --------------------------------------
 
