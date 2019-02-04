@@ -11,20 +11,19 @@
 # (3) You may comment out lines by placing a "#" in the first column of any 
 #     line between the section between the first pair of dotted lines.
 #
-# (4) Note the modification timestamp above is auto generated after you have 
-#     saved this file and it has been processed.
+# (4) Note the hostname and modification timestamp above are auto generated
+#     after you have saved this file and it has been processed.
 #
 # (5) Deleting configuration can be achieved by deleting lines and restarting
 #     the LISP component or by use of the LISP API.
 #
 # (6) The landing web page on any device provides detailed Command and API
-#     documentation.
+#     documentation. Just click on those buttons.
 #
 # (7) Any name references must follow their definitions. Examples are 
 #     elp-names and rle-names when referred to in static map-cache entries.
 #
-# DO NOT WRITE TO ANY OTHER PART OF THIS FILE. YOU MUST ONLY ADD, CHANGE, OR
-# REMOVE LINES BETWEEN THE FIRST PAIR OF DOTTED LINES SECTION.
+# DO NOT REMOVE THE LINES "#--- ... ---" and "#--- ... ---#".    
 #
 #-----------------------------------------------------------------------------
 lisp enable {
