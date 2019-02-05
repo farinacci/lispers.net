@@ -80,9 +80,9 @@ If you want to build container images based on centos or debian, modify the
 top of the build/Dockerfile. To start a docker container that runs the
 lispers.net LISP subsystem, create aliases like:
 
-alias drun-ubuntu 'docker run -p 8080 --privileged --name \!* -h \!* -v /Users/dino:/dino -ti lispers.net/ubuntu'
-alias drun-centos 'docker run -p 8080 --privileged --name \!* -h \!* -v /Users/dino:/dino -ti lispers.net/centos'
-alias drun-debian 'docker run -p 8080 --privileged --name \!* -h \!* -v /Users/dino:/dino -ti lispers.net/debian'
+alias drun-ubuntu 'docker run -p 8080 --privileged --name \!* -h \!* -v /:/hostOS -ti lispers.net/ubuntu'
+alias drun-centos 'docker run -p 8080 --privileged --name \!* -h \!* -v /:/hostOS -ti lispers.net/centos'
+alias drun-debian 'docker run -p 8080 --privileged --name \!* -h \!* -v /:/hostOS -ti lispers.net/debian'
 
 and simply type:
 
