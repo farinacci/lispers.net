@@ -1,4 +1,18 @@
 
+                lispers.net Beta Release Version 0.489
+                --------------------------------------
+
+o Release date: <not yet>
+
+o Have lispapi.api_init() allow a negative port number to be passed in. When
+  the port is postive, use https, when the port is negative, use http.
+
+o Allow log-packets to take a negative port number.
+
+o Move release builds in lispers.net/build/releases.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.488
                 --------------------------------------
 

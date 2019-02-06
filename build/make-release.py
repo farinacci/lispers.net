@@ -112,7 +112,7 @@ else:
     version = raw_input("Enter version number (in format x.y): ")
 #endif
 
-dir = "release-{}".format(version)
+dir = "releases/release-{}".format(version)
 status = os.system("mkdir " + dir)
 if (status != 0):
     print "Could not create directory {}".format(dir)
@@ -231,7 +231,7 @@ os.system('cp ./py-depend/pip-requirements.txt ./{}/.'.format(dir))
 # Now tar and gzip files for release. COPYFILE is so MacOs does not put in
 # ._<foo> files.
 #
-tar_file = "lispers.net-" + cpu + "-" + dir + ".tgz"
+tar_file = "lispers.net-" + cpu + "-release-" + version + ".tgz"
 print "Build tgz file {} ... ".format(tar_file),
 files = "*.pyo *.txt lisp.config.example lisp-cert.pem.default *-LISP " + \
     "RL-* get-pip.py pslisp log-packets lispers.net-geo.html {}".format( \
@@ -256,8 +256,8 @@ if (lisp_xtr != ""):
 print "Copying version information to ../lisp directory ... ", 
 command = '''
     cd ./{}; 
-    cp lisp-version.txt ../../lisp/.;
-    cp lisp-build-date.txt ../../lisp/.;
+    cp lisp-version.txt ../../../lisp/.;
+    cp lisp-build-date.txt ../../../lisp/.;
     chmod -R 555 *;
     chmod 444 lispers.net*tgz;
     ln -s lispers.net*tgz lispers.net.tgz;

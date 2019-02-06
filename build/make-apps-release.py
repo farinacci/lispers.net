@@ -74,7 +74,7 @@ else:
     version = raw_input("Enter version number (in format x.y): ")
 #endif
 
-dir = "apps-release-{}".format(version)
+dir = "releases/apps-release-{}".format(version)
 status = os.system("mkdir " + dir)
 if (status != 0):
     print "Could not create directory {}".format(dir)
@@ -141,7 +141,7 @@ os.system('cp ../docs/how-to-use-apps.txt ./{}/.'.format(dir))
 #
 # Now tar and gzip files for release.
 #
-tar_file = "lispers.net-" + cpu + "-" + dir + ".tgz"
+tar_file = "lispers.net-" + cpu + "-apps-release-" + version + ".tgz"
 print "Build tgz file {} ... ".format(tar_file),
 files = '''*.pyo *.txt'''
 command = "cd {}; tar czf {} {}".format(dir, tar_file, files)
