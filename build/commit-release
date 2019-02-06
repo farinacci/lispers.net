@@ -16,14 +16,14 @@ if ($yn != "y") then
     exit
 endif
 
-ls $REL >& /dev/null
+ls releases/$REL >& /dev/null
 if ($status != "0") then
     echo "Release directory $REL does not exist"
     exit
 endif
 
 echo "git add -f $REL ..."
-git add -f releases/$REL
+git add -f releases/*$REL
 
 echo "git commit ..."
 git commit releases/.
