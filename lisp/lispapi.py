@@ -70,6 +70,7 @@ class api_init():
             be stored by caller. If 'pw' is None, then the password will be
             obtained from the environment variable LISPAPI_PW. If you want the
             LISP API to return debug information, pass argument api_debug=True.
+            If 'port' is negative, use http versus https.
         """
 
         self.host = host
@@ -77,7 +78,14 @@ class api_init():
         if (pw == None): pw = os.getenv("LISPAPI_PW_" + host)
         if (pw == None): pw = os.getenv("LISPAPI_PW")
         self.pw = pw
-        self.url = "https://" + self.host + ":{}/lisp/api/".format(str(port))
+
+        http = "https://"
+        if (port < 0):
+            port = -port
+            http = http.replace("s", "")
+        #endif
+        self.url = http + self.host + ":{}/lisp/api/".format(str(port))
+
         self.enable_status = None
         self.debug_status = None
         self.api_debug = api_debug

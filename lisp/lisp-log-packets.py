@@ -34,6 +34,10 @@
 #
 # Usage: python -O lisp-log-packets.py [force] [<api-port>] [help]
 #
+# Note when <api-port> is negative, it is passed into the lispapi to tell it
+# to use http versus https. This port number should be the same value as
+# passed on the ./RESTART-LISP command.
+#
 #------------------------------------------------------------------------------
 
 import lispapi
@@ -52,7 +56,8 @@ for arg in sys.argv[1::]:
     #endif
     if (arg == "force"): force = True
     if (arg.isdigit()): api_port = int(arg)
-#endfor    
+    if (arg[0] == "-" and arg[1::].isdigit()): api_port = -int(arg[1::])
+#endfor
 
 #
 # Get user supplied password, if any.
@@ -65,7 +70,8 @@ if (pw == None): pw = ""
 #
 lisp = lispapi.api_init("localhost", "root", pw, port=api_port)
 if (lisp.debug_status == None):
-    print "Could not connect to API, is lispers.net running or LISP_PW set?"
+    print ("Could not connect to API, is lispers.net running?, " + \
+        "LISP_PW set?, or using the correct port number?")
     exit(1)
 #endif
 
