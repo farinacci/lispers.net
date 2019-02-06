@@ -2,7 +2,7 @@
 #
 # commit-release
 #
-# After a "python make-release.py <release-numbrer>" is peformed in the
+# After a "python make-release.py <release-numbrer>" is performed in the
 # lispers.net/build directory, use this script to commit the release directory
 # and tag the repo with the <release-number>.
 # 
@@ -23,10 +23,10 @@ if ($status != "0") then
 endif
 
 echo "git add -f $REL ..."
-git add -f $REL
+git add -f releases/$REL
 
 echo "git commit ..."
-git commit .
+git commit releases/.
 
 echo "git push ..."
 git push
