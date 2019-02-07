@@ -26,7 +26,7 @@ echo "git add -f $REL ..."
 git add -f releases/*$REL
 
 echo "git commit ..."
-git commit releases/.
+git commit release-notes.txt latest releases/$REL
 
 echo "git push ..."
 git push
