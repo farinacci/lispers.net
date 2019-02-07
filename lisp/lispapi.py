@@ -21,8 +21,15 @@
 # This file containse API definitions that users call in their python programs.
 # 
 # When this file is changed, remote file lispapi.html and click the "API
-# Documentation" button on the landing page to build a pydoc lispapi.html
+# Documentation" button on the landing page to build a pydoc lispapi.txt
 # file.
+#
+# If you modify this file, please run:
+#
+#    pydoc lispapi.py > lispapi.txt
+#
+# So the API documentation stays up to date. Then commit lispapi.txt to the
+# repo.
 #
 # -----------------------------------------------------------------------------
 
