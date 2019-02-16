@@ -26,13 +26,14 @@ echo "git add -f $REL ..."
 git add -f releases/*$REL
 
 echo "git commit ..."
-git commit release-notes.txt latest releases/$REL
+git commit -m "Commit build release $REL" release-notes.txt latest \
+    releases/$REL
 
 echo "git push ..."
 git push
 
 echo "git tag -a $REL ..."
-git tag -a $REL
+git tag -a -m "Tag build release $REL" $REL
 
 echo "git push origin $REL ..."
 git push origin $REL
