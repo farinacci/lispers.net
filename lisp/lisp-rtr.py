@@ -796,6 +796,8 @@ lisp_rtr_commands = {
         "nat-traversal" : [True, "yes", "no"],
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
+        "decentralized-push-xtr" : [True, "yes", "no"],
+        "decentralized-pull-xtr" : [True],
         "program-hardware" : [True, "yes", "no"] }],
 
     "lisp map-resolver" : [lisp_rtr_map_resolver_command, {

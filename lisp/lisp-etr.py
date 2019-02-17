@@ -485,19 +485,37 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         format(db_list_len))
 
     #
+    # Set boolean if "decentralized-pull-xtr" configured.
+    #
+    decent = lisp.lisp_decent_pull_xtr_configured()
+
+    #
     # Go quiet with debug output when there are a lot of EID-records.
     #
     quiet = (db_list_len > 12)
 
-    #
-    # Set up each map-server names so we can decide which EID-prefixes go
-    # to which map-servers. [0] is eid_records and [1] is count.
-    #
     ms_list = {}
-    for ms in lisp.lisp_map_servers_list.values():
-        if (ms_only != None and ms != ms_only): continue
-        ms_list[ms.ms_name] = []
-    #endfor
+    if (decent):
+
+        #
+        # If "decentralized-pull-xtr" is configured, decide which map-server
+        # this EID belongs too (and is registered with.
+        #
+        for db in lisp.lisp_db_list:
+            dns_name = lisp.lisp_get_decent_dns_name(db.eid)
+            ms_list[dns_name] = []
+        #endfor
+    else:
+
+        #
+        # Set up each map-server names so we can decide which EID-prefixes go
+        # to which map-servers. [0] is eid_records and [1] is count.
+        #
+        for ms in lisp.lisp_map_servers_list.values():
+            if (ms_only != None and ms != ms_only): continue
+            ms_list[ms.ms_name] = []
+        #endfor
+    #endif
 
     #
     # Create data structure instances to build Map-Regiser message.
@@ -512,18 +530,24 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
     # Traverse the databas-mapping associative array.
     #
     for db in lisp.lisp_db_list:
+        if (decent):
+            ms_dns_name = lisp.lisp_get_decent_dns_name(db.eid)
+        else:
+            ms_dns_name = db.use_ms_name
+        #endif
 
         #
-        # Is db entry associated with a map-server name that is not configured?
+        # Is db entry associated with a map-server name that is not
+        # configured?
         #
-        if (ms_list.has_key(db.use_ms_name) == False): continue
+        if (ms_list.has_key(ms_dns_name) == False): continue
 
-        msl = ms_list[db.use_ms_name]
+        msl = ms_list[ms_dns_name]
         if (msl == []):
             msl = ["", 0]
-            ms_list[db.use_ms_name].append(msl)
+            ms_list[ms_dns_name].append(msl)
         else:
-            msl = ms_list[db.use_ms_name][-1]
+            msl = ms_list[ms_dns_name][-1]
         #endif
 
         #
@@ -560,7 +584,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
 
         if (msl[1] == 20): 
             msl = ["", 0]
-            ms_list[db.use_ms_name].append(msl)
+            ms_list[ms_dns_name].append(msl)
         #endif
     #endfor
 
@@ -570,7 +594,8 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
     for ms in lisp.lisp_map_servers_list.values():
         if (ms_only != None and ms != ms_only): continue
 
-        for msl in ms_list[ms.ms_name]:
+        ms_dns_name = ms.dns_name if decent else ms.ms_name
+        for msl in ms_list[ms_dns_name]:
 
             #
             # Build map-server specific fields.
@@ -749,6 +774,9 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         g_entries.append([group, joinleave])
     #endfor
 
+    decent = lisp.lisp_decent_pull_xtr_configured()
+
+    ms_list = {}
     entries = []
     for group, joinleave in g_entries: 
         ms_gm = None
@@ -776,7 +804,12 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
             continue
         #endif
         for s in ms_gm.sources: 
-            entries.append([s, group, iid, ms_name, rle, joinleave])
+            key = ms_name
+            if (decent):
+                key = lisp.lisp_get_decent_dns_name_from_str(iid, s, group)
+                ms_list[key] = ["", 0]
+            #endif
+            entries.append([s, group, iid, key, rle, joinleave])
         #endfor
     #endfor
                 
@@ -795,15 +828,17 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     translated_rloc = lisp.lisp_get_any_translated_rloc()
     rle = lisp.lisp_rle("")
     rle.rle_nodes.append(rle_node)
-            
+
     #
     # Set up each map-server names so we can decide which EID-prefixes go
-    # to which map-servers. [0] is eid_records and [1] is count.
+    # to which map-servers. [0] is eid_records and [1] is count. The ms_list
+    # is already setup for when pull-based decent is used.
     #
-    ms_list = {}
-    for ms in lisp.lisp_map_servers_list.values():
-        ms_list[ms.ms_name] = ["", 0]
-    #endfor
+    if (decent == False):
+        for ms in lisp.lisp_map_servers_list.values():
+            ms_list[ms.ms_name] = ["", 0]
+        #endfor
+    #endif
 
     rloc_name = None
     if (lisp.lisp_nat_traversal): rloc_name = lisp.lisp_hostname
@@ -821,12 +856,12 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     # Run through multicast entry array.
     #
     eid_records = ""
-    for source, group, iid, ms_name, rle_addr, joinleave in entries:
+    for source, group, iid, ms_dns_name, rle_addr, joinleave in entries:
 
         #
         # Is db entry associated with a map-server name that is not configured?
         #
-        if (ms_list.has_key(ms_name) == False): continue
+        if (ms_list.has_key(ms_dns_name) == False): continue
 
         eid_record = lisp.lisp_eid_record()
         eid_record.rloc_count = 1 + rtr_count
@@ -838,12 +873,12 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         if (eid_record.group.is_mac_broadcast() and \
             eid_record.eid.address == 0): eid_record.eid.mask_len = 0
 
-        lisp.lprint("  EID-prefix {} for ms-name '{}'".format( \
-            lisp.green(eid_record.print_eid_tuple(), False), ms_name))
+        lisp.lprint("  EID-prefix {} for [ms,dns]-name '{}'".format( \
+            lisp.green(eid_record.print_eid_tuple(), False), ms_dns_name))
 
         eid_records += eid_record.encode()
         eid_record.print_record("  ", False)
-        ms_list[ms_name][1] += 1
+        ms_list[ms_dns_name][1] += 1
 
         #
         # Build our RLOC entry.
@@ -896,7 +931,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         #
         # Add EID-records to correct map-server name set.
         #
-        ms_list[ms_name][0] += eid_records
+        ms_list[ms_dns_name][0] += eid_records
     #endfor
 
     #
@@ -913,16 +948,17 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     # Send Map-Register to each configured map-server.
     #
     for ms in lisp.lisp_map_servers_list.values():
+        key = ms.dns_name if decent else ms.ms_name
 
         #
         # Get EID-records from correct map-server name set.
         #
-        if (ms_list.has_key(ms.ms_name) == False): continue
+        if (ms_list.has_key(key) == False): continue
 
         #
         # Build map-server specific fields.
         #
-        map_register.record_count = ms_list[ms.ms_name][1]
+        map_register.record_count = ms_list[key][1]
         if (map_register.record_count == 0): continue
 
         map_register.nonce += 1
@@ -1266,7 +1302,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
     # address to our local RLOC address. Also, zero out the UDP checksum
     # since the destination address changes that affects the pseudo-header.
     #
-    if (lisp.lisp_decent_configured and 
+    if (lisp.lisp_decent_push_configured and
         packet.inner_dest.is_multicast_address() and \
         packet.lisp_header.get_instance_id() == 0xffffff):
         source = packet.inner_source.print_address_no_iid()
@@ -1422,7 +1458,7 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     # address to our local RLOC address. Also, zero out the UDP checksum
     # since the destination address changes that affects the pseudo-header.
     #
-    if (lisp.lisp_decent_configured and 
+    if (lisp.lisp_decent_push_configured and
         packet.inner_dest.is_multicast_address() and \
         packet.lisp_header.get_instance_id() == 0xffffff):
         sport = packet.udp_sport
@@ -1969,7 +2005,8 @@ lisp_etr_commands = {
         "nat-traversal" : [True, "yes", "no"],
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
-        "decentralized-xtr" : [True, "yes", "no"],
+        "decentralized-push-xtr" : [True, "yes", "no"],
+        "decentralized-pull-xtr" : [True],
         "register-reachable-rtrs" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 

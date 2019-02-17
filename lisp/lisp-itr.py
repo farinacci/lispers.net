@@ -580,7 +580,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         return
     #endif
 
-    lisp_decent = lisp.lisp_decent_configured
+    lisp_decent = lisp.lisp_decent_push_configured
     if (lisp_decent):
         multicast = packet.inner_dest.is_multicast_address()
         local = packet.inner_source.is_local()
@@ -1263,7 +1263,8 @@ lisp_itr_commands = {
         "nat-traversal" : [True, "yes", "no"],
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
-        "decentralized-xtr" : [True, "yes", "no"],
+        "decentralized-push-xtr" : [True, "yes", "no"],
+        "decentralized-pull-xtr" : [True],
         "register-reachable-rtrs" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 

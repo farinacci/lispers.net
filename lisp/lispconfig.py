@@ -636,9 +636,13 @@ def lisp_setup_kv_pairs(clause):
     if (count != 0):
         kv_pairs["program-hardware"] = [""] * count
     #endif
-    count = clause.count("decentralized-xtr =")
+    count = clause.count("decentralized-push-xtr =")
     if (count != 0):
-        kv_pairs["decentralized-xtr"] = [""] * count
+        kv_pairs["decentralized-push-xtr"] = [""] * count
+    #endif
+    count = clause.count("decentralized-pull-xtr =")
+    if (count != 0):
+        kv_pairs["decentralized-pull-xtr"] = [""] * count
     #endif
     count = clause.count("register-reachable-rtrs =")
     if (count != 0):
@@ -2805,8 +2809,19 @@ def lisp_xtr_command(kv_pair):
             #endif
             lisp.lisp_ipc_data_plane = turn_onoff
         #endif
-        if (kw == "decentralized-xtr"):
-            lisp.lisp_decent_configured = (value == "yes")
+        if (kw == "decentralized-push-xtr"):
+            lisp.lisp_decent_push_configured = (value == "yes")
+        #endif
+        if (kw == "decentralized-pull-xtr"):
+            mod, dns = value.split()
+            lisp.lisp_decent_modulus = int(mod) if int(mod) > 0 else 1
+            lisp.lisp_decent_dns_suffix = dns
+            if (lisp.lisp_i_am_itr or lisp.lisp_i_am_rtr):
+                lisp.lisp_build_decent_map_resolver_list()
+            #endif
+            if (lisp.lisp_i_am_etr):
+                lisp.lisp_build_decent_map_server_list()
+            #endif
         #endif
         if (kw == "register-reachable-rtrs"):
             lisp.lisp_register_all_rtrs = (value == "no")

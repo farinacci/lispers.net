@@ -55,7 +55,7 @@ lisp xtr-parameters {
     nonce-echoing = no
     checkpoint-map-cache = no
     ipc-data-plane = no
-    decentralized-xtr = no
+    decentralized-push-xtr = no
     register-reachable-rtrs = no
     frame-logging = no
     flow-logging = no
@@ -404,8 +404,9 @@ lisp xtr-parameters {
     nat-traversal = yes | no
     checkpoint-map-cache = yes | no
     ipc-data-plane = yes | no
-    decentralized-xtr = yes | no
     register-reachable-rtrs = yes | no
+    decentralized-push-xtr = yes | no
+    decentralized-pull-xtr = <modulus-1-255> <dns-name-suffix>
 }
 
 Command Description:
@@ -477,12 +478,20 @@ Command Description:
         software forwarding or hardware forwarding implementations. When this
         feature is used, the lispers.net data-plane does not execute.
 
-    decentralized-xtr
-        When this is set to "yes", an xTR will run a Decentrailzed Mapping 
-        System (DMS). That is an xTR is configured as an ITR, ETR, Map-Resolver
-        and Map-Server. The "lisp map-server" command must supply a group
-        address for the peer-group. Details of the design can be found in the
-        Internet Draft draft-farinacci-lisp-decent. All xTRs will have a
+    register-reachable-rtrs
+        When this is set to "yes" and NAT-traversal is in use, an xTR will
+        register reachabile RTRs. Only reachable RTRs determine by RLOC-probing
+        will be registered to the mapping system. The default setting is "no",
+        which means all RTRs learned via Info-Reply messages from Map-Servers
+        will be registered to the mapping system regardless of their
+        reachability status.
+
+    decentralized-push-xtr
+        When this is set to "yes", an xTR will run a pushed-based Decentrailzed
+        Mapping System (DMS). That is an xTR is configured as an ITR, ETR, Map-
+        Resolver and Map-Server. The "lisp map-server" command must supply a
+        group address for the peer-group. Details of the design can be found
+        in the Internet Draft draft-farinacci-lisp-decent. All xTRs will have a
         synchronized mapping system realized by draft-ietf-lisp-signal-free-
         multicast. There is no dependence on a third-party mapping system. The
         xTRs contribute to maintaining a mapping system for their own use. For 
@@ -492,13 +501,22 @@ Command Description:
         command. There is a template file called lisp.config.decent-xtr
         available for use. The default setting for this sub-command is "no".
 
-    register-reachable-rtrs
-        When this is set to "yes" and NAT-traversal is in use, an xTR will
-        register reachabile RTRs. Only reachable RTRs determine by RLOC-probing
-        will be registered to the mapping system. The default setting is "no",
-        which means all RTRs learned via Info-Reply messages from Map-Servers
-        will be registered to the mapping system regardless of their
-        reachability status.
+    decentralized-pull-xtr
+        When specified, implements the use of the pull-based LISP-Decentralized
+        Mapping System. The LISP-Decent pull-based mapping system is a cluster
+        of map-servers being configured as the entire mapping system. The
+        cluster is made up of many map-server sets that are indexed based on a
+        hash of the EID being lookup up in a Map-Request or being registered
+        in a Map-Register. The index is part of a DNS name used to identify
+        the set  The index is calculated by using the hash of the EID modulo
+        the "<modulus-1-255>" value and prepended to DNS name "<dns-name-
+        suffix>". So if an EID [200]1.1.1.1 is hashed modulo <modulus-1-255>
+        is 3 then the DNS name "3.<dns-name-suffix>" will be used for a DNS
+        lookup to obtain the addresses of the map-resolver/map-server set. For
+        Map-Requests, an ITR round-robin requests to each Map-Resolver in the
+        set. For Map-Registers, the ETR sends to each address in the set. The
+        "lisp map-server" commands are required with "dns-name" for each
+        map-server set DNS name constructed.
 
 Example:
 
@@ -508,6 +526,22 @@ lisp xtr-parameters {
     data-plane-security = yes
     data-plane-logging = no
     nat-traversal = no
+}
+
+#
+# Configure to use 2 map-server sets in an xTR with DNS suffix name of
+# map-server.lispers.net.
+#
+lisp xtr-parameters {
+    decentralized-pull-xtr = 2 map-server.lispers.net
+}
+lisp map-server {
+    dns-name = 0.map-server.lispers.net
+    authentication-key = <key1>
+}
+lisp map-server {
+    dns-name = 1.map-server.lispers.net
+    authentication-key = <key2>
 }
 
 -------------------------------------------------------------------------------
@@ -862,7 +896,6 @@ Command Description:
     configures an additional Map-Server. One clause can configure multiple
     map-server addresses that share all the attributes that follow for the
     clause.
-
 Example:
 
 lisp map-server {

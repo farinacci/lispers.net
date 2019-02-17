@@ -2378,7 +2378,7 @@ def lisp_core_startup(bottle_port):
 
     #
     # Check if we are a map-server listening on a multicast group. This
-    # is a decentralized-xtr with a multicast map-server address.
+    # is a decentralized-push-xtr with a multicast map-server address.
     #
     lisp_check_decent_xtr_multicast(lisp_control_listen_socket)
 
@@ -2425,8 +2425,8 @@ def lisp_core_shutdown():
 #
 # lisp_check_decent_xtr_multicast
 #
-# Check to see if "decentralized-xtr = yes" and if any map-server clause has
-# a multicast address configured. If so, setsockopt so we can receive
+# Check to see if "decentralized-push-xtr = yes" and if any map-server clause
+# has a multicast address configured. If so, setsockopt so we can receive
 # multicast Map-Register messages.
 #
 # This function is robust enough for when a user copies lisp.config.example
@@ -2438,14 +2438,14 @@ def lisp_check_decent_xtr_multicast(lisp_socket):
     lines = lines.split("\n")
 
     #
-    # Check if "decentralized-xtr = yes" is in the "lisp xtr-parameters"
+    # Check if "decentralized-push-xtr = yes" is in the "lisp xtr-parameters"
     # command clause.
     #
     decent_xtr = False
     for line in lines:
         if (line[0:1] == "#-" and line[-2:-1] == "-#"): break
         if (line == "" or line[0] == "#"): continue
-        if (line.find("decentralized-xtr = yes") == -1): continue
+        if (line.find("decentralized-push-xtr = yes") == -1): continue
         decent_xtr = True
         break
     #endfor

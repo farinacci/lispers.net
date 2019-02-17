@@ -1,4 +1,43 @@
 
+                lispers.net Beta Release Version 0.490
+                --------------------------------------
+
+o Release date: <not yet>
+
+o Implement support for the pull-based LISP-Decent mapping system. The
+  pull based decentralized mapping system is one where Map-Resolvers and
+  Map-Servers are co-located and there is no need for a mapping database
+  transport system like LISP-DDT or LISP-ALT. The decision on what map-server
+  node to send Map-Register and Map-Requests to is based a hash of the EID
+  modulus a configured value. That produces a DNS name where a level of
+  indirection points an xTR to multiple A records that are used for redundancy
+  and reliability. The DNS entry is called a map-server set. xTRs send
+  Map-Register messages to all A records in a map-server set but send a
+  single Map-Request message round-robin among A records in a map-server set..
+
+o Change "lisp xtr-parameters" subcommand "decentralizd-xtr = yes|no" to
+  "decentralizsed-push-xtr = yes|no" to make it more clear the first phase
+  was the push-based multicast LISP-Decent mechanism.
+
+o Introduce "lisp xtr-parameters" subcommand "decentralized-pull-xtr =
+  <modulus> <dns-suffix>".
+
+o "lisp map-resolver" commands are not required but "lisp map-server" commands
+  are required with a dns-name parameter (which contains index prepended to a
+  configured DNS name suffix) so each map-server set can have a distinct set of
+  configuration parameters (such as different authentication keys).
+
+o Provide a lisp.config.decent-pull-xtr configuration file template.
+
+o Document the pull-based LISP-Decent feature in lisp.conifg.example.
+
+o Note, this feature only works when the EID being looked up is the same
+  prefix length of what is being registered. Next phase (with an Internet
+  Draft update), support for a coarser EID-prefix registered that matches a
+  more specific target EID from the Map-Request will find the same map-server.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.489
                 --------------------------------------
 
