@@ -406,7 +406,8 @@ lisp xtr-parameters {
     ipc-data-plane = yes | no
     register-reachable-rtrs = yes | no
     decentralized-push-xtr = yes | no
-    decentralized-pull-xtr = <modulus-1-255> <dns-name-suffix>
+    decentralized-pull-xtr-modulus = <modulus-1-255>
+    decentralized-pull-xtr-dns-suffix = <dns-name-suffix>
 }
 
 Command Description:
@@ -501,7 +502,8 @@ Command Description:
         command. There is a template file called lisp.config.decent-xtr
         available for use. The default setting for this sub-command is "no".
 
-    decentralized-pull-xtr
+    decentralized-pull-xtr-modulus
+    decentralized-pull-xtr-dns-suffix
         When specified, implements the use of the pull-based LISP-Decentralized
         Mapping System. The LISP-Decent pull-based mapping system is a cluster
         of map-servers being configured as the entire mapping system. The
@@ -533,11 +535,18 @@ lisp xtr-parameters {
 # map-server.lispers.net.
 #
 lisp xtr-parameters {
-    decentralized-pull-xtr = 2 map-server.lispers.net
+    decentralized-pull-xtr-modulus = 2
+    decentralized-pull-xtr-dns-suffix = map-server.lispers.net
+}
+lisp map-resolver {
+    dns-name = 0.map-server.lispers.net
 }
 lisp map-server {
     dns-name = 0.map-server.lispers.net
     authentication-key = <key1>
+}
+lisp map-resolver {
+    dns-name = 1.map-server.lispers.net
 }
 lisp map-server {
     dns-name = 1.map-server.lispers.net

@@ -54,8 +54,21 @@ lisp xtr-parameters {
     nonce-echoing = no
     data-plane-logging = no
     flow-logging = no
-    decentralized-pull-xtr = 4 map-server.lispers.net
+    decentralized-pull-xtr-modulus = 4
+    decentralized-pull-xtr-dns-suffix = map-server.lispers.net
 }
+lisp map-resolver {
+    dns-name = 0.map-server.lispers.net
+}    
+lisp map-resolver {
+    dns-name = 1.map-server.lispers.net
+}    
+lisp map-resolver {
+    dns-name = 2.map-server.lispers.net
+}    
+lisp map-resolver {
+    dns-name = 3.map-server.lispers.net
+}    
 lisp map-server {
     dns-name = 0.map-server.lispers.net
     authentication-key = <key1>
