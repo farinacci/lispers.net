@@ -125,7 +125,7 @@ def lisp_etr_show_command(clause):
     for ms in lisp.lisp_map_servers_list.values():
         ms.resolve_dns_name()
         ms_name = "" if ms.ms_name == "all" else ms.ms_name + "<br>"
-        addr_str = ms_name + ms.map_server.print_address()
+        addr_str = ms_name + ms.map_server.print_address_no_iid()
         if (ms.dns_name): addr_str += "<br>" + ms.dns_name
 
         xtr_id = "0x" + lisp.lisp_hex_string(ms.xtr_id)
@@ -423,8 +423,14 @@ def lisp_build_map_register_records(quiet, db, eid, group, ttl):
         eid_records += eid_record.encode()
         if (not quiet): 
             prefix_str = eid.print_prefix()
-            lisp.lprint("  EID-prefix {} for ms-name '{}'".format( \
-                    lisp.green(prefix_str, False), db.use_ms_name))
+            decent_index = ""
+            if (lisp.lisp_decent_pull_xtr_configured()):
+                decent_index = lisp.lisp_get_decent_index(eid)
+                decent_index = lisp.bold(str(decent_index), False)
+                decent_index = ", decent-index {}".format(decent_index)
+            #endif
+            lisp.lprint("  EID-prefix {} for ms-name '{}'{}".format( \
+                lisp.green(prefix_str, False), db.use_ms_name, decent_index))
             eid_record.print_record("  ", False)
         #endif
 
@@ -485,7 +491,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         format(db_list_len))
 
     #
-    # Set boolean if "decentralized-pull-xtr" configured.
+    # Set boolean if "decentralized-pull-xtr-[modulus,dns-suffix]" configured.
     #
     decent = lisp.lisp_decent_pull_xtr_configured()
 
@@ -498,8 +504,8 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
     if (decent):
 
         #
-        # If "decentralized-pull-xtr" is configured, decide which map-server
-        # this EID belongs too (and is registered with.
+        # If "decentralized-pull-xtr-[modulus,dns-suffix]" is configured,
+        # decide which map-server this EID belongs too (and is registered with.
         #
         for db in lisp.lisp_db_list:
             dns_name = lisp.lisp_get_decent_dns_name(db.eid)
@@ -2006,7 +2012,8 @@ lisp_etr_commands = {
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
         "decentralized-push-xtr" : [True, "yes", "no"],
-        "decentralized-pull-xtr" : [True],
+        "decentralized-pull-xtr-modulus" : [True, 1, 0xff],
+        "decentralized-pull-xtr-dns-suffix" : [True],
         "register-reachable-rtrs" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 

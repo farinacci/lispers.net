@@ -640,9 +640,13 @@ def lisp_setup_kv_pairs(clause):
     if (count != 0):
         kv_pairs["decentralized-push-xtr"] = [""] * count
     #endif
-    count = clause.count("decentralized-pull-xtr =")
+    count = clause.count("decentralized-pull-xtr-modulus =")
     if (count != 0):
-        kv_pairs["decentralized-pull-xtr"] = [""] * count
+        kv_pairs["decentralized-pull-xtr-modulus"] = [""] * count
+    #endif
+    count = clause.count("decentralized-pull-xtr-dns-suffix =")
+    if (count != 0):
+        kv_pairs["decentralized-pull-xtr-dns-suffix"] = [""] * count
     #endif
     count = clause.count("register-reachable-rtrs =")
     if (count != 0):
@@ -2565,7 +2569,7 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
     for mr in lisp.lisp_map_resolvers_list.values():
         mr.resolve_dns_name()
         mr_name = "" if mr.mr_name == "all" else mr.mr_name + "<br>"
-        addr_str = mr_name + mr.map_resolver.print_address()
+        addr_str = mr_name + mr.map_resolver.print_address_no_iid()
         if (mr.dns_name): addr_str += "<br>" + mr.dns_name
 
         ts = lisp.lisp_print_elapsed(mr.last_used)
@@ -2812,16 +2816,11 @@ def lisp_xtr_command(kv_pair):
         if (kw == "decentralized-push-xtr"):
             lisp.lisp_decent_push_configured = (value == "yes")
         #endif
-        if (kw == "decentralized-pull-xtr"):
-            mod, dns = value.split()
-            lisp.lisp_decent_modulus = int(mod) if int(mod) > 0 else 1
-            lisp.lisp_decent_dns_suffix = dns
-            if (lisp.lisp_i_am_itr or lisp.lisp_i_am_rtr):
-                lisp.lisp_build_decent_map_resolver_list()
-            #endif
-            if (lisp.lisp_i_am_etr):
-                lisp.lisp_build_decent_map_server_list()
-            #endif
+        if (kw == "decentralized-pull-xtr-modulus"):
+            lisp.lisp_decent_modulus = int(value)
+        #endif
+        if (kw == "decentralized-pull-xtr-dns-suffix"):
+            lisp.lisp_decent_dns_suffix = value
         #endif
         if (kw == "register-reachable-rtrs"):
             lisp.lisp_register_all_rtrs = (value == "no")

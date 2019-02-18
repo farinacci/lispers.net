@@ -270,9 +270,9 @@ lisp_pubsub_cache = {}
 lisp_decent_push_configured = False
 
 #
-# When "decentralized-pull-xtr" is configured, the xTR is also running as
-# a Map-Server and Map-Resolver. So Map-Register messages the ETR sends is
-# looped back to the lisp-ms process.
+# When "decentralized-pull-xtr-[modulus,dns-suffix] is configured, the xTR is
+# also running as a Map-Server and Map-Resolver. So Map-Register messages the
+# ETR sends is looped back to the lisp-ms process.
 #
 lisp_decent_modulus = 0
 lisp_decent_dns_suffix = None
@@ -10177,8 +10177,13 @@ def lisp_send_map_register(lisp_sockets, packet, map_register, ms):
         lprint("{} Map-Register with key-id {}".format(e, ms.ekey_id))
     #endif
 
-    lprint("Send Map-Register to map-server {}{}".format(dest.print_address(),
-        ", ms-name '{}'".format(ms.ms_name)))
+    decent = ""
+    if (lisp_decent_pull_xtr_configured()):
+        decent = ", decent-index {}".format(bold(ms.dns_name, False))
+    #endif        
+
+    lprint("Send Map-Register to map-server {}{}{}".format( \
+        dest.print_address(), ", ms-name '{}'".format(ms.ms_name), decent))
     lisp_send(lisp_sockets, dest, LISP_CTRL_PORT, packet)
     return
 #enddef
@@ -13449,6 +13454,7 @@ class lisp_mr():
         self.dns_name = dns_name
         self.map_resolver = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.last_dns_resolve = None
+        self.a_record_index = 0
         if (addr_str): 
             self.map_resolver.store_address(addr_str)
             self.insert_mr()
@@ -13465,21 +13471,46 @@ class lisp_mr():
 
     def resolve_dns_name(self):
         if (self.dns_name == None): return
-        if (lisp_is_decent_dns_suffix(self.dns_name)): return
         if (self.last_dns_resolve and 
             time.time() - self.last_dns_resolve < 30): return
 
         try:
+            addresses = socket.gethostbyname_ex(self.dns_name)
             self.last_dns_resolve = lisp_get_timestamp()
-            addr = socket.gethostbyname(self.dns_name)
-            if (addr != self.map_resolver.print_address_no_iid()):
-                self.delete_mr()
-                self.map_resolver.store_address(addr)
-                self.insert_mr()
-            #endif
+            a_records = addresses[2]
         except:
-            pass
+            return
         #endtry
+
+        #
+        # Check if number of A-records have changed and this one is no longer
+        # valid.
+        #
+        if (len(a_records) <= self.a_record_index):
+            self.delete_mr()
+            return
+        #endif
+
+        addr = a_records[self.a_record_index]
+        if (addr != self.map_resolver.print_address_no_iid()):
+            self.delete_mr()
+            self.map_resolver.store_address(addr)
+            self.insert_mr()
+        #endif
+
+        #
+        # If pull-based decent DNS suffix, then create other lisp_mr() for
+        # all A-records. Only have master to this (A-record index 0).
+        #
+        if (lisp_is_decent_dns_suffix(self.dns_name) == False): return
+        if (self.a_record_index != 0): return
+        
+        for addr in a_records[1::]:
+            mr = lisp_mr(addr, None, None)
+            mr.a_record_index = a_records.index(addr)
+            mr.dns_name = self.dns_name
+            mr.last_dns_resolve = lisp_get_timestamp()
+        #endfor
     #enddef
 
     def insert_mr(self):
@@ -13634,16 +13665,11 @@ class lisp_ms():
         self.dns_name = dns_name
         self.map_server = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.last_dns_resolve = None
+        self.a_record_index = 0
         if (lisp_map_servers_list == {}):
             self.xtr_id = lisp_get_control_nonce()
         else:
             self.xtr_id = lisp_map_servers_list.values()[0].xtr_id
-        #endif
-        if (addr_str): 
-            self.map_server.store_address(addr_str)
-            self.insert_ms()
-        else:
-            self.resolve_dns_name()
         #endif
         self.alg_id = alg_id
         self.key_id = key_id
@@ -13659,25 +13685,57 @@ class lisp_ms():
         self.map_notify_acks_sent = 0
         self.ekey_id = ekey_id
         self.ekey = ekey
+        if (addr_str): 
+            self.map_server.store_address(addr_str)
+            self.insert_ms()
+        else:
+            self.resolve_dns_name()
+        #endif
     #enddef
 
     def resolve_dns_name(self):
         if (self.dns_name == None): return
-        if (lisp_is_decent_dns_suffix(self.dns_name)): return
         if (self.last_dns_resolve and 
             time.time() - self.last_dns_resolve < 30): return
 
         try:
+            addresses = socket.gethostbyname_ex(self.dns_name)
             self.last_dns_resolve = lisp_get_timestamp()
-            addr = socket.gethostbyname(self.dns_name)
-            if (addr != self.map_server.print_address_no_iid()):
-                self.delete_ms()
-                self.map_server.store_address(addr)
-                self.insert_ms()
-            #endif
+            a_records = addresses[2]
         except:
-            pass
+            return
         #endtry
+
+        #
+        # Check if number of A-records have changed and this one is no longer
+        # valid.
+        #
+        if (len(a_records) <= self.a_record_index):
+            self.delete_ms()
+            return
+        #endif
+
+        addr = a_records[self.a_record_index]
+        if (addr != self.map_server.print_address_no_iid()):
+            self.delete_ms()
+            self.map_server.store_address(addr)
+            self.insert_ms()
+        #endif
+
+        #
+        # If pull-based decent DNS suffix, then create other lisp_ms() for
+        # all A-records. Only have master to this (A-record index 0).
+        #
+        if (lisp_is_decent_dns_suffix(self.dns_name) == False): return
+        if (self.a_record_index != 0): return
+        
+        for addr in a_records[1::]:
+            ms = copy.deepcopy(self)
+            ms.map_server.store_address(addr)
+            ms.a_record_index = a_records.index(addr)
+            ms.last_dns_resolve = lisp_get_timestamp()
+            ms.insert_ms()
+        #endfor
     #enddef
 
     def insert_ms(self):
@@ -14055,6 +14113,9 @@ def lisp_get_map_resolver(address, eid):
 def lisp_get_decent_map_resolver(eid):
     index = lisp_get_decent_index(eid)
     dns_name = str(index) + "." + lisp_decent_dns_suffix
+
+    lprint("Use LISP-Decent map-resolver {} for EID {}".format( \
+        bold(dns_name, False), eid.print_prefix()))
 
     older = None
     for mr in lisp_map_resolvers_list.values():
@@ -17911,7 +17972,7 @@ def lisp_retry_decap_keys(addr_str, packet, iv, packet_icv):
 # the LISP-Decent pull-based mapping system.
 #
 def lisp_decent_pull_xtr_configured():
-    return(lisp_decent_modulus != 0)
+    return(lisp_decent_modulus != 0 and lisp_decent_dns_suffix != None)
 #enddef
 
 #
@@ -17961,70 +18022,6 @@ def lisp_get_decent_dns_name_from_str(iid, source, group):
     g = lisp_address(LISP_AFI_NONE, group, 0, iid)
     index = lisp_get_decent_index(s, g)
     return(str(index) + "." + lisp_decent_dns_suffix)
-#enddef
-
-#
-# lisp_build_decent_map_resolver_list
-#
-# Based on the lisp_decent_modulus setting and lisp_decent_dns_suffix, build
-# a Map-Resolver list. This is called by the lisp-itr and lisp-rtr processes.
-#
-def lisp_build_decent_map_resolver_list():
-    mr_list = []
-
-    #
-    # Build DNS names for each map-resolver set.
-    #
-    for index in range(0, lisp_decent_modulus):
-        mr_list.append(str(index) + "." + lisp_decent_dns_suffix)
-    #endfor
-
-    #
-    # Lookup each name. Multiple a records will be returned. Each A record
-    # goes into a separate entry in the lisp_map_resolvers_list.
-    #
-    for mr in mr_list:
-        addresses = socket.gethostbyname_ex(mr)[2]
-        for addr in addresses:
-            lisp_mr(addr, mr, None)
-        #endfor
-    #endfor
-#enddef
-
-#
-# lisp_build_decent_map_server_list
-#
-# Based on the lisp_decent_modulus setting and lisp_decent_dns_suffix, build
-# a Map-Server list. This is called by the lisp-etr process.
-#
-def lisp_build_decent_map_server_list():
-    ms_list = []
-
-    #
-    # Build DNS names for each map-resolver set.
-    #
-    for index in range(0, lisp_decent_modulus):
-        ms_list.append(str(index) + "." + lisp_decent_dns_suffix)
-    #endfor
-
-    #
-    # Lookup each name. Multiple a records will be returned. Each A record
-    # goes into a separate entry in the lisp_map_resolvers_list. The first
-    # address will be the address that was resolved for the configured entry.
-    # We need to deepcopy the values for the other addresses for the same
-    # DNS name.
-    #
-    for ms in ms_list:
-        addresses = socket.gethostbyname_ex(ms)[2]
-        config_ms = lisp_get_map_server(addresses[0])
-        if (config_ms == None): continue
-        for addr in addresses:
-            if (addr == config_ms.map_server): continue
-            new = lisp_ms(addr, [None] * 12)
-            new = copy.deepcopy(config_ms)
-            new.map_server.store_address(addr)
-        #endfor
-    #endfor
 #enddef
 
 #------------------------------------------------------------------------------

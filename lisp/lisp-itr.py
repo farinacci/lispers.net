@@ -1264,7 +1264,8 @@ lisp_itr_commands = {
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
         "decentralized-push-xtr" : [True, "yes", "no"],
-        "decentralized-pull-xtr" : [True],
+        "decentralized-pull-xtr-modulus" : [True, 1, 0xff],
+        "decentralized-pull-xtr-dns-suffix" : [True],
         "register-reachable-rtrs" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 
