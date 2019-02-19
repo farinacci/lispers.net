@@ -13517,6 +13517,18 @@ class lisp_mr():
             mr.dns_name = self.dns_name
             mr.last_dns_resolve = lisp_get_timestamp()
         #endfor
+
+        #
+        # Check for deletes.
+        #
+        delete_list = []
+        for mr in lisp_map_resolvers_list.values():
+            if (self.dns_name != mr.dns_name): continue
+            a = mr.map_resolver.print_address_no_iid()
+            if (a in a_records): continue
+            delete_list.append(mr)
+        #endfor
+        for mr in delete_list: mr.delete_mr()
     #enddef
 
     def insert_mr(self):
@@ -13747,6 +13759,18 @@ class lisp_ms():
             ms.last_dns_resolve = lisp_get_timestamp()
             ms.insert_ms()
         #endfor
+
+        #
+        # Check for deletes.
+        #
+        delete_list = []
+        for ms in lisp_map_servers_list.values():
+            if (self.dns_name != ms.dns_name): continue
+            a = ms.map_server.print_address_no_iid()
+            if (a in a_records): continue
+            delete_list.append(ms)
+        #endfor
+        for ms in delete_list: ms.delete_ms()
     #enddef
 
     def insert_ms(self):

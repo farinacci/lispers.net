@@ -611,6 +611,8 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         if (ms_only != None and ms != ms_only): continue
 
         ms_dns_name = ms.dns_name if decent else ms.ms_name
+        if (ms_list.has_key(ms_dns_name) == False): continue
+        
         for msl in ms_list[ms_dns_name]:
 
             #
