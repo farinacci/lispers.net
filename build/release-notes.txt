@@ -19,15 +19,20 @@ o Change "lisp xtr-parameters" subcommand "decentralizd-xtr = yes|no" to
   "decentralizsed-push-xtr = yes|no" to make it more clear the first phase
   was the push-based multicast LISP-Decent mechanism.
 
-o Introduce "lisp xtr-parameters" subcommand "decentralized-pull-xtr =
-  <modulus> <dns-suffix>".
+o Introduce "lisp xtr-parameters" subcommands "decentralized-pull-xtr-modulus =
+  <modulus>" and "decentralized-pull-xtr-dns-suffix = <dns-suffix>".
 
-o "lisp map-resolver" commands are not required but "lisp map-server" commands
-  are required with a dns-name parameter (which contains index prepended to a
-  configured DNS name suffix) so each map-server set can have a distinct set of
-  configuration parameters (such as different authentication keys).
+o "lisp map-resolver" commands are are required on ITRs and RTRs with a
+  dns-name parameter (which contains index prepended to a configured DNS name
+  suffix) so each map-resolver set can have a distinct set of configuration
+  parameters.
 
-o Provide a lisp.config.decent-pull-xtr configuration file template.
+o "lisp map-server" commands are are required on ETRs with a dns-name
+  parameter (which contains index prepended to a configured DNS name suffix)
+  so each map-server set can have a distinct set of configuration parameters.
+
+o Provide a lisp.config.decent-xtr-pull configuration file template in the
+  lispers.net/docs directory.
 
 o Document the pull-based LISP-Decent feature in lisp.conifg.example.
 
@@ -35,6 +40,9 @@ o Note, this feature only works when the EID being looked up is the same
   prefix length of what is being registered. Next phase (with an Internet
   Draft update), support for a coarser EID-prefix registered that matches a
   more specific target EID from the Map-Request will find the same map-server.
+
+o Do not print an instance-ID bracket for Map-Resolver and Map-Server
+  addresses. They aren't needed and don't apply in this case.
 
 -------------------------------------------------------------------------------
 
