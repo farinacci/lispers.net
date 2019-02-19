@@ -17993,9 +17993,8 @@ def lisp_is_decent_dns_suffix(dns_name):
 #
 # Hash the EID-prefix and mod the configured LISP-Decent modulus value.
 #
-def lisp_get_decent_index(eid, group=None):
+def lisp_get_decent_index(eid):
     eid_str = eid.print_prefix()
-    if (group != None): eid_str += group.print_prefix()
     hash_value = hashlib.sha256(eid_str).hexdigest()
     index = int(hash_value, 16) % lisp_decent_modulus
     return(index)
@@ -18006,8 +18005,8 @@ def lisp_get_decent_index(eid, group=None):
 #
 # Based on EID, get index and prepend to LISP-Decent DNS name suffix.
 #
-def lisp_get_decent_dns_name(eid, group=None):
-    index = lisp_get_decent_index(eid, group)
+def lisp_get_decent_dns_name(eid):
+    index = lisp_get_decent_index(eid)
     return(str(index) + "." + lisp_decent_dns_suffix)
 #enddef
 
@@ -18017,10 +18016,9 @@ def lisp_get_decent_dns_name(eid, group=None):
 # Supplied source and group are addresses passed as strings. Build in internal
 # lisp_address() to pass into lisp_get_decent_index().
 #
-def lisp_get_decent_dns_name_from_str(iid, source, group):
-    s = lisp_address(LISP_AFI_NONE, source, 0, iid)
-    g = lisp_address(LISP_AFI_NONE, group, 0, iid)
-    index = lisp_get_decent_index(s, g)
+def lisp_get_decent_dns_name_from_str(iid, eid_str):
+    eid = lisp_address(LISP_AFI_NONE, eid_str, 0, iid)
+    index = lisp_get_decent_index(eid)
     return(str(index) + "." + lisp_decent_dns_suffix)
 #enddef
 

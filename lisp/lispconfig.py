@@ -2555,13 +2555,21 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
         output += lisp_table_footer()
     #endif
 
+    dns_suffix = lisp.lisp_decent_dns_suffix
+    if (dns_suffix == None):
+        dns_suffix = ":"
+    else:
+        dns_suffix = "&nbsp;(dns-suffix '{}'):".format(dns_suffix)
+    #endif
+
     #
     # Show map-resolvers configured.
     #
     hover = "{} map-resolvers configured".format( \
         len(lisp.lisp_map_resolvers_list))
-    title = "LISP-{} Configured Map-Resolvers:".format(itr_or_rtr)
+    title = "LISP-{} Configured Map-Resolvers{}".format(itr_or_rtr, dns_suffix)
     title = lisp.lisp_span(title, hover)
+
     output += lisp_table_header(title, "Map-Resolver", "Last Used", 
         "Map-Requests<br>Sent", "Negative Map-Replies<br>Received", 
         "Last Negative<br>Map-Reply", "Average RTT")

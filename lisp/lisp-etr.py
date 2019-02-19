@@ -112,8 +112,17 @@ def lisp_etr_show_command(clause):
     #
     # Show configured map-servers.
     #
+    dns_suffix = lisp.lisp_decent_dns_suffix
+    if (dns_suffix == None):
+        dns_suffix = ":"
+    else:
+        dns_suffix = "&nbsp;(dns-suffix '{}'):".format(dns_suffix)
+    #endif
+
     hover = "{} configured map-servers".format(len(lisp.lisp_map_servers_list))
-    title = lisp.lisp_span("LISP-ETR Configured Map-Servers:", hover)
+    title = "LISP-ETR Configured Map-Servers{}".format(dns_suffix)
+    title = lisp.lisp_span(title, hover)
+
     hover = ("P = proxy-reply requested, M = merge-registrations " + \
         "requested, N = Map-Notify requested")
     reg_title = lisp.lisp_span("Registration<br>flags", hover) 
@@ -422,7 +431,7 @@ def lisp_build_map_register_records(quiet, db, eid, group, ttl):
 
         eid_records += eid_record.encode()
         if (not quiet): 
-            prefix_str = eid.print_prefix()
+            prefix_str = lisp.lisp_print_eid_tuple(eid, group)
             decent_index = ""
             if (lisp.lisp_decent_pull_xtr_configured()):
                 decent_index = lisp.lisp_get_decent_index(eid)
@@ -508,7 +517,8 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         # decide which map-server this EID belongs too (and is registered with.
         #
         for db in lisp.lisp_db_list:
-            dns_name = lisp.lisp_get_decent_dns_name(db.eid)
+            eid = db.eid if db.group.is_null() else db.group
+            dns_name = lisp.lisp_get_decent_dns_name(eid)
             ms_list[dns_name] = []
         #endfor
     else:
@@ -805,16 +815,23 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         ms_name = ms_gm.use_ms_name
         rle = ms_gm.rle_address
 
+        #
+        # To obtain decent-index for a group address, just use group address
+        # and no source as part of hash. Because an ITR does not know if (*,G)
+        # or (S,G) is registered with the mapping system
+        #
+        key = ms_name
+        if (decent):
+            key = lisp.lisp_get_decent_dns_name_from_str(iid, group)
+            ms_list[key] = ["", 0]
+        #endif
+
         if (len(ms_gm.sources) == 0): 
-            entries.append(["0.0.0.0", group, iid, ms_name, rle, joinleave])
+            entries.append(["0.0.0.0", group, iid, key, rle, joinleave])
             continue
         #endif
         for s in ms_gm.sources: 
-            key = ms_name
-            if (decent):
-                key = lisp.lisp_get_decent_dns_name_from_str(iid, s, group)
-                ms_list[key] = ["", 0]
-            #endif
+            ms_list[key] = ["", 0]
             entries.append([s, group, iid, key, rle, joinleave])
         #endfor
     #endfor
@@ -879,8 +896,19 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         if (eid_record.group.is_mac_broadcast() and \
             eid_record.eid.address == 0): eid_record.eid.mask_len = 0
 
-        lisp.lprint("  EID-prefix {} for [ms,dns]-name '{}'".format( \
-            lisp.green(eid_record.print_eid_tuple(), False), ms_dns_name))
+        decent_index = ""
+        ms_name = ""
+        if (lisp.lisp_decent_pull_xtr_configured()):
+            decent_index = lisp.lisp_get_decent_index(eid_record.group)
+            decent_index = lisp.bold(str(decent_index), False)
+            decent_index = "with decent-index {}".format(decent_index)
+        else:
+            decent_index = "for ms-name '{}'".format(ms_dns_name)
+        #endif
+
+        eid_str = lisp.green(eid_record.print_eid_tuple(), False)
+        lisp.lprint("  EID-prefix {} {}{}".format(eid_str, ms_name,
+            decent_index))
 
         eid_records += eid_record.encode()
         eid_record.print_record("  ", False)
