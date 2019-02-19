@@ -44,6 +44,9 @@ o Note, this feature only works when the EID being looked up is the same
 o Do not print an instance-ID bracket for Map-Resolver and Map-Server
   addresses. They aren't needed and don't apply in this case.
 
+o Be more descriptive on the format of a E.164 address prefix in file
+  lisp.config.example.
+
 -------------------------------------------------------------------------------
 
                 lispers.net Beta Release Version 0.489
