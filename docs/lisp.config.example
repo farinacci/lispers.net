@@ -702,7 +702,8 @@ Command Description:
     address, a leading plus sign is a E.164 number, single quotes is a
     distinguished name, and dashes with N, S, W, E is a geo-prefix. See
     the "lisp geo-coordinates" command description for the format details
-    for geo-prefixes.
+    for geo-prefixes. E.164 address prefixes must start with a "+" sign,
+    may be <= 16 digits with values 0-9, and end with /64.
 
     The "instance-id" parameter scopes the eid-prefix within a VPN context for
     closed user group connectivity. If the "instance-id" is configured with
