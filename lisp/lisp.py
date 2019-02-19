@@ -9698,7 +9698,8 @@ def lisp_process_map_notify(lisp_sockets, orig_packet, source):
             auth_good else "failed"))
         if (auth_good == False): return
     else:
-        ms = lisp_ms(s, None, "", 0, "", False, False, False, False, 0, 0)
+        ms = lisp_ms(s, None, "", 0, "", False, False, False, False, 0, 0, 0,
+            None)
     #endif
 
     #
@@ -13506,6 +13507,11 @@ class lisp_mr():
         if (self.a_record_index != 0): return
         
         for addr in a_records[1::]:
+            a = lisp_address(LISP_AFI_NONE, addr, 0, 0)
+            mr = lisp_get_map_resolver(a, None)
+            if (mr != None and mr.a_record_index == a_records.index(addr)):
+                continue
+            #endif
             mr = lisp_mr(addr, None, None)
             mr.a_record_index = a_records.index(addr)
             mr.dns_name = self.dns_name
@@ -13730,6 +13736,11 @@ class lisp_ms():
         if (self.a_record_index != 0): return
         
         for addr in a_records[1::]:
+            a = lisp_address(LISP_AFI_NONE, addr, 0, 0)
+            ms = lisp_get_map_server(a)
+            if (ms != None and ms.a_record_index == a_records.index(addr)):
+                continue
+            #endif
             ms = copy.deepcopy(self)
             ms.map_server.store_address(addr)
             ms.a_record_index = a_records.index(addr)
@@ -14041,8 +14052,8 @@ class lisp_pubsub():
 #
 # lisp_get_map_server
 #
-# Return a Map-Server to a caller so we can send an Info-Request message to
-# it.
+# Return a lisp_ms() class instance. Variable 'address' is a lisp_address()
+# class instance.
 #
 def lisp_get_map_server(address):
     for ms in lisp_map_servers_list.values():
@@ -14054,8 +14065,7 @@ def lisp_get_map_server(address):
 #
 # lisp_get_any_map_server
 #
-# Return a Map-Server to a caller so we can send an Info-Request message to
-# it.
+# Return the first lisp_ms() class instance.
 #
 def lisp_get_any_map_server():
     for ms in lisp_map_servers_list.values(): return(ms)
