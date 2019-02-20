@@ -1,4 +1,13 @@
 
+                lispers.net Beta Release Version 0.491
+                --------------------------------------
+
+o Release date: Tue Feb 19 16:46:11 PST 2019
+
+o Include binary lispers.net/lisp/lisp-xtr in release build.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.490
                 --------------------------------------
 
