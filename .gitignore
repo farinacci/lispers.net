@@ -1,7 +1,6 @@
 lisp/TAGS
 lisp/*pyc
 lisp/*pyo
-lisp/lisp-xtr*
 lisp/lisp-build-date.txt
 lisp/lisp-version.txt
 apps/*pyc
