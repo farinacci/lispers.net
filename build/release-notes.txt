@@ -2,7 +2,7 @@
                 lispers.net Beta Release Version 0.492
                 --------------------------------------
 
-o Release date:
+o Release date: <not yet>
 
 o Return "map-reply" on Received output line from lisp-lig.
 
