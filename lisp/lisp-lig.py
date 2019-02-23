@@ -558,7 +558,7 @@ for i in range(count):
     # Process Map-Reply
     #
     rtt = round(time.time() - map_request_ts, 3)
-    print "Received {} from {} with rtt {} secs:".format(mr, source, rtt)
+    print "Received {} from {} with rtt {} secs:".format(mr_str, source, rtt)
     if (mr_str == "map-reply"):
         packet = map_reply.decode(packet)
         if (packet == None):
