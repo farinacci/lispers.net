@@ -2,9 +2,14 @@
                 lispers.net Beta Release Version 0.492
                 --------------------------------------
 
-o Release date: <not yet>
+o Release date: Tue Feb 26 11:50:14 PST 2019
 
-o Return "map-reply" on Received output line from lisp-lig.
+o Return string "map-reply" on Received output line from lisp-lig.
+
+o Implement returning dynamic data associated with database-mappings. URL
+  https://<host>:8080/lisp/api/data/database-mapping will return a JSON
+  formatted array of configured database-mappings. The RLOC-set returns
+  RLOC address, RLOC interface, RLOC name, and translated RLOC address.
 
 -------------------------------------------------------------------------------
 
