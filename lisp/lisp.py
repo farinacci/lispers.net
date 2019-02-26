@@ -15383,6 +15383,9 @@ def lisp_process_api(process, lisp_socket, data_structure):
         parms = {} if (parms == "") else json.loads(parms)
         data = lisp_process_api_ms_or_mr(False, parms)
     #endif
+    if (api_name ==  "database-mapping"):
+        data = lisp_process_api_database_mapping()
+    #endif
 
     #
     # Send IPC back to lisp-core process.
@@ -15575,6 +15578,50 @@ def lisp_process_api_ms_or_mr(ms_or_mr, data):
         #endfor
     #endif
     return([])
+#enddef
+
+#
+# lisp_process_api_database_mapping
+#
+# Return array of database-mappings configured, include dynamic data like
+# translated_rloc in particular.
+#
+def lisp_process_api_database_mapping():
+    data = []
+
+    for db in lisp_db_list:
+        entry = {}
+        entry["eid-prefix"] = db.eid.print_prefix()
+        if (db.group.is_null() == False):
+            entry["group-prefix"] = db.group.print_prefix()
+        #endif
+
+        rlocs = []
+        for r in db.rloc_set:
+            rloc = {}
+            if (r.rloc.is_null() == False):
+                rloc["rloc"] = r.rloc.print_address_no_iid()
+            #endif
+            if (r.rloc_name != None): rloc["rloc-name"] = r.rloc_name
+            if (r.interface != None): rloc["interface"] = r.interface
+            tr = r.translated_rloc
+            if (tr.is_null() == False):
+                rloc["translated-rloc"] = tr.print_address_no_iid()
+            #endif
+            if (rloc != {}): rlocs.append(rloc)
+        #endfor
+
+        #
+        # Add RLOCs array to EID entry.
+        #
+        entry["rlocs"] = rlocs
+
+        #
+        # Add EID entry to return array.
+        #
+        data.append(entry)
+    #endfor
+    return(data)
 #enddef
 
 #

@@ -185,7 +185,7 @@ def lisp_get_api_system():
 #
 def lisp_get_api_data(data_structure, data):
     valid_apis = ["site-cache", "map-cache", "system", "map-resolver",
-        "map-server"]
+        "map-server", "database-mapping"]
 
     if (data_structure not in valid_apis): return(json.dumps([]))
 
@@ -211,7 +211,7 @@ def lisp_get_api_data(data_structure, data):
             return(json.dumps([]))
         #endif
     #endif
-    if (data_structure == "map-server"):
+    if (data_structure in ["map-server", "database-mapping"]):
         if (lisp.lisp_is_running("lisp-etr")): 
             lisp.lisp_ipc_lock.acquire()
             lisp.lisp_ipc(ipc, lisp_ipc_socket, "lisp-etr")
