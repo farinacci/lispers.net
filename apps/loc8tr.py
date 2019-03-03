@@ -29,7 +29,9 @@
 #   -d:
 #       Produce more output.
 #   -hp <host>:<port>:
-#       Host address and Port number to get to lispers.net restful API.
+#       Host address and Port number to get to lispers.net restful API. When
+#       <port> is a negative number that means that http rather than https
+#       is used.
 #   -up <username>:<password>:
 #       Supply username and password for lispers.net map-cache query.
 #
@@ -86,17 +88,28 @@ if ("-up" in sys.argv):
     #endif
 #endif    
 
+http = "https"
 hp = "localhost:8080"
 if ("-hp" in sys.argv):
     hp = sys.argv.index("-hp")
     hp = sys.argv[hp+1]
     check = hp.split(":")
-    if (len(check) == 1 or check[1].isdigit() == False):
+    if (len(check) == 1):
         print "Invalid syntax for host:port pair"
         exit(1)
     #endif
+    port = check[1]
+    if (port[0] == "-"):
+        http = "http"
+        port = port[1::]
+    #endif
+    if (port.isdigit() == False):
+        print "Invalid syntax for port"
+        exit(1)
+    #endif
+    hp = check[0] + ":" + port
 #endif    
-curl_command = 'curl --silent --insecure -u "{}" https://{}/lisp/api/data/map-cache'.format(userpw, hp)
+curl_command = 'curl --silent --insecure -u "{}" {}://{}/lisp/api/data/map-cache'.format(userpw, http, hp)
 
 #
 # The parameters we use for traceroute.

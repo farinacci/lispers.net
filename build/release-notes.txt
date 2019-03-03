@@ -1,4 +1,14 @@
 
+                lispers.net Beta Release Version 0.493
+                --------------------------------------
+
+o Release date: <not yet>
+
+o Have apps/loc8tr accept a negative port number which means to use http
+  rather than https.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.492
                 --------------------------------------
 
