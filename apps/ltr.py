@@ -18,9 +18,7 @@
 # -----------------------------------------------------------------------------
 # 
 # ltr.py - LISP EID Traceroute Client - Trace the encap/decap paths
-#
-# Last update: Wed Sep 26 14:13:59 PDT 2018
-#
+
 # Usage: python ltr.py [-s <source-eid>] <destination-EID>
 #
 #   -s: Optional source EID.
@@ -63,10 +61,14 @@
 # If there an error along the path, the node detecting the error will return
 # the LISP-Trace packet to the RLOC of the originating ITR.
 #
-# The JSON format of an LISP-Trace packet is:
+# The JSON format of an LISP-Trace packet is an array of dictionary arrays.
+# The array will typically have 2 elements, one from ltr source to destination
+# EID and one for the return path. Each dictionary array is keyed with "seid",
+# "deid", and "paths". The array "paths" is the node data that is appended
+# at each encapsulation hop. Note example below:
 # 
 # [ 
-#   { "seid" : "[<iid>]<orig-eid>", "deid" : "[<iid>]<dest-eid>", "paths" ;
+#   { "seid" : "[<iid>]<orig-eid>", "deid" : "[<iid>]<dest-eid>", "paths" : a
 #   [
 #     { "node" : "ITR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
 #                       "encap-timestamp" : "<ts>" },
