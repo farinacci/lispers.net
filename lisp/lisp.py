@@ -299,6 +299,7 @@ LISP_CTRL_PORT       = 4342
 LISP_L2_DATA_PORT    = 8472
 LISP_VXLAN_DATA_PORT = 4789
 LISP_VXLAN_GPE_PORT  = 4790
+LISP_TRACE_PORT      = 2434
 
 #
 # Packet type definitions.
@@ -311,6 +312,7 @@ LISP_MAP_NOTIFY_ACK = 5
 LISP_MAP_REFERRAL   = 6
 LISP_NAT_INFO       = 7
 LISP_ECM            = 8
+LISP_TRACE          = 9
 
 #
 # Map-Reply action values.
@@ -1487,6 +1489,8 @@ class lisp_packet():
         self.inner_dest = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.inner_tos = 0
         self.inner_ttl = 0
+        self.inner_protocol = 0
+        self.inner_dport = 0
         self.lisp_header = lisp_data_header()
         self.packet = packet
         self.inner_version = 0
@@ -2208,25 +2212,36 @@ class lisp_packet():
             packet_len = socket.ntohs(struct.unpack("H", packet[2:4])[0])
             self.inner_tos = struct.unpack("B", packet[1:2])[0]
             self.inner_ttl = struct.unpack("B", packet[8:9])[0]
+            self.inner_protocol = struct.unpack("B", packet[9:10])[0]
             self.inner_source.afi = LISP_AFI_IPV4
             self.inner_dest.afi = LISP_AFI_IPV4
             self.inner_source.unpack_address(packet[12:16])
             self.inner_dest.unpack_address(packet[16:20])
             frag_field = socket.ntohs(struct.unpack("H", packet[6:8])[0])
             self.inner_is_fragment = (frag_field & 0x2000 or frag_field != 0)
+            if (self.inner_protocol == LISP_UDP_PROTOCOL):
+                self.inner_dport = struct.unpack("H", packet[26:28])[0]
+                self.inner_dport = socket.ntohs(self.inner_dport)
+            #endif                
         elif (L3 and self.inner_version == 6 and version >= 0x60): 
             packet_len = socket.ntohs(struct.unpack("H", packet[4:6])[0]) + 40
             tos = struct.unpack("H", packet[0:2])[0]
             self.inner_tos = (socket.ntohs(tos) >> 4) & 0xff
             self.inner_ttl = struct.unpack("B", packet[7:8])[0]
+            self.inner_protocol = struct.unpack("B", packet[6:7])[0]
             self.inner_source.afi = LISP_AFI_IPV6
             self.inner_dest.afi = LISP_AFI_IPV6
             self.inner_source.unpack_address(packet[8:24])
             self.inner_dest.unpack_address(packet[24:40])
+            if (self.inner_protocol == LISP_UDP_PROTOCOL):
+                self.inner_dport = struct.unpack("H", packet[46:48])[0]
+                self.inner_dport = socket.ntohs(self.inner_dport)
+            #endif                
         elif (L2):
             packet_len = len(packet)
             self.inner_tos = 0
             self.inner_ttl = 0
+            self.inner_protocol = 0
             self.inner_source.afi = LISP_AFI_MAC
             self.inner_dest.afi = LISP_AFI_MAC
             self.inner_dest.unpack_address(self.swap_mac(packet[0:6]))
@@ -2498,6 +2513,11 @@ class lisp_packet():
         flow += "\n"
         return(flow)
     #endif
+
+    def is_trace(self):
+        return(self.inner_protocol == LISP_UDP_PROTOCOL and 
+               self.inner_dport == LISP_TRACE_PORT)
+    #enddef
 #endclass
 
 #
@@ -14071,6 +14091,72 @@ class lisp_pubsub():
     #enddef
 #endclass
 
+#
+# lisp_trace
+#
+# The LISP-Trace message format is:
+#
+#    0                   1                   2                   3
+#    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |Type=9 |                     0                                 |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |                         Nonce . . .                           |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |                         . . . Nonce                           |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |                        JSON Data ...                          |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#
+class lisp_trace():
+    def __init__(self):
+        self.nonce = lisp_get_control_nonce()
+        self.packet_json = None
+    #enddef
+
+    def print_trace(self):
+        jd = self.packet_json
+        lprint("LISP-Trace JSON: '{}'".format(jd))
+    #enddef
+            
+    def encode(self):
+        first_long = socket.htonl(0x90000000)
+        packet = struct.pack("I", first_long)
+        packet += struct.pack("Q", self.nonce)
+        packet += json.dumps(self.packet_json)
+        return(packet)
+    #enddef
+
+    def decode(self, packet):
+        packet_format = "IQ"
+        format_size = struct.calcsize(packet_format)
+        if (len(packet) < format_size): return(False)
+
+        first_long, nonce = struct.unpack(packet_format, packet)[0]
+        if (socket.ntohl(first_long) != 0x90000000): return(False)
+
+        self.nonce = nonce
+        packet += format_size
+        try:
+            self.packet_json = json.loads(packet)
+        except:
+            return(False)
+        #entry
+        return(True)
+    #enddef
+
+    def myeid(self, eid):
+        return(lisp_is_myeid(eid))
+    #enddef
+
+    def return_to_sender(self, rts_rloc):
+        s = lisp_open_listen_socket("0.0.0.0", LISP_TRACE_PORT)
+        packet = self.encode()
+        s.sendto(packet, (rts_rloc, LISP_TRACE_PORT))
+        s.close()
+    #enddef
+#endclass        
+
 #------------------------------------------------------------------------------
 
 #
@@ -16187,6 +16273,18 @@ def lisp_db_list_length():
 #endif
 
 #
+# lisp_is_myeid
+#
+# Return true if supplied EID is the EID for this system.
+#
+def lisp_is_myeid(eid):
+    for db in lisp_db_list:
+        if (db.eid.is_exact_match(eid)): return(True)
+    #endfor
+    return(False)
+#enddef    
+
+#
 # lisp_format_macs
 #
 # Take two MAC address strings and format them with dashes and place them in
@@ -18101,6 +18199,126 @@ def lisp_get_decent_dns_name_from_str(iid, eid_str):
     eid = lisp_address(LISP_AFI_NONE, eid_str, 0, iid)
     index = lisp_get_decent_index(eid)
     return(str(index) + "." + lisp_decent_dns_suffix)
+#enddef
+
+#
+# lisp_trace_append
+#
+# Append JSON data to trace packet. If this is the ETR, the EIDs will be
+# swapped to return packet to originator.
+#
+# Returning False means the caller should return (and not forward the packet).
+#
+def lisp_trace_append(packet, ed="encap"):
+    offset = 28 if packet.inner_version == 4 else 48
+    pkt = packet.packet[offset]
+    trace = lisp_trace()
+    trace.decode(pkt)
+
+    next_rloc = "?" if packet.outer_dest.is_null() else \
+        packet.outer_dest.print_address_no_iid()
+
+    #
+    # Add node entry data for the encapsulation or decapsulation.
+    #
+    entry = {}
+    entry["node"] = "ITR" if lisp_i_am_itr else "ETR" if lisp_i_am_etr else \
+        "RTR" if lisp_i_am_rtr else "?"
+    entry["srloc"] = packet.outer_source.print_address_no_iid()
+    entry["drloc"] = next_rloc
+    key = ed + "-timestamp"
+    entry[key] = lisp_get_timestamp()
+
+    #
+    # Build seid->deid record if it does not exist. Then append node entry
+    # to record below, in the search loop.
+    #
+    seid = packet.inner_source.print_address()
+    deid = packet.inner_dest.print_address()
+    append_length = 0
+    if (trace.packet_json == None):
+        rec = {}
+        rec["seid"] = seid
+        rec["deid"] = deid
+        rec["paths"] = []
+        trace.packet_json = []
+        append_length = len(json.dumps(trace.packet_json))
+    #endif
+
+    #
+    # Search for record. If we appending the first ITR node entry, get its
+    # RLOC address in case we have to return-to-sender.
+    #
+    for rec in trace.packet_json:
+        if (rec["deid"] != deid): continue
+        rec.paths.append(entry)
+        sender_rloc = rec.paths[0]["srloc"]
+        break
+    #endfor
+    append_length += len(json.dumps(entry))
+
+    #
+    # If we are destination-EID, add a new record deid->seid.
+    #
+    swap = False
+    if (trace.myeid(packet.inner_dest)):
+        rec = {}
+        rec["seid"] = deid
+        rec["deid"] = seid
+        rec["paths"] = []
+        trace.packet_json.append(rec)
+        append_length = len(json.dumps(rec))
+        swap = True
+    #endif
+
+    #
+    # Print the JSON packet after we appended data to it. Put the new JSON in
+    # packet. Fix up lengths and checksums from inner headers.
+    #
+    trace.print_trace()
+    pkt = trace.encode(packet)
+
+    #
+    # Fix up lengths. Zero UDP checksum.
+    #
+    headers = packet.packet[0:offset]
+    headers[offset-4:offset] += append_length
+    headers[offset-2:offset] = 0
+    offset = 2 if packet.inner_version == 4 else 4
+    headers[offset:offset+2] += append_length
+
+    #
+    # If we are swampping addresses, do it here so the JSON append and IP
+    # header fields changes are all reflected in new IPv4 header checksum.
+    #
+    if (swap):
+        s = headers[16:20]
+        d = headers[12:16]
+        headers[12:16] = s
+        headers[16:20] = d
+    #endif
+
+    #
+    # Fix up IPv4 header checksum.
+    #
+    if (packet.inner_version == 4):
+        headers[0:20] = lisp_ip_checksum(headers[0:20])
+    #endif
+
+    #
+    # If next_rloc is not known, we need to return packet to sender.
+    #
+    if (next_rloc == "?"):
+        trace.return_to_sender(sender_rloc)
+        return(False)
+    #endif
+
+    #
+    # If we did not swap addresses, return and let the encapsulator forward
+    # packets. If we did 
+    #
+    packet.packet = headers + pkt
+    return(True)
 #enddef
 
 #------------------------------------------------------------------------------

@@ -321,6 +321,13 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #endif
 
     #
+    # Process decap node trace function.
+    #
+    if (packet.is_trace()):
+        if (lisp.lisp_trace_append(packet, "decap")): return
+    #endif
+
+    #
     # Do map-cache lookup. If no entry found, send Map-Request.
     #
     mc = lisp.lisp_map_cache_lookup(packet.inner_source, packet.inner_dest)
@@ -347,6 +354,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             packet.inner_dest)): return
         lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
             packet.inner_source, packet.inner_dest, None)
+
+        if (packet.is_trace()): lisp.lisp_trace_append(packet)
         return
     #endif
 
@@ -376,13 +385,16 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         if (action == lisp.LISP_NATIVE_FORWARD_ACTION):
             lisp.dprint("Natively forwarding")
             packet.send_packet(lisp_raw_socket, packet.inner_dest)
+            if (packet.is_trace()): lisp.lisp_trace_append(packet)
             return
         #endif
         lisp.dprint("No reachable RLOCs found")
+        if (packet.is_trace()): lisp.lisp_trace_append(packet)
         return
     #endif
     if (dest_rloc and dest_rloc.is_null()): 
         lisp.dprint("Drop action RLOC found")
+        if (packet.is_trace()): lisp.lisp_trace_append(packet)
         return
     #endif
 
@@ -404,6 +416,10 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         source_rloc = lisp.lisp_myrlocs[0] if (version == 4) else \
             lisp.lisp_myrlocs[1]
         packet.outer_source.copy_address(source_rloc)
+
+        if (packet.is_trace()):
+            if (lisp.lisp_trace_append(packet) == False): return
+        #endif
 
         #
         # Encode new LISP, UDP, and outer header.
@@ -433,6 +449,10 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             source_rloc = lisp.lisp_myrlocs[0] if (version == 4) else \
                 lisp.lisp_myrlocs[1]
             packet.outer_source.copy_address(source_rloc)
+
+            if (packet.is_trace()):
+                if (lisp.lisp_trace_append(packet) == False): return
+            #endif
 
             if (packet.encode(None) == None): return
 
