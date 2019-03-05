@@ -65,8 +65,8 @@
 #
 # The JSON format of an LISP-Trace packet is:
 # 
-# [
-#   "seid" : "[<iid>]<orig-eid>", "deid" : "[<iid>]<dest-eid>", "paths" ;
+# [ 
+#   { "seid" : "[<iid>]<orig-eid>", "deid" : "[<iid>]<dest-eid>", "paths" ;
 #   [
 #     { "node" : "ITR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
 #                       "encap-timestamp" : "<ts>" },
@@ -76,9 +76,9 @@
 #                       "encap-timestamp" : "<ts>" },
 #     { "node" : "ETR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
 #                       "encap-timestamp" : "<ts>" }, ...
-#   ],
+#   ] },
 # 
-#   "seid" : "[<iid>]<dest-eid>", "deid" : "[<iid>]<orig-eid>", "paths" :
+#   { "seid" : "[<iid>]<dest-eid>", "deid" : "[<iid>]<orig-eid>", "paths" :
 #   [
 #     { "node" : "ITR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
 #                       "encap-timestamp" : "<ts>" },
@@ -88,7 +88,7 @@
 #                       "encap-timestamp" : "<ts>" },
 #     { "node" : "ETR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
 #                       "encap-timestamp" : "<ts>" }, ...
-#   ]
+#   ] }
 # ]
 
 #------------------------------------------------------------------------------
