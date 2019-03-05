@@ -14111,7 +14111,7 @@ class lisp_pubsub():
 class lisp_trace():
     def __init__(self):
         self.nonce = lisp_get_control_nonce()
-        self.packet_json = None
+        self.packet_json = []
     #enddef
 
     def print_trace(self):
@@ -14136,6 +14136,8 @@ class lisp_trace():
         if (socket.ntohl(first_long) != 0x90000000): return(False)
 
         self.nonce = nonce
+        if (len(packet) == format_size): return(True)
+
         packet += format_size
         try:
             self.packet_json = json.loads(packet)
@@ -14149,9 +14151,8 @@ class lisp_trace():
         return(lisp_is_myeid(eid))
     #enddef
 
-    def return_to_sender(self, rts_rloc):
+    def return_to_sender(self, rts_rloc, packet):
         s = lisp_open_listen_socket("0.0.0.0", LISP_TRACE_PORT)
-        packet = self.encode()
         s.sendto(packet, (rts_rloc, LISP_TRACE_PORT))
         s.close()
     #enddef
@@ -18211,9 +18212,12 @@ def lisp_get_decent_dns_name_from_str(iid, eid_str):
 #
 def lisp_trace_append(packet, ed="encap"):
     offset = 28 if packet.inner_version == 4 else 48
-    pkt = packet.packet[offset]
+    trace_pkt = packet.packet[offset::]
     trace = lisp_trace()
-    trace.decode(pkt)
+    if (trace.decode(trace_pkt) == False):
+        lprint("Could not decode JSON portion of a LISP-Trace packet")
+        return
+    #endif
 
     next_rloc = "?" if packet.outer_dest.is_null() else \
         packet.outer_dest.print_address_no_iid()
@@ -18236,12 +18240,12 @@ def lisp_trace_append(packet, ed="encap"):
     seid = packet.inner_source.print_address()
     deid = packet.inner_dest.print_address()
     append_length = 0
-    if (trace.packet_json == None):
+    if (trace.packet_json == []):
         rec = {}
         rec["seid"] = seid
         rec["deid"] = deid
         rec["paths"] = []
-        trace.packet_json = []
+        trace.packet_json.append(rec)
         append_length = len(json.dumps(trace.packet_json))
     #endif
 
@@ -18258,7 +18262,9 @@ def lisp_trace_append(packet, ed="encap"):
     append_length += len(json.dumps(entry))
 
     #
-    # If we are destination-EID, add a new record deid->seid.
+    # If we are destination-EID, add a new record deid->seid. Tbe ETR will
+    # deliver this packet from its own EID which means the co-located ITR will
+    # pcap the packet and add its encap node entry.
     #
     swap = False
     if (trace.myeid(packet.inner_dest)):
@@ -18267,7 +18273,7 @@ def lisp_trace_append(packet, ed="encap"):
         rec["deid"] = seid
         rec["paths"] = []
         trace.packet_json.append(rec)
-        append_length = len(json.dumps(rec))
+        append_length += len(json.dumps(rec))
         swap = True
     #endif
 
@@ -18276,48 +18282,58 @@ def lisp_trace_append(packet, ed="encap"):
     # packet. Fix up lengths and checksums from inner headers.
     #
     trace.print_trace()
-    pkt = trace.encode(packet)
+    trace_pkt = trace.encode()
 
     #
-    # Fix up lengths. Zero UDP checksum.
+    # If next_rloc is not known, we need to return packet to sender.
+    #
+    # Otherwise we are forwarding a packet that is about to encapsulated or we
+    # are forwarding a packet that was just decapsulated with the addresses
+    # swapped so we can turn it around.
+    #
+    if (next_rloc == "?"):
+        trace.return_to_sender(sender_rloc, trace_pkt)
+        return(False)
+    #endif
+
+    #
+    # Fix up UDP length. Zero UDP checksum.
     #
     headers = packet.packet[0:offset]
-    headers[offset-4:offset] += append_length
+    udplen = socket.ntohs(headers[offset-4:offset-2]) + append_length
+    headers[offset-4:offset-2] = socket.htons(udplen)
     headers[offset-2:offset] = 0
-    offset = 2 if packet.inner_version == 4 else 4
-    headers[offset:offset+2] += append_length
 
     #
     # If we are swampping addresses, do it here so the JSON append and IP
     # header fields changes are all reflected in new IPv4 header checksum.
     #
     if (swap):
-        s = headers[16:20]
         d = headers[12:16]
+        s = headers[16:20]
         headers[12:16] = s
         headers[16:20] = d
     #endif
 
     #
+    # Fix up IP length.
+    #
+    offset = 2 if packet.inner_version == 4 else 4
+    iplen = socket.ntohs(headers[offset:offset+2]) + append_length
+    headers[offset:offset+2] = socket.htons(iplen)
+
+    #
     # Fix up IPv4 header checksum.
     #
     if (packet.inner_version == 4):
+        packet[10:12] = struct.pack("H", 0)
         headers[0:20] = lisp_ip_checksum(headers[0:20])
     #endif
 
     #
-    # If next_rloc is not known, we need to return packet to sender.
+    # Caller is forwarding packet, either as an ITR, RTR, or ETR.
     #
-    if (next_rloc == "?"):
-        trace.return_to_sender(sender_rloc)
-        return(False)
-    #endif
-
-    #
-    # If we did not swap addresses, return and let the encapsulator forward
-    # packets. If we did 
-    #
-    packet.packet = headers + pkt
+    packet.packet = headers + trace_pkt
     return(True)
 #enddef
 
