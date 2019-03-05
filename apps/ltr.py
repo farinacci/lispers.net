@@ -132,7 +132,8 @@ http_port = 9090
 def build_packet():
     first_long = socket.htonl(0x90000000)
     nonce =  random.randint(0, (2**64)-1)
-    packet = struct.pack("IQ", first_long, nonce)
+    packet = struct.pack("I", first_long)
+    packet += struct.pack("Q", nonce)
     return(nonce, packet)
 #enddef
 
@@ -146,7 +147,7 @@ def parse_packet(nonce, packet):
     format_size = struct.calcsize(packet_format)
     if (len(packet) < format_size): return({})
 
-    first_long, pnonce = struct.unpack(packet_format, packet)
+    first_long, pnonce = struct.unpack(packet_format, packet)[0]
     if (socket.ntohl(first_long) != 0x90000000):
         print "Invalid LISP-Trace message"
         return({})
@@ -280,6 +281,7 @@ if (diid != siid):
 #
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((seid, 2434))
+sock.settimeout(3) 
 
 #
 # Build empty LISP-Trace packet and send on overlay.
@@ -290,13 +292,15 @@ print "Send LISP-Trace packet [{}]{} -> [{}]{} ...".format(siid, seid,
 sock.sendto(packet, (deid, 2434))
 
 #
-# Wait for reply, timeout after 5 seconds.
+# Wait for reply, timeout after 3 seconds.
 #
 try:
     packet, source = sock.recvfrom(9000)
     source = source[0]
-except:
-    print "recvfrom() read error, exiting"
+except socket.timeout:
+    exit(1)
+except socket.error, e:
+    print "recvfrom() failed, error: {}".format(e)
     exit(1)
 #endtry
 
