@@ -18266,7 +18266,6 @@ def lisp_trace_append(packet, ed="encap"):
     for rec in trace.packet_json:
         if (rec["deid"] != deid): continue
         rec["paths"].append(entry)
-        sender_rloc = rec["paths"][0]["srloc"]
         break
     #endfor
 
@@ -18300,6 +18299,7 @@ def lisp_trace_append(packet, ed="encap"):
     # are forwarding a packet that was just decapsulated with the addresses
     # swapped so we can turn it around.
     #
+    sender_rloc = trace.packet_json[0]["paths"][0]["srloc"]
     if (next_rloc == "?"):
         lprint("LISP-Trace return to sender RLOC {}".format(sender_rloc))
         trace.return_to_sender(sender_rloc, trace_pkt)
