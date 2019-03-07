@@ -1405,6 +1405,15 @@ def lisp_etr_data_plane(parms, not_used, packet):
     #endif
 
     #
+    # If this is a trace packet, lisp_trace_append() will swap addresses
+    # and send packet back to source. We have no app to forward this decap'ed
+    # packet to, so return.
+    #
+    if (packet.is_trace()):
+        if (lisp.lisp_trace_append(packet, "decap") == False): return
+    #endif
+
+    #
     # We are going to forward or bridge the decapsulated packet.
     #
     addr_str = "{} -> {}".format(packet.inner_source.print_address(),
@@ -1413,15 +1422,6 @@ def lisp_etr_data_plane(parms, not_used, packet):
     lisp.dprint("{} packet for EIDs {}: {} ...".format(f_or_b, \
         lisp.green(addr_str, False), 
         lisp.lisp_format_packet(packet.packet[0:60])))
-
-    #
-    # If this is a trace packet, lisp_trace_append() will swap addresses
-    # and send packet back to source. We have no app to forward this decap'ed
-    # packet to, so return.
-    #
-    if (packet.is_trace()):
-        if (lisp.lisp_trace_append(packet, "decap") == False): return
-    #endif
 
     #
     # If we are decapsulating a MAC frame, then use the L2 socket where

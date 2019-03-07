@@ -7,6 +7,16 @@ o Release date: <not yet>
 o Have apps/loc8tr accept a negative port number which means to use http
   rather than https.
 
+o Print log file name when displaying Tracebacks when clicking right hand
+  corner hostname in any web page display.
+
+o Added apps/ltr.py which is support for a LISP Traceroute facility. ITRs,
+  RTRs, and ETRs are equipped to add data to a trace packet while it travels
+  from source-EID to destination-EID and returns back. The entire round-trip
+  encapsulation path information is provided to the user. Command usage is
+  "python ltr.py [-s <source-eid>] <destination-EID>". See ltr.py file header
+  for more details.
+
 -------------------------------------------------------------------------------
 
                 lispers.net Beta Release Version 0.492

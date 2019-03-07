@@ -2220,7 +2220,7 @@ class lisp_packet():
             frag_field = socket.ntohs(struct.unpack("H", packet[6:8])[0])
             self.inner_is_fragment = (frag_field & 0x2000 or frag_field != 0)
             if (self.inner_protocol == LISP_UDP_PROTOCOL):
-                self.inner_dport = struct.unpack("H", packet[26:28])[0]
+                self.inner_dport = struct.unpack("H", packet[22:24])[0]
                 self.inner_dport = socket.ntohs(self.inner_dport)
             #endif                
         elif (L3 and self.inner_version == 6 and version >= 0x60): 
@@ -2234,7 +2234,7 @@ class lisp_packet():
             self.inner_source.unpack_address(packet[8:24])
             self.inner_dest.unpack_address(packet[24:40])
             if (self.inner_protocol == LISP_UDP_PROTOCOL):
-                self.inner_dport = struct.unpack("H", packet[46:48])[0]
+                self.inner_dport = struct.unpack("H", packet[42:44])[0]
                 self.inner_dport = socket.ntohs(self.inner_dport)
             #endif                
         elif (L2):
@@ -14128,17 +14128,20 @@ class lisp_trace():
     #enddef
 
     def decode(self, packet):
-        packet_format = "IQ"
+        packet_format = "I"
         format_size = struct.calcsize(packet_format)
         if (len(packet) < format_size): return(False)
-
-        first_long, nonce = struct.unpack(packet_format, packet)[0]
+        first_long = struct.unpack(packet_format, packet[:format_size])[0]
+        packet = packet[format_size::]
         if (socket.ntohl(first_long) != 0x90000000): return(False)
 
-        self.nonce = nonce
-        if (len(packet) == format_size): return(True)
+        packet_format = "Q"
+        format_size = struct.calcsize(packet_format)
+        if (len(packet) < format_size): return(False)
+        self.nonce = struct.unpack(packet_format, packet[:format_size])[0]
+        packet = packet[format_size::]
+        if (len(packet) == 0): return(True)
 
-        packet += format_size
         try:
             self.packet_json = json.loads(packet)
         except:
@@ -14156,6 +14159,12 @@ class lisp_trace():
         s.sendto(packet, (rts_rloc, LISP_TRACE_PORT))
         s.close()
     #enddef
+
+    def packet_length(self):
+        udp = 8; trace = 4 + 8
+        return(udp + trace + len(json.dumps(self.packet_json)))
+    #enddef
+        
 #endclass        
 
 #------------------------------------------------------------------------------
@@ -18216,7 +18225,7 @@ def lisp_trace_append(packet, ed="encap"):
     trace = lisp_trace()
     if (trace.decode(trace_pkt) == False):
         lprint("Could not decode JSON portion of a LISP-Trace packet")
-        return
+        return(False)
     #endif
 
     next_rloc = "?" if packet.outer_dest.is_null() else \
@@ -18239,14 +18248,12 @@ def lisp_trace_append(packet, ed="encap"):
     #
     seid = packet.inner_source.print_address()
     deid = packet.inner_dest.print_address()
-    append_length = 0
     if (trace.packet_json == []):
         rec = {}
         rec["seid"] = seid
         rec["deid"] = deid
         rec["paths"] = []
         trace.packet_json.append(rec)
-        append_length = len(json.dumps(trace.packet_json))
     #endif
 
     #
@@ -18255,25 +18262,24 @@ def lisp_trace_append(packet, ed="encap"):
     #
     for rec in trace.packet_json:
         if (rec["deid"] != deid): continue
-        rec.paths.append(entry)
-        sender_rloc = rec.paths[0]["srloc"]
+        rec["paths"].append(entry)
+        sender_rloc = rec["paths"][0]["srloc"]
         break
     #endfor
-    append_length += len(json.dumps(entry))
 
     #
-    # If we are destination-EID, add a new record deid->seid. Tbe ETR will
-    # deliver this packet from its own EID which means the co-located ITR will
-    # pcap the packet and add its encap node entry.
+    # If we are destination-EID, add a new record deid->seid if we have not
+    # completed a round-trip. The ETR will deliver this packet from its own
+    # EID which means the co-located ITR will pcap the packet and add its
+    # encap node entry.
     #
     swap = False
-    if (trace.myeid(packet.inner_dest)):
+    if (len(trace.packet_json) == 1 and trace.myeid(packet.inner_dest)):
         rec = {}
         rec["seid"] = deid
         rec["deid"] = seid
         rec["paths"] = []
         trace.packet_json.append(rec)
-        append_length += len(json.dumps(rec))
         swap = True
     #endif
 
@@ -18292,42 +18298,52 @@ def lisp_trace_append(packet, ed="encap"):
     # swapped so we can turn it around.
     #
     if (next_rloc == "?"):
+        lprint("LISP-Trace return to sender RLOC {}".format(sender_rloc))
         trace.return_to_sender(sender_rloc, trace_pkt)
         return(False)
     #endif
 
     #
+    # Compute length of trace packet. This includes the UDP header, Trace
+    # header, and JSON payload.
+    #
+    udplen = trace.packet_length()
+    
+    #
     # Fix up UDP length. Zero UDP checksum.
     #
     headers = packet.packet[0:offset]
-    udplen = socket.ntohs(headers[offset-4:offset-2]) + append_length
-    headers[offset-4:offset-2] = socket.htons(udplen)
-    headers[offset-2:offset] = 0
+    p = struct.pack("HH", socket.htons(udplen), 0)
+    headers = headers[0:offset-4] + p
 
     #
     # If we are swampping addresses, do it here so the JSON append and IP
     # header fields changes are all reflected in new IPv4 header checksum.
     #
     if (swap):
-        d = headers[12:16]
-        s = headers[16:20]
-        headers[12:16] = s
-        headers[16:20] = d
+        headers = headers[0:12] + headers[16:20] + headers[12:16] + \
+            headers[20::]
+        d = packet.inner_dest
+        packet.inner_dest = packet.inner_source
+        packet.inner_source = d
     #endif
 
     #
     # Fix up IP length.
     #
     offset = 2 if packet.inner_version == 4 else 4
-    iplen = socket.ntohs(headers[offset:offset+2]) + append_length
-    headers[offset:offset+2] = socket.htons(iplen)
+    iplen = 20 + udplen if packet.inner_version == 4 else 40 + udplen
+    h = struct.pack("H", socket.htons(iplen))
+    headers = headers[0:offset] + h + headers[offset+2::]
 
     #
     # Fix up IPv4 header checksum.
     #
     if (packet.inner_version == 4):
-        packet[10:12] = struct.pack("H", 0)
-        headers[0:20] = lisp_ip_checksum(headers[0:20])
+        c = struct.pack("H", 0)
+        headers = headers[0:10] + c + headers[12::]
+        h = lisp_ip_checksum(headers[0:20])
+        headers = h + headers[20::]
     #endif
 
     #

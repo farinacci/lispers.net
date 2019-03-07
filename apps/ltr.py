@@ -108,10 +108,13 @@ import commands
 # The following variables are used to curl for the local EID. Set
 # approrpriately for your deployment environment.
 #
-http = "http"
-#http = "https"
-http_port = 9090
-#http_port = 8080
+#http = "http"
+#http_port = 9090
+
+http_port = 8080
+http = "https"
+
+LISP_TRACE_PORT = 2434
 
 #------------------------------------------------------------------------------
 
@@ -145,22 +148,32 @@ def build_packet():
 # Parse packet and return JSON data only.
 #
 def parse_packet(nonce, packet):
-    packet_format = "IQ"
-    format_size = struct.calcsize(packet_format)
-    if (len(packet) < format_size): return({})
+    if (len(packet) < 12): return(False)
 
-    first_long, pnonce = struct.unpack(packet_format, packet)[0]
+    packet_format = "I"
+    format_size = struct.calcsize(packet_format)
+    first_long = struct.unpack(packet_format, packet[:format_size])[0]
+    packet = packet[format_size::]
     if (socket.ntohl(first_long) != 0x90000000):
         print "Invalid LISP-Trace message"
         return({})
     #endif
-    packet += format_size
+
+    packet_format = "Q"
+    format_size = struct.calcsize(packet_format)
+    pnonce = struct.unpack(packet_format, packet[:format_size])[0]
+    packet = packet[format_size::]
 
     #
     # Check compare nonce sent with one echo'ed in repsonse.
     #
     if (pnonce != nonce):
         print "Invalid nonce, sent {}, received {}".format(nonce, pnonce)
+        return({})
+    #endif
+
+    if (len(packet) == 0):
+        print "No JSON data in payload"
         return({})
     #endif
 
@@ -282,7 +295,7 @@ if (diid != siid):
 # Open send socket. Bind local EID to socket.
 #
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind((seid, 2434))
+sock.bind((seid, LISP_TRACE_PORT))
 sock.settimeout(3) 
 
 #
@@ -291,7 +304,8 @@ sock.settimeout(3)
 nonce, packet = build_packet()
 print "Send LISP-Trace packet [{}]{} -> [{}]{} ...".format(siid, seid,
     diid, deid)
-sock.sendto(packet, (deid, 2434))
+
+sock.sendto(packet, (deid, LISP_TRACE_PORT))
 
 #
 # Wait for reply, timeout after 3 seconds.
