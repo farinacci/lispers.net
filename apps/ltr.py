@@ -210,7 +210,7 @@ def display_packet(jd):
             hn = path["hostname"]
             drloc = path["drloc"]
             if (drloc == "?"): drloc = bold(drloc)
-            print "  {} {}: {} -> {}, timestamp {}, hostname {}".format( \
+            print "  {} {}: {} -> {}, ts {}, node {}".format( \
                 path["node"], ed, path["srloc"], drloc, ts, blue(hn))
         #endfor
         print ""
