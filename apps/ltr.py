@@ -306,7 +306,7 @@ if (diid != siid):
 # Open send socket. Bind local EID to socket.
 #
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind((seid, LISP_TRACE_PORT))
+sock.bind(("0.0.0.0", LISP_TRACE_PORT))
 sock.settimeout(3) 
 
 #

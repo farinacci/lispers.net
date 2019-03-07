@@ -14155,8 +14155,9 @@ class lisp_trace():
     #enddef
 
     def return_to_sender(self, rts_rloc, packet):
-        s = lisp_open_listen_socket("0.0.0.0", str(LISP_TRACE_PORT))
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.sendto(packet, (rts_rloc, LISP_TRACE_PORT))
+        s.close()
     #enddef
 
     def packet_length(self):
