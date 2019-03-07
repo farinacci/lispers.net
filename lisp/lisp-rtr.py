@@ -324,7 +324,9 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Process decap node trace function.
     #
     if (packet.is_trace()):
-        if (lisp.lisp_trace_append(packet, "decap")): return
+        if (lisp.lisp_trace_append(packet, "decap") == False): return
+        packet.outer_source.afi = lisp.LISP_AFI_NONE
+        packet.outer_dest.afi = lisp.LISP_AFI_NONE
     #endif
 
     #
@@ -812,6 +814,7 @@ lisp_rtr_commands = {
         "nonce-echoing" : [True, "yes", "no"],
         "data-plane-security" : [True, "yes", "no"],
         "data-plane-logging" : [True, "yes", "no"],
+        "frame-logging" : [True, "yes", "no"],
         "flow-logging" : [True, "yes", "no"],
         "nat-traversal" : [True, "yes", "no"],
         "checkpoint-map-cache" : [True, "yes", "no"],
@@ -819,6 +822,7 @@ lisp_rtr_commands = {
         "decentralized-push-xtr" : [True, "yes", "no"],
         "decentralized-pull-xtr-modulus" : [True, 1, 0xff],
         "decentralized-pull-xtr-dns-suffix" : [True],
+        "register-reachable-rtrs" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 
     "lisp map-resolver" : [lisp_rtr_map_resolver_command, {

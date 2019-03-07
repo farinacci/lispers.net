@@ -208,8 +208,10 @@ def display_packet(jd):
                 ed = "decap"
             #endif
             hn = path["hostname"]
+            drloc = path["drloc"]
+            if (drloc == "?"): drloc = bold(drloc)
             print "  {} {}: {} -> {}, timestamp {}, hostname {}".format( \
-                path["node"], ed, path["srloc"], path["drloc"], ts, blue(hn))
+                path["node"], ed, path["srloc"], drloc, ts, blue(hn))
         #endfor
         print ""
     #enfor
@@ -256,12 +258,21 @@ def get_db(http, port, diid):
 #enddef
 
 #
+# bold
+#
+# Print in bold font.
+#
+def bold(string):
+    return("\033[1m" + string + "\033[0m")
+#enddef
+
+#
 # blue
 #
 # Print hostnames in bold blue.
 #
 def blue(string):
-    return("\033[1m\033[94m" + string + "\033[0m")
+    return("\033[94m" + bold(string) + "\033[0m")
 #enddef
 
 #------------------------------------------------------------------------------

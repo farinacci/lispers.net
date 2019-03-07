@@ -938,7 +938,11 @@ def lisp_process_command(lisp_socket, opcode, clause, process, command_set):
     error = False
     if (len(kv_pairs) != 0):
         error, new_clause, kv_pairs = lisp_syntax_check(kv_pairs, clause)
-        if (error == False): command_processor(kv_pairs)
+        if (error):
+            lisp.lprint("Command syntax error: {}".format(new_clause))
+        else:
+            command_processor(kv_pairs)
+        #endif
     else:
         if (is_show_command): kv_pairs = parameters
         new_clause = command_processor(kv_pairs)
