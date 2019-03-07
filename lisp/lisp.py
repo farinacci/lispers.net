@@ -14155,9 +14155,8 @@ class lisp_trace():
     #enddef
 
     def return_to_sender(self, rts_rloc, packet):
-        s = lisp_open_listen_socket("0.0.0.0", LISP_TRACE_PORT)
+        s = lisp_open_listen_socket("0.0.0.0", str(LISP_TRACE_PORT))
         s.sendto(packet, (rts_rloc, LISP_TRACE_PORT))
-        s.close()
     #enddef
 
     def packet_length(self):
@@ -18237,8 +18236,11 @@ def lisp_trace_append(packet, ed="encap"):
     entry = {}
     entry["node"] = "ITR" if lisp_i_am_itr else "ETR" if lisp_i_am_etr else \
         "RTR" if lisp_i_am_rtr else "?"
-    entry["srloc"] = packet.outer_source.print_address_no_iid()
+    srloc = packet.outer_source
+    if (srloc.is_null()): srloc = lisp_myrlocs[0]
+    entry["srloc"] = srloc.print_address_no_iid()
     entry["drloc"] = next_rloc
+    entry["hostname"] = lisp_hostname
     key = ed + "-timestamp"
     entry[key] = lisp_get_timestamp()
 

@@ -71,25 +71,25 @@
 #   { "seid" : "[<iid>]<orig-eid>", "deid" : "[<iid>]<dest-eid>", "paths" : a
 #   [
 #     { "node" : "ITR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>" },
+#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" },
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "decap-timestamp" : "<ts>" },
+#                       "decap-timestamp" : "<ts>", "hostname" : "<hn>" },
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>" },
+#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" },
 #     { "node" : "ETR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>" }, ...
+#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" }, ...
 #   ] },
 # 
 #   { "seid" : "[<iid>]<dest-eid>", "deid" : "[<iid>]<orig-eid>", "paths" :
 #   [
 #     { "node" : "ITR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>" },
+#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" },
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "decap-timestamp" : "<ts>" },
+#                       "decap-timestamp" : "<ts>", "hostname" : "<hn>" },
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>" },
+#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" },
 #     { "node" : "ETR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>" }, ...
+#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" }, ...
 #   ] }
 # ]
 
@@ -101,6 +101,7 @@ import random
 import socket
 import json
 import commands
+import time
 
 #------------------------------------------------------------------------------
 
@@ -206,8 +207,9 @@ def display_packet(jd):
                 ts = path["decap-timestamp"]
                 ed = "decap"
             #endif
-            print "  {} {}: {} -> {}, {}".format(path["node"], ed,
-                path["srloc"], path["drloc"], ts)
+            hn = path["hostname"]
+            print "  {} {}: {} -> {}, timestamp {}, hostname {}".format( \
+                path["node"], ed, path["srloc"], path["drloc"], ts, blue(hn))
         #endfor
         print ""
     #enfor
@@ -251,7 +253,16 @@ def get_db(http, port, diid):
         return(iid, eid)
     #endfor
     return(None, None)
-#enddef    
+#enddef
+
+#
+# blue
+#
+# Print hostnames in bold blue.
+#
+def blue(string):
+    return("\033[1m\033[94m" + string + "\033[0m")
+#enddef
 
 #------------------------------------------------------------------------------
 
@@ -302,9 +313,10 @@ sock.settimeout(3)
 # Build empty LISP-Trace packet and send on overlay.
 #
 nonce, packet = build_packet()
-print "Send LISP-Trace packet [{}]{} -> [{}]{} ...".format(siid, seid,
-    diid, deid)
+print "Send round-trip LISP-Trace between EIDs [{}]{} and [{}]{} ...". \
+    format(siid, seid, diid, deid)
 
+ts = time.time()
 sock.sendto(packet, (deid, LISP_TRACE_PORT))
 
 #
@@ -320,7 +332,10 @@ except socket.error, e:
     exit(1)
 #endtry
 
-print "Received reply from {}:".format(source)
+rtt = round(time.time() - ts, 3)
+
+print "Received reply from {}, rtt {} secs".format(source, rtt)
+print ""
 json_data = parse_packet(nonce, packet)
 if (json_data == {}): exit(1)
 
