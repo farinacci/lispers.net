@@ -94,8 +94,9 @@
 # ]
 #
 # Environment variable LISP_LTR_PORT is used to determine if th connection to
-# the LISP API is done with http to port 9090 or https to port 8080. Port 9090
-# is a special case for Nexus applications.
+# the LISP API is done with a particular port. And if the port has a minus
+# sign in front of it, it will use http rather https to connect to the
+# lispers.net API.
 #
 #------------------------------------------------------------------------------
 
@@ -119,12 +120,15 @@ http_port = 8080
 
 port = os.getenv("LISP_LTR_PORT")
 if (port != None):
+    if (port[0] == "-"):
+        http = "http"
+        port = port[1::]
+    #endif
     if (port.isdigit() == False):
         print "Invalid value for env variable LISP_LTR_PORT"
         exit(1)
     #endif
     http_port = int(port)
-    http = "http" if (http_port == 9090) else "https"
 #endif
 
 LISP_TRACE_PORT = 2434
