@@ -2,7 +2,7 @@
                 lispers.net Beta Release Version 0.493
                 --------------------------------------
 
-o Release date: <not yet>
+o Release date: Fri Mar  8 09:56:12 PST 2019
 
 o Have apps/loc8tr accept a negative port number which means to use http
   rather than https.
@@ -16,6 +16,13 @@ o Added apps/ltr.py which is support for a LISP Traceroute facility. ITRs,
   encapsulation path information is provided to the user. Command usage is
   "python ltr.py [-s <source-eid>] <destination-EID>". See ltr.py file header
   for more details.
+
+o Turning on data-plane-logging=yes in the lisp-rtr process was broken when
+  either frame-logging or register-reachable-rtrs were sub-commands in the
+  "lisp xtr-parameters" command clause. They need to go into the lisp_rtr_
+  command[] array.
+
+o Print out the command clause in the log file when a syntax error is detected.
 
 -------------------------------------------------------------------------------
 
