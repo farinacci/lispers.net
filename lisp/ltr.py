@@ -18,7 +18,7 @@
 # -----------------------------------------------------------------------------
 # 
 # ltr.py - LISP EID Traceroute Client - Trace the encap/decap paths
-
+#
 # Usage: python ltr.py [-s <source-eid>] <destination-EID>
 #
 #   -s: Optional source EID.
@@ -92,7 +92,11 @@
 #                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" }, ...
 #   ] }
 # ]
-
+#
+# Environment variable LISP_LTR_PORT is used to determine if th connection to
+# the LISP API is done with http to port 9090 or https to port 8080. Port 9090
+# is a special case for Nexus applications.
+#
 #------------------------------------------------------------------------------
 
 import sys
@@ -102,18 +106,26 @@ import socket
 import json
 import commands
 import time
+import os
 
 #------------------------------------------------------------------------------
 
 #
 # The following variables are used to curl for the local EID. Set
-# approrpriately for your deployment environment.
+# approrpriately via environment variables for your deployment environment.
 #
-#http = "http"
-#http_port = 9090
-
-http_port = 8080
 http = "https"
+http_port = 8080
+
+port = os.getenv("LISP_LTR_PORT")
+if (port != None):
+    if (port.isdigit() == False):
+        print "Invalid value for env variable LISP_LTR_PORT"
+        exit(1)
+    #endif
+    http_port = int(port)
+    http = "http" if (http_port == 9090) else "https"
+#endif
 
 LISP_TRACE_PORT = 2434
 
@@ -299,7 +311,7 @@ if ("-s" in sys.argv):
 else:
     siid, seid = get_db(http, http_port, diid)
     if (siid == None):
-        print "Could not find local EID"
+        print "Could not find local EID, maybe lispers.net API port wrong?"
         exit(1)
     #endif
 #endif    
