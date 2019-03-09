@@ -18240,10 +18240,22 @@ def lisp_trace_append(packet, ed="encap"):
     srloc = packet.outer_source
     if (srloc.is_null()): srloc = lisp_myrlocs[0]
     entry["srloc"] = srloc.print_address_no_iid()
-    entry["drloc"] = next_rloc
     entry["hostname"] = lisp_hostname
     key = ed + "-timestamp"
     entry[key] = lisp_get_timestamp()
+
+    #
+    # If this is a ETR decap entry and the drloc is "?", the packet came in on
+    # lisp_etr_nat_data_plane() where the kernel strips the outer header. Get
+    # the local/private RLOC from our database-mapping.
+    #
+    if (next_rloc == "?" and entry["node"] == "ETR"):
+        db = lisp_db_for_lookups.lookup_cache(packet.inner_dest, False)
+        if (db != None and len(db.rloc_set) >= 1):
+            next_rloc = db.rloc_set[0].rloc.print_address_no_iid()
+        #endif
+    #endif
+    entry["drloc"] = next_rloc
 
     #
     # Build seid->deid record if it does not exist. Then append node entry

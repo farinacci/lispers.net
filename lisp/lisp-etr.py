@@ -1559,6 +1559,15 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
         #endif
     #endif
 
+    #
+    # If this is a trace packet, lisp_trace_append() will swap addresses
+    # and send packet back to source. We have no app to forward this decap'ed
+    # packet to, so return.
+    #
+    if (packet.is_trace()):
+        if (lisp.lisp_trace_append(packet, "decap") == False): return
+    #endif
+
     addr_str = "{} -> {}".format(packet.inner_source.print_address(),
         packet.inner_dest.print_address())
 
