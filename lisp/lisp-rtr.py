@@ -38,6 +38,7 @@ import copy
 # Global data structures relative to the lisp-itr process.
 #
 lisp_send_sockets = [None, None, None]
+lisp_trace_listen_socket = None
 lisp_ipc_listen_socket = None
 lisp_ipc_punt_socket = None
 lisp_ephem_listen_socket = None
@@ -207,6 +208,7 @@ def lisp_fix_rloc_encap_state(sockets, hostname, rloc, port):
 def lisp_rtr_data_plane(lisp_packet, thread_name):
     global lisp_send_sockets, lisp_ephem_prot, lisp_data_packet 
     global lisp_raw_socket, lisp_raw_v6_socket
+    global lisp_trace_listen_socket
 
     packet = lisp_packet
 
@@ -357,7 +359,10 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
             packet.inner_source, packet.inner_dest, None)
 
-        if (packet.is_trace()): lisp.lisp_trace_append(packet)
+        if (packet.is_trace()):
+            s = lisp_trace_listen_socket
+            lisp.lisp_trace_append(packet, lisp_socket=s)
+        #endif
         return
     #endif
 
@@ -387,7 +392,11 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         if (action == lisp.LISP_NATIVE_FORWARD_ACTION):
             lisp.dprint("Natively forwarding")
             packet.send_packet(lisp_raw_socket, packet.inner_dest)
-            if (packet.is_trace()): lisp.lisp_trace_append(packet)
+
+            if (packet.is_trace()):
+                s = lisp_trace_listen_socket
+                lisp.lisp_trace_append(packet, lisp_socket=s)
+            #endif
             return
         #endif
         lisp.dprint("No reachable RLOCs found")
@@ -396,7 +405,11 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #endif
     if (dest_rloc and dest_rloc.is_null()): 
         lisp.dprint("Drop action RLOC found")
-        if (packet.is_trace()): lisp.lisp_trace_append(packet)
+
+        if (packet.is_trace()):
+            s = lisp_trace_listen_socket
+            lisp.lisp_trace_append(packet, lisp_socket=s)
+        #endif
         return
     #endif
 
@@ -420,7 +433,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         packet.outer_source.copy_address(source_rloc)
 
         if (packet.is_trace()):
-            if (lisp.lisp_trace_append(packet) == False): return
+            s = lisp_trace_listen_socket
+            if (lisp.lisp_trace_append(packet, lisp_socket=s) == False): return
         #endif
 
         #
@@ -453,7 +467,10 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             packet.outer_source.copy_address(source_rloc)
 
             if (packet.is_trace()):
-                if (lisp.lisp_trace_append(packet) == False): return
+                s = lisp_trace_listen_socket
+                if (lisp.lisp_trace_append(packet, lisp_socket=s) == False):
+                    return
+                #endif
             #endif
 
             if (packet.encode(None) == None): return
@@ -617,12 +634,20 @@ def lisp_rtr_process_timer():
     for keys in lisp.lisp_crypto_keys_by_nonce.values():
         for key in keys: del(key)
     #endfor
+    lisp.lisp_crypto_keys_by_nonce.clear()
     lisp.lisp_crypto_keys_by_nonce = {}
 
     #
     # Walk map-cache.
     #
     lisp.lisp_timeout_map_cache(lisp.lisp_map_cache)
+
+    #
+    # Clear the LISP-Trace cache so we can optimize memory usage. There is only
+    # a one-time use for the cahced entries.
+    #
+    lisp.lisp_rtr_nat_trace_cache.clear()
+    lisp.lisp_rtr_nat_trace_cache = {}
 
     #
     # Restart periodic timer.
@@ -640,7 +665,7 @@ def lisp_rtr_process_timer():
 def lisp_rtr_startup():
     global lisp_ipc_listen_socket, lisp_send_sockets, lisp_ephem_listen_socket
     global lisp_raw_socket, lisp_raw_v6_socket, lisp_threads
-    global lisp_ipc_punt_socket
+    global lisp_ipc_punt_socket, lisp_trace_listen_socket
 
     lisp.lisp_i_am("rtr")
     lisp.lisp_set_exception()
@@ -679,6 +704,13 @@ def lisp_rtr_startup():
         socket.IPPROTO_RAW)
     lisp_raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
     lisp_send_sockets.append(lisp_raw_socket)
+
+    #
+    # Open up a listen socket on the LISP-Trace port so the RTR can cache
+    # translated RLOC information from an ltr client program.
+    #
+    lisp_trace_listen_socket = lisp.lisp_open_listen_socket("0.0.0.0",
+        str(lisp.LISP_TRACE_PORT))
 
     if (lisp.lisp_is_raspbian() == False):
         lisp_raw_v6_socket = socket.socket(socket.AF_INET6, socket.SOCK_RAW,
@@ -744,6 +776,7 @@ def lisp_rtr_shutdown():
     lisp.lisp_close_socket(lisp_send_sockets[1], "")
     lisp.lisp_close_socket(lisp_ipc_listen_socket, "lisp-rtr")
     lisp.lisp_close_socket(lisp_ephem_listen_socket, "")
+    lisp.lisp_close_socket(lisp_trace_listen_socket, "")
     lisp.lisp_close_socket(lisp_ipc_punt_socket, "lispers.net-itr")
     lisp_raw_socket.close()
     return
@@ -905,6 +938,27 @@ lisp_rtr_commands = {
     "show rtr-map-cache-dns" : [lisp_rtr_show_command_dns, {}]
 }
 
+#
+# lisp_rtr_process_trace_packet
+#
+# Process RLOC-based LISP-Trace message.
+#
+def lisp_rtr_process_trace_packet(lisp_socket):
+
+    #
+    # Read from listen socket for port 2434 and parse LISP-Trace packet.
+    #
+    opcode, source, port, packet = lisp.lisp_receive(lisp_socket, False)
+    trace = lisp.lisp_trace()
+    if (trace.decode(packet) == False): return
+
+    #
+    # Cache the translated information. Will use local addressing info to
+    # find translated information in lisp_trace_append().
+    #
+    trace.rtr_cache_nat_trace(source, port)
+#enddef
+
 #------------------------------------------------------------------------------
 
 #
@@ -917,7 +971,7 @@ if (lisp_rtr_startup() == False):
 #endif
 
 socket_list = [lisp_ephem_listen_socket, lisp_ipc_listen_socket,
-               lisp_ipc_punt_socket]
+               lisp_ipc_punt_socket, lisp_trace_listen_socket]
 ephem_sockets = [lisp_ephem_listen_socket] * 3
 
 while (True):
@@ -930,6 +984,13 @@ while (True):
     if (lisp.lisp_ipc_data_plane and lisp_ipc_punt_socket in ready_list):
         lisp.lisp_process_punt(lisp_ipc_punt_socket, lisp_send_sockets,
             lisp_ephem_port)
+    #endif
+
+    #
+    # LISP-TRACE messages coming from an ltr client program.
+    #
+    if (lisp_trace_listen_socket in ready_list):
+        lisp_rtr_process_trace_packet(lisp_trace_listen_socket)
     #endif
 
     #

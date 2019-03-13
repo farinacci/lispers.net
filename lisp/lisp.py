@@ -289,6 +289,21 @@ lisp_ipc_socket = None
 #
 lisp_ms_encryption_keys = {}
 
+#
+# Used to stare NAT translated address state in an RTR when a ltr client
+# is sending RLOC-based LISP-Trace messages. If the RTR encounters any
+# LISP-Trace error proessing called from lisp_rtr_data_plane() then it
+# can return a partially filled LISP-Trace packet to the ltr client that
+# site behind a NAT device.
+#
+# Dictiionary array format is:
+#     key = self.local_addr + ":" + self.local_port
+#     lisp_rtr_nat_trace_cache[key] = (translated_rloc, translated_port)
+#
+# And the array elements are added in lisp_trace.rtr_cache_nat_trace().
+#
+lisp_rtr_nat_trace_cache = {}
+
 #------------------------------------------------------------------------------
 
 #
@@ -1490,6 +1505,7 @@ class lisp_packet():
         self.inner_tos = 0
         self.inner_ttl = 0
         self.inner_protocol = 0
+        self.inner_sport = 0
         self.inner_dport = 0
         self.lisp_header = lisp_data_header()
         self.packet = packet
@@ -2220,6 +2236,8 @@ class lisp_packet():
             frag_field = socket.ntohs(struct.unpack("H", packet[6:8])[0])
             self.inner_is_fragment = (frag_field & 0x2000 or frag_field != 0)
             if (self.inner_protocol == LISP_UDP_PROTOCOL):
+                self.inner_sport = struct.unpack("H", packet[20:22])[0]
+                self.inner_sport = socket.ntohs(self.inner_sport)
                 self.inner_dport = struct.unpack("H", packet[22:24])[0]
                 self.inner_dport = socket.ntohs(self.inner_dport)
             #endif                
@@ -2234,6 +2252,8 @@ class lisp_packet():
             self.inner_source.unpack_address(packet[8:24])
             self.inner_dest.unpack_address(packet[24:40])
             if (self.inner_protocol == LISP_UDP_PROTOCOL):
+                self.inner_sport = struct.unpack("H", packet[20:22])[0]
+                self.inner_sport = socket.ntohs(self.inner_sport)
                 self.inner_dport = struct.unpack("H", packet[42:44])[0]
                 self.inner_dport = socket.ntohs(self.inner_dport)
             #endif                
@@ -2515,8 +2535,9 @@ class lisp_packet():
     #endif
 
     def is_trace(self):
+        ports = [self.inner_sport, self.inner_dport]
         return(self.inner_protocol == LISP_UDP_PROTOCOL and 
-               self.inner_dport == LISP_TRACE_PORT)
+               LISP_TRACE_PORT in ports)
     #enddef
 #endclass
 
@@ -14096,22 +14117,25 @@ class lisp_pubsub():
 #
 # The LISP-Trace message format is:
 #
-#    0                   1                   2                   3
-#    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#   |Type=9 |                     0                                 |
-#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#   |                         Nonce . . .                           |
-#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#   |                         . . . Nonce                           |
-#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#   |                        JSON Data ...                          |
-#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#  0                   1                   2                   3
+#  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+# |Type=9 |         0           |        Local Private Port       |
+# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+# |                  Local Private IPv4 RLOC                      | 
+# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+# |                         Nonce . . .                           |
+# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+# |                         . . . Nonce                           |
+# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
 class lisp_trace():
     def __init__(self):
         self.nonce = lisp_get_control_nonce()
         self.packet_json = []
+        self.local_rloc = None
+        self.local_port = None
+        self.lisp_socket = None
     #enddef
 
     def print_trace(self):
@@ -14121,7 +14145,7 @@ class lisp_trace():
             
     def encode(self):
         first_long = socket.htonl(0x90000000)
-        packet = struct.pack("I", first_long)
+        packet = struct.pack("II", first_long, 0)
         packet += struct.pack("Q", self.nonce)
         packet += json.dumps(self.packet_json)
         return(packet)
@@ -14133,7 +14157,20 @@ class lisp_trace():
         if (len(packet) < format_size): return(False)
         first_long = struct.unpack(packet_format, packet[:format_size])[0]
         packet = packet[format_size::]
-        if (socket.ntohl(first_long) != 0x90000000): return(False)
+        first_long = socket.ntohl(first_long)
+        if ((first_long & 0xff000000) != 0x90000000): return(False)
+
+        if (len(packet) < format_size): return(False)
+        addr = struct.unpack(packet_format, packet[:format_size])[0]
+        packet = packet[format_size::]
+
+        addr = socket.ntohl(addr)
+        v1 = addr >> 24
+        v2 = (addr >> 16) & 0xff
+        v3 = (addr >> 8) & 0xff
+        v4 = addr & 0xff
+        self.local_rloc = "{}.{}.{}.{}".format(v1, v2, v3, v4)
+        self.local_port = str(first_long & 0xffff)
 
         packet_format = "Q"
         format_size = struct.calcsize(packet_format)
@@ -14154,17 +14191,43 @@ class lisp_trace():
         return(lisp_is_myeid(eid))
     #enddef
 
-    def return_to_sender(self, rts_rloc, packet):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.sendto(packet, (rts_rloc, LISP_TRACE_PORT))
-        s.close()
+    def return_to_sender(self, lisp_socket, rts_rloc, packet):
+        rloc = rts_rloc
+        port = LISP_TRACE_PORT
+        if (rts_rloc.find(":") != -1):
+            rloc, port = self.rtr_cache_nat_trace_find(rts_rloc)
+            lprint("Send LISP-Trace to translated address {}:{}".format(rloc,
+                port))
+        #endif
+
+        if (lisp_socket == None):
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.bind(("0.0.0.0", LISP_TRACE_PORT))
+            s.sendto(packet, (rloc, port))
+            s.close()
+        else:
+            lisp_socket.sendto(packet, (rloc, port))
+        #endif
     #enddef
 
     def packet_length(self):
-        udp = 8; trace = 4 + 8
+        udp = 8; trace = 4 + 4 + 8
         return(udp + trace + len(json.dumps(self.packet_json)))
     #enddef
-        
+
+    def rtr_cache_nat_trace(self, translated_rloc, translated_port):
+        key = self.local_rloc + ":" + self.local_port
+        value = (translated_rloc, translated_port)
+        lisp_rtr_nat_trace_cache[key] = value
+        lprint("Cache NAT Trace addresses {} -> {}".format(key, value))
+    #enddef
+
+    def rtr_cache_nat_trace_find(self, local_rloc_and_port):
+        key = local_rloc_and_port
+        try: value = lisp_rtr_nat_trace_cache[key]
+        except: value = None
+        return(value)
+    #enddef
 #endclass        
 
 #------------------------------------------------------------------------------
@@ -18219,7 +18282,7 @@ def lisp_get_decent_dns_name_from_str(iid, eid_str):
 #
 # Returning False means the caller should return (and not forward the packet).
 #
-def lisp_trace_append(packet, ed="encap"):
+def lisp_trace_append(packet, ed="encap", lisp_socket=None):
     offset = 28 if packet.inner_version == 4 else 48
     trace_pkt = packet.packet[offset::]
     trace = lisp_trace()
@@ -18232,6 +18295,14 @@ def lisp_trace_append(packet, ed="encap"):
         packet.outer_dest.print_address_no_iid()
 
     #
+    # Display port if in this call is a encapsulating RTR using a translated
+    # RLOC.
+    #
+    if (next_rloc != "?" and packet.encap_port != LISP_DATA_PORT):
+        if (ed == "encap"): next_rloc += ":{}".format(packet.encap_port)
+    #endif        
+
+    #
     # Add node entry data for the encapsulation or decapsulation.
     #
     entry = {}
@@ -18240,6 +18311,15 @@ def lisp_trace_append(packet, ed="encap"):
     srloc = packet.outer_source
     if (srloc.is_null()): srloc = lisp_myrlocs[0]
     entry["srloc"] = srloc.print_address_no_iid()
+
+    #
+    # In the source RLOC include the ephemeral port number of the ltr client
+    # so RTRs can return errors to the client behind a NAT.
+    #
+    if (entry["node"] == "ITR" and packet.inner_sport != LISP_TRACE_PORT):
+        entry["srloc"] += ":{}".format(packet.inner_sport)
+    #endif
+        
     entry["hostname"] = lisp_hostname
     key = ed + "-timestamp"
     entry[key] = lisp_get_timestamp()
@@ -18314,7 +18394,7 @@ def lisp_trace_append(packet, ed="encap"):
     sender_rloc = trace.packet_json[0]["paths"][0]["srloc"]
     if (next_rloc == "?"):
         lprint("LISP-Trace return to sender RLOC {}".format(sender_rloc))
-        trace.return_to_sender(sender_rloc, trace_pkt)
+        trace.return_to_sender(lisp_socket, sender_rloc, trace_pkt)
         return(False)
     #endif
 
@@ -18337,7 +18417,7 @@ def lisp_trace_append(packet, ed="encap"):
     #
     if (swap):
         headers = headers[0:12] + headers[16:20] + headers[12:16] + \
-            headers[20::]
+            headers[22:24] + headers[20:22] + headers[24::]
         d = packet.inner_dest
         packet.inner_dest = packet.inner_source
         packet.inner_source = d

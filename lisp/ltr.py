@@ -19,7 +19,7 @@
 # 
 # ltr.py - LISP EID Traceroute Client - Trace the encap/decap paths
 #
-# Usage: python ltr.py [-s <source-eid>] <destination-EID>
+# Usage: python ltr.py [-s <source-eid>] <destination-EID | DNS-name>
 #
 #   -s: Optional source EID.
 #   <destination-EID>: required parameter [<iid>] in front is optional
@@ -144,17 +144,27 @@ LISP_TRACE_PORT = 2434
 #  0                   1                   2                   3
 #  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-# |Type=9 |                     0                                 |
+# |Type=9 |         0           |        Local Private Port       |
+# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+# |                  Local Private IPv4 RLOC                      | 
 # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 # |                         Nonce . . .                           |
 # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 # |                         . . . Nonce                           |
 # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
-def build_packet():
-    first_long = socket.htonl(0x90000000)
-    nonce =  random.randint(0, (2**64)-1)
+def build_packet(rloc, port):
+    first_long = socket.htonl(0x90000000 + port)
     packet = struct.pack("I", first_long)
+
+    octet = rloc.split(".")
+    value = int(octet[0]) << 24
+    value += int(octet[1]) << 16
+    value += int(octet[2]) << 8
+    value += int(octet[3])
+    packet += struct.pack("I", socket.htonl(value))
+
+    nonce =  random.randint(0, (2**64)-1)
     packet += struct.pack("Q", nonce)
     return(nonce, packet)
 #enddef
@@ -167,9 +177,9 @@ def build_packet():
 def parse_packet(nonce, packet):
     if (len(packet) < 12): return(False)
 
-    packet_format = "I"
+    packet_format = "II"
     format_size = struct.calcsize(packet_format)
-    first_long = struct.unpack(packet_format, packet[:format_size])[0]
+    first_long, rloc = struct.unpack(packet_format, packet[:format_size])
     packet = packet[format_size::]
     if (socket.ntohl(first_long) != 0x90000000):
         print "Invalid LISP-Trace message"
@@ -225,7 +235,7 @@ def display_packet(jd):
             #endif
             hn = path["hostname"]
             drloc = path["drloc"]
-            if (drloc == "?"): drloc = bold(drloc)
+            if (drloc == "?"): drloc = red(drloc)
             print "  {} {}: {} -> {}, ts {}, node {}".format( \
                 path["node"], ed, path["srloc"], drloc, ts, blue(hn))
         #endfor
@@ -236,13 +246,20 @@ def display_packet(jd):
 #
 # parse_eid
 #
-# Parse an EID in string format "[<iid>]<eid>".
+# Parse an EID in string format "[<iid>]<eid> or "[<iid>]<dns-name>".
 #
 def parse_eid(eid):
     index = eid.find("]")
     iid = "0" if (index == -1) else eid[1:index]
     eid = eid[index+1::]
+    if (eid.count(".") == 3): return(iid, eid)
+
+    #
+    # If address not supplied, try DNS lookup.
+    #
+    eid = socket.gethostbyname()
     if (eid.count(".") != 3): return(None, None)
+
     return(iid, eid)
 #enddef    
 
@@ -250,9 +267,11 @@ def parse_eid(eid):
 # get_db
 #
 # Find databaas-mapping entry so we can find our IPv4 EID using API. Try some
-# different methods like different port numbers.
+# different methods like different port numbers. Return 4-tuple of (iid, eid,
+# rloc, nat-traversal) if not matching an iid/eid pair. If matching, then just
+# return rloc ant nat-traversal for the EID.
 #
-def get_db(http, port, diid):
+def get_db(match_iid, match_eid, http, port):
     cmd = ("curl --silent --insecure -u root: {}://localhost:{}/lisp/" + \
         "api/data/database-mapping").format(http, port)
     out = commands.getoutput(cmd)
@@ -260,7 +279,7 @@ def get_db(http, port, diid):
     try:
         jd = json.loads(out)
     except:
-        return(None, None)
+        return(None, None, None, None)
     #endtry
 
     for entry in jd:
@@ -268,9 +287,46 @@ def get_db(http, port, diid):
         eid = entry["eid-prefix"]
         eid = eid.split("/")[0]
         iid, eid = parse_eid(eid)
-        return(iid, eid)
+        rloc = entry["rlocs"][0]["rloc"]
+        nat = entry["rlocs"][0].has_key("translated-rloc")
+        if (match_iid == None): return(iid, eid, rloc, nat)
+        if (match_iid == iid and match_eid == eid):
+            return(None, None, rloc, nat)
+        #endif
     #endfor
-    return(None, None)
+    return(None, None, None)
+#enddef
+
+#
+# get_rtrs
+#
+# Look up 0.0.0.0/0 map-cache entry and get list of RTRs.
+#
+def get_rtrs(http, port):
+    cmd = ("curl --silent --insecure -u root: {}://localhost:{}/lisp/" + \
+        "api/data/map-cache").format(http, port)
+    out = commands.getoutput(cmd)
+
+    try:
+        jd = json.loads(out)
+    except:
+        return([])
+    #endtry
+
+    rtr_list = []
+    for entry in jd:
+        if (entry.has_key("group-prefix")): continue
+        if (entry.has_key("eid-prefix") == False): continue
+        if (entry["eid-prefix"] != "0.0.0.0/0"): continue
+
+        for rloc in entry["rloc-set"]:
+            if (rloc.has_key("rloc-name") == False): continue
+            if (rloc["rloc-name"] != "RTR"): continue
+            if (rloc.has_key("address") == False): continue
+            rtr_list.append(rloc["address"])
+        #endfor
+    #endfor
+    return(rtr_list)
 #enddef
 
 #
@@ -289,6 +345,15 @@ def bold(string):
 #
 def blue(string):
     return("\033[94m" + bold(string) + "\033[0m")
+#enddef
+
+#
+# red
+#
+# Print hostnames in bold red.
+#
+def red(string):
+    return("\033[91m" + bold(string) + "\033[0m")
 #enddef
 
 #------------------------------------------------------------------------------
@@ -312,8 +377,9 @@ if ("-s" in sys.argv):
         print "-s <source-eid> parse error"
         exit(1)
     #endif
+    x, y, rloc, nat = get_db(siid, seid, http, http_port)
 else:
-    siid, seid = get_db(http, http_port, diid)
+    siid, seid, rloc, nat = get_db(None, None, http, http_port)
     if (siid == None):
         print "Could not find local EID, maybe lispers.net API port wrong?"
         exit(1)
@@ -333,13 +399,26 @@ if (diid != siid):
 # Open send socket. Bind local EID to socket.
 #
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(("0.0.0.0", LISP_TRACE_PORT))
-sock.settimeout(3) 
+sock.bind(("0.0.0.0", 0))
+sock.settimeout(3)
+port = sock.getsockname()[1]
 
 #
 # Build empty LISP-Trace packet and send on overlay.
 #
-nonce, packet = build_packet()
+nonce, packet = build_packet(rloc, port)
+
+#
+# First send RLOC packet to RTR to get translated NAT address info to RTRs.
+#
+if (nat):
+    rtr_list = get_rtrs(http, http_port)
+    for rtr in rtr_list:
+        print "Send NAT-traversal LISP-Trace to RTR {} ...".format(rtr)
+        sock.sendto(packet, (rtr, LISP_TRACE_PORT))
+    #endfor
+#endif
+
 print "Send round-trip LISP-Trace between EIDs [{}]{} and [{}]{} ...". \
     format(siid, seid, diid, deid)
 
