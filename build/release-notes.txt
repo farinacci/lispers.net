@@ -1,4 +1,28 @@
 
+                lispers.net Beta Release Version 0.494
+                --------------------------------------
+
+o Release date: Wed Mar 13 10:15:28 PDT 2019
+
+o Make LISP-Trace functionality work on xTRs behind NATs.
+
+o If there is a LISP-Trace forwarding issue from an RTR perspective, return
+  the LISP-Trace packet back to the ltr client. The Trace messages is sent to
+  the translated RLOC and translated port when the client is behind a NAT.
+  The ltr client will send RLOC-based LISP-Trace packets to all RTRs it knows
+  about from the 0.0.0.0/0 map-cache rloc-set list. It will include its local
+  address and ephemeral port in the LISP-Trace payload (non JSON area of
+  the packet encoded in binary). The RTRs listen on port 2434 for these
+  RLOC-based Trace packets and caches the translated address information from
+  the IP header associated with the local address/port pair. When the client
+  sends the EID-based LISP-Trace packet, the ITR (co-located with the ltr
+  client) will add as the first entry to JSON part of the LISP-Trace message,
+  the local RLOC address and client ephemeral port. This allows the RTR to
+  find the cached translated information for the client program. And thereby
+  allowing a returned Trace message to traverse thee NAT device.
+  
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.493
                 --------------------------------------
 
