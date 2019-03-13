@@ -326,7 +326,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Process decap node trace function.
     #
     if (packet.is_trace()):
-        if (lisp.lisp_trace_append(packet, "decap") == False): return
+        if (lisp.lisp_trace_append(packet, ed="decap") == False): return
         packet.outer_source.afi = lisp.LISP_AFI_NONE
         packet.outer_dest.afi = lisp.LISP_AFI_NONE
     #endif

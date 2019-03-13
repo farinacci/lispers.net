@@ -249,18 +249,30 @@ def display_packet(jd):
 # Parse an EID in string format "[<iid>]<eid> or "[<iid>]<dns-name>".
 #
 def parse_eid(eid):
+    no_iid = True
+
+    #
+    # Look for instance-ID brackets. They are optional so may not be present.
+    # Default to instance-ID 0 when not present.
+    #
     index = eid.find("]")
-    iid = "0" if (index == -1) else eid[1:index]
-    eid = eid[index+1::]
-    if (eid.count(".") == 3): return(iid, eid)
+    if (index == -1):
+        iid = "0"
+    else:
+        no_iid = False
+        iid = eid[1:index]
+        eid = eid[index+1::]
+    #endif
+    if (eid.find(".") != -1 and eid.count(".") != 3): return(iid, eid, no_iid)
+    if (eid.find(":") != -1): return(iid, eid, no_iid)
 
     #
     # If address not supplied, try DNS lookup.
     #
-    eid = socket.gethostbyname()
-    if (eid.count(".") != 3): return(None, None)
+    eid = socket.gethostbyname(eid)
+    if (eid.count(".") != 3): return(None, None, None)
 
-    return(iid, eid)
+    return(iid, eid, no_iid)
 #enddef    
 
 #
@@ -286,15 +298,16 @@ def get_db(match_iid, match_eid, http, port):
         if (entry.has_key("eid-prefix") == False): continue
         eid = entry["eid-prefix"]
         eid = eid.split("/")[0]
-        iid, eid = parse_eid(eid)
+        iid, eid, no_iid = parse_eid(eid)
         rloc = entry["rlocs"][0]["rloc"]
         nat = entry["rlocs"][0].has_key("translated-rloc")
+
         if (match_iid == None): return(iid, eid, rloc, nat)
         if (match_iid == iid and match_eid == eid):
             return(None, None, rloc, nat)
         #endif
     #endfor
-    return(None, None, None)
+    return(None, None, None, None)
 #enddef
 
 #
@@ -361,7 +374,17 @@ def red(string):
 #
 # Main entry point. Get command line arguments.
 #
-diid, deid = parse_eid(sys.argv[-1])
+if ("-s" in sys.argv):
+    args_bad = len(sys.argv) != 4
+else:
+    args_bad = len(sys.argv) != 2
+#endif
+if (args_bad):
+    print "Usage: python ltr.py [-s <source-eid>] <destination-EID | DNS-name>"
+    exit(1)
+#endif
+
+diid, deid, no_iid = parse_eid(sys.argv[-1])
 if (diid == None):
     print "<destinaton-eid> parse error"
     exit(1)
@@ -372,19 +395,24 @@ if (diid == None):
 #
 if ("-s" in sys.argv):
     index = sys.argv.index("-s") + 1
-    siid, seid = parse_eid(sys.argv[index])
+    siid, seid, no_iid = parse_eid(sys.argv[index])
     if (siid == None):
         print "-s <source-eid> parse error"
         exit(1)
     #endif
+    if (no_iid): siid = None
     x, y, rloc, nat = get_db(siid, seid, http, http_port)
+    if (rloc == None):
+        print "[{}]{} is not a local EID".format(siid, seid)
+        exit(1)
+    #endif
 else:
     siid, seid, rloc, nat = get_db(None, None, http, http_port)
     if (siid == None):
         print "Could not find local EID, maybe lispers.net API port wrong?"
         exit(1)
     #endif
-#endif    
+#endif
 
 #
 # Verify IIDs of source and dest are the same.
