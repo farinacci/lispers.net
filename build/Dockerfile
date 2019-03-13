@@ -66,6 +66,7 @@ WORKDIR /lispers.net
 # Start up LISP when container is created.
 #
 COPY ./RL.docker /lispers.net/RL
+COPY ./.cshrc /root/.cshrc
 CMD /lispers.net/RL; sleep 1; /lispers.net/pslisp; tcsh
 
 #------------------------------------------------------------------------------
