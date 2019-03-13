@@ -1410,7 +1410,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
     # packet to, so return.
     #
     if (packet.is_trace()):
-        if (lisp.lisp_trace_append(packet, "decap") == False): return
+        if (lisp.lisp_trace_append(packet, ed="decap") == False): return
     #endif
 
     #
@@ -1565,7 +1565,7 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     # packet to, so return.
     #
     if (packet.is_trace()):
-        if (lisp.lisp_trace_append(packet, "decap") == False): return
+        if (lisp.lisp_trace_append(packet, ed="decap") == False): return
     #endif
 
     addr_str = "{} -> {}".format(packet.inner_source.print_address(),

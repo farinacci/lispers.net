@@ -361,7 +361,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
 
         if (packet.is_trace()):
             s = lisp_trace_listen_socket
-            lisp.lisp_trace_append(packet, lisp_socket=s)
+            r = "map-cache miss"
+            lisp.lisp_trace_append(packet, reason=r, lisp_socket=s)
         #endif
         return
     #endif
@@ -395,12 +396,18 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
 
             if (packet.is_trace()):
                 s = lisp_trace_listen_socket
-                lisp.lisp_trace_append(packet, lisp_socket=s)
+                r = "not an EID"
+                lisp.lisp_trace_append(packet, reason=r, lisp_socket=s)
             #endif
             return
         #endif
-        lisp.dprint("No reachable RLOCs found")
-        if (packet.is_trace()): lisp.lisp_trace_append(packet)
+        r = "No reachable RLOCs found"
+        lisp.dprint(r)
+
+        if (packet.is_trace()):
+            s = lisp_trace_listen_socket
+            lisp.lisp_trace_append(packet, reason=r, lisp_socket=s)
+        #endif
         return
     #endif
     if (dest_rloc and dest_rloc.is_null()): 
@@ -408,7 +415,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
 
         if (packet.is_trace()):
             s = lisp_trace_listen_socket
-            lisp.lisp_trace_append(packet, lisp_socket=s)
+            r = "drop action"
+            lisp.lisp_trace_append(packet, reason=r, lisp_socket=s)
         #endif
         return
     #endif
@@ -468,9 +476,9 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
 
             if (packet.is_trace()):
                 s = lisp_trace_listen_socket
-                if (lisp.lisp_trace_append(packet, lisp_socket=s) == False):
-                    return
-                #endif
+                r = "replicate"
+                if (lisp.lisp_trace_append(packet, reason=r, lisp_socket=s) \
+                    == False): return
             #endif
 
             if (packet.encode(None) == None): return

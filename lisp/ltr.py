@@ -235,7 +235,7 @@ def display_packet(jd):
             #endif
             hn = path["hostname"]
             drloc = path["drloc"]
-            if (drloc == "?"): drloc = red(drloc)
+            if (drloc.find("?") != -1): drloc = red(drloc)
             print "  {} {}: {} -> {}, ts {}, node {}".format( \
                 path["node"], ed, path["srloc"], drloc, ts, blue(hn))
         #endfor

@@ -14192,10 +14192,12 @@ class lisp_trace():
     #enddef
 
     def return_to_sender(self, lisp_socket, rts_rloc, packet):
-        rloc = rts_rloc
-        port = LISP_TRACE_PORT
-        if (rts_rloc.find(":") != -1):
-            rloc, port = self.rtr_cache_nat_trace_find(rts_rloc)
+        rloc, port = self.rtr_cache_nat_trace_find(rts_rloc)
+        if (rloc == None):
+            rloc, port = rts_rloc.split(":")
+            port = int(port)
+            lprint("Send LISP-Trace to address {}:{}".format(rloc, port))
+        else:
             lprint("Send LISP-Trace to translated address {}:{}".format(rloc,
                 port))
         #endif
@@ -14225,7 +14227,7 @@ class lisp_trace():
     def rtr_cache_nat_trace_find(self, local_rloc_and_port):
         key = local_rloc_and_port
         try: value = lisp_rtr_nat_trace_cache[key]
-        except: value = None
+        except: value = (None, None)
         return(value)
     #enddef
 #endclass        
@@ -18282,7 +18284,7 @@ def lisp_get_decent_dns_name_from_str(iid, eid_str):
 #
 # Returning False means the caller should return (and not forward the packet).
 #
-def lisp_trace_append(packet, ed="encap", lisp_socket=None):
+def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None):
     offset = 28 if packet.inner_version == 4 else 48
     trace_pkt = packet.packet[offset::]
     trace = lisp_trace()
@@ -18336,6 +18338,13 @@ def lisp_trace_append(packet, ed="encap", lisp_socket=None):
         #endif
     #endif
     entry["drloc"] = next_rloc
+
+    #
+    # If there is a reason there is no dest RLOC, include it.
+    #
+    if (next_rloc == "?" and reason != None):
+        entry["drloc"] += " ({})".format(reason)
+    #endif
 
     #
     # Build seid->deid record if it does not exist. Then append node entry
