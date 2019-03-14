@@ -13856,6 +13856,7 @@ class lisp_interface():
     #enddef
     
     def does_dynamic_eid_match(self, eid):
+        if (self.dynamic_eid.is_null()): return(False)
         return(eid.is_more_specific(self.dynamic_eid))
     #enddef
 
