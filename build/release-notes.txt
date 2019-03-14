@@ -1,4 +1,25 @@
 
+                lispers.net Beta Release Version 0.495
+                --------------------------------------
+
+o Release date: Wed Mar 13 19:01:35 PDT 2019
+
+o Fix bugs with command-line parameters when -s is used.
+
+o If there is no instance-ID specified, use the one from the lisp.config
+  configuration.
+
+o Print "decap" in the RTR decapsulation path. Did not supply required
+  function parameter.
+
+o Added .cshrc to farinacci/lispers.net/build directory so when lispers.net
+  docker images are created, there are convienent short-cut alias commands.
+
+o When checking if a dynamic-EID matches an interface that was not configured,
+  and non dynamic-EID configured does not mean it should match anything.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.494
                 --------------------------------------
 
