@@ -263,15 +263,11 @@ def parse_eid(eid):
         iid = eid[1:index]
         eid = eid[index+1::]
     #endif
-    if (eid.find(".") != -1 and eid.count(".") != 3): return(iid, eid, no_iid)
-    if (eid.find(":") != -1): return(iid, eid, no_iid)
 
     #
-    # If address not supplied, try DNS lookup.
+    # Do not pass in a IPv6 address to gethostbyname(). Sigh.
     #
-    eid = socket.gethostbyname(eid)
-    if (eid.count(".") != 3): return(None, None, None)
-
+    if (eid.find(":") == -1): eid = socket.gethostbyname(eid)
     return(iid, eid, no_iid)
 #enddef    
 
@@ -283,7 +279,7 @@ def parse_eid(eid):
 # rloc, nat-traversal) if not matching an iid/eid pair. If matching, then just
 # return rloc ant nat-traversal for the EID.
 #
-def get_db(match_iid, match_eid, http, port):
+def get_db(match_iid, match_eid, http, port, v4v6):
     cmd = ("curl --silent --insecure -u root: {}://localhost:{}/lisp/" + \
         "api/data/database-mapping").format(http, port)
     out = commands.getoutput(cmd)
@@ -299,6 +295,9 @@ def get_db(match_iid, match_eid, http, port):
         eid = entry["eid-prefix"]
         eid = eid.split("/")[0]
         iid, eid, no_iid = parse_eid(eid)
+        if (v4v6 and eid.find(".") == -1): continue
+        if (v4v6 == False and eid.find(":") == -1): continue
+
         rloc = entry["rlocs"][0]["rloc"]
         nat = entry["rlocs"][0].has_key("translated-rloc")
 
@@ -389,6 +388,7 @@ if (diid == None):
     print "<destinaton-eid> parse error"
     exit(1)
 #endif
+v4v6 = deid.find(":") == -1
 
 #
 # Get source-EID from command-line or get it from xTR configuration.
@@ -401,13 +401,13 @@ if ("-s" in sys.argv):
         exit(1)
     #endif
     if (no_iid): siid = None
-    x, y, rloc, nat = get_db(siid, seid, http, http_port)
+    x, y, rloc, nat = get_db(siid, seid, http, http_port, v4v6)
     if (rloc == None):
         print "[{}]{} is not a local EID".format(siid, seid)
         exit(1)
     #endif
 else:
-    siid, seid, rloc, nat = get_db(None, None, http, http_port)
+    siid, seid, rloc, nat = get_db(None, None, http, http_port, v4v6)
     if (siid == None):
         print "Could not find local EID, maybe lispers.net API port wrong?"
         exit(1)
@@ -426,8 +426,8 @@ if (diid != siid):
 #
 # Open send socket. Bind local EID to socket.
 #
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(("0.0.0.0", 0))
+sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+sock.bind(("0::0", 0))
 sock.settimeout(3)
 port = sock.getsockname()[1]
 
@@ -443,7 +443,7 @@ if (nat):
     rtr_list = get_rtrs(http, http_port)
     for rtr in rtr_list:
         print "Send NAT-traversal LISP-Trace to RTR {} ...".format(rtr)
-        sock.sendto(packet, (rtr, LISP_TRACE_PORT))
+        sock.sendto(packet, ("::ffff:" + rtr, LISP_TRACE_PORT))
     #endfor
 #endif
 
@@ -451,14 +451,16 @@ print "Send round-trip LISP-Trace between EIDs [{}]{} and [{}]{} ...". \
     format(siid, seid, diid, deid)
 
 ts = time.time()
-sock.sendto(packet, (deid, LISP_TRACE_PORT))
+
+dest = deid if (deid.find(":") != -1) else "::ffff:" + deid
+sock.sendto(packet, (dest, LISP_TRACE_PORT))
 
 #
 # Wait for reply, timeout after 3 seconds.
 #
 try:
     packet, source = sock.recvfrom(9000)
-    source = source[0]
+    source = source[0].replace("::ffff:", "")
 except socket.timeout:
     exit(1)
 except socket.error, e:

@@ -574,7 +574,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     #
     # Drop packet if input interface not found based on MAC address used.
     #
-    if (device != input_interface):
+    if (device != input_interface and device != "lispers.net"):
         lisp.dprint("Not our MAC address on interface {}, pcap interface {}". \
             format(input_interface, device))
         return
@@ -815,8 +815,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
 # Receive LISP encapsulated packet from pcap.loop().
 #
 def lisp_itr_pcap_process_packet(device, not_used, packet):
-#   offset = 4 if device == "lo0" else (14 if lisp.lisp_is_macos() else 16)
-    offset = 4 if device == "lo0" else 14
+    offset = 4 if device == "lo0" else 0 if device == "lispers.net" else 14
 
     if (lisp.lisp_frame_logging):
         title = lisp.bold("Received frame on interface '{}'".format(device), 
@@ -848,16 +847,18 @@ def lisp_itr_pcap_process_packet(device, not_used, packet):
     # 
     # Check for VLAN encapsulation.
     #
-    ethertype = struct.unpack("H", packet[offset-2:offset])[0]
-    ethertype = socket.ntohs(ethertype)
-    if (ethertype == 0x8100): 
-        vlan = struct.unpack("I", packet[offset:offset+4])[0]
-        vlan = socket.ntohl(vlan)
-        interface = "vlan" + str(vlan >> 16)
-        offset += 4
-    elif (ethertype == 0x806):
-        lisp.dprint("Dropping ARP packets, host should have default route")
-        return
+    if (offset != 0):
+        ethertype = struct.unpack("H", packet[offset-2:offset])[0]
+        ethertype = socket.ntohs(ethertype)
+        if (ethertype == 0x8100): 
+            vlan = struct.unpack("I", packet[offset:offset+4])[0]
+            vlan = socket.ntohl(vlan)
+            interface = "vlan" + str(vlan >> 16)
+            offset += 4
+        elif (ethertype == 0x806):
+            lisp.dprint("Dropping ARP packets, host should have default route")
+            return
+        #endif
     #endif
 
     if (lisp.lisp_l2_overlay): offset = 0

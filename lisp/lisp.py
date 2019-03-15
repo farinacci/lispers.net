@@ -2252,7 +2252,7 @@ class lisp_packet():
             self.inner_source.unpack_address(packet[8:24])
             self.inner_dest.unpack_address(packet[24:40])
             if (self.inner_protocol == LISP_UDP_PROTOCOL):
-                self.inner_sport = struct.unpack("H", packet[20:22])[0]
+                self.inner_sport = struct.unpack("H", packet[40:42])[0]
                 self.inner_sport = socket.ntohs(self.inner_sport)
                 self.inner_dport = struct.unpack("H", packet[42:44])[0]
                 self.inner_dport = socket.ntohs(self.inner_dport)
@@ -18426,8 +18426,13 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None):
     # header fields changes are all reflected in new IPv4 header checksum.
     #
     if (swap):
-        headers = headers[0:12] + headers[16:20] + headers[12:16] + \
-            headers[22:24] + headers[20:22] + headers[24::]
+        if (packet.inner_version == 4):
+            headers = headers[0:12] + headers[16:20] + headers[12:16] + \
+                headers[22:24] + headers[20:22] + headers[24::]
+        else:
+            headers = headers[0:8] + headers[24:40] + headers[8:24] + \
+                headers[42:44] + headers[40:42] + headers[44::]
+        #endif
         d = packet.inner_dest
         packet.inner_dest = packet.inner_source
         packet.inner_source = d
@@ -18437,7 +18442,7 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None):
     # Fix up IP length.
     #
     offset = 2 if packet.inner_version == 4 else 4
-    iplen = 20 + udplen if packet.inner_version == 4 else 40 + udplen
+    iplen = 20 + udplen if packet.inner_version == 4 else udplen
     h = struct.pack("H", socket.htons(iplen))
     headers = headers[0:offset] + h + headers[offset+2::]
 

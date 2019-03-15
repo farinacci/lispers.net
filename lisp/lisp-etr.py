@@ -1477,7 +1477,6 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     # Store outer source RLOC address so if we are doing lisp-crypto across
     # NAT-traversal, we can find the decryption key.
     #
-
     packet.outer_source = lisp.lisp_address(lisp.LISP_AFI_IPV4, source, 
         lisp.LISP_IPV4_HOST_MASK_LEN, 0)
 
