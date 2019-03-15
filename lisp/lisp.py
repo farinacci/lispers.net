@@ -11180,13 +11180,6 @@ class lisp_address():
             addr_str = lisp_hex_string(self.address).zfill(32)
             addr_str = binascii.unhexlify(addr_str)
             addr_str = socket.inet_ntop(socket.AF_INET6, addr_str)
-
-            #
-            # For the odd zero byte in front of "::", never print "xx00:: ...".
-            #
-            if (addr_str[2:6] == "00::"):
-                addr_str = addr_str[0:2] + addr_str[4::]
-            #endif
             return("{}".format(addr_str))
         elif (self.is_geo_prefix()): 
             return("{}".format(self.address.print_geo()))

@@ -1,4 +1,23 @@
 
+                lispers.net Beta Release Version 0.496
+                --------------------------------------
+
+o Release date:
+
+o This is an important fix to get IPv6 forwarding to work when the high
+  order bits of address are fe:: or fd::. When entered as fe00:: and fd00::,
+  do not suppress printing the trailing zeroes. Otherwise packets will be
+  encoded as 00fe and 00fd and all sorts of table lookups won't work. Linux
+  systems will do this. So users and configurators alike, must also be
+  explicit and putting the trailing zeroes before the colon (and double colon
+  as well).
+
+o Make LISP-Trace work for IPv6 EIDs. Use a udp46 socket. So we can send
+  both IPv4 RLOC-based LISP-Trace messages and IPv6 EID-based LISP-Trace
+  messages with the same socket.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.495
                 --------------------------------------
 
