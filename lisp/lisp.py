@@ -18485,12 +18485,14 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None):
     
     #
     # Fix up UDP length and recompute UDP checksum if IPv6 packet, zero
-    # otherwise..
+    # otherwise. Only do checksum when the Trace went round-trip and this is
+    # the local ETR delivery EID-based Trace packet to the client ltr.
     #
     headers = packet.packet[0:offset]
     p = struct.pack("HH", socket.htons(udplen), 0)
     headers = headers[0:offset-4] + p
-    if (packet.inner_version == 6):
+    if (packet.inner_version == 6 and entry["node"] == "ETR" and 
+        len(trace.packet_json) == 2):
         udp = headers[offset-8::] + trace_pkt
         udp = lisp_udp_checksum(seid, deid, udp)
         headers = headers[0:offset-8] + udp[0:8]
