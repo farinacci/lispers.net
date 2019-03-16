@@ -1145,6 +1145,82 @@ def lisp_ip_checksum(data):
 #enddef
 
 #
+# lisp_udp_checksum
+#
+# Calculate the UDP pseudo header checksum. The variable 'data' is a UDP
+# packet buffer starting with the UDP header with the checksum field zeroed.
+#
+# What is returned is the UDP packet buffer with a non-zero/computed checksum.
+#
+# The UDP pseudo-header is prepended to the UDP packet buffer which the
+# checksum runs over:
+#
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |                                                               |
+#   +                                                               +
+#   |                                                               |
+#   +                         Source Address                        +
+#   |                                                               |
+#   +                                                               +
+#   |                                                               |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |                                                               |
+#   +                                                               +
+#   |                                                               |
+#   +                      Destination Address                      +
+#   |                                                               |
+#   +                                                               +
+#   |                                                               |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |                   Upper-Layer Packet Length                   |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#   |                      zero                     |  Next Header  |
+#   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#
+def lisp_udp_checksum(source, dest, data):
+
+    #
+    # Build pseudo-header for IPv6.
+    #
+    s = lisp_address(LISP_AFI_IPV6, source, LISP_IPV6_HOST_MASK_LEN, 0)
+    d = lisp_address(LISP_AFI_IPV6, dest, LISP_IPV6_HOST_MASK_LEN, 0)
+    udplen = socket.htonl(len(data))
+    next_header = socket.htonl(LISP_UDP_PROTOCOL)
+    pheader = s.pack_address()
+    pheader += d.pack_address()
+    pheader += struct.pack("II", udplen, next_header)
+
+    #
+    # Append UDP packet to pseudo-header. Add zeros to make 4 byte aligned.
+    #
+    udp = binascii.hexlify(pheader + data)
+    add = len(udp) % 4
+    for i in range(0,add): udp += "0"
+
+    #
+    # Go 2-bytes at a time so we only have to fold carry-over once.
+    #
+    checksum = 0
+    for i in range(0, len(udp), 4):
+        checksum += int(udp[i:i+4], 16)
+    #endfor
+
+    #
+    # Add in carry and byte-swap.
+    #
+    checksum = (checksum >> 16) + (checksum & 0xffff)
+    checksum += checksum >> 16
+    checksum = socket.htons(~checksum & 0xffff)
+
+    #
+    # Pack in 2-byte buffer and insert at last 2 bytes of UDP header.
+    #
+    checksum = struct.pack("H", checksum)
+    udp = data[0:6] + checksum + data[8::]
+    return(udp)
+#enddef
+
+#
 # lisp_get_interface_address
 #
 # Based on supplied interface device, return IPv4 local interface address.
@@ -18408,11 +18484,17 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None):
     udplen = trace.packet_length()
     
     #
-    # Fix up UDP length. Zero UDP checksum.
+    # Fix up UDP length and recompute UDP checksum if IPv6 packet, zero
+    # otherwise..
     #
     headers = packet.packet[0:offset]
     p = struct.pack("HH", socket.htons(udplen), 0)
     headers = headers[0:offset-4] + p
+    if (packet.inner_version == 6):
+        udp = headers[offset-8::] + trace_pkt
+        udp = lisp_udp_checksum(seid, deid, udp)
+        headers = headers[0:offset-8] + udp[0:8]
+    #endif
 
     #
     # If we are swampping addresses, do it here so the JSON append and IP
