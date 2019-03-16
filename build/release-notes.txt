@@ -2,7 +2,7 @@
                 lispers.net Beta Release Version 0.496
                 --------------------------------------
 
-o Release date:
+o Release date: Sat Mar 16 11:44:57 EDT 2019
 
 o This is an important fix to get IPv6 forwarding to work when the high
   order bits of address are fe:: or fd::. When entered as fe00:: and fd00::,
@@ -15,6 +15,12 @@ o This is an important fix to get IPv6 forwarding to work when the high
 o Make LISP-Trace work for IPv6 EIDs. Use a udp46 socket. So we can send
   both IPv4 RLOC-based LISP-Trace messages and IPv6 EID-based LISP-Trace
   messages with the same socket.
+
+o Need to perform an IPv6 UDP checksum on the packet returned to the ltr
+  client so the UDP socket interface can read the packet. UDP checksums are
+  required for IPv6 but can be set to 0 for IPv4. The kernel will not deliver
+  UDP checksum 0 packets to client. Have the originating xTR compute a
+  checksum after appending the file trace record to the LISP-Trace packet.
 
 -------------------------------------------------------------------------------
 
