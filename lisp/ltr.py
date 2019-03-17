@@ -93,7 +93,7 @@
 #   ] }
 # ]
 #
-# Environment variable LISP_LTR_PORT is used to determine if th connection to
+# Environment variable LISP_LTR_PORT is used to determine if the connection to
 # the LISP API is done with a particular port. And if the port has a minus
 # sign in front of it, it will use http rather https to connect to the
 # lispers.net API.
