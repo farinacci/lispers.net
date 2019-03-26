@@ -1302,6 +1302,18 @@ def lisp_get_loopback_address():
 #enddef
 
 #
+# lisp_is_mac_string
+#
+# Return True if the supplied string parameter is iin form of "xxxx-xxxx-xxxx".
+# The input prefix could be "xxxx-xxxx-xxxx/48".
+#
+def lisp_is_mac_string(mac_str):
+    mac = mac_str.split("/")
+    if (len(mac) == 2): mac_str = mac[0]
+    return(len(mac_str) == 14 and mac_str.count("-") == 2)
+#enddef
+
+#
 # lisp_get_local_macs
 #
 # Walk all interfaces, and for each ethernet interface, put the MAC address

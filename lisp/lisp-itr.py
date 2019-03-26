@@ -478,9 +478,17 @@ def lisp_itr_get_capture_info():
 
     #
     # Start a pcap thread so we can receive packets from applications on this
-    # system. But make sure the device is up on A10 devices.
+    # system. But make sure the device is up on A10 devices. If ethernet MAC
+    # capturing, do not listen on non ethernet interfaces.
     #
+    mac_capturing = (pfilter.find("ether host") != -1)
     for device in interfaces:
+        if (device in ["lo", "lispers.net"] and mac_capturing):
+            lisp.lprint(("Capturing suppressed on interface {}, " + \
+                "MAC filters configured").format(device))
+            continue
+        #endif
+
         args = [device, pfilter, lisp_pcap_lock]
         lisp.lprint("Capturing packets on {}interface {}".format(us, device))
         threading.Thread(target=lisp_itr_pcap_thread, args=args).start() 
@@ -925,6 +933,7 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
         "fe80::/16"]
     addr_set += sources + lisp.lisp_get_all_addresses()
     for addr in addr_set:
+        if (lisp.lisp_is_mac_string(addr)): continue
         six = "" if addr.find(":") == -1 else "6"
         os.system(add.format(six, addr))
     #endfor
@@ -939,9 +948,11 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
         add = "sudo ip{}tables -t raw -A lisp -j ACCEPT -s {} -d {}"
         check = "sudo ip{}tables -t raw -C lisp -j ACCEPT -s {} -d {}"
         for source in sources:
+            if (lisp.lisp_is_mac_string(source)): continue
             if (source in dyn_eids): continue
             six = "" if source.find(":") == -1 else "6"
             for s in sources:
+                if (lisp.lisp_is_mac_string(s)): continue
                 if (s in dyn_eids): continue
                 if (s.find(".") != -1 and source.find(".") == -1): continue
                 if (s.find(":") != -1 and source.find(":") == -1): continue
@@ -958,6 +969,7 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
     #
     drop = "sudo ip{}tables -t raw -A lisp -j DROP -s {}"
     for source in sources:
+        if (lisp.lisp_is_mac_string(source)): continue
         six = "" if source.find(":") == -1 else "6"
         os.system(drop.format(six, source))
     #endif
@@ -1015,8 +1027,17 @@ def lisp_itr_build_pcap_filter(sources, dyn_eids, l2_overlay, pitr):
     src_pfilter = ""
     dst_pfilter = ""
     for source in sources:
-        src_pfilter += "{}".format(source)
-        if (source not in dyn_eids): dst_pfilter += "{}".format(source)
+        insert_source = source
+        if (lisp.lisp_is_mac_string(source)):
+            insert_source = source.split("/")[0]
+            insert_source = insert_source.replace("-", "")
+            mac_str = []
+            for i in range(0, 12, 2): mac_str.append(insert_source[i:i+2])
+            insert_source = "ether host " + ":".join(mac_str)
+        #endif
+
+        src_pfilter += "{}".format(insert_source)
+        if (source not in dyn_eids): dst_pfilter += "{}".format(insert_source)
         if (sources[-1] == source): break
         src_pfilter += " or "
         if (source not in dyn_eids): dst_pfilter += " or "
