@@ -12910,7 +12910,7 @@ class lisp_mapping():
         length = len(self.best_rloc_set)
         if (length is 0): 
             self.stats.increment(len(packet))
-            return([None, None, None,self.action, None])
+            return([None, None, None, self.action, None, None])
         #endif
 
         ls = 4 if lisp_load_split_pings else 0
@@ -12971,7 +12971,7 @@ class lisp_mapping():
             #endwhile
             if (index == stop): 
                 self.build_best_rloc_set()
-                return([None, None, None, None, None])
+                return([None, None, None, None, None, None])
             #endif
         #endif
 
@@ -12988,13 +12988,14 @@ class lisp_mapping():
                 rloc.rle = lisp_rle_list[rloc.rle_name]
             #endif
         #endif
-        if (rloc.rle): return([None, None, None, None, rloc.rle])
+        if (rloc.rle): return([None, None, None, None, rloc.rle, None])
 
         #
         # Next check if ELP is cached for this RLOC entry.
         #
         if (rloc.elp and rloc.elp.use_elp_node):
-            return([rloc.elp.use_elp_node.address, None, None, None, None])
+            return([rloc.elp.use_elp_node.address, None, None, None, None,
+                None])
         #endif
 
         #
@@ -13016,7 +13017,7 @@ class lisp_mapping():
         #
         # If no RLOC address, check for native-forward.
         #
-        return([rloc_addr, port, nonce, action, None])
+        return([rloc_addr, port, nonce, action, None, rloc])
     #enddef
 
     def do_rloc_sets_match(self, rloc_address_set):
@@ -18366,7 +18367,9 @@ def lisp_get_decent_dns_name_from_str(iid, eid_str):
 #
 # Returning False means the caller should return (and not forward the packet).
 #
-def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None):
+def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
+    rloc_entry=None):
+
     offset = 28 if packet.inner_version == 4 else 48
     trace_pkt = packet.packet[offset::]
     trace = lisp_trace()
@@ -18426,6 +18429,14 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None):
     #
     if (next_rloc == "?" and reason != None):
         entry["drloc"] += " ({})".format(reason)
+    #endif
+
+    #
+    # Add recent-rtts and recent-hops.
+    #
+    if (rloc_entry != None):
+        entry["recent-rtts"] = rloc_entry.recent_rloc_probe_rtts
+        entry["recent-hops"] = rloc_entry.recent_rloc_probe_hops
     #endif
 
     #

@@ -711,7 +711,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     #
     # Encapsulate, native forward, or encapsulate-and-replciate  packet.
     #
-    dest_rloc, dest_port, nonce, action, rle = \
+    dest_rloc, dest_port, nonce, action, rle, rloc_entry = \
         mc.select_rloc(packet, lisp_ipc_listen_socket)
 
     if (dest_rloc == None and rle == None):
@@ -755,7 +755,8 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         packet.outer_source.copy_address(source_rloc)
 
         if (packet.is_trace()):
-            if (lisp.lisp_trace_append(packet) == False): return
+            if (lisp.lisp_trace_append(packet, rloc_entry=rloc_entry) \
+                == False): return
         #endif
 
         #

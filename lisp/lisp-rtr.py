@@ -387,7 +387,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #
     # Encapsulate or native forward packet.
     #
-    dest_rloc, dest_port, nonce, action, rle = mc.select_rloc(packet, None)
+    dest_rloc, dest_port, nonce, action, rle, rloc_entry = \
+        mc.select_rloc(packet, None)
 
     if (dest_rloc == None and rle == None):
         if (action == lisp.LISP_NATIVE_FORWARD_ACTION):
@@ -442,7 +443,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
 
         if (packet.is_trace()):
             s = lisp_trace_listen_socket
-            if (lisp.lisp_trace_append(packet, lisp_socket=s) == False): return
+            if (lisp.lisp_trace_append(packet, rloc_entry=rloc_entry,
+                lisp_socket=s) == False): return
         #endif
 
         #

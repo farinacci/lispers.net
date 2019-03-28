@@ -71,11 +71,13 @@
 #   { "seid" : "[<iid>]<orig-eid>", "deid" : "[<iid>]<dest-eid>", "paths" : a
 #   [
 #     { "node" : "ITR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" },
+#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>",
+#                       "recent-rtts" : [...], "recent-hops" : [...] }, 
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
 #                       "decap-timestamp" : "<ts>", "hostname" : "<hn>" },
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" },
+#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>",
+#                       "recent-rtts" : [...], "recent-hops" : [...] }, 
 #     { "node" : "ETR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
 #                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" }, ...
 #   ] },
@@ -83,11 +85,13 @@
 #   { "seid" : "[<iid>]<dest-eid>", "deid" : "[<iid>]<orig-eid>", "paths" :
 #   [
 #     { "node" : "ITR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" },
+#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>",
+#                       "recent-rtts" : [...], "recent-hops" : [...] }, 
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
 #                       "decap-timestamp" : "<ts>", "hostname" : "<hn>" },
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" },
+#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>",
+#                       "recent-rtts" : [...], "recent-hops" : [...] }, 
 #     { "node" : "ETR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
 #                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" }, ...
 #   ] }
@@ -236,8 +240,20 @@ def display_packet(jd):
             hn = path["hostname"]
             drloc = path["drloc"]
             if (drloc.find("?") != -1): drloc = red(drloc)
+
             print "  {} {}: {} -> {}, ts {}, node {}".format( \
                 path["node"], ed, path["srloc"], drloc, ts, blue(hn))
+
+            if (path.has_key("recent-rtts") and path.has_key("recent-hops")):
+                rtts = path["recent-rtts"]
+                hops = json.dumps(path["recent-hops"])
+                hops = hops.replace("u", "")
+                hops = hops.replace("'", "")
+                hops = hops.replace('"', "")
+                print "            ",
+                print "recent-rtts {}, recent-hops {}".format(rtts, hops)
+            #endif
+                
         #endfor
         print ""
     #enfor
