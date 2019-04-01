@@ -71,29 +71,25 @@
 #   { "seid" : "[<iid>]<orig-eid>", "deid" : "[<iid>]<dest-eid>", "paths" : a
 #   [
 #     { "node" : "ITR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>",
-#                       "recent-rtts" : [...], "recent-hops" : [...] }, 
+#       "encap-ts" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "decap-timestamp" : "<ts>", "hostname" : "<hn>" },
+#       "decap-ts" : "<ts>", "hn" : "<hn>" },
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>",
-#                       "recent-rtts" : [...], "recent-hops" : [...] }, 
+#       "encap-ts" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
 #     { "node" : "ETR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" }, ...
+#       "encap-ts" : "<ts>", "hn" : "<hn>" }, ...
 #   ] },
 # 
 #   { "seid" : "[<iid>]<dest-eid>", "deid" : "[<iid>]<orig-eid>", "paths" :
 #   [
 #     { "node" : "ITR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>",
-#                       "recent-rtts" : [...], "recent-hops" : [...] }, 
+#       "encap-ts" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "decap-timestamp" : "<ts>", "hostname" : "<hn>" },
+#       "decap-ts" : "<ts>", "hn" : "<hn>" },
 #     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>",
-#                       "recent-rtts" : [...], "recent-hops" : [...] }, 
+#       "encap-ts" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
 #     { "node" : "ETR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#                       "encap-timestamp" : "<ts>", "hostname" : "<hn>" }, ...
+#       "encap-ts" : "<ts>", "hn" : "<hn>" }, ...
 #   ] }
 # ]
 #
@@ -229,24 +225,24 @@ def display_packet(jd):
     for segment in jd:
         print "Path from {} to {}:".format(segment["seid"], segment["deid"])
         for path in segment["paths"]:
-            if (path.has_key("encap-timestamp")):
-                ts = path["encap-timestamp"]
+            if (path.has_key("encap-ts")):
+                ts = path["encap-ts"]
                 ed = "encap"
             #endif
-            if (path.has_key("decap-timestamp")):
-                ts = path["decap-timestamp"]
+            if (path.has_key("decap-ts")):
+                ts = path["decap-ts"]
                 ed = "decap"
             #endif
-            hn = path["hostname"]
+            hn = path["hn"]
             drloc = path["drloc"]
             if (drloc.find("?") != -1): drloc = red(drloc)
 
             print "  {} {}: {} -> {}, ts {}, node {}".format( \
                 path["node"], ed, path["srloc"], drloc, ts, blue(hn))
 
-            if (path.has_key("recent-rtts") and path.has_key("recent-hops")):
-                rtts = path["recent-rtts"]
-                hops = json.dumps(path["recent-hops"])
+            if (path.has_key("rtts") and path.has_key("hops")):
+                rtts = path["rtts"]
+                hops = json.dumps(path["hops"])
                 hops = hops.replace("u", "")
                 hops = hops.replace("'", "")
                 hops = hops.replace('"', "")

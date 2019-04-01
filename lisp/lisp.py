@@ -18407,8 +18407,8 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
         entry["srloc"] += ":{}".format(packet.inner_sport)
     #endif
         
-    entry["hostname"] = lisp_hostname
-    key = ed + "-timestamp"
+    entry["hn"] = lisp_hostname
+    key = ed + "-ts"
     entry[key] = lisp_get_timestamp()
 
     #
@@ -18435,8 +18435,8 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     # Add recent-rtts and recent-hops.
     #
     if (rloc_entry != None):
-        entry["recent-rtts"] = rloc_entry.recent_rloc_probe_rtts
-        entry["recent-hops"] = rloc_entry.recent_rloc_probe_hops
+        entry["rtts"] = rloc_entry.recent_rloc_probe_rtts
+        entry["hops"] = rloc_entry.recent_rloc_probe_hops
     #endif
 
     #
