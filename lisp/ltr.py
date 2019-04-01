@@ -241,7 +241,8 @@ def display_packet(jd):
                 path["node"], ed, path["srloc"], drloc, ts, blue(hn))
 
             if (path.has_key("rtts") and path.has_key("hops")):
-                rtts = path["rtts"]
+                rtts = json.dumps(path["rtts"])
+                rtts = rtts.replace("-1", "?")
                 hops = json.dumps(path["hops"])
                 hops = hops.replace("u", "")
                 hops = hops.replace("'", "")
