@@ -2,7 +2,7 @@
                 lispers.net Beta Release Version 0.498
                 --------------------------------------
 
-o Release date:
+o Release date: Mon Apr  1 11:37:27 PDT 2019
 
 o Make JSON smaller in LISP-Trace message. We should be able to go from ITR to
   ETR and return through one RTR in an MTU-sized packet. Want to avoid inner header
