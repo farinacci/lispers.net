@@ -1,4 +1,29 @@
 
+                lispers.net Beta Release Version 0.498
+                --------------------------------------
+
+o Release date:
+
+o Make JSON smaller in LISP-Trace message. We should be able to go from ITR to
+  ETR and return through one RTR in an MTU-sized packet.
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.497
+                --------------------------------------
+
+o Release date: Fri Mar 29 00:01:37 CET 2019
+
+o When passing a MAC address to pcap filters, do not pass the MAC address
+  in lispers.net format (dashes between quad-nibbles). Convert to linux
+  MAC address format with colons between dual-nibbles.
+
+o And do not pass MAC addresses to iptables/ip6tables.
+
+o Add recent-rtts and recent-hops to LISP-Trace functionality.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.496
                 --------------------------------------
 
