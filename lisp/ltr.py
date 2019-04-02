@@ -96,7 +96,8 @@
 # Environment variable LISP_LTR_PORT is used to determine if the connection to
 # the LISP API is done with a particular port. And if the port has a minus
 # sign in front of it, it will use http rather https to connect to the
-# lispers.net API.
+# lispers.net API. Environment variables LISP_LTR_USER and LISP_LTR_PW are
+# used when lispers.net API is running with a password on username root.
 #
 #------------------------------------------------------------------------------
 
@@ -280,7 +281,10 @@ def parse_eid(eid):
     #
     # Do not pass in a IPv6 address to gethostbyname(). Sigh.
     #
-    if (eid.find(":") == -1): eid = socket.gethostbyname(eid)
+    if (eid.find(":") == -1):
+        try: eid = socket.gethostbyname(eid)
+        except: pass
+    #endtry
     return(iid, eid, no_iid)
 #enddef    
 
@@ -293,8 +297,13 @@ def parse_eid(eid):
 # return rloc ant nat-traversal for the EID.
 #
 def get_db(match_iid, match_eid, http, port, v4v6):
-    cmd = ("curl --silent --insecure -u root: {}://localhost:{}/lisp/" + \
-        "api/data/database-mapping").format(http, port)
+    user = os.getenv("LISP_LTR_USER") 
+    pw = os.getenv("LISP_LTR_PW")
+    if (user == None): user = "root"
+    if (pw == None): pw = ""
+
+    cmd = ("curl --silent --insecure -u {}:{} {}://localhost:{}/lisp/" + \
+        "api/data/database-mapping").format(user, pw, http, port)
     out = commands.getoutput(cmd)
 
     try:
