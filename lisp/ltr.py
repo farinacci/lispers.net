@@ -131,6 +131,10 @@ if (port != None):
     #endif
     http_port = int(port)
 #endif
+user = os.getenv("LISP_LTR_USER") 
+pw = os.getenv("LISP_LTR_PW")
+if (user == None): user = "root"
+if (pw == None): pw = ""
 
 LISP_TRACE_PORT = 2434
 
@@ -296,12 +300,7 @@ def parse_eid(eid):
 # rloc, nat-traversal) if not matching an iid/eid pair. If matching, then just
 # return rloc ant nat-traversal for the EID.
 #
-def get_db(match_iid, match_eid, http, port, v4v6):
-    user = os.getenv("LISP_LTR_USER") 
-    pw = os.getenv("LISP_LTR_PW")
-    if (user == None): user = "root"
-    if (pw == None): pw = ""
-
+def get_db(match_iid, match_eid, user, pw, http, port, v4v6):
     cmd = ("curl --silent --insecure -u {}:{} {}://localhost:{}/lisp/" + \
         "api/data/database-mapping").format(user, pw, http, port)
     out = commands.getoutput(cmd)
@@ -336,9 +335,9 @@ def get_db(match_iid, match_eid, http, port, v4v6):
 #
 # Look up 0.0.0.0/0 map-cache entry and get list of RTRs.
 #
-def get_rtrs(http, port):
-    cmd = ("curl --silent --insecure -u root: {}://localhost:{}/lisp/" + \
-        "api/data/map-cache").format(http, port)
+def get_rtrs(user, pw, http, port):
+    cmd = ("curl --silent --insecure -u {}:{} {}://localhost:{}/lisp/" + \
+        "api/data/map-cache").format(user, pw, http, port)
     out = commands.getoutput(cmd)
 
     try:
@@ -423,13 +422,13 @@ if ("-s" in sys.argv):
         exit(1)
     #endif
     if (no_iid): siid = None
-    x, y, rloc, nat = get_db(siid, seid, http, http_port, v4v6)
+    x, y, rloc, nat = get_db(siid, seid, user, pw, http, http_port, v4v6)
     if (rloc == None):
         print "[{}]{} is not a local EID".format(siid, seid)
         exit(1)
     #endif
 else:
-    siid, seid, rloc, nat = get_db(None, None, http, http_port, v4v6)
+    siid, seid, rloc, nat = get_db(None, None, user, pw, http, http_port, v4v6)
     if (siid == None):
         print "Could not find local EID, maybe lispers.net API port wrong?"
         exit(1)
@@ -462,7 +461,7 @@ nonce, packet = build_packet(rloc, port)
 # First send RLOC packet to RTR to get translated NAT address info to RTRs.
 #
 if (nat):
-    rtr_list = get_rtrs(http, http_port)
+    rtr_list = get_rtrs(user, pw, http, http_port)
     for rtr in rtr_list:
         print "Send NAT-traversal LISP-Trace to RTR {} ...".format(rtr)
         sock.sendto(packet, ("::ffff:" + rtr, LISP_TRACE_PORT))

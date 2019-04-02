@@ -1,12 +1,26 @@
 
+                lispers.net Beta Release Version 0.499
+                --------------------------------------
+
+o Release date:
+
+o Have ltr print "?" instead of -1 for recent-rtts when RLOC-probing has not
+  begun to start between an ITR/RTR and an ETR.
+
+o Allow the use of LISP_LTR_USER and LISP_LTR_PW to get ltr to work when a
+  password is on username root or you want to use an alternate username/
+  password.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.498
                 --------------------------------------
 
 o Release date: Mon Apr  1 11:37:27 PDT 2019
 
 o Make JSON smaller in LISP-Trace message. We should be able to go from ITR to
-  ETR and return through one RTR in an MTU-sized packet. Want to avoid inner header
-  fragmentation.
+  ETR and return through one RTR in an MTU-sized packet. Want to avoid inner
+  header fragmentation.
 
 -------------------------------------------------------------------------------
 
