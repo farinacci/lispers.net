@@ -474,7 +474,12 @@ print "Send round-trip LISP-Trace between EIDs [{}]{} and [{}]{} ...". \
 ts = time.time()
 
 dest = deid if (deid.find(":") != -1) else "::ffff:" + deid
-sock.sendto(packet, (dest, LISP_TRACE_PORT))
+try:
+    sock.sendto(packet, (dest, LISP_TRACE_PORT))
+except socket.error, e:
+    print "socket.sendto() failed: {}".format(e)
+    exit(1)
+#endtry
 
 #
 # Wait for reply, timeout after 3 seconds.

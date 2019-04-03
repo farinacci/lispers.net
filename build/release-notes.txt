@@ -8,8 +8,17 @@ o Have ltr print "?" instead of -1 for recent-rtts when RLOC-probing has not
   begun to start between an ITR/RTR and an ETR.
 
 o Allow the use of LISP_LTR_USER and LISP_LTR_PW to get ltr to work when a
-  password is on username root or you want to use an alternate username/
-  password.
+  password is configured for username root or you want to use an alternate
+  username/password to access the API.
+
+o If the destination EID for a LISP-Trace message hits an ETR, but the ETR
+  is not assigned the EID but covers it with an EID-prefix in a "lisp database-
+  mapping" command, then the LISP-Trace message should be turned around. We
+  want ltr to work when it targets a host that is assigned an EID but does not
+  run LISP.
+
+o socket.sendto() can fail when LISP-Tracing an IPv6 address when no IPv6
+  address can be assigned to any interface. This happens on a GCP VM. Sigh.
 
 -------------------------------------------------------------------------------
 

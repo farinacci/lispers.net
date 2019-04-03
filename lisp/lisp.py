@@ -16433,11 +16433,12 @@ def lisp_db_list_length():
 #
 # lisp_is_myeid
 #
-# Return true if supplied EID is the EID for this system.
+# Return true if supplied EID is an EID supported by this ETR. That means a
+# longest match lookup is done.
 #
 def lisp_is_myeid(eid):
     for db in lisp_db_list:
-        if (db.eid.is_exact_match(eid)): return(True)
+        if (eid.is_more_specific(db.eid)): return(True)
     #endfor
     return(False)
 #enddef    
