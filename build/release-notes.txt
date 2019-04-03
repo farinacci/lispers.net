@@ -2,7 +2,7 @@
                 lispers.net Beta Release Version 0.499
                 --------------------------------------
 
-o Release date:
+o Release date: Wed Apr  3 16:04:55 PDT 2019
 
 o Have ltr print "?" instead of -1 for recent-rtts when RLOC-probing has not
   begun to start between an ITR/RTR and an ETR.
