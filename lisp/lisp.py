@@ -18471,7 +18471,8 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     # encap node entry.
     #
     swap = False
-    if (len(trace.packet_json) == 1 and trace.myeid(packet.inner_dest)):
+    if (len(trace.packet_json) == 1 and entry["node"] == "ETR" and
+        trace.myeid(packet.inner_dest)):
         rec = {}
         rec["seid"] = deid
         rec["deid"] = seid
