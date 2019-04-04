@@ -389,6 +389,23 @@ def red(string):
     return("\033[91m" + bold(string) + "\033[0m")
 #enddef
 
+#
+# check_multicast
+#
+# Exit program if destination EID is a multicast address. LISP-Trace and ltr
+# do not support multicast yet.
+#
+def check_multicast(deid, v4v6):
+    if (v4v6):
+        maddr = int(deid.split(".")[0])
+        if (maddr < 224 or maddr >= 240): return
+    else:
+        if (deid[0:2].lower() != "ff"): return
+    #endif
+    print "Multicast EID not supported"
+    exit(1)
+#enddef
+
 #------------------------------------------------------------------------------
 
 #
@@ -410,6 +427,12 @@ if (diid == None):
     exit(1)
 #endif
 v4v6 = deid.find(":") == -1
+
+#
+# Check if destination EID is a multicast address. LISP-Trace does not support
+# multicast yet. Will exit program if multicast.
+#
+check_multicast(deid, v4v6)
 
 #
 # Get source-EID from command-line or get it from xTR configuration.
