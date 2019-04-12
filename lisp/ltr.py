@@ -109,6 +109,7 @@ import json
 import commands
 import time
 import os
+import binascii
 
 #------------------------------------------------------------------------------
 
@@ -290,7 +291,36 @@ def parse_eid(eid):
         except: pass
     #endtry
     return(iid, eid, no_iid)
-#enddef    
+#enddef
+
+#
+# do_longest_match
+#
+# Take two address strings and see if EID is more specific than EID-prefix.
+#
+def do_longest_match(eid, eid_prefix, ml):
+    mask = 2**ml - 1
+
+    e = eid.split(".")
+    if (len(e) == 1): e = eid.split(":")
+    if (len(e) == 1): return(False)
+
+    if (len(e) == 4):
+        mask = mask << (32 - ml)
+        eid = int(e[0]) << 24 | int(e[1]) << 16 | int(e[2]) << 8 | int(e[3])
+        e = eid & mask
+        eid = "{}.{}.{}.{}".format((e >> 24) & 0xff, (e >> 16) & 0xff,
+            (e >> 8) & 0xff, e & 0xff)
+    else:
+        mask = mask << (128 - ml)
+        eid = socket.inet_pton(socket.AF_INET6, eid)
+        eid = int(binascii.hexlify(eid), 16)
+        e = eid & mask
+        eid = binascii.unhexlify(hex(e)[2:-1])
+        eid = socket.inet_ntop(socket.AF_INET6, eid)
+    #endif
+    return(eid == eid_prefix)
+#enddef
 
 #
 # get_db
@@ -314,7 +344,15 @@ def get_db(match_iid, match_eid, user, pw, http, port, v4v6):
     for entry in jd:
         if (entry.has_key("eid-prefix") == False): continue
         eid = entry["eid-prefix"]
-        eid = eid.split("/")[0]
+
+        #
+        # Skip over distinguished names or any other EID-type that is not an
+        # IPv4 or IPv6 address.
+        #
+        if (eid.count("'") == 2): continue
+        if (eid.count(".") != 3 and eid.find(":") == -1): continue
+
+        eid, ml = eid.split("/")
         iid, eid, no_iid = parse_eid(eid)
         if (v4v6 and eid.find(".") == -1): continue
         if (v4v6 == False and eid.find(":") == -1): continue
@@ -323,7 +361,9 @@ def get_db(match_iid, match_eid, user, pw, http, port, v4v6):
         nat = entry["rlocs"][0].has_key("translated-rloc")
 
         if (match_iid == None): return(iid, eid, rloc, nat)
-        if (match_iid == iid and match_eid == eid):
+
+        match = do_longest_match(match_eid, eid, int(ml))
+        if (match_iid == iid and match):
             return(None, None, rloc, nat)
         #endif
     #endfor
@@ -447,13 +487,14 @@ if ("-s" in sys.argv):
     if (no_iid): siid = None
     x, y, rloc, nat = get_db(siid, seid, user, pw, http, http_port, v4v6)
     if (rloc == None):
-        print "[{}]{} is not a local EID".format(siid, seid)
+        print "[{}]{} not a local EID, maybe lispers.net API pw/port wrong". \
+            format(siid, seid)
         exit(1)
     #endif
 else:
     siid, seid, rloc, nat = get_db(None, None, user, pw, http, http_port, v4v6)
     if (siid == None):
-        print "Could not find local EID, maybe lispers.net API port wrong?"
+        print "Could not find local EID, maybe lispers.net API pw/port wrong?"
         exit(1)
     #endif
 #endif
