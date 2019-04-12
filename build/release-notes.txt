@@ -1,4 +1,25 @@
 
+                lispers.net Beta Release Version 0.500
+                --------------------------------------
+
+o Release date: Fri Apr 12 10:31:01 PDT 2019
+
+o Have ltr exit when a user tries to supply a multicast address to trace. We
+  don't support LISP-Trace for multicast EIDs (yet).
+
+o Do not turnaround a LISP-Trace packet if you are an RTR and have "lisp
+  database-mapping" commands that may longest match.
+
+o Added farinacci/lispers.net/docs/ltr.pdf to document how LISP TraceRoute
+  (ltr) works.
+
+o When checking for a local-EID in ltr, make sure you do longest match
+  lookups on a EID-prefix from a "lisp database-mapping" command. I created
+  a really cool longest-match lookup function for IPv4 and IPv6 that works
+  on strings. IPv6 address parsing always a challenge (colon cancer). ;-)
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.499
                 --------------------------------------
 
