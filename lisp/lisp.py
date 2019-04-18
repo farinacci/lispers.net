@@ -14865,11 +14865,13 @@ def lisp_process_info_request(lisp_sockets, packet, addr_str, sport, rtr_list):
     info.etr_port = sport
 
     #
-    # Put Info-Request hostname in private-rloc in Info-Reply. Encode it as
-    # an AFI=17 distinguished-name.
+    # Put Info-Request hostname (if it was encoded) in private-rloc in
+    # Info-Reply. Encode it as an AFI=17 distinguished-name.
     #
-    info.private_etr_rloc.afi = LISP_AFI_NAME
-    info.private_etr_rloc.store_address(info.hostname)
+    if (info.hostname != None):
+        info.private_etr_rloc.afi = LISP_AFI_NAME
+        info.private_etr_rloc.store_address(info.hostname)
+    #endif
 
     if (rtr_list != None): info.rtr_list = rtr_list
     packet = info.encode()
