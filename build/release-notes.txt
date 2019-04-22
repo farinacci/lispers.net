@@ -1,4 +1,14 @@
 
+                lispers.net Beta Release Version 0.501
+                --------------------------------------
+
+o Release date: Thu Apr 18 12:56:41 PDT 2019
+
+o Do not try to encode a distinguished-name in an Info-Reply if it did not
+  appear in an Info-Request.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.500
                 --------------------------------------
 
