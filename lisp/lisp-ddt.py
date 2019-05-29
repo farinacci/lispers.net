@@ -399,7 +399,7 @@ def lisp_ddt_shutdown():
 #enddef
 
 #
-# DDT-noder commands procssed by this process.
+# DDT-node commands processed by this process.
 #
 lisp_ddt_commands = {
     "lisp ddt-authoritative-prefix" : [lisp_ddt_auth_prefix_command, {

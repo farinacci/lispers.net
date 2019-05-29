@@ -58,6 +58,7 @@ lisp_commands = {
     "lisp map-server"               : ["lisp-etr"], 
     "lisp database-mapping"         : ["lisp-itr", "lisp-etr", "lisp-rtr"],
     "lisp group-mapping"            : ["lisp-etr"],
+    "lisp glean-mapping"            : ["lisp-rtr"],
     "lisp explicit-locator-path"    : ["lisp-itr", "lisp-rtr", "lisp-etr",
                                        "lisp-ms"],
     "lisp replication-list-entry"   : ["lisp-itr", "lisp-rtr", "lisp-etr",
@@ -2287,6 +2288,7 @@ def lisp_display_map_cache(mc, output):
     #endif
 
     if (mc.checkpoint_entry): source = "checkpoint"
+    if (mc.gleaned): source = "gleaned"
     ttl = mc.print_ttl()
 
     action = "encapsulate" if action == lisp.LISP_NO_ACTION else \

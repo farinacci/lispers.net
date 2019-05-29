@@ -304,6 +304,16 @@ lisp_ms_encryption_keys = {}
 #
 lisp_rtr_nat_trace_cache = {}
 
+#
+# Configured glean mappings. The data structure is an array of dictionary
+# arrays with keywords "eid-prefix", "rloc-prefix", and "instance-id". If
+# keywords are not in dictionary array, the value is wildcarded. The values
+# eid-prefix and rloc-prefix is lisp_address() so longest match lookups can
+# be performed. The instance-id value is an array of 2 elements that store
+# same value in both elements if not a range or the low and high range values.
+#
+lisp_glean_mappings = []
+
 #------------------------------------------------------------------------------
 
 #
@@ -380,6 +390,7 @@ LISP_MR_TTL       = (24*60)
 LISP_REGISTER_TTL = 3
 LISP_SHORT_TTL    = 1
 LISP_NMR_TTL      = 15
+LISP_GLEAN_TTL    = 15
 
 LISP_SITE_TIMEOUT_CHECK_INTERVAL     = 60 # In units of seconds
 LISP_PUBSUB_TIMEOUT_CHECK_INTERVAL   = 60 # In units of seconds
@@ -12793,6 +12804,7 @@ class lisp_mapping():
         self.checkpoint_entry = False
         self.secondary_iid = None
         self.signature_eid = False
+        self.gleaned = False
     #enddef
 
     def print_mapping(self, eid_indent, rloc_indent):
@@ -18565,6 +18577,71 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     #
     packet.packet = headers + trace_pkt
     return(True)
+#enddef
+
+#
+# lisp_allow_gleaning
+#
+# Check the lisp_glean_mapping array to see if we should glean the EID and
+# RLOC. Find first match. Return False if there are no configured glean
+# mappings.
+#
+def lisp_allow_gleaning(eid, rloc):
+    if (lisp_glean_mappings == []): return(False)
+    
+    for entry in lisp_glean_mappings:
+        if (entry.has_key("instance-id")):
+            iid = eid.instance_id
+            low, high = entry["instance-id"]
+            if (iid < low or iid > high): continue
+        #endif
+        if (entry.has_key("eid-prefix")):
+            if (eid.is_more_specific(entry["eid-prefix"]) == False): continue
+        #endif
+        if (entry.has_key("rloc-prefix")):
+            if (rloc.is_more_specific(entry["rloc-prefix"]) == False): continue
+        #endif
+        return(True)
+    #endfor
+
+    return(False)
+#enddef
+
+#
+# lisp_glean_map_cache
+#
+# Add or update a gleaned EID/RLOC to the map-cache.
+#
+def lisp_glean_map_cache(eid, rloc):
+
+    #
+    # First do lookup to see if EID is in map-cache. If so and it was created
+    # less th
+    #
+    uptime = None
+    mc = lisp_map_cache.lookup_cache(eid, True)
+    if (mc):
+        uptime = mc.uptime
+        if ((time.time() - mc.last_refresh_time) < 60): return
+    #endif
+    
+    rloc_entry = lisp_rloc()
+    rloc_entry.rloc.copy_address(rloc)
+    rloc_entry.priority = 253
+    rloc_entry.mpriority = 255
+    rloc_set = [rloc_entry]
+
+    mc = lisp_mapping(eid, "", rloc_set)
+    mc.mapping_source.copy_address(rloc)
+    mc.map_cache_ttl = LISP_GLEAN_TTL
+    mc.gleaned = True
+    mc.rloc_set = rloc_set
+    if (uptime): mc.uptime = uptime
+    mc.add_cache()
+
+    e = green(eid.print_address())
+    r = red(rloc.print_address_no_iid())
+    lprint("Add gleaned EID {} to map-cache with RLOC {}".format(e, r))
 #enddef
 
 #------------------------------------------------------------------------------

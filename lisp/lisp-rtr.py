@@ -94,6 +94,45 @@ def lisp_rtr_database_mapping_command(kv_pair):
 #enddef
 
 #
+# lisp_rtr_glean_mapping_command
+# 
+# Add a configured glean_mapping to the lisp_glean_mapping array.
+#
+def lisp_rtr_glean_mapping_command(kv_pair):
+    entry = {}
+
+    for kw in kv_pair.keys():
+        value = kv_pair[kw]
+
+        if (kw == "instance-id"):
+            v = value.split("-")
+            if (len(v) == 1):
+                entry["instance-id"][0] = int(v)
+                entry["instance-id"][1] = int(v)
+            else:
+                entry["instance-id"][0] = int(v[0])
+                entry["instance-id"][1] = int(v[1])
+            #endif
+        #endif
+        if (kw == "eid-prefix"):
+            eid = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
+            eid.store_prefix(value)
+            entry["eid-prefix"] = eid
+        #endif
+        if (kw == "rloc-prefix"):
+            rloc = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
+            rloc.store_prefix(value)
+            entry["rloc-prefix"] = rloc
+        #endif
+    #endfor
+
+    #
+    # Add dictionary array to array.
+    #
+    lisp.lisp_glean_mapping.append(entry)
+#enddef
+
+#
 # lisp_rtr_show_rloc_probe_command
 #
 # Display RLOC-probe list state in an RTR.
@@ -497,6 +536,14 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
 
             if (lisp.lisp_flow_logging): packet = copy.deepcopy(packet)
         #endfor
+    #endif
+
+    #
+    # Should we glean source information from packet and add it to the
+    # map-cache??
+    #
+    if (lisp.lisp_allow_gleaning(packet.inner_source, packet.outer_source)):
+        lisp.lisp_glean_map_cache(packet.inner_source, packet.outer_source)
     #endif
 
     # 
@@ -941,6 +988,11 @@ lisp_rtr_commands = {
         "interface" : [True], 
         "priority" : [True, 0, 255], 
         "weight" : [True, 0, 100] }],
+
+    "lisp glean-mapping" : [lisp_rtr_glean_mapping_command, {
+        "instance-id" : [False, 0, 0xffffffff, True],  
+        "eid-prefix" : [True], 
+        "rloc-prefix" : [True] }],
 
     "show rtr-rloc-probing" : [lisp_rtr_show_rloc_probe_command, { }],
     "show rtr-keys" : [lisp_rtr_show_keys_command, {}],
