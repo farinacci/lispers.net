@@ -106,9 +106,10 @@ def lisp_rtr_glean_mapping_command(kv_pair):
 
         if (kw == "instance-id"):
             v = value.split("-")
+            entry["instance-id"] = [0, 0]
             if (len(v) == 1):
-                entry["instance-id"][0] = int(v)
-                entry["instance-id"][1] = int(v)
+                entry["instance-id"][0] = int(v[0])
+                entry["instance-id"][1] = int(v[0])
             else:
                 entry["instance-id"][0] = int(v[0])
                 entry["instance-id"][1] = int(v[1])
@@ -127,9 +128,40 @@ def lisp_rtr_glean_mapping_command(kv_pair):
     #endfor
 
     #
+    # Check if entry already exists. If so, just return.
+    #
+    for e in lisp.lisp_glean_mappings:
+        if (e.has_key("eid-prefix") ^ entry.has_key("eid-prefix")): continue
+        if (e.has_key("eid-prefix") and entry.has_key("eid-prefix")):
+            old = e["eid-prefix"]
+            new = entry["eid-prefix"]
+            if (old.is_exact_match(new) == False): continue
+        #endif
+
+        if (e.has_key("rloc-prefix") ^ entry.has_key("rloc-prefix")): continue
+        if (e.has_key("rloc-prefix") and entry.has_key("rloc-prefix")):
+            old = e["rloc-prefix"]
+            new = entry["rloc-prefix"]
+            if (old.is_exact_match(new) == False): continue
+        #endif
+
+        if (e.has_key("instance-id") ^ entry.has_key("instance-id")): continue
+        if (e.has_key("instance-id") and entry.has_key("instance-id")):
+            old = e["instance-id"]
+            new = entry["instance-id"]
+            if (old != new): continue
+        #endif
+
+        #
+        # Found a match. Do not append existing entry to array.
+        #
+        return
+    #endfor
+
+    #
     # Add dictionary array to array.
     #
-    lisp.lisp_glean_mapping.append(entry)
+    lisp.lisp_glean_mappings.append(entry)
 #enddef
 
 #
@@ -371,10 +403,30 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #endif
 
     #
+    # Should we glean source information from packet and add it to the
+    # map-cache??
+    #
+    if (lisp.lisp_allow_gleaning(packet.inner_source, packet.outer_source)):
+        lisp.lisp_glean_map_cache(packet.inner_source, packet.outer_source,
+            packet.udp_sport)
+    #endif
+
+    #
     # Do map-cache lookup. If no entry found, send Map-Request.
     #
     mc = lisp.lisp_map_cache_lookup(packet.inner_source, packet.inner_dest)
 
+    #
+    # Map-cache lookup miss. Send Map-Request to mapping system if source
+    # is configured to be gleaned. We want to give preference to the gleaned
+    # mapping and not the mapping in the mapping system.
+    #
+    if (mc == None and lisp.lisp_allow_gleaning(packet.inner_dest, None)):
+        lisp.lprint("Suppress Map-Request for gleaned EID {}".format( \
+            lisp.green(packet.inner_dest.print_address(), False)))
+        return
+    #endif
+        
     #
     # Check if we are doing secondary-instance-ids only when we have a 
     # map-cache entry in the IID that is possibly a non-LISP site.
@@ -389,9 +441,6 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         #endif
     #endif
 
-    #
-    # Map-cache lookup miss.
-    #
     if (mc == None or mc.action == lisp.LISP_SEND_MAP_REQUEST_ACTION):
         if (lisp.lisp_rate_limit_map_request(packet.inner_source, 
             packet.inner_dest)): return
@@ -536,14 +585,6 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
 
             if (lisp.lisp_flow_logging): packet = copy.deepcopy(packet)
         #endfor
-    #endif
-
-    #
-    # Should we glean source information from packet and add it to the
-    # map-cache??
-    #
-    if (lisp.lisp_allow_gleaning(packet.inner_source, packet.outer_source)):
-        lisp.lisp_glean_map_cache(packet.inner_source, packet.outer_source)
     #endif
 
     # 
@@ -990,7 +1031,7 @@ lisp_rtr_commands = {
         "weight" : [True, 0, 100] }],
 
     "lisp glean-mapping" : [lisp_rtr_glean_mapping_command, {
-        "instance-id" : [False, 0, 0xffffffff, True],  
+        "instance-id" : [False], 
         "eid-prefix" : [True], 
         "rloc-prefix" : [True] }],
 
