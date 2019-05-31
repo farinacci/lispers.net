@@ -18645,7 +18645,8 @@ def lisp_glean_map_cache(eid, rloc, encap_port):
     rloc_entry.mpriority = 255
     rloc_set = [rloc_entry]
 
-    mc = lisp_mapping(eid, "", rloc_set)
+    mc = lisp_mapping("", "", rloc_set)
+    mc.eid.copy_address(eid)
     mc.mapping_source.copy_address(rloc)
     mc.map_cache_ttl = LISP_GLEAN_TTL
     mc.gleaned = True
