@@ -1318,7 +1318,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
     # receive the same packet on a raw socket (in lisp_etr_nat_data_plane()).
     #
     sport = socket.ntohs(struct.unpack("H", packet[20:22])[0])
-    if (sport == lisp.LISP_DATA_PORT): return
+    if (lisp.lisp_nat_traversal and sport == lisp.LISP_DATA_PORT): return
     packet = lisp.lisp_reassemble(packet)
     if (packet == None): return
 
@@ -1735,6 +1735,7 @@ def lisp_etr_process():
     #endif
     pfilter = pfilter[0:-4]
     pfilter += ") and ((udp dst port 4341 or 8472 or 4789) or "
+    pfilter += "(udp src port 4341) or "
     pfilter += "(udp dst port 4342 and ip[28] == 0x12) or "
     pfilter += "(proto 17 and (ip[6]&0xe0 == 0x20 or " + \
         "(ip[6]&0xe0 == 0 and ip[7] != 0)))))"
