@@ -18627,16 +18627,33 @@ def lisp_allow_gleaning(eid, rloc):
 def lisp_glean_map_cache(eid, rloc, encap_port):
 
     #
-    # First do lookup to see if EID is in map-cache. If so and it was created
-    # less th
+    # First do lookup to see if EID is in map-cache. Check to see if RLOC
+    # or encap-port needs updating. If not, return.
     #
-    uptime = None
     mc = lisp_map_cache.lookup_cache(eid, True)
     if (mc):
-        uptime = mc.uptime
-        if ((time.time() - mc.last_refresh_time) < 60): return
+        cached_rloc = mc.rloc_set[0]
+        if (cached_rloc.rloc.is_exact_match(rloc) and
+            cached_rloc.translated_port == encap_port): return
+        
+        e = green(eid.print_address(), False)
+        r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
+        lprint("Gleaned EID {} RLOC changed to {}".format(e, r))
+    else:
+        mc = lisp_mapping("", "", [])
+        mc.eid.copy_address(eid)
+        mc.mapping_source.copy_address(rloc)
+        mc.map_cache_ttl = LISP_GLEAN_TTL
+        mc.gleaned = True
+        e = green(eid.print_address(), False)
+        r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
+        lprint("Add gleaned EID {} to map-cache with RLOC {}".format(e, r))
+        mc.add_cache()
     #endif
 
+    #
+    # Adding RLOC to new map-cache entry or updating RLOC for existing entry..
+    #
     rloc_entry = lisp_rloc()
     rloc_entry.rloc.copy_address(rloc)
     rloc_entry.translated_rloc.copy_address(rloc)
@@ -18644,19 +18661,8 @@ def lisp_glean_map_cache(eid, rloc, encap_port):
     rloc_entry.priority = 253
     rloc_entry.mpriority = 255
     rloc_set = [rloc_entry]
-
-    mc = lisp_mapping("", "", rloc_set)
-    mc.eid.copy_address(eid)
-    mc.mapping_source.copy_address(rloc)
-    mc.map_cache_ttl = LISP_GLEAN_TTL
-    mc.gleaned = True
     mc.rloc_set = rloc_set
-    if (uptime): mc.uptime = uptime
-    mc.add_cache()
-
-    e = green(eid.print_address(), False)
-    r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
-    lprint("Add gleaned EID {} to map-cache with RLOC {}".format(e, r))
+    mc.build_best_rloc_set()
 #enddef
 
 #------------------------------------------------------------------------------
