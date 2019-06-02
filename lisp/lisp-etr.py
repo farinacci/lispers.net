@@ -1358,8 +1358,8 @@ def lisp_etr_data_plane(parms, not_used, packet):
     # (outer-IPv4 + UDP-outer-LISP + inner-IPv4-UDP).
     #
     if (packet.lisp_header.get_instance_id() == 0xffffff):
-        inner_lisp = packet.packet[64::]
         inner_ip = packet.packet[36::]
+        inner_lisp = inner_ip[28::]
         ttl = -1
         if (lisp.lisp_is_rloc_probe_request(inner_lisp[0])):
             ttl = struct.unpack("B", inner_ip[8])[0] - 1
@@ -1540,8 +1540,8 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     # RLOC-probe Map-Reply.
     #
     if (packet.lisp_header.get_instance_id() == 0xffffff):
-        inner_lisp = packet.packet[28::]
         inner_ip = packet.packet
+        inner_lisp = inner_ip[28::]
         ttl = -1
         if (lisp.lisp_is_rloc_probe_request(inner_lisp[0])):
             ttl = struct.unpack("B", inner_ip[8])[0] - 1
