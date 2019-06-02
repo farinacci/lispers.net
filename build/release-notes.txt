@@ -1,4 +1,37 @@
 
+                lispers.net Beta Release Version 0.502
+                --------------------------------------
+
+o Release date: Sun Jun  2 11:37:07 PDT 2019
+
+o Add some new functionality to an RTR. When configured, an RTR can glean
+  mappings for packets it decapsulates. This allows for an xTR to NOT run
+  a LISP control-plane. The xTR simply encapsulates packets to configured RTRs.
+  Return packets will arrive to an xTR since the RTR will glean the source EID
+  and source RLOC from decapsulated packets. A new command "lisp glean-
+  mapping" is required on the RTR. When configured, the RTR will add the
+  source-EID and source-RLOC to the map-cache. See lisp.config.example
+  for a description of the new command with some examples. EID-prefixes are
+  used to permit ranges of EIDs allowed to be gleaned as well RLOC-prefixes
+  so RLOCs can be controlled. A single or range of instance-IDs can also be
+  configured.
+
+o Allow the lispers.net implementation to be a control-plane-less xTR. That
+  means no Map-Requests go to the mapping system and no registration is
+  required. Simply configured a list of RTR RLOCs to encap to. The RTRs must
+  support "lisp glean-mapping" so they can return packets to the xTR regardless
+  if the xTR is behind a NAT. The "lisp xtr-parameters" sub-command "nat-
+  traversal = no" must be configured. See example configuration in
+  docs/lisp.config.xtr-control-plane-less.
+
+o This glean-mapping feature interoperates with OOR 1.1(13). The OOR
+  configuration requires a "Proxy ETR List" to be configured and have
+  "NAT Traversal Aware" set to off. From a lispers.net perspective, an OOR
+  Map-Server and Map-Server Key is not required. A "DNS Server" is required
+  and can be set to "8.8.8.8".
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.501
                 --------------------------------------
 
