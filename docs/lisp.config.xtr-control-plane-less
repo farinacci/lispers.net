@@ -28,19 +28,11 @@
 lisp enable {
     itr = yes
     etr = yes
-    rtr = no
-    map-server = no
-    map-resolver = no
-    ddt-node = no
 }
 lisp debug {
     core = no
     itr = no
     etr = no
-    rtr = no
-    map-server = no
-    map-resolver = no
-    ddt-node = no
 }
 lisp user-account {
     username = root
@@ -68,11 +60,11 @@ lisp database-mapping {
 }
 lisp map-cache {
     prefix {
-        instance-id = <fill-in>
+        instance-id = <fill-in-same-as-instance-id-above>
         eid-prefix = 0.0.0.0/0
     }
     prefix {
-        instance-id = <fill-in>
+        instance-id = <fill-in-same-as-instance-id-above>
         eid-prefix = 0::/0
     }
     rloc {
