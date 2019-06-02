@@ -1139,7 +1139,7 @@ lisp group-mapping {
                  ----------------------------
 
 lisp glean-mapping {
-    instance-id = <0 - 4294967295>
+    instance-id = <0 - 4294967295> | <low-range-iid>-<high-range-iid>
     eid-prefix = <eid-prefix>
     rloc-prefix = <rloc-prefix>
 }
