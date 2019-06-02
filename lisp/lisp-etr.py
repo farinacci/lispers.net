@@ -1350,6 +1350,26 @@ def lisp_etr_data_plane(parms, not_used, packet):
     #endif
 
     #
+    # Check if inner packet is a LISP control-packet. Typically RLOC-probes
+    # from RTRs can come through NATs. We want to reply to the global address
+    # of the RTR which is the outer source RLOC. We don't care about the
+    # inner source port since the RTR will decapsulate a data encapsulated
+    # RLOC-probe Map-Reply. The inner LISP header begins at offset 20+16+28=64
+    # (outer-IPv4 + UDP-outer-LISP + inner-IPv4-UDP).
+    #
+    if (packet.lisp_header.get_instance_id() == 0xffffff):
+        inner_lisp = packet.packet[64::]
+        inner_ip = packet.packet[36::]
+        ttl = -1
+        if (lisp.lisp_is_rloc_probe_request(inner_lisp[0])):
+            ttl = struct.unpack("B", inner_ip[8])[0] - 1
+        #endif
+        source = packet.inner_source.print_address_no_iid()
+        lisp.lisp_parse_packet(lisp_send_sockets, inner_lisp, source, 0, ttl)
+        return
+    #endif
+
+    #
     # Packets are arriving on pcap interface. Need to check if another data-
     # plane is running. If so, don't deliver duplicates.
     #
@@ -1520,13 +1540,13 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     # RLOC-probe Map-Reply.
     #
     if (packet.lisp_header.get_instance_id() == 0xffffff):
-        packet = packet.packet
+        inner_lisp = packet.packet[28::]
+        inner_ip = packet.packet
         ttl = -1
-        if (lisp.lisp_is_rloc_probe_request(packet[28])):
-            ttl = struct.unpack("B", packet[8])[0] - 1
+        if (lisp.lisp_is_rloc_probe_request(inner_lisp[0])):
+            ttl = struct.unpack("B", inner_ip[8])[0] - 1
         #endif
-        packet = packet[28::]
-        lisp.lisp_parse_packet(lisp_send_sockets, packet, source, 0, ttl)
+        lisp.lisp_parse_packet(lisp_send_sockets, inner_lisp, source, 0, ttl)
         return
     #endif
 

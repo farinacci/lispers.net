@@ -6903,10 +6903,16 @@ def lisp_etr_process_map_request(lisp_sockets, map_request, source, sport,
     # We could be getting a RLOC-probe from an xTR that is behind the same
     # NAT as us. So do not data encapsulate the RLOC-probe reply.
     #
+    # There is a special hack here. If the sport is 0, this RLOC-probe
+    # request is coming from an RTR. If we are doing gleaning on the RTR,
+    # this xTR needs to data encapsulate the RLOC-probe reply. The lisp_rtr_
+    # list will not be set because a gleaned xTR does not have NAT-traversal
+    # enabled.
+    #
     if (map_request.rloc_probe and len(lisp_sockets) == 4):
         public = (itr_rloc.is_private_address() == False)
         rtr = itr_rloc.print_address_no_iid()
-        if (public and lisp_rtr_list.has_key(rtr)):
+        if ((public and lisp_rtr_list.has_key(rtr)) or sport == 0):
             lisp_encapsulate_rloc_probe(lisp_sockets, itr_rloc, None, packet)
             return
         #endif
@@ -8347,7 +8353,16 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
                     lisp_echo_nonce(addr_str)
                 #endif
             #endif
-  
+
+            #
+            # Set RLOC to the cached RLOC and set port to gleaned port so we
+            # can find the RLOC key in lisp_rloc_probe_list.
+            #
+            if (mc and mc.gleaned):
+                rloc = mc.rloc_set[0]
+                port = rloc.translated_port
+            #endif
+
             #
             # Process state for RLOC-probe reply from this specific RLOC. And
             # update RLOC state for map-cache entry. Ignore an RLOC with a
@@ -8458,11 +8473,13 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         # Add to map-cache. If this is a replace, save uptime.
         #
         uptime = mc.uptime if (mc) else None
-        mc = lisp_mapping(eid_record.eid, eid_record.group, rloc_set)
-        mc.mapping_source = source
-        mc.map_cache_ttl = eid_record.store_ttl()
-        mc.action = eid_record.action
-        mc.add_cache(rloc_set_change)
+        if (mc == None or mc.gleaned == False):
+            mc = lisp_mapping(eid_record.eid, eid_record.group, rloc_set)
+            mc.mapping_source = source
+            mc.map_cache_ttl = eid_record.store_ttl()
+            mc.action = eid_record.action
+            mc.add_cache(rloc_set_change)
+        #endif
         
         add_or_replace = "Add"
         if (uptime):
@@ -14677,11 +14694,19 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc):
     if (probe_dest != None):
         if (rloc.is_rloc_translated()):
             nat_info = lisp_get_nat_info(probe_dest, rloc.rloc_name)
-            if (nat_info and len(lisp_sockets) == 4):
-                lisp_encapsulate_rloc_probe(lisp_sockets, probe_dest, 
-                    nat_info, packet)
-                return
+
+            #
+            # Handle gleaned RLOC case.
+            #
+            if (nat_info == None):
+                r = rloc.rloc.print_address_no_iid()
+                g = "gleaned-{}".format(r)
+                p = rloc.translated_port
+                nat_info = lisp_nat_info(r, g, p)
             #endif
+            lisp_encapsulate_rloc_probe(lisp_sockets, probe_dest, nat_info,
+                packet)
+            return
         #endif
 
         addr_str = probe_dest.print_address_no_iid()
@@ -16150,16 +16175,6 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             addr_str = parent_rloc.rloc.print_address_no_iid()
 
             #
-            # Do not RLOC-probe gleaned entries.
-            #
-            if (lisp_allow_gleaning(eid, parent_rloc)):
-                e = green(eid.print_address(), False)
-                lprint("Suppress probe to RLOC {} for gleaned EID {}".format( \
-                    red(addr_str, False), e))
-                continue
-            #endif
-
-            #
             # Do not send RLOC-probes to RLOCs that are in down-state or admin-
             # down-state. The RLOC-probe reply will apply for all EID-prefixes
             # and the RLOC state will be updated for each.
@@ -16400,10 +16415,9 @@ def lisp_update_rtr_updown(rtr, updown):
 #
 # We have received a RLOC-probe Map-Reply, process it.
 #
-def lisp_process_rloc_probe_reply(rloc_addr, source, port, nonce, hop_count,
-    ttl):
+def lisp_process_rloc_probe_reply(rloc, source, port, nonce, hop_count, ttl):
     probe = bold("RLOC-probe reply", False)
-    map_reply_addr = rloc_addr.print_address_no_iid()
+    map_reply_addr = rloc.print_address_no_iid()
     source_addr = source.print_address_no_iid()
     pl = lisp_rloc_probe_list
 
@@ -16419,8 +16433,9 @@ def lisp_process_rloc_probe_reply(rloc_addr, source, port, nonce, hop_count,
             addr = source_addr
             if (pl.has_key(addr) == False):
                 addr += ":" + str(port)
-                lprint("    Received unsolicited {} from {}/{}".format(probe, 
-                    red(map_reply_addr, False), red(source_addr, False)))
+                lprint("    Received unsolicited {} from {}/{}, port {}". \
+                    format(probe, red(map_reply_addr, False), red(source_addr,
+                        False), port))
                 return
             #endif
         #endif
@@ -18628,10 +18643,13 @@ def lisp_glean_map_cache(eid, rloc, encap_port):
 
     #
     # First do lookup to see if EID is in map-cache. Check to see if RLOC
-    # or encap-port needs updating. If not, return.
+    # or encap-port needs updating. If not, return. Set refresh timer since
+    # we received a packet from the source gleaned EID.
     #
     mc = lisp_map_cache.lookup_cache(eid, True)
     if (mc):
+        mc.last_refresh_time = lisp_get_timestamp()
+
         cached_rloc = mc.rloc_set[0]
         if (cached_rloc.rloc.is_exact_match(rloc) and
             cached_rloc.translated_port == encap_port): return
@@ -18639,6 +18657,7 @@ def lisp_glean_map_cache(eid, rloc, encap_port):
         e = green(eid.print_address(), False)
         r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
         lprint("Gleaned EID {} RLOC changed to {}".format(e, r))
+        cached_rloc.delete_from_rloc_probe_list(mc.eid, mc.group)
     else:
         mc = lisp_mapping("", "", [])
         mc.eid.copy_address(eid)
@@ -18651,13 +18670,13 @@ def lisp_glean_map_cache(eid, rloc, encap_port):
         mc.add_cache()
     #endif
 
+
     #
     # Adding RLOC to new map-cache entry or updating RLOC for existing entry..
     #
     rloc_entry = lisp_rloc()
-    rloc_entry.rloc.copy_address(rloc)
-    rloc_entry.translated_rloc.copy_address(rloc)
-    rloc_entry.translated_port = encap_port
+    rloc_entry.store_translated_rloc(rloc, encap_port)
+    rloc_entry.add_to_rloc_probe_list(mc.eid, mc.group)
     rloc_entry.priority = 253
     rloc_entry.mpriority = 255
     rloc_set = [rloc_entry]
