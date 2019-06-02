@@ -1135,6 +1135,51 @@ lisp group-mapping {
 
 -------------------------------------------------------------------------------
 
+                 Configure Gleaning in an RTR
+                 ----------------------------
+
+lisp glean-mapping {
+    instance-id = <0 - 4294967295>
+    eid-prefix = <eid-prefix>
+    rloc-prefix = <rloc-prefix>
+}
+
+Command Description:
+    This command configures gleaning in an RTR. An RTR will add the source-EID
+    and source-RLOC to the map-cache so return packets to the EID can be
+    encapsulated to the RLOC. This allows for a xTR to be configured with the
+    RTR and not require a control-plane to receive packets. The xTR can be
+    behind a NAT or in public space configures 1 or more RTRs to send
+    encapsulated packets to and those RTRs will return  packets to the xTR's 
+    RLOC used in those packets. The RTR will only glean for configured 
+    EID-prefixes from RLOCs that are more specific than configured 
+    RLOC-prefixes. The "instance-id" parameter can be a range and defaults to 
+    0. The parameters "eid-prefix" and "rloc-prefix" can be omitted which 
+    defaults to accepting from all.
+
+Example:
+
+#
+# When configured on an RTR, the RTR will add any EID that is more specific
+# to 35.0.0.0/8 if and only if the source RLOC from received encapsulated
+# packets with instance-ID 1000 is more specific than 10.0.0.0/8.
+#
+lisp glean-mapping {
+    instance-id = 1000
+    eid-prefix = 10.0.0.0/8
+    rloc-prefix = 35.0.0.0/8
+}
+
+#
+# Glean any EID that has been encapsulated with an instance-id between 1000
+# and 2000.
+#
+lisp glean-mapping {
+    instance-id = 1000-2000
+}
+
+-------------------------------------------------------------------------------
+
         Configure the Address of the DDT root node for a Map-Resolver
         -------------------------------------------------------------
 
