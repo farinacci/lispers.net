@@ -16175,6 +16175,18 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             addr_str = parent_rloc.rloc.print_address_no_iid()
 
             #
+            # Do not RLOC-probe gleaned entries.
+            #
+            if (os.getenv("LISP_RLOC_PROBE_GLEAN") == None and
+                lisp_allow_gleaning(eid, parent_rloc)):
+                e = green(eid.print_address(), False)
+                addr_str += ":{}".format(parent_rloc.translated_port)
+                lprint("Suppress probe to RLOC {} for gleaned EID {}".format( \
+                    red(addr_str, False), e))
+                continue
+            #endif
+
+            #
             # Do not send RLOC-probes to RLOCs that are in down-state or admin-
             # down-state. The RLOC-probe reply will apply for all EID-prefixes
             # and the RLOC state will be updated for each.

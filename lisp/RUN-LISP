@@ -34,6 +34,12 @@ setenv LISP_VIRTIO_BUG
 #setenv LISP_LOAD_SPLIT_PINGS
 
 #
+# To disable RLOC-probing for gleaned map-cache entries, comment out env
+# variable below.
+#
+#setenv LISP_RLOC_PROBE_GLEAN 1
+
+#
 # Run go data-plane. Called lisp-xtr.
 #
 #setenv LISP_RUN_LISP_XTR
