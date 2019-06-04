@@ -99,7 +99,7 @@ def lisp_rtr_database_mapping_command(kv_pair):
 # Add a configured glean_mapping to the lisp_glean_mapping array.
 #
 def lisp_rtr_glean_mapping_command(kv_pair):
-    entry = {}
+    entry = { "rloc-probe" : False }
 
     for kw in kv_pair.keys():
         value = kv_pair[kw]
@@ -124,6 +124,9 @@ def lisp_rtr_glean_mapping_command(kv_pair):
             rloc = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
             rloc.store_prefix(value)
             entry["rloc-prefix"] = rloc
+        #endif
+        if (kw == "rloc-probe"):
+            entry["rloc-probe"] = (value == "yes")
         #endif
     #endfor
 
@@ -406,11 +409,13 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Should we glean source information from packet and add it to the
     # map-cache??
     #
-    if (lisp.lisp_allow_gleaning(packet.inner_source, packet.outer_source)):
+    allow, nil = lisp.lisp_allow_gleaning(packet.inner_source,
+        packet.outer_source)
+    if (allow):
         lisp.lisp_glean_map_cache(packet.inner_source, packet.outer_source,
             packet.udp_sport)
     #endif
-    glean_dest = lisp.lisp_allow_gleaning(packet.inner_dest, None)
+    glean_dest, nil = lisp.lisp_allow_gleaning(packet.inner_dest, None)
 
     #
     # Do map-cache lookup. If no entry found, send Map-Request.
@@ -1035,7 +1040,8 @@ lisp_rtr_commands = {
     "lisp glean-mapping" : [lisp_rtr_glean_mapping_command, {
         "instance-id" : [False], 
         "eid-prefix" : [True], 
-        "rloc-prefix" : [True] }],
+        "rloc-prefix" : [True],
+        "rloc-probe" : [True, "yes", "no"] }],
 
     "show rtr-rloc-probing" : [lisp_rtr_show_rloc_probe_command, { }],
     "show rtr-keys" : [lisp_rtr_show_keys_command, {}],

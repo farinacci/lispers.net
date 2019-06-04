@@ -16175,10 +16175,10 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             addr_str = parent_rloc.rloc.print_address_no_iid()
 
             #
-            # Do not RLOC-probe gleaned entries.
+            # Do not RLOC-probe gleaned entries if configured.
             #
-            if (os.getenv("LISP_RLOC_PROBE_GLEAN") == None and
-                lisp_allow_gleaning(eid, parent_rloc)):
+            gleaned_eid, probe = lisp_allow_gleaning(eid, parent_rloc)
+            if (gleaned_eid and probe == False):
                 e = green(eid.print_address(), False)
                 addr_str += ":{}".format(parent_rloc.translated_port)
                 lprint("Suppress probe to RLOC {} for gleaned EID {}".format( \
@@ -18621,10 +18621,11 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
 #
 # Check the lisp_glean_mapping array to see if we should glean the EID and
 # RLOC. Find first match. Return False if there are no configured glean
-# mappings.
+# mappings. The second return value is either True or False depending if the
+# matched entry was configured to RLOC-probe the RLOC for the gleaned entry.
 #
 def lisp_allow_gleaning(eid, rloc):
-    if (lisp_glean_mappings == []): return(False)
+    if (lisp_glean_mappings == []): return(False, False)
     
     for entry in lisp_glean_mappings:
         if (entry.has_key("instance-id")):
@@ -18641,9 +18642,9 @@ def lisp_allow_gleaning(eid, rloc):
             if (rloc != None and rloc.is_more_specific(entry["rloc-prefix"])
                 == False): continue
         #endif
-        return(True)
+        return(True, entry["rloc-probe"])
     #endfor
-    return(False)
+    return(False, False)
 #enddef
 
 #
