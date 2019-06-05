@@ -2170,6 +2170,17 @@ class lisp_packet():
         #endtry
     #enddef
 
+    def is_lisp_packet(self, packet):
+        udp = (struct.unpack("B", packet[9])[0] == LISP_UDP_PROTOCOL)
+        if (udp == False): return(False)
+
+        port = struct.unpack("H", packet[22:24])[0]
+        if (socket.ntohs(port) == LISP_DATA_PORT): return(True)
+        port = struct.unpack("H", packet[20:22])[0]
+        if (socket.ntohs(port) == LISP_DATA_PORT): return(True)
+        return(False)
+    #enddef
+
     def decode(self, is_lisp_packet, lisp_ipc_socket, stats):
         self.packet_error = ""
         packet = self.packet

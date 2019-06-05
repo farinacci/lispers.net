@@ -49,7 +49,7 @@ lisp_commands = {
     "lisp enable"                   : ["lisp-core"], 
     "lisp debug"                    : ["lisp-core"], 
     "lisp xtr-parameters"           : ["lisp-itr", "lisp-rtr", "lisp-etr"],
-    "lisp interface"                : ["lisp-itr", "lisp-etr"], 
+    "lisp interface"                : ["lisp-itr", "lisp-etr", "lisp-rtr"], 
     "lisp rtr-list"                 : ["lisp-core"],
     "lisp map-resolver"             : ["lisp-itr", "lisp-rtr"],
     "lisp map-cache"                : ["lisp-itr", "lisp-rtr"],

@@ -31,6 +31,7 @@ import threading
 import pcappy
 import os
 import copy
+import commands
 
 #------------------------------------------------------------------------------
 
@@ -285,17 +286,19 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     global lisp_trace_listen_socket
 
     packet = lisp_packet
+    is_lisp_packet = packet.is_lisp_packet(packet.packet)
 
     #
     # Check RLOC-probe Map-Request. We need to grab the TTL from IP header.
     #
-    orig_pkt = packet.packet
-    pkt = orig_pkt
-    pkt, source, port, ttl = lisp.lisp_is_rloc_probe(pkt, -1)
-    if (orig_pkt != pkt):
-        if (source == None): return
-        lisp.lisp_parse_packet(lisp_send_sockets, pkt, source, port, ttl)
-        return
+    if (is_lisp_packet == False):
+        orig_packet = packet.packet
+        pkt, source, port, ttl = lisp.lisp_is_rloc_probe(orig_packet, -1)
+        if (orig_packet != pkt):
+            if (source == None): return
+            lisp.lisp_parse_packet(lisp_send_sockets, pkt, source, port, ttl)
+            return
+        #endif
     #endif
 
     #
@@ -310,17 +313,20 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #
     if (lisp.lisp_flow_logging): packet = copy.deepcopy(packet)
 
-    if (packet.decode(True, None, lisp.lisp_decap_stats) == None): return
-
     #
-    # Print some useful header fields and strip outer headers..
+    # If we are a PITR as well, we are receiving non encapsulated packets
+    # via return packets from doing LISP-NAT. Print some useful header fields
+    # and strip outer headers. Strip outer headers if LISP encapsulated packet
+    # and start inner header forwarding logic.
     #
-    packet.print_packet("Receive-({})".format(thread_name), True)
-
-    #
-    # Strip outer headers and start inner header forwarding logic.
-    #
-    packet.strip_outer_headers()
+    if (is_lisp_packet):
+        if (packet.decode(True, None, lisp.lisp_decap_stats) == None): return
+        packet.print_packet("Receive-({})".format(thread_name), True)
+        packet.strip_outer_headers()
+    else:
+        if (packet.decode(False, None, None) == None): return
+        packet.print_packet("Receive-({})".format(thread_name), False)
+    #endif
 
     #
     # If instance-id is 0xffffff, this is a Info-Request packet encapsulated
@@ -374,7 +380,9 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #
     # Increment global stats.
     #
-    lisp.lisp_decap_stats["good-packets"].increment(len(packet.packet))
+    if (is_lisp_packet):
+        lisp.lisp_decap_stats["good-packets"].increment(len(packet.packet))
+    #endif
 
     #
     # Process inner header (checksum and decrement ttl).
@@ -692,8 +700,14 @@ def lisp_rtr_pcap_thread(lisp_thread):
     if (lisp.lisp_myrlocs[0] == None): return
 
     device = "lo0" if lisp.lisp_is_macos() else "any"
-
     pcap = pcappy.open_live(device, 9000, 0, 100)
+
+    #
+    # If "lisp-nat = yes" is configured, then a PETR is co-located with this
+    # RTR functionality. We need to pcap *all* packets (0.0.0.0/0 and 0::/0).
+    #
+    lisp_nat = commands.getoutput("egrep 'lisp-nat = yes' ./lisp.config")
+    lisp_nat = (lisp_nat != "" and lisp_nat[0] == " ")
 
     pfilter = "(dst host "
     afilter = ""
@@ -714,6 +728,10 @@ def lisp_rtr_pcap_thread(lisp_thread):
     pfilter += (" or (not (src host {}) and " + \
         "((udp src port 4342 and ip[28] == 0x28) or " + \
         "(udp dst port 4342 and ip[28] == 0x12)))").format(afilter)
+
+    if (lisp_nat):
+        pfilter += " or (dst net 0.0.0.0/0 and not (host {}))".format(afilter)
+    #endif
 
     lisp.lprint("Capturing packets for: '{}'".format(pfilter))
     pcap.filter = pfilter
@@ -962,6 +980,15 @@ lisp_rtr_commands = {
         "decentralized-pull-xtr-dns-suffix" : [True],
         "register-reachable-rtrs" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
+
+    "lisp interface" : [lispconfig.lisp_interface_command, {
+        "interface-name" : [True],
+        "device" : [True],
+        "instance-id" : [True, 0, 0xffffffff], 
+        "dynamic-eid" : [True],
+        "dynamic-eid-device" : [True],
+        "lisp-nat" : [True, "yes", "no"],
+        "dynamic-eid-timeout" : [True, 0, 0xff] }],
 
     "lisp map-resolver" : [lisp_rtr_map_resolver_command, {
         "mr-name" : [True],
