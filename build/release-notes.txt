@@ -1,4 +1,31 @@
 
+                lispers.net Beta Release Version 0.503
+                --------------------------------------
+
+o Release date: Wed Jun  5 17:37:55 PDT 2019
+
+o Fix range syntax in lisp.config.example documentation.
+
+o Add parameter "rloc-probe = yes | no" to the "lisp glean-mapping" command
+  clause. This is so we can disable RLOC-probing to OOR devices for now but
+  continue to RLOC-probe other gleaned entries.
+
+o Support LISP to non-LISP interworking on an RTR via the LISP-NAT feature
+  documented in RFC6832. We already had support on an xTR but we are now
+  co-locating the functionality so gleaned EIDs, via the RTR, can talk to
+  non-LISP (non-EIDs) sites. This works when xTRs are not behind NATs, are
+  behind NATs using NAT-traversal control-plane logic, or when xTRs regardless
+  if behind a NAT or not is being gleaned from the RTR.
+
+o When a gleaned source-port is 4341, the NAT is not translating the port. That 
+  means to get packets through the NAT you have to encapsulate with source AND 
+  dest port of 4341. OOR encaps by default from 4341 to 4341 and some cases the
+  port gets translated and other caees it is not. The RTR will encap from
+  4341 when the destination it is encapsulating to has been gleaned (and with
+  a gleaned port of 4341).
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.502
                 --------------------------------------
 
