@@ -423,7 +423,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         lisp.lisp_glean_map_cache(packet.inner_source, packet.outer_source,
             packet.udp_sport)
     #endif
-    glean_dest, nil = lisp.lisp_allow_gleaning(packet.inner_dest, None)
+    gleaned_dest, nil = lisp.lisp_allow_gleaning(packet.inner_dest, None)
+    packet.gleaned_dest = gleaned_dest
 
     #
     # Do map-cache lookup. If no entry found, send Map-Request.
@@ -435,7 +436,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # dest-EID is configured to be gleaned. We want to give preference to
     # the gleaned mapping and not the mapping in the mapping system.
     #
-    if (mc == None and glean_dest):
+    if (mc == None and gleaned_dest):
         lisp.lprint("Suppress Map-Request for gleaned EID {}".format( \
             lisp.green(packet.inner_dest.print_address(), False)))
         return
@@ -474,7 +475,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # entry that is about to time out.
     #
     if (mc and mc.is_active() and mc.has_ttl_elapsed() and
-        glean_dest == False):
+        gleaned_dest == False):
         lisp.lprint("Refresh map-cache entry {}".format( \
             lisp.green(mc.print_eid_tuple(), False)))
         lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 

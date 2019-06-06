@@ -1613,6 +1613,7 @@ class lisp_packet():
         self.encap_port = LISP_DATA_PORT
         self.inner_is_fragment = False
         self.packet_error = ""
+        self.gleaned_dest = False
     #enddef
 
     def encode(self, nonce):
@@ -1664,7 +1665,11 @@ class lisp_packet():
         self.udp_checksum = 0
         if (self.encap_port == LISP_DATA_PORT):
             if (lisp_crypto_ephem_port == None):
-                self.hash_packet()
+                if (self.gleaned_dest):
+                    self.udp_sport = LISP_DATA_PORT
+                else:
+                    self.hash_packet()
+                #endif
             else:
                 self.udp_sport = lisp_crypto_ephem_port
             #endif
