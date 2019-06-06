@@ -338,7 +338,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # map-server, and the NAT is ready for packets from port 4341 since we 
     # received this Info-Request.
     #
-    if (packet.lisp_header.get_instance_id() == 0xffffff):
+    if (is_lisp_packet and packet.lisp_header.get_instance_id() == 0xffffff):
         header = lisp.lisp_control_header()
         header.decode(packet.packet)
         if (header.is_info_request()):
