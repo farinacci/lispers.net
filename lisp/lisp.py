@@ -8500,6 +8500,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         add_or_replace = "Add"
         if (uptime):
             mc.uptime = uptime
+            mc.refresh_time = lisp_get_timestamp()
             add_or_replace = "Replace"
         #endif
 
@@ -12879,7 +12880,15 @@ class lisp_mapping():
     def has_ttl_elapsed(self):
         if (self.map_cache_ttl == None): return(False)
         elapsed = time.time() - self.last_refresh_time
-        return(elapsed >= self.map_cache_ttl)
+        if (elapsed >= self.map_cache_ttl): return(True)
+
+        #
+        # TTL is about to elapse. We need to refresh entry if we are 90%
+        # close to expiring.
+        #
+        almost_ttl = self.map_cache_ttl - (self.map_cache_ttl / 10)
+        if (elapsed >= almost_ttl): return(True)
+        return(False)
     #enddef
 
     def is_active(self):
@@ -15298,15 +15307,16 @@ def lisp_timeout_map_cache_entry(mc, delete_list):
         return([True, delete_list])
     #endif
 
+    now = lisp_get_timestamp()
+
     #
-    # Check acitvity timers for encapsulation entries only.
+    # Check refresh timers. Native-Forward entries just return if active,
+    # else check for encap-port changes for NAT entries. Then return if
+    # entry still active.
     #
-    if (mc.action == LISP_NO_ACTION):
-        now = lisp_get_timestamp()
-        if (mc.last_refresh_time + mc.map_cache_ttl > now): 
-            lisp_update_encap_port(mc)
-            return([True, delete_list])
-        #endif
+    if (mc.last_refresh_time + mc.map_cache_ttl > now): 
+        if (mc.action == LISP_NO_ACTION): lisp_update_encap_port(mc)
+        return([True, delete_list])
     #endif
 
     #
