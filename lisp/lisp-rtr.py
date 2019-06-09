@@ -434,9 +434,9 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #
     # Map-cache lookup miss. Do not send Map-Request to mapping system if
     # dest-EID is configured to be gleaned. We want to give preference to
-    # the gleaned mapping and not the mapping in the mapping system.
+   # the gleaned mapping and not the mapping in the mapping system.
     #
-    if (mc == None and gleaned_dest):
+    if (mc == None and gleaned_dest and packet.inner_dest.instance_id != 0):
         lisp.lprint("Suppress Map-Request for gleaned EID {}".format( \
             lisp.green(packet.inner_dest.print_address(), False)))
         return
@@ -453,6 +453,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             dest_eid = packet.inner_dest
             dest_eid.instance_id = db.secondary_iid
             mc = lisp.lisp_map_cache_lookup(packet.inner_source, dest_eid)
+            if (mc): packet.gleaned_dest = mc.gleaned
         #endif
     #endif
 
@@ -475,7 +476,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # entry that is about to time out.
     #
     if (mc and mc.is_active() and mc.has_ttl_elapsed() and
-        gleaned_dest == False):
+        mc.gleaned == False):
         lisp.lprint("Refresh map-cache entry {}".format( \
             lisp.green(mc.print_eid_tuple(), False)))
         lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 

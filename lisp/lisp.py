@@ -2196,8 +2196,9 @@ class lisp_packet():
         # Get version number of outer header so we can decode outer addresses.
         #
         header_len = 0
-        iid = self.lisp_header.get_instance_id()
+        iid = 0
         if (is_lisp_packet):
+            iid = self.lisp_header.get_instance_id()
             version = struct.unpack("B", packet[0:1])[0]
             self.outer_version = version >> 4
             if (self.outer_version == 4): 
@@ -11246,6 +11247,7 @@ class lisp_address():
     #enddef
 
     def zero_host_bits(self):
+        if (self.mask_len < 0): return
         mask = (2 ** self.mask_len) - 1
         shift = self.addr_length() * 8 - self.mask_len
         mask <<= shift
@@ -16203,8 +16205,8 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             #
             # Do not RLOC-probe gleaned entries if configured.
             #
-            gleaned_eid, probe = lisp_allow_gleaning(eid, parent_rloc)
-            if (gleaned_eid and probe == False):
+            gleaned_eid, do_probe = lisp_allow_gleaning(eid, parent_rloc)
+            if (gleaned_eid and do_probe == False):
                 e = green(eid.print_address(), False)
                 addr_str += ":{}".format(parent_rloc.translated_port)
                 lprint("Suppress probe to RLOC {} for gleaned EID {}".format( \
@@ -18686,7 +18688,7 @@ def lisp_glean_map_cache(eid, rloc, encap_port):
     # we received a packet from the source gleaned EID.
     #
     mc = lisp_map_cache.lookup_cache(eid, True)
-    if (mc):
+    if (mc and len(mc.rloc_set) != 0):
         mc.last_refresh_time = lisp_get_timestamp()
 
         cached_rloc = mc.rloc_set[0]
@@ -18722,5 +18724,5 @@ def lisp_glean_map_cache(eid, rloc, encap_port):
     mc.rloc_set = rloc_set
     mc.build_best_rloc_set()
 #enddef
-
+    
 #------------------------------------------------------------------------------
