@@ -17836,6 +17836,11 @@ def lisp_is_rloc_probe(packet, rr):
     udp = (struct.unpack("B", packet[9])[0] == 17)
     if (udp == False): return([packet, None, None, None])
 
+    sport = struct.unpack("H", packet[20:22])[0]
+    dport = struct.unpack("H", packet[22:24])[0]
+    is_lisp = (socket.htons(LISP_CTRL_PORT) in [sport, dport])
+    if (is_lisp == False): return([packet, None, None, None])
+
     if (rr == 0):
         probe = lisp_is_rloc_probe_request(packet[28])
         if (probe == False): return([packet, None, None, None])

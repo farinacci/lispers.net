@@ -432,17 +432,6 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     mc = lisp.lisp_map_cache_lookup(packet.inner_source, packet.inner_dest)
 
     #
-    # Map-cache lookup miss. Do not send Map-Request to mapping system if
-    # dest-EID is configured to be gleaned. We want to give preference to
-   # the gleaned mapping and not the mapping in the mapping system.
-    #
-    if (mc == None and gleaned_dest and packet.inner_dest.instance_id != 0):
-        lisp.lprint("Suppress Map-Request for gleaned EID {}".format( \
-            lisp.green(packet.inner_dest.print_address(), False)))
-        return
-    #endif
-        
-    #
     # Check if we are doing secondary-instance-ids only when we have a 
     # map-cache entry in the IID that is possibly a non-LISP site.
     #
@@ -452,9 +441,21 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         if (db and db.secondary_iid):
             dest_eid = packet.inner_dest
             dest_eid.instance_id = db.secondary_iid
+
             mc = lisp.lisp_map_cache_lookup(packet.inner_source, dest_eid)
             if (mc): packet.gleaned_dest = mc.gleaned
         #endif
+    #endif
+        
+    #
+    # Map-cache lookup miss. Do not send Map-Request to mapping system if
+    # dest-EID is configured to be gleaned. We want to give preference to
+    # the gleaned mapping and not the mapping in the mapping system.
+    #
+    if (mc == None and gleaned_dest):
+        lisp.lprint("Suppress Map-Request for gleaned EID {}".format( \
+            lisp.green(packet.inner_dest.print_address(), False)))
+        return
     #endif
 
     if (mc == None or mc.action == lisp.LISP_SEND_MAP_REQUEST_ACTION):
