@@ -443,7 +443,13 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             dest_eid.instance_id = db.secondary_iid
 
             mc = lisp.lisp_map_cache_lookup(packet.inner_source, dest_eid)
-            if (mc): packet.gleaned_dest = mc.gleaned
+            if (mc):
+                packet.gleaned_dest = mc.gleaned
+            else:
+                gleaned_dest, nil = lisp.lisp_allow_gleaning(dest_eid, None)
+                packet.gleaned_dest = gleaned_dest
+            #endif
+
         #endif
     #endif
         

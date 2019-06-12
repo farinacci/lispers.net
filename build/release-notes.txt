@@ -1,4 +1,37 @@
 
+                lispers.net Beta Release Version 0.504
+                --------------------------------------
+
+o Release date:
+
+o Do not check for instance-ID 0xffffff unless arrival packet is a LISP
+  encapsulated packet. This caused us to erroneously parse a data encapsulated
+  LISP control-plane message.
+
+o Refresh Native-Forward map-cache entries when they are active. They are
+  being removed after minute while data is moviing for longer than that.
+  Send refreshing Map-Request and update refresh timer.
+
+o Do not install duplicate iptables NAT entries. Check correctly if they
+  already exist.
+
+o We need to store gleaned EIDs as native-forward entries in the map-cache
+  for instance-ID 0 so we can extra-net to the instance-ID it was gleaned on
+  when a packet is sent from a non-LISP node to the gleaned EID.
+
+o Suppress sending ECM based Map-Requests for gleaned EIDs.
+
+o More granular checks for RLOC-probes since RTR now packet captures for
+  0.0.0.0/0. A DNS response from 8.8.8.8 looked like a Map-Reply.  ;-)
+
+o Add env variable LISP_IGNORE_DF_BIT since we need to fragment a packet
+  coming into an RTR in GCP which has been assembled to be greater than
+  1500 bytes but has the DF-bit set. Well to get the packet to a mobile
+  phone, it needs to be fragmented or packets are dropped. Google is doing
+  something strange. Note the TCP MSS negotiated between two endpoints is 1400.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.503
                 --------------------------------------
 

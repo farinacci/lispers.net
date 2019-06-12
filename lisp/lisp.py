@@ -2019,10 +2019,15 @@ class lisp_packet():
         #
         frag_field = struct.unpack("H", inner_hdr[6:8])[0]
         frag_field = socket.ntohs(frag_field)
+        ignore_df = os.getenv("LISP_IGNORE_DF_BIT") != None
         if (frag_field & 0x4000):
-            df_bit = bold("DF-bit set", False)
-            dprint("{} in inner header, packet discarded".format(df_bit))
-            return([], "Fragment-None-DF-bit")
+            if (ignore_df):
+                frag_field &= ~0x4000
+            else:
+                df_bit = bold("DF-bit set", False)
+                dprint("{} in inner header, packet discarded".format(df_bit))
+                return([], "Fragment-None-DF-bit")
+            #endif
         #endif
 
         offset = 0
