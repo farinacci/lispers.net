@@ -2,14 +2,14 @@
                 lispers.net Beta Release Version 0.504
                 --------------------------------------
 
-o Release date:
+o Release date: Wed Jun 19 08:58:11 PDT 2019
 
 o Do not check for instance-ID 0xffffff unless arrival packet is a LISP
   encapsulated packet. This caused us to erroneously parse a data encapsulated
   LISP control-plane message.
 
 o Refresh Native-Forward map-cache entries when they are active. They are
-  being removed after minute while data is moviing for longer than that.
+  being removed after one minute while data is moving for longer than that.
   Send refreshing Map-Request and update refresh timer.
 
 o Do not install duplicate iptables NAT entries. Check correctly if they
@@ -26,9 +26,17 @@ o More granular checks for RLOC-probes since RTR now packet captures for
 
 o Add env variable LISP_IGNORE_DF_BIT since we need to fragment a packet
   coming into an RTR in GCP which has been assembled to be greater than
-  1500 bytes but has the DF-bit set. Well to get the packet to a mobile
+  1500 bytes but has the DF-bit set. Well, to get the packet to a mobile
   phone, it needs to be fragmented or packets are dropped. Google is doing
-  something strange. Note the TCP MSS negotiated between two endpoints is 1400.
+  something strange. Note the TCP MSS negotiated between two endpoints is
+  1400. Go figure.
+
+o When the RTR encapsulates a packet it needs to use a source RLOC that is
+  a private address on eth0 or AWS won't forward it out of the cloud.
+
+o Add file docs/lisp.config.pxtr to show an example of an RTR that can be
+  configured to glean mappings and do LISP-NAT for interworking with non-LISP
+  sites.
 
 -------------------------------------------------------------------------------
 
