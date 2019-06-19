@@ -50,6 +50,12 @@ lisp_periodic_timer = None
 
 lisp_threads = []
 
+#
+# In AWS, the source RLOC must be a private address or it will not outbound
+# forward encapsulated packets.
+#
+lisp_rtr_source_rloc = None
+
 #------------------------------------------------------------------------------
 
 #
@@ -284,6 +290,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     global lisp_send_sockets, lisp_ephem_prot, lisp_data_packet 
     global lisp_raw_socket, lisp_raw_v6_socket
     global lisp_trace_listen_socket
+    global lisp_rtr_source_rloc
 
     packet = lisp_packet
     is_lisp_packet = packet.is_lisp_packet(packet.packet)
@@ -549,7 +556,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         packet.outer_dest.copy_address(dest_rloc)
         version = packet.outer_dest.afi_to_version()
         packet.outer_version = version
-        source_rloc = lisp.lisp_myrlocs[0] if (version == 4) else \
+
+        source_rloc = lisp_rtr_source_rloc if (version == 4) else \
             lisp.lisp_myrlocs[1]
         packet.outer_source.copy_address(source_rloc)
 
@@ -798,6 +806,7 @@ def lisp_rtr_startup():
     global lisp_ipc_listen_socket, lisp_send_sockets, lisp_ephem_listen_socket
     global lisp_raw_socket, lisp_raw_v6_socket, lisp_threads
     global lisp_ipc_punt_socket, lisp_trace_listen_socket
+    global lisp_rtr_source_rloc
 
     lisp.lisp_i_am("rtr")
     lisp.lisp_set_exception()
@@ -807,6 +816,15 @@ def lisp_rtr_startup():
     # Get local address for source RLOC for encapsulation.
     #
     if (lisp.lisp_get_local_addresses() == False): return(False)
+
+    #
+    # Get interface address for RTR source RLOC if env variable defined. It
+    # should be the private translatable address from a AWS resident NAT.
+    #
+    lisp_rtr_source_rloc = lisp.lisp_myrlocs[0]
+    if (lisp.lisp_on_aws()):
+        lisp_rtr_source_rloc = lisp.lisp_get_interface_address("eth0")
+    #endif
 
     #
     # Open network send socket and internal listen socket. For an RTR, that

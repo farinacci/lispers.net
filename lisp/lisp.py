@@ -607,6 +607,26 @@ def lisp_is_linux():
 #enddef
 
 #
+# lisp_on_aws
+#
+# Return True if this node is running in an Amazon VM on AWS.
+#
+def lisp_on_aws():
+    vm = commands.getoutput("sudo dmidecode -s bios-version")
+    return(vm.lower().find("amazon") != -1)
+#enddef
+
+#
+# lisp_on_gcp
+#
+# Return True if this node is running in an Google Compute Engine VM.
+#
+def lisp_on_gcp():
+    vm = commands.getoutput("sudo dmidecode -s bios-version")
+    return(vm.lower().find("google") != -1)
+#enddef
+
+#
 # lisp_process_logfile
 #
 # Check to see if logfile exists. If not, it is startup time to create one
