@@ -222,6 +222,11 @@ lisp_nat_state_info = {}
 lisp_last_map_request_sent = None
 
 #
+# Used for doing global rate-limiting of ICMP Too Big messages.
+#
+lisp_last_icmp_too_big_sent = 0
+
+#
 # Array to store 1000 flows.
 #
 LISP_FLOW_LOG_SIZE = 100
@@ -314,6 +319,19 @@ lisp_rtr_nat_trace_cache = {}
 #
 lisp_glean_mappings = []
 
+#
+# Use this socket for all ICMP Too-Big messages sent by any process. We are
+# centralizing it here.
+#
+lisp_icmp_raw_socket = None
+if (os.getenv("LISP_SEND_ICMP_TOO_BIG") != None):
+    lisp_icmp_raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW,
+        socket.IPPROTO_ICMP)
+    lisp_icmp_raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
+#endif
+
+lisp_ignore_df_bit = (os.getenv("LISP_IGNORE_DF_BIT") != None)
+
 #------------------------------------------------------------------------------
 
 #
@@ -401,6 +419,7 @@ LISP_DDT_MAP_REQUEST_INTERVAL        = 2  # In units of seconds
 LISP_MAX_MAP_NOTIFY_RETRIES          = 3
 LISP_INFO_INTERVAL                   = 15 # In units of seconds
 LISP_MAP_REQUEST_RATE_LIMIT          = 5  # In units of seconds
+LISP_ICMP_TOO_BIG_RATE_LIMIT         = 1  # In units of seconds
 #LISP_RLOC_PROBE_TTL                 = 255
 LISP_RLOC_PROBE_TTL                  = 64
 LISP_RLOC_PROBE_INTERVAL             = 10 # In units of seconds
@@ -1176,6 +1195,43 @@ def lisp_ip_checksum(data):
 #enddef
 
 #
+# lisp_icmp_checksum
+#
+# Checksum a ICMP Destination Unreachable Too Big message. It will staticly
+# checksum 36 bytes.
+#
+def lisp_icmp_checksum(data):
+    if (len(data) < 36): 
+        lprint("ICMP packet too short, length {}".format(len(data)))
+        return(data)
+    #endif
+
+    icmp = binascii.hexlify(data) 
+
+    #
+    # Go 2-bytes at a time so we only have to fold carry-over once.
+    #
+    checksum = 0
+    for i in range(0, 36, 4):
+        checksum += int(icmp[i:i+4], 16)
+    #endfor
+
+    #
+    # Add in carry and byte-swap.
+    #
+    checksum = (checksum >> 16) + (checksum & 0xffff)
+    checksum += checksum >> 16
+    checksum = socket.htons(~checksum & 0xffff)
+
+    #
+    # Pack in 2-byte buffer and insert at bytes 2 and 4.
+    #
+    checksum = struct.pack("H", checksum)
+    icmp = data[0:2] + checksum + data[4::]
+    return(icmp)
+#enddef
+
+#
 # lisp_udp_checksum
 #
 # Calculate the UDP pseudo header checksum. The variable 'data' is a UDP
@@ -1729,7 +1785,7 @@ class lisp_packet():
             tl = socket.htons(self.udp_length + 20)
             frag = socket.htons(0x4000)
             outer = struct.pack("BBHHHBBH", 0x45, self.outer_tos, tl, 0xdfdf, 
-               frag, self.outer_ttl, 17, 0)
+                frag, self.outer_ttl, 17, 0)
             outer += self.outer_source.pack_address()
             outer += self.outer_dest.pack_address()
             outer = lisp_ip_checksum(outer)
@@ -2001,7 +2057,79 @@ class lisp_packet():
         return(fragments)
     #enddef
 
+    def send_icmp_too_big(self, inner_packet):
+        global lisp_last_icmp_too_big_sent
+        global lisp_icmp_raw_socket
+        
+        elapsed = time.time() - lisp_last_icmp_too_big_sent
+        if (elapsed < LISP_ICMP_TOO_BIG_RATE_LIMIT):
+            lprint("Rate limit sending ICMP Too-Big to {}".format( \
+                self.inner_source.print_address_no_iid()))
+            return(False)
+        #endif
+
+        #
+        #   Destination Unreachable Message - Too Big Message
+        #
+        #    0                   1                   2                   3
+        #    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+        #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        #   |    Type = 3   |   Code = 4    |          Checksum             |
+        #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        #   |            unused             |          MTU = 1400           |
+        #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        #   |      Internet Header + 64 bits of Original Data Datagram      |
+        #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        #
+        mtu = socket.htons(1400)
+        icmp = struct.pack("BBHHH", 3, 4, 0, 0, mtu)
+        icmp += inner_packet[0:20+8]
+        icmp = lisp_icmp_checksum(icmp)
+
+        #
+        # Build IP header. Make source of ICMP invoking packet the destination
+        # and our address the source. We can get our address when we thought
+        # we could encap. So lisp_packet.outer_source has the RLOC address of
+        # this system.
+        #
+        host = inner_packet[12:16]
+        dest = self.inner_source.print_address_no_iid()
+        me = self.outer_source.pack_address()
+
+        #
+        # IP_HDRINCL requires the total-length and frag-offset fields to be
+        # host byte order. We need to build the total-length field just like
+        # lisp_packet.encode(), checksum, and then fix outer header. So that
+        # logic is semantically repliciated here. Same logic is in lisp_packet.
+        # fragment() as well.
+        #
+        tl = socket.htons(20+36)
+        ip = struct.pack("BBHHHBBH", 0x45, 0, tl, 0, 0, 32, 1, 0) + me + host
+        ip = lisp_ip_checksum(ip)
+        ip = self.fix_outer_header(ip)
+        ip += icmp
+        tb = bold("Too-Big", False)
+        lprint("Send ICMP {} to {}, mtu 1400: {}".format(tb, dest,
+            lisp_format_packet(ip)))
+
+        try:
+            lisp_icmp_raw_socket.sendto(ip, (dest, 0))
+        except socket.error, e:
+            lprint("lisp_icmp_raw_socket.sendto() failed: {}".format(e))
+            return(False)
+        #endtry
+
+        #
+        # Caller function sends packet on raw socket. Kernel routes out
+        # interface to destination.
+        #
+        lisp_last_icmp_too_big_sent = lisp_get_timestamp()
+        return(True)
+
     def fragment(self):
+        global lisp_icmp_raw_socket
+        global lisp_ignore_df_bit
+        
         packet = self.fix_outer_header(self.packet)
 
         #
@@ -2035,13 +2163,17 @@ class lisp_packet():
         inner_packet = packet[outer_hdr_len + 20::]
 
         #
-        # If DF-bit is set, don't fragment packet.
+        # If DF-bit is set, don't fragment packet. Do MTU discovery if
+        # configured with env variable.
         #
         frag_field = struct.unpack("H", inner_hdr[6:8])[0]
         frag_field = socket.ntohs(frag_field)
-        ignore_df = os.getenv("LISP_IGNORE_DF_BIT") != None
         if (frag_field & 0x4000):
-            if (ignore_df):
+            if (lisp_icmp_raw_socket != None):
+                inner = packet[outer_hdr_len::]
+                if (self.send_icmp_too_big(inner)): return([], None)
+            #endif
+            if (lisp_ignore_df_bit):
                 frag_field &= ~0x4000
             else:
                 df_bit = bold("DF-bit set", False)
