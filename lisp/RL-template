@@ -64,6 +64,11 @@ exit
 #sudo ifconfig lo0 x.x.x.x/32 alias
 #sudo ifconfig lo0 inet6 2001:5:3::x/128 alias
 
+# -------------------- Must set MTU on EID Interface --------------------
+
+#sudo ifconfig lo mtu 1400
+#sudo ifconfig lo0 mtu 1400
+
 # -------------------- EID Source Address Selection --------------------
 
 #
@@ -116,7 +121,19 @@ exit
 # interface and the command line below needs to be "./RESTART-LISP 8080 lo".
 #
 #sudo ip addr add <rtr-translated-rloc>/32 dev lo >& /dev/null
-#sudo ip addr add 130.211.169.66/32 dev lo >& /dev/null
+set RTR_ADDRESS = "<rtr-translated-rloc>"
+#sudo ip addr add $RTR_ADDRESS/32 dev lo >& /dev/null
+
+#
+# In RTRs doing LISP-NAT, to avoid jumbo frames with DF-bit set (which means
+# the RTR would drop packets), we need to disable TCP-segment-offload and
+# scatter-gather. Also, lower MSS so there is room for LISP headers for TCP
+# packets. In GCP device is ens4 in AWS device is eth0.
+#
+set DEVICE = "eth0"
+#sudo ethtool -K $DEVICE tso off
+#sudo ethtool -K $DEVICE sg off
+#sudo iptables -t mangle -A POSTROUTING -o $DEVICE -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
 
 # -------------------- LISP Subsystem Startup --------------------
 
