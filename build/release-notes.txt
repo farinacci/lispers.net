@@ -1,4 +1,34 @@
 
+                lispers.net Beta Release Version 0.505
+                --------------------------------------
+
+o Release date: Wed Jul 17 17:48:47 PDT 2019
+
+o During LISP-NAT interworking, when the RTR receives a packet larger than
+  1400 bytes with the DF bit set in the IPv4 header, trigger an ICMP Too
+  Big message so the non-LISP host can send smaller packets so the RTR
+  can encap to a LISP-MN without fragmentation. This helps performance when
+  a mobile-node runs LISP and is talking to a non-LISP node.
+
+o Rate-limit sending ICMP Too Big messages globally to one a second.
+
+o Change permissions on files RUN-LISP and STOP-LISP to 555. We don't want to
+  encourage users to modify these files unless instructed.
+
+o Put ifconfig command in RL-template to change mtu to 1400 on the interface
+  an EID is assigned to.
+
+o Comment out (and off by default) env variables LISP_SEND_ICMP_TOO_BIG and
+  LISP_IGNORE_DF_BIT. These ICMP/MTU settings are experimental and shouldn't
+  be used. We will continue to experiment with them while testing LISP-MN.
+
+o Put OS specific commands in RL-template so when you run an RTR in a cloud
+  provider with LISP-NAT configured that CP segment offload can be disabled
+  for jumbo frames with DF-bit set. This allows LISP-to-non-LISP interworking
+  to have better performance when web browsing.
+  
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.504
                 --------------------------------------
 
