@@ -133,7 +133,10 @@ set RTR_ADDRESS = "<rtr-translated-rloc>"
 set DEVICE = "eth0"
 #sudo ethtool -K $DEVICE tso off
 #sudo ethtool -K $DEVICE sg off
-#sudo iptables -t mangle -A POSTROUTING -o $DEVICE -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
+sudo iptables -t mangle -C POSTROUTING -o $DEVICE -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
+if ($status == "1") then
+#    sudo iptables -t mangle -A POSTROUTING -o $DEVICE -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
+endif
 
 # -------------------- LISP Subsystem Startup --------------------
 
