@@ -631,8 +631,8 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     # Do input processing for currently supported packet types..
     #
     if (packet.inner_version == 4):
-        packet.packet = lisp.lisp_ipv4_input(packet.packet)
-        if (packet.packet == None): return
+        igmp, packet.packet = lisp.lisp_ipv4_input(packet.packet)
+        if (packet.packet == None or igmp): return
         packet.inner_ttl -= 1
     elif (packet.inner_version == 6):
         packet.packet = lisp.lisp_ipv6_input(packet)

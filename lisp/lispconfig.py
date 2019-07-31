@@ -3665,6 +3665,9 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None):
                 v = value[i]
                 if (v == ""): continue
                 db.secondary_iid = int(v)
+                if (db.eid.address == 0):
+                    lisp.lisp_default_secondary_iid = int(v)
+                #endif
             #endfor
         #endif
         if (kw == "eid-prefix"):
@@ -3672,6 +3675,9 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None):
                 db = prefix_set[i]
                 v = value[i]
                 if (v != ""): db.eid.store_prefix(v)
+                if (db.eid.address == 0):
+                    lisp.lisp_default_secondary_iid = db.secondary_iid
+                #endif
             #endfor
         #endif
         if (kw == "group-prefix"):

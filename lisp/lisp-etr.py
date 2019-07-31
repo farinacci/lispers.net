@@ -746,21 +746,6 @@ def lisp_process_register_timer(lisp_sockets):
 #enddef
 
 #
-# lisp_is_group_more_specific
-#
-# Take group address in string format and see if it is more specific than
-# the group-prefix in class lisp_group_mapping(). If more specific, return
-# mask-length, otherwise return -1.
-#
-def lisp_is_group_more_specific(group_str, group_mapping):
-    iid = group_mapping.group_prefix.instance_id
-    mask_len = group_mapping.group_prefix.mask_len
-    group = lisp.lisp_address(lisp.LISP_AFI_IPV4, group_str, 32, iid)
-    if (group.is_more_specific(group_mapping.group_prefix)): return(mask_len)
-    return(-1)
-#enddef
-
-#
 # lisp_send_multicast_map_register
 #
 # Build a Map-Register message with a Multicast Info Type LCAF as an EID-record
@@ -797,14 +782,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     ms_list = {}
     entries = []
     for group, joinleave in g_entries: 
-        ms_gm = None
-        for gm in lisp.lisp_group_mapping_list.values():
-            mask_len = lisp_is_group_more_specific(group, gm)
-            if (mask_len == -1): continue
-            if (ms_gm == None or mask_len > ms_gm.group_prefix.mask_len):
-                ms_gm = gm
-            #endif
-        #endfor
+        ms_gm = lisp.lisp.lisp_lookup_group(group)
         if (ms_gm == None):
             lisp.lprint("No group-mapping for {}, could be underlay group". \
                 format(group))
@@ -1364,7 +1342,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
         if (lisp.lisp_is_rloc_probe_request(inner_lisp[0])):
             ttl = struct.unpack("B", inner_ip[8])[0] - 1
         #endif
-        source = packet.inner_source.print_address_no_iid()
+        source = packet.outer_source.print_address_no_iid()
         lisp.lisp_parse_packet(lisp_send_sockets, inner_lisp, source, 0, ttl)
         return
     #endif
@@ -1392,14 +1370,19 @@ def lisp_etr_data_plane(parms, not_used, packet):
     #
     # Process inner header (checksum and decrement ttl).
     #
+    igmp = False
     L2 = packet.inner_dest.is_mac()
     if (L2):
         packet.packet = lisp.lisp_mac_input(packet.packet)
         if (packet.packet == None): return
         f_or_b = lisp.bold("Bridge", False)
     elif (packet.inner_version == 4):
-        packet.packet = lisp.lisp_ipv4_input(packet.packet)
+        igmp, packet.packet = lisp.lisp_ipv4_input(packet.packet)
         if (packet.packet == None): return
+        if (igmp):
+            lisp_process_igmp_packet(packet.packet)
+            return
+        #endif
         packet.inner_ttl = packet.outer_ttl
     elif (packet.inner_version == 6):
         packet.packet = lisp.lisp_ipv6_input(packet)
@@ -1623,12 +1606,7 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
 # source for the IPv6 group-prefix found.
 #
 def lisp_register_ipv6_group_entries(group, joinleave):
-    ms_gm = None
-    for gm in lisp.lisp_group_mapping_list.values():
-        mask_len = lisp_is_group_more_specific(group, gm)
-        if (mask_len == -1): continue
-        if (ms_gm == None or mask_len > ms_gm.mask_len): ms_gm = gm
-    #endfor
+    ms_gm = lisp.lisp.lisp_lookup_group(group)
     if (ms_gm == None): return
 
     sg = []

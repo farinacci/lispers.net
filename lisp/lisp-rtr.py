@@ -32,6 +32,7 @@ import pcappy
 import os
 import copy
 import commands
+import binascii
 
 #------------------------------------------------------------------------------
 
@@ -281,6 +282,204 @@ def lisp_fix_rloc_encap_state(sockets, hostname, rloc, port):
 #enddef
 
 #
+# lisp_fast_debug
+#
+# Print out debug for lisp_rtr_fast_data_plane().
+#
+def lisp_fast_debug(sred, packet):
+    if (lisp.lisp_data_plane_logging == False): return
+
+    if (sred in ["Send", "Receive"]):
+        p = binascii.hexlify(packet[0:20])
+        lisp.lprint("Fast-{}: ip {} {} {} {} {}".format(sred, p[0:8], p[8:16],
+            p[16:24], p[24:32], p[32:40]))
+    elif (sred in ["Encap", "Decap"]):
+        p = binascii.hexlify(packet[0:36])
+        lisp.lprint("Fast-{}: ip {} {} {} {} {}, udp {} {}, lisp {} {}". \
+            format(sred, p[0:8], p[8:16], p[16:24], p[24:32], p[32:40],
+            p[40:48], p[48:56], p[56:64], p[64:72]))
+    #endif
+#enddef
+
+#
+# lisp_fast_lookup_debug
+#
+# Print out lisp_rtr_fast_data_plane() lookup information.
+#
+def lisp_fast_lookup_debug(dest, mc):
+    if (lisp.lisp_data_plane_logging == False): return
+
+    hm = "miss" if mc == None else "hit!"
+    lisp.lprint("Fast-Lookup {} {}".format(dest.print_address(), hm))
+#enddef
+
+#
+# lisp_fast_latency_debug
+#
+# Set or print latency timing.
+#
+def lisp_fast_latency_debug(ts):
+#   if (lisp.lisp_data_plane_logging == False): return(None)
+    if (ts == None): return(time.time())
+
+    ts = (time.time() - ts) * 1000000
+    lisp.lprint("Fast-Latency: {} usecs".format(round(ts, 1)))
+    return(None)        
+#enddef    
+
+#
+# lisp_rtr_fast_data_plane
+#
+# This is a python fast data plane that is limited in features and process
+# packets in a raw manner. That is, there are no library calls and no byte
+# swaps done. It is designed to make the gleaning RTR data-plane with LISP
+# to non-LISP interworking go faster.
+#
+# Any non-fast operations returns False to allow lisp_rtr_data_plane() to
+# process the packet normally.
+#
+# The first byte of 'packet' is assumed to be either the first byte of the
+# LISP encapsulated packet (coming from an ITR) or a regular IP packet
+# (arriving from a non-LISP source). All other packets (like LISP control-plane
+# packets that can come in the form of both encapsulated or non encapsulated,
+# return False, for lisp_rtr_data_plane() to process.
+#
+lisp_address_cached = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
+
+def lisp_rtr_fast_data_plane(packet):
+    global lisp_address_cached, lisp_map_cache, lisp_raw_socket
+
+    ts = lisp_fast_latency_debug(None)
+
+    #
+    # Check if UDP ports for any type of LISP packet. Strict outer headers
+    # if LISP encapsulated packet.
+    #
+    iid = 0
+    if (packet[9] == '\x11'):
+        if (packet[20:22] == '\x10\xf6'): return(False)
+        if (packet[22:24] == '\x10\xf6'): return(False)
+
+        if (packet[22:24] == '\x10\xf5' or packet[24:26] == '\x10\xf5'):
+            iid = packet[32:35]
+            iid = ord(iid[0]) << 16 | ord(iid[1]) << 8 | ord(iid[2])
+            if (iid == 0xffffff): return(False)
+            lisp_fast_debug("Decap", packet)
+            packet = packet[36::]
+        #endif
+    #endif
+
+    lisp_fast_debug("Receive", packet)
+
+    #
+    # Get destination in a form for map_cache lookup.
+    #
+    dest = packet[16:20]
+    dest = ord(dest[0]) << 24 | ord(dest[1]) << 16 | ord(dest[2]) << 8 | \
+        ord(dest[3])
+    lisp_address_cached.instance_id = iid
+    lisp_address_cached.address = dest
+
+    #
+    # Don't switch multicast for now.
+    #
+    if ((dest & 0xe0000000) == 0xe0000000): return(False)
+    
+    #
+    # Do map-cache lookup.
+    #
+    dest = lisp_address_cached
+    mc = lisp.lisp_map_cache.lookup_cache(dest, False)
+    lisp_fast_lookup_debug(dest, mc)
+    if (mc == None): return(False)
+
+    #
+    # Need this check for interworking.
+    #
+    if (mc.action == lisp.LISP_NATIVE_FORWARD_ACTION and
+        mc.eid.instance_id == 0):
+        dest.instance_id = lisp.lisp_default_secondary_iid
+        mc = lisp.lisp_map_cache.lookup_cache(dest, False)
+        lisp_fast_lookup_debug(dest, mc)
+        if (mc == None): return(False)
+    #endif
+
+    #
+    # Determine if new LISP encap is to be prepended or we are forwarding
+    # a decapsulated packet.
+    #
+    if (mc.action != lisp.LISP_NATIVE_FORWARD_ACTION):
+        if (mc.best_rloc_set == []): return(False)
+        
+        dest = mc.best_rloc_set[0]
+        if (dest.state != lisp.LISP_RLOC_UP_STATE): return(False)
+
+        iid = mc.eid.instance_id
+        port = dest.translated_port
+        stats = dest.stats
+        dest = dest.rloc
+        drloc = dest.address
+        srloc = lisp.lisp_myrlocs[0].address
+
+        #
+        # Build outer IPv4 header.
+        #
+        outer = '\x45\x00'
+        length = len(packet) + 20 + 8 + 8
+        outer += chr((length >> 8) & 0xff) + chr(length & 0xff)
+        outer += '\xff\xff\x40\x00\x10\x11\x00\x00'
+        outer += chr((srloc >> 24) & 0xff)
+        outer += chr((srloc >> 16) & 0xff)
+        outer += chr((srloc >> 8) & 0xff)
+        outer += chr(srloc & 0xff)
+        outer += chr((drloc >> 24) & 0xff)
+        outer += chr((drloc >> 16) & 0xff)
+        outer += chr((drloc >> 8) & 0xff)
+        outer += chr(drloc & 0xff)
+        outer = lisp.lisp_ip_checksum(outer)
+
+        #
+        # Build UDP and LISP headers.
+        #
+        udplen = length - 20
+        udplisp = '\xff\x00' if (port == 4341) else '\x10\xf5'
+        udplisp += chr((port >> 8) & 0xff) + chr(port & 0xff)
+        udplisp += chr((udplen >> 8) & 0xff) + chr(udplen & 0xff) + '\x00\x00'
+
+        udplisp += '\x08\xdf\xdf\xdf'
+        udplisp += chr((iid >> 16) & 0xff)
+        udplisp += chr((iid >> 8) & 0xff)
+        udplisp += chr(iid & 0xff)
+        udplisp += '\x00'
+
+        #
+        # Append all outer headers.
+        #
+        packet = outer + udplisp + packet
+        lisp_fast_debug("Encap", packet)
+    else:
+        length = len(packet)
+        stats = mc.stats
+        lisp_fast_debug("Send", packet)
+    #endif
+
+    #
+    # Increment stats.
+    #
+    mc.last_refresh_time = time.time()
+    stats.increment(length)
+    
+    #
+    # Send it.
+    #
+    dest = dest.print_address_no_iid()
+    lisp_raw_socket.sendto(packet, (dest, 0))
+
+    lisp_fast_latency_debug(ts)
+    return(True)
+#endif    
+
+#
 # lisp_rtr_data_plane
 #
 # Capture a LISP encapsulated packet, decap it, process inner header, and
@@ -292,6 +491,14 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     global lisp_trace_listen_socket
     global lisp_rtr_source_rloc
 
+    #
+    # Try switching packet fast.
+    #
+    #if (lisp_rtr_fast_data_plane(lisp_packet.packet)): return
+
+    #
+    # Feature-rich forwarding path.
+    #
     packet = lisp_packet
     is_lisp_packet = packet.is_lisp_packet(packet.packet)
 
@@ -399,8 +606,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         if (packet.packet == None): return
         packet.encap_port = lisp.LISP_VXLAN_DATA_PORT
     elif (packet.inner_version == 4):
-        packet.packet = lisp.lisp_ipv4_input(packet.packet)
-        if (packet.packet == None): return
+        igmp, packet.packet = lisp.lisp_ipv4_input(packet.packet)
+        if (packet.packet == None or igmp): return
         packet.inner_ttl = packet.outer_ttl
     elif (packet.inner_version == 6):
         packet.packet = lisp.lisp_ipv6_input(packet)
@@ -427,8 +634,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     allow, nil = lisp.lisp_allow_gleaning(packet.inner_source,
         packet.outer_source)
     if (allow):
-        lisp.lisp_glean_map_cache(packet.inner_source, packet.outer_source,
-            packet.udp_sport)
+        lisp.lisp_glean_map_cache(packet.inner_source, packet.inner_dest,
+            packet.outer_source, packet.udp_sport)
     #endif
     gleaned_dest, nil = lisp.lisp_allow_gleaning(packet.inner_dest, None)
     packet.gleaned_dest = gleaned_dest
@@ -710,7 +917,8 @@ def lisp_rtr_pcap_process_packet(parms, not_used, packet):
 #
 # lisp_rtr_pcap_thread
 #
-# Receive LISP encapsulated packet from pcap.
+# Setup pcap filters for this thread to receive packets in lisps_rtr_pcap_
+# processs_packet().
 #
 def lisp_rtr_pcap_thread(lisp_thread):
     lisp.lisp_set_exception()

@@ -202,6 +202,7 @@ lisp_ipc_lock = None
 # command.
 #
 lisp_default_iid = 0
+lisp_default_secondary_iid = 0
 
 #
 # Configured list of RTRs that the lisp-core process will insert into
@@ -13399,6 +13400,36 @@ class lisp_group_mapping():
     #enddef
 #endclass
 
+#
+# lisp_is_group_more_specific
+#
+# Take group address in string format and see if it is more specific than
+# the group-prefix in class lisp_group_mapping(). If more specific, return
+# mask-length, otherwise return -1.
+#
+def lisp_is_group_more_specific(group_str, group_mapping):
+    iid = group_mapping.group_prefix.instance_id
+    mask_len = group_mapping.group_prefix.mask_len
+    group = lisp_address(LISP_AFI_IPV4, group_str, 32, iid)
+    if (group.is_more_specific(group_mapping.group_prefix)): return(mask_len)
+    return(-1)
+#enddef
+
+#
+# lisp_lookup_group
+#
+# Lookup group addresss in lisp_group_mapping_list{}.
+#
+def lisp_lookup_group(group):
+    best = None
+    for gm in lisp_group_mapping_list.values():
+        mask_len = lisp_is_group_more_specific(group, gm)
+        if (mask_len == -1): continue
+        if (best == None or mask_len > best.group_prefix.mask_len): best = gm
+    #endfor
+    return(best)
+#enddef
+
 lisp_site_flags = {
     "P": "ETR is {}Requesting Map-Server to Proxy Map-Reply",
     "S": "ETR is {}LISP-SEC capable",
@@ -14624,6 +14655,11 @@ def lisp_get_decent_map_resolver(eid):
 def lisp_ipv4_input(packet):
 
     #
+    # Check IGMP packet first. And don't do IP checksum and don't test TTL.
+    #
+    if (ord(packet[9]) == 2): return([True, packet])
+
+    #
     # Now calculate checksum for verification.
     #
     checksum = struct.unpack("H", packet[10:12])[0]
@@ -14636,7 +14672,7 @@ def lisp_ipv4_input(packet):
             dprint("IPv4 header checksum failed for inner header")
             packet = lisp_format_packet(packet[0:20])
             dprint("Packet header: {}".format(packet))
-            return(None)
+            return([False, None])
         #endif
     #endif
 
@@ -14647,18 +14683,18 @@ def lisp_ipv4_input(packet):
     ttl = struct.unpack("B", packet[8:9])[0]
     if (ttl == 0):
         dprint("IPv4 packet arrived with ttl 0, packet discarded")
-        return(None)
+        return([False, None])
     elif (ttl == 1):
         dprint("IPv4 packet {}, packet discarded".format( \
             bold("ttl expiry", False)))
-        return(None)
+        return([False, None])
     #endif
 
     ttl -= 1
     packet = packet[0:8] + struct.pack("B", ttl) + packet[9::]
     packet = packet[0:10] + struct.pack("H", 0) + packet[12::]
     packet = lisp_ip_checksum(packet)
-    return(packet)
+    return([False, packet])
 #enddef
 
 #
@@ -18842,14 +18878,14 @@ def lisp_allow_gleaning(eid, rloc):
 #
 # Add or update a gleaned EID/RLOC to the map-cache.
 #
-def lisp_glean_map_cache(eid, rloc, encap_port):
+def lisp_glean_map_cache(seid, deid, rloc, encap_port):
 
     #
     # First do lookup to see if EID is in map-cache. Check to see if RLOC
     # or encap-port needs updating. If not, return. Set refresh timer since
     # we received a packet from the source gleaned EID.
     #
-    mc = lisp_map_cache.lookup_cache(eid, True)
+    mc = lisp_map_cache.lookup_cache(seid, True)
     if (mc and len(mc.rloc_set) != 0):
         mc.last_refresh_time = lisp_get_timestamp()
 
@@ -18857,22 +18893,21 @@ def lisp_glean_map_cache(eid, rloc, encap_port):
         if (cached_rloc.rloc.is_exact_match(rloc) and
             cached_rloc.translated_port == encap_port): return
         
-        e = green(eid.print_address(), False)
+        e = green(seid.print_address(), False)
         r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
         lprint("Gleaned EID {} RLOC changed to {}".format(e, r))
         cached_rloc.delete_from_rloc_probe_list(mc.eid, mc.group)
     else:
         mc = lisp_mapping("", "", [])
-        mc.eid.copy_address(eid)
+        mc.eid.copy_address(seid)
         mc.mapping_source.copy_address(rloc)
         mc.map_cache_ttl = LISP_GLEAN_TTL
         mc.gleaned = True
-        e = green(eid.print_address(), False)
+        e = green(seid.print_address(), False)
         r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
         lprint("Add gleaned EID {} to map-cache with RLOC {}".format(e, r))
         mc.add_cache()
     #endif
-
 
     #
     # Adding RLOC to new map-cache entry or updating RLOC for existing entry..
@@ -18885,6 +18920,83 @@ def lisp_glean_map_cache(eid, rloc, encap_port):
     rloc_set = [rloc_entry]
     mc.rloc_set = rloc_set
     mc.build_best_rloc_set()
+
+    #
+    # Unicast gleaning only.
+    #
+    if (deid.is_multicast_address() == False): return
+
+    #
+    # Add (S,G) or (*,G) to map-cache. Do group lookup in group-mappings to
+    # determine if group allowed to be joined.
+    #
+    gm = lisp_lookup_group(deid)
+    if (gm == None): return
+
+    #
+    # Support (*,G) only gleaning. Scales better anyway.
+    #
+    mc = lisp_map_cache_lookup(seid, deid)
+    if (mc == None):
+        mc = lisp_mapping("", "", [])
+        mc.eid.copy_address(seid)
+        mc.eid.address = 0
+        mc.eid.mask_len = 0
+        mc.group.copy_address(deid)
+        mc.mapping_source.copy_address(rloc)
+        mc.map_cache_ttl = LISP_GLEAN_TTL
+        mc.gleaned = True
+        e = green("(*, {})".format(deid.print_address()), False)
+        r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
+        lprint("Add gleaned EID {} to map-cache with RLE {}".format(e, r))
+        mc.add_cache()
+    #endif
+
+    #
+    # Check to see if RLE node exists. If so, update the RLE node RLOC and
+    # encap-port.
+    #
+    rloc_entry = rle_entry = rle_node = None
+    if (mc.rloc_set != []):
+        rloc_entry = mc.rloc_set[0]
+        if (rloc_entry.rle):
+            rle_entry = rloc_entry.rle
+            for rn in rle_entry.rle_nodes:
+                if (rn.address.is_exact_match(rloc.rloc) == False): continue
+                rle_node = rn
+                break
+            #endfor
+        #endif
+    #endif
+    
+    #
+    # Adding RLE to existing rloc-set or create new one.
+    #
+    if (rloc_entry == None):
+        rloc_entry = lisp_rloc()
+        mc.rloc_set = [rloc_entry]
+        rloc_entry.priority = 253
+        rloc_entry.mpriority = 255
+        mc.build_best_rloc_set()
+    #endif
+    if (rle_entry == None):
+        rle_entry = lisp_rle()
+        rloc_entry.rle = rle_entry
+    #endif
+    if (rle_node == None):
+        rle_node = lisp_rle_node()
+        rle_entry.rle_nodes.append(rle_node)
+    #endif
+
+    #
+    # Add or update.
+    #
+    rle_node.store_translated_rloc(rloc, encap_port)
+    rloc_entry.add_to_rloc_probe_list(mc.eid, mc.group)
+
+    e = green("(*, {})".format(deid.print_address()), False)
+    r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
+    lprint("Gleaned EID {} RLE changed to {}".format(e, r))
 #enddef
     
 #------------------------------------------------------------------------------
