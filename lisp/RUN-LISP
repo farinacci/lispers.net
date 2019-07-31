@@ -46,6 +46,12 @@ setenv LISP_VIRTIO_BUG
 #setenv LISP_USE_AF_PACKET
 
 #
+# Faster python data-plane.
+#
+#setenv LISP_RTR_FAST_DATA_PLANE
+#setenv LISP_RTR_LATENCY_DEBUG
+
+#
 # Cipher defaults to chacha20. Comment out CHACHA line below if you want AES.
 # When you use AES, choose either GCM or CBC. Default is CBC. If you want the
 # python data-plane to interrwork with the go data-plane, use GCM. ECDH 25519

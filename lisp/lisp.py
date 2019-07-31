@@ -696,17 +696,25 @@ def lisp_i_am(name):
 #
 # lprint
 #
-# Print with timestamp and component name prefixed.
+# Print with timestamp and component name prefixed. If "force" is any argument,
+# then we don't care about the lisp_debug_logging setting and a log message
+# is issued.
 #
 def lprint(*args):
-    if (lisp_debug_logging == False): return
+    force = ("force" in args)
+    if (lisp_debug_logging == False and force == False): return
 
     lisp_process_logfile()
     ts = datetime.datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")
     ts = ts[:-3]
     print "{}: {}:".format(ts, lisp_log_id),
-    for arg in args: print arg,
+
+    for arg in args:
+        if (arg == "force"): continue
+        print arg,
+    #endfor
     print ""
+
     try: sys.stdout.flush()
     except: pass
     return

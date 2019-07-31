@@ -57,6 +57,12 @@ lisp_threads = []
 #
 lisp_rtr_source_rloc = None
 
+#
+# Check if fast python data-plane should run.
+#
+lisp_rtr_fast_mode = (os.getenv("LISP_RTR_FAST_DATA_PLANE") != None)
+lisp_rtr_latency_debug = (os.getenv("LISP_RTR_LATENCY_DEBUG") != None)
+
 #------------------------------------------------------------------------------
 
 #
@@ -314,18 +320,40 @@ def lisp_fast_lookup_debug(dest, mc):
 #enddef
 
 #
-# lisp_fast_latency_debug
+# lisp_latency_debug
 #
-# Set or print latency timing.
+# Set or print latency timing. Used by both lisp_rtr_data_plane() and lisp_
+# rtr_fast_data_plane().
 #
-def lisp_fast_latency_debug(ts):
-#   if (lisp.lisp_data_plane_logging == False): return(None)
+def lisp_latency_debug(ts, msg):
+    global lisp_rtr_latency_debug
+    
+    if (lisp.lisp_data_plane_logging == False and
+        lisp_rtr_latency_debug == False): return(None)
+
+    #
+    # Return the initial timestamp when requested.
+    #
     if (ts == None): return(time.time())
 
+    #
+    # Compute elapsed time from initial timestamp.
+    #
     ts = (time.time() - ts) * 1000000
-    lisp.lprint("Fast-Latency: {} usecs".format(round(ts, 1)))
+    lisp.lprint("{}-Latency: {} usecs".format(msg, round(ts, 1)), "force")
     return(None)        
-#enddef    
+#enddef
+
+#
+# lisp_fast_address_to_binary
+#
+# Convert 4-byte address from packet format to binary. Used to store in
+# lisp_address.address for other support functions to be used.
+#
+def lisp_fast_address_to_binary(a):
+    binary = ord(a[0]) << 24 | ord(a[1]) << 16 | ord(a[2]) << 8 | ord(a[3])
+    return(binary)
+#enddef
 
 #
 # lisp_rtr_fast_data_plane
@@ -344,23 +372,26 @@ def lisp_fast_latency_debug(ts):
 # packets that can come in the form of both encapsulated or non encapsulated,
 # return False, for lisp_rtr_data_plane() to process.
 #
-lisp_address_cached = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
+lisp_seid_cached = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
+lisp_deid_cached = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
 
 def lisp_rtr_fast_data_plane(packet):
     global lisp_address_cached, lisp_map_cache, lisp_raw_socket
 
-    ts = lisp_fast_latency_debug(None)
+    ts = lisp_latency_debug(None, "Fast")
 
     #
     # Check if UDP ports for any type of LISP packet. Strict outer headers
     # if LISP encapsulated packet.
     #
     iid = 0
+    srloc = None
     if (packet[9] == '\x11'):
         if (packet[20:22] == '\x10\xf6'): return(False)
         if (packet[22:24] == '\x10\xf6'): return(False)
 
-        if (packet[22:24] == '\x10\xf5' or packet[24:26] == '\x10\xf5'):
+        if (packet[20:22] == '\x10\xf5' or packet[22:24] == '\x10\xf5'):
+            srloc = packet[12:16]
             iid = packet[32:35]
             iid = ord(iid[0]) << 16 | ord(iid[1]) << 8 | ord(iid[2])
             if (iid == 0xffffff): return(False)
@@ -374,11 +405,9 @@ def lisp_rtr_fast_data_plane(packet):
     #
     # Get destination in a form for map_cache lookup.
     #
-    dest = packet[16:20]
-    dest = ord(dest[0]) << 24 | ord(dest[1]) << 16 | ord(dest[2]) << 8 | \
-        ord(dest[3])
-    lisp_address_cached.instance_id = iid
-    lisp_address_cached.address = dest
+    dest = lisp_fast_address_to_binary(packet[16:20])
+    lisp_deid_cached.instance_id = iid
+    lisp_deid_cached.address = dest
 
     #
     # Don't switch multicast for now.
@@ -388,10 +417,28 @@ def lisp_rtr_fast_data_plane(packet):
     #
     # Do map-cache lookup.
     #
-    dest = lisp_address_cached
+    dest = lisp_deid_cached
     mc = lisp.lisp_map_cache.lookup_cache(dest, False)
     lisp_fast_lookup_debug(dest, mc)
     if (mc == None): return(False)
+
+    #
+    # Check for source gleaning. If gleaned entry and RLOC changes from SRLOC
+    # return to do more general processing.
+    #
+    if (srloc != None):
+        src = lisp_fast_address_to_binary(packet[12:16])
+        lisp_seid_cached.instance_id = iid
+        lisp_seid_cached.address = src
+        src_mc = lisp.lisp_map_cache.lookup_cache(lisp_seid_cached, False)
+        if (src_mc == None):
+            allow, nil = lisp.lisp_allow_gleaning(src, None)
+            if (allow): return(False)
+        elif (src_mc.gleaned):
+            srloc = lisp_fast_address_to_binary(srloc)
+            if (src_mc.rloc_set[0].rloc.address != srloc): return(False)
+        #endif
+    #endif
 
     #
     # Need this check for interworking.
@@ -475,7 +522,7 @@ def lisp_rtr_fast_data_plane(packet):
     dest = dest.print_address_no_iid()
     lisp_raw_socket.sendto(packet, (dest, 0))
 
-    lisp_fast_latency_debug(ts)
+    lisp_latency_debug(ts, "Fast")
     return(True)
 #endif    
 
@@ -490,11 +537,16 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     global lisp_raw_socket, lisp_raw_v6_socket
     global lisp_trace_listen_socket
     global lisp_rtr_source_rloc
+    global lisp_rtr_fast_mode
+
+    ts = lisp_latency_debug(None, "RTR")
 
     #
     # Try switching packet fast.
     #
-    #if (lisp_rtr_fast_data_plane(lisp_packet.packet)): return
+    if (lisp_rtr_fast_mode):
+        if (lisp_rtr_fast_data_plane(lisp_packet.packet)): return
+    #endif
 
     #
     # Feature-rich forwarding path.
@@ -663,7 +715,6 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
                 gleaned_dest, nil = lisp.lisp_allow_gleaning(dest_eid, None)
                 packet.gleaned_dest = gleaned_dest
             #endif
-
         #endif
     #endif
         
@@ -726,6 +777,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
                 r = "not an EID"
                 lisp.lisp_trace_append(packet, reason=r, lisp_socket=s)
             #endif
+            lisp_latency_debug(ts, "RTR")
             return
         #endif
         r = "No reachable RLOCs found"
@@ -830,6 +882,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Don't need packet structure anymore.
     #
     del(packet)
+
+    lisp_latency_debug(ts, "RTR")
     return
 #enddef
 
