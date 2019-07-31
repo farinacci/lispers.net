@@ -782,7 +782,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     ms_list = {}
     entries = []
     for group, joinleave in g_entries: 
-        ms_gm = lisp.lisp.lisp_lookup_group(group)
+        ms_gm = lisp.lisp_lookup_group(group)
         if (ms_gm == None):
             lisp.lprint("No group-mapping for {}, could be underlay group". \
                 format(group))
@@ -1245,7 +1245,6 @@ def lisp_process_igmp_packet(packet):
     if (len(register_entries) != 0):
         lisp_send_multicast_map_register(lisp_send_sockets, register_entries)
     #endif
-    return
 #enddef
 
 #
@@ -1606,7 +1605,7 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
 # source for the IPv6 group-prefix found.
 #
 def lisp_register_ipv6_group_entries(group, joinleave):
-    ms_gm = lisp.lisp.lisp_lookup_group(group)
+    ms_gm = lisp.lisp_lookup_group(group)
     if (ms_gm == None): return
 
     sg = []
