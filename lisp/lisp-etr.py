@@ -38,10 +38,6 @@ except:
     pytun = None
 #endtry
 
-igmp_types = { 17 : "IGMP-query", 18 : "IGMPv1-report", 19 : "DVMRP",
-    20 : "PIMv1", 22 : "IGMPv2-report", 23 : "IGMPv2-leave",  
-    30 : "mtrace-response", 31 : "mtrace-request", 34 : "IGMPv3-report" }
-
 #------------------------------------------------------------------------------
 
 #
@@ -1008,253 +1004,13 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
 #enddef
 
 #
-# IGMP record types.
-#
-lisp_igmp_record_types = { 1 : "include-mode", 2 : "exclude-mode", 
-    3 : "change-to-include", 4 : "change-to-exclude", 5 : "allow-new-source", 
-    6 : "block-old-sources" }
-
-#
-# lisp_process_igmp_packet
-#
-# Process IGMP packets.
-#
-# Basically odd types are Joins and even types are Leaves.
-#
-#
-# An IGMPv1 and IGMPv2 report format is:
-#
-#      0                   1                   2                   3
-#      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |Version| Type  |    Unused     |           Checksum            |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |                         Group Address                         |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#
-# An IGMPv3 report format is:
-# 
-#      0                   1                   2                   3
-#      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |  Type = 0x22  |    Reserved   |           Checksum            |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |           Reserved            |  Number of Group Records (M)  |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |                                                               |
-#     .                                                               .
-#     .                        Group Record [1]                       .
-#     .                                                               .
-#     |                                                               |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |                                                               |
-#     .                                                               .
-#     .                        Group Record [2]                       .
-#     .                                                               .
-#     |                                                               |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |                               .                               |
-#     .                               .                               .
-#     |                               .                               |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |                                                               |
-#     .                                                               .
-#     .                        Group Record [M]                       .
-#     .                                                               .
-#     |                                                               |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#
-# An IGMPv3 group record format is:
-#
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |  Record Type  |  Aux Data Len |     Number of Sources (N)     |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |                       Multicast Address                       |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |                       Source Address [1]                      |
-#     +-                                                             -+
-#     |                       Source Address [2]                      |
-#     +-                                                             -+
-#     .                               .                               .
-#     .                               .                               .
-#     .                               .                               .
-#     +-                                                             -+
-#     |                       Source Address [N]                      |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#     |                                                               |
-#     .                                                               .
-#     .                         Auxiliary Data                        .
-#     .                                                               .
-#     |                                                               |
-#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#
-def lisp_process_igmp_packet(packet):
-    global lisp_send_sockets
-
-    r = lisp.bold("Receive", False)
-    lisp.lprint("{} {}-byte IGMP packet: {}".format(r, len(packet), 
-        lisp.lisp_format_packet(packet)))
-
-    #
-    # Jump over IP header.
-    #
-    header_offset = (struct.unpack("B", packet[0])[0] & 0x0f) * 4
-
-    #
-    # Check for IGMPv3 type value 0x22. Or process an IGMPv2 report.
-    #
-    igmp = packet[header_offset::]
-    igmp_type = struct.unpack("B", igmp[0])[0]
-    group = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
-
-    reports_and_leaves_only = (igmp_type in (0x12, 0x16, 0x17, 0x22))
-    if (reports_and_leaves_only == False):
-        igmp_str = "{} ({})".format(igmp_type, igmp_types[igmp_type]) if \
-            igmp_types.has_key(igmp_type) else igmp_type
-        lisp.lprint("IGMP type {} not supported".format(igmp_str))
-        return
-    #endif
-
-    if (len(igmp) < 8):
-        lisp.lprint("IGMP message too small")
-        return
-    #endif
-
-    #
-    # Maybe this is an IGMPv1 or IGMPv2 message so get group address. If 
-    # IGMPv3, we will fix up group address in loop (for each group record).
-    #
-    group.address = socket.ntohl(struct.unpack("II", igmp[:8])[1])
-    group_str = group.print_address_no_iid()
-
-    #
-    # Process either IGMPv1 or IGMPv2 and exit.
-    #
-    if (igmp_type == 0x17):
-        lisp.lprint("IGMPv2 leave (*, {})".format(lisp.bold(group_str, False)))
-        lisp_send_multicast_map_register(lisp_send_sockets, 
-            [[None, group_str, False]])
-        return
-    #endif
-    if (igmp_type in (0x12, 0x16)):
-        lisp.lprint("IGMPv{} join (*, {})".format( \
-            1 if (igmp_type == 0x12) else 2, lisp.bold(group_str, False)))
-
-        #
-        # Suppress for link-local groups.
-        #
-        if (group_str.find("224.0.0.") != -1):
-            lisp.lprint("Suppress registration for link-local groups")
-        else:
-            lisp_send_multicast_map_register(lisp_send_sockets, 
-                [[None, group_str, True]])
-        #endif
-
-        #
-        # Finished with IGMPv1 or IGMPv2 processing.
-        #
-        return
-    #endif
-
-    #
-    # Parse each record for IGMPv3 (igmp_type == 0x22).
-    #
-    record_count = group.address
-    igmp = igmp[8::]
-
-    group_format = "BBHI"
-    group_size = struct.calcsize(group_format)
-    source_format = "I"
-    source_size = struct.calcsize(source_format)
-    source = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
-
-    #
-    # Traverse each group record.
-    #
-    register_entries = []
-    for i in range(record_count):
-        if (len(igmp) < group_size): return
-        record_type, x, source_count, address = struct.unpack(group_format, 
-            igmp[:group_size])
-
-        igmp = igmp[group_size::]
-
-        if (lisp_igmp_record_types.has_key(record_type) == False):
-            lisp.lprint("Invalid record type {}".format(record_type))
-            continue
-        #endif
-
-        record_type_str = lisp_igmp_record_types[record_type]
-        source_count = socket.ntohs(source_count)
-        group.address = socket.ntohl(address)
-        group_str = group.print_address_no_iid()
-
-        lisp.lprint("Record type: {}, group: {}, source-count: {}".format( \
-            record_type_str, group_str, source_count))
-
-        #
-        # Determine if this is a join or leave. MODE_IS_INCLUDE (1) is a join. 
-        # MODE_TO_EXCLUDE (4) with no sources is a join. CHANGE_TO_INCLUDE (5)
-        # is a join. Everything else is a leave.
-        #
-        joinleave = False
-        if (record_type in (1, 5)): joinleave = True
-        if (record_type == 4 and source_count == 0): joinleave = True
-        j_or_l = "join" if (joinleave) else "leave"
-
-        #
-        # Suppress registration for link-local groups.
-        #
-        if (group_str.find("224.0.0.") != -1):
-            lisp.lprint("Suppress registration for link-local groups")
-            continue
-        #endif
-
-        #
-        # (*,G) Join or Leave has been received if source count is 0.
-        #
-        # If this is IGMPv2 or just IGMPv3 reporting a group address, encode
-        # a (*,G) for the element in the register_entries array.
-        #
-        if (source_count == 0):
-            register_entries.append([None, group_str, joinleave])
-            lisp.lprint("IGMPv3 {} (*, {})".format(lisp.bold(j_or_l, False), 
-                lisp.bold(group_str, False)))
-        #endif
-
-        #
-        # Process (S,G)s (source records)..
-        #
-        for j in range(source_count):
-            if (len(igmp) < source_size): return
-            address = struct.unpack(source_format, igmp[:source_size])[0]
-            source.address = socket.ntohl(address)
-            source_str = source.print_address_no_iid()
-            register_entries.append([source_str, group_str, joinleave])
-            lisp.lprint("{} ({}, {})".format(j_or_l, 
-                lisp.green(source_str, False), lisp.bold(group_str, False)))
-            igmp = igmp[source_size::]
-        #endfor
-    #endfor
-
-    #
-    # Build Map-Register for (S,G) entries. Put them in a Multicast Info LCAF
-    # Type and put ourselves as an RLE. This is draft-farinacci-lisp-signal-
-    # free-multicast
-    #
-    if (len(register_entries) != 0):
-        lisp_send_multicast_map_register(lisp_send_sockets, register_entries)
-    #endif
-#enddef
-
-#
 # lisp_etr_data_plane
 #
 # Capture a LISP encapsulated packet, decap it, process inner header, and
 # re-encapsulated it.
 #
 def lisp_etr_data_plane(parms, not_used, packet):
-    global lisp_ipc_listen_socket
+    global lisp_ipc_listen_socket, lisp_send_sockets
 
     device = parms[0]
     lisp_raw_socket = parms[1]
@@ -1274,7 +1030,10 @@ def lisp_etr_data_plane(parms, not_used, packet):
     #
     protocol = struct.unpack("B", packet[9])[0]
     if (protocol == 2):
-        lisp_process_igmp_packet(packet)
+        entries = lisp.lisp_process_igmp_packet(packet)
+        if (len(entries) != 0):
+            lisp_send_multicast_map_register(lisp_send_sockets, entries)
+        #endif
         return
     #endif
 
@@ -1379,7 +1138,10 @@ def lisp_etr_data_plane(parms, not_used, packet):
         igmp, packet.packet = lisp.lisp_ipv4_input(packet.packet)
         if (packet.packet == None): return
         if (igmp):
-            lisp_process_igmp_packet(packet.packet)
+            entries = lisp.lisp_process_igmp_packet(packet.packet)
+            if (len(entries) != 0):
+                lisp_send_multicast_map_register(lisp_send_sockets, entries)
+            #endif
             return
         #endif
         packet.inner_ttl = packet.outer_ttl
@@ -1688,7 +1450,10 @@ def lisp_etr_join_leave_process():
                 value += int(octet[2]) << 8
                 value += int(octet[3])
                 send_packet += struct.pack("I", swap(value))
-                lisp_process_igmp_packet(send_packet)
+                sg = lisp.lisp_process_igmp_packet(send_packet)
+                if (len(sg) != 0):
+                    lisp_send_multicast_map_register(lisp_send_sockets, sg)
+                #endif
                 time.sleep(.100)
             #endif
         #endfor

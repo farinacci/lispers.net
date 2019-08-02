@@ -432,7 +432,7 @@ def lisp_rtr_fast_data_plane(packet):
         lisp_seid_cached.address = src
         src_mc = lisp.lisp_map_cache.lookup_cache(lisp_seid_cached, False)
         if (src_mc == None):
-            allow, nil = lisp.lisp_allow_gleaning(src, None)
+            allow, nil = lisp.lisp_allow_gleaning(lisp_seid_cached, None)
             if (allow): return(False)
         elif (src_mc.gleaned):
             srloc = lisp_fast_address_to_binary(srloc)
@@ -653,13 +653,14 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #
     # Process inner header (checksum and decrement ttl).
     #
+    igmp = None
     if (packet.inner_dest.is_mac()):
         packet.packet = lisp.lisp_mac_input(packet.packet)
         if (packet.packet == None): return
         packet.encap_port = lisp.LISP_VXLAN_DATA_PORT
     elif (packet.inner_version == 4):
         igmp, packet.packet = lisp.lisp_ipv4_input(packet.packet)
-        if (packet.packet == None or igmp): return
+        if (packet.packet == None): return
         packet.inner_ttl = packet.outer_ttl
     elif (packet.inner_version == 6):
         packet.packet = lisp.lisp_ipv6_input(packet)
@@ -686,8 +687,10 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     allow, nil = lisp.lisp_allow_gleaning(packet.inner_source,
         packet.outer_source)
     if (allow):
-        lisp.lisp_glean_map_cache(packet.inner_source, packet.inner_dest,
-            packet.outer_source, packet.udp_sport)
+        igmp_packet = packet.packet if (igmp) else None
+        lisp.lisp_glean_map_cache(packet.inner_source, packet.outer_source,
+            packet.udp_sport, igmp_packet)
+        if (igmp): return
     #endif
     gleaned_dest, nil = lisp.lisp_allow_gleaning(packet.inner_dest, None)
     packet.gleaned_dest = gleaned_dest

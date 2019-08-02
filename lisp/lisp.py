@@ -410,6 +410,7 @@ LISP_REGISTER_TTL = 3
 LISP_SHORT_TTL    = 1
 LISP_NMR_TTL      = 15
 LISP_GLEAN_TTL    = 15
+LISP_IGMP_TTL     = 150
 
 LISP_SITE_TIMEOUT_CHECK_INTERVAL     = 60 # In units of seconds
 LISP_PUBSUB_TIMEOUT_CHECK_INTERVAL   = 60 # In units of seconds
@@ -9942,6 +9943,17 @@ def lisp_process_multicast_map_notify(packet, source):
             mc.add_cache()
         #endif
 
+        #
+        # Gleaned map-cache entries always override what is regitered in
+        # the mapping system. Since the mapping system RLE entries are RTRs
+        # and RTRs store gleaned mappings for group members.
+        #
+        if (mc.gleaned):
+            lprint("Suppress Map-Notify for gleaned {}".format( \
+                green(mc.print_eid_tuple(), False)))
+            continue
+        #endif
+
         mc.mapping_source = None if source == "lisp-etr" else source
         mc.map_cache_ttl = eid_record.store_ttl()
 
@@ -12302,7 +12314,7 @@ class lisp_rle():
             addr_str = rle_node.address.print_address_no_iid()
             if (rle_node.address.is_local()): addr_str = red(addr_str, html)
             rle_str += "{}{}(L{}){}, ".format(addr_str, "" if port == 0 \
-                else "-" + str(port), rle_node.level, 
+                else ":" + str(port), rle_node.level, 
                 "" if rle_node.rloc_name == None else rle_name_str)
         #endfor
         return(rle_str[0:-2] if rle_str != "" else "")
@@ -18882,11 +18894,321 @@ def lisp_allow_gleaning(eid, rloc):
 #enddef
 
 #
+# lisp_build_gleaned_multicast
+#
+# Build (*,G) map-cache entry in RTR with gleaned RLOC info from IGMP report.
+#
+def lisp_build_gleaned_multicast(seid, geid, rloc, port):
+    
+    #
+    # Support (*,G) only gleaning. Scales better anyway.
+    #
+    mc = lisp_map_cache_lookup(seid, geid)
+    if (mc == None):
+        mc = lisp_mapping("", "", [])
+        mc.group.copy_address(geid)
+        mc.eid.copy_address(geid)
+        mc.eid.address = 0
+        mc.eid.mask_len = 0
+        mc.mapping_source.copy_address(rloc)
+        mc.map_cache_ttl = LISP_IGMP_TTL
+        mc.gleaned = True
+        e = green("(*, {})".format(geid.print_address()), False)
+        r = red(rloc.print_address_no_iid() + ":" + str(port), False)
+        lprint("Add gleaned EID {} to map-cache with RLE {}".format(e, r))
+        mc.add_cache()
+    #endif
+
+    #
+    # Check to see if RLE node exists. If so, update the RLE node RLOC and
+    # encap-port.
+    #
+    rloc_entry = rle_entry = rle_node = None
+    if (mc.rloc_set != []):
+        rloc_entry = mc.rloc_set[0]
+        if (rloc_entry.rle):
+            rle_entry = rloc_entry.rle
+            for rn in rle_entry.rle_nodes:
+                if (rn.address.is_exact_match(rloc) == False): continue
+                rle_node = rn
+                break
+            #endfor
+        #endif
+    #endif
+    
+    #
+    # Adding RLE to existing rloc-set or create new one.
+    #
+    if (rloc_entry == None):
+        rloc_entry = lisp_rloc()
+        mc.rloc_set = [rloc_entry]
+        rloc_entry.priority = 253
+        rloc_entry.mpriority = 255
+        mc.build_best_rloc_set()
+    #endif
+    if (rle_entry == None):
+        rle_entry = lisp_rle(geid.print_address())
+        rloc_entry.rle = rle_entry
+    #endif
+    if (rle_node == None):
+        rle_node = lisp_rle_node()
+        rle_node.rloc_name = seid.print_address_no_iid()
+        rle_entry.rle_nodes.append(rle_node)
+        rle_entry.build_forwarding_list()
+    #endif
+
+    #
+    # Add or update.
+    #
+    rle_node.store_translated_rloc(rloc, port)
+    e = green("(*, {})".format(geid.print_address()), False)
+    r = red(rloc.print_address_no_iid() + ":" + str(port), False)
+    lprint("Gleaned EID {} RLE changed to {}".format(e, r))
+#enddef
+
+#
+# lisp_process_igmp_packet
+#
+# Process IGMP packets.
+#
+# Basically odd types are Joins and even types are Leaves.
+#
+#
+# An IGMPv1 and IGMPv2 report format is:
+#
+#      0                   1                   2                   3
+#      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |Version| Type  |    Unused     |           Checksum            |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |                         Group Address                         |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#
+# An IGMPv3 report format is:
+# 
+#      0                   1                   2                   3
+#      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |  Type = 0x22  |    Reserved   |           Checksum            |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |           Reserved            |  Number of Group Records (M)  |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |                                                               |
+#     .                                                               .
+#     .                        Group Record [1]                       .
+#     .                                                               .
+#     |                                                               |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |                                                               |
+#     .                                                               .
+#     .                        Group Record [2]                       .
+#     .                                                               .
+#     |                                                               |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |                               .                               |
+#     .                               .                               .
+#     |                               .                               |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |                                                               |
+#     .                                                               .
+#     .                        Group Record [M]                       .
+#     .                                                               .
+#     |                                                               |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#
+# An IGMPv3 group record format is:
+#
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |  Record Type  |  Aux Data Len |     Number of Sources (N)     |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |                       Multicast Address                       |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |                       Source Address [1]                      |
+#     +-                                                             -+
+#     |                       Source Address [2]                      |
+#     +-                                                             -+
+#     .                               .                               .
+#     .                               .                               .
+#     .                               .                               .
+#     +-                                                             -+
+#     |                       Source Address [N]                      |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#     |                                                               |
+#     .                                                               .
+#     .                         Auxiliary Data                        .
+#     .                                                               .
+#     |                                                               |
+#     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#
+igmp_types = { 17 : "IGMP-query", 18 : "IGMPv1-report", 19 : "DVMRP",
+    20 : "PIMv1", 22 : "IGMPv2-report", 23 : "IGMPv2-leave",  
+    30 : "mtrace-response", 31 : "mtrace-request", 34 : "IGMPv3-report" }
+
+lisp_igmp_record_types = { 1 : "include-mode", 2 : "exclude-mode", 
+    3 : "change-to-include", 4 : "change-to-exclude", 5 : "allow-new-source", 
+    6 : "block-old-sources" }
+
+def lisp_process_igmp_packet(packet):
+    r = bold("Receive", False)
+    lprint("{} {}-byte IGMP packet: {}".format(r, len(packet), 
+        lisp_format_packet(packet)))
+
+    #
+    # Jump over IP header.
+    #
+    header_offset = (struct.unpack("B", packet[0])[0] & 0x0f) * 4
+
+    #
+    # Check for IGMPv3 type value 0x22. Or process an IGMPv2 report.
+    #
+    igmp = packet[header_offset::]
+    igmp_type = struct.unpack("B", igmp[0])[0]
+    group = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+
+    reports_and_leaves_only = (igmp_type in (0x12, 0x16, 0x17, 0x22))
+    if (reports_and_leaves_only == False):
+        igmp_str = "{} ({})".format(igmp_type, igmp_types[igmp_type]) if \
+            igmp_types.has_key(igmp_type) else igmp_type
+        lprint("IGMP type {} not supported".format(igmp_str))
+        return([])
+    #endif
+
+    if (len(igmp) < 8):
+        lprint("IGMP message too small")
+        return([])
+    #endif
+
+    #
+    # Maybe this is an IGMPv1 or IGMPv2 message so get group address. If 
+    # IGMPv3, we will fix up group address in loop (for each group record).
+    #
+    group.address = socket.ntohl(struct.unpack("II", igmp[:8])[1])
+    group_str = group.print_address_no_iid()
+
+    #
+    # Process either IGMPv1 or IGMPv2 and exit.
+    #
+    if (igmp_type == 0x17):
+        lprint("IGMPv2 leave (*, {})".format(bold(group_str, False)))
+        return([[None, group_str, False]])
+    #endif
+    if (igmp_type in (0x12, 0x16)):
+        lprint("IGMPv{} join (*, {})".format( \
+            1 if (igmp_type == 0x12) else 2, bold(group_str, False)))
+
+        #
+        # Suppress for link-local groups.
+        #
+        if (group_str.find("224.0.0.") != -1):
+            lprint("Suppress registration for link-local groups")
+        else:
+            return([[None, group_str, True]])
+        #endif
+
+        #
+        # Finished with IGMPv1 or IGMPv2 processing.
+        #
+        return([])
+    #endif
+
+    #
+    # Parse each record for IGMPv3 (igmp_type == 0x22).
+    #
+    record_count = group.address
+    igmp = igmp[8::]
+
+    group_format = "BBHI"
+    group_size = struct.calcsize(group_format)
+    source_format = "I"
+    source_size = struct.calcsize(source_format)
+    source = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+
+    #
+    # Traverse each group record.
+    #
+    register_entries = []
+    for i in range(record_count):
+        if (len(igmp) < group_size): return
+        record_type, x, source_count, address = struct.unpack(group_format, 
+            igmp[:group_size])
+
+        igmp = igmp[group_size::]
+
+        if (lisp_igmp_record_types.has_key(record_type) == False):
+            lprint("Invalid record type {}".format(record_type))
+            continue
+        #endif
+
+        record_type_str = lisp_igmp_record_types[record_type]
+        source_count = socket.ntohs(source_count)
+        group.address = socket.ntohl(address)
+        group_str = group.print_address_no_iid()
+
+        lprint("Record type: {}, group: {}, source-count: {}".format( \
+            record_type_str, group_str, source_count))
+
+        #
+        # Determine if this is a join or leave. MODE_IS_INCLUDE (1) is a join. 
+        # MODE_TO_EXCLUDE (4) with no sources is a join. CHANGE_TO_INCLUDE (5)
+        # is a join. Everything else is a leave.
+        #
+        joinleave = False
+        if (record_type in (1, 5)): joinleave = True
+        if (record_type == 4 and source_count == 0): joinleave = True
+        j_or_l = "join" if (joinleave) else "leave"
+
+        #
+        # Suppress registration for link-local groups.
+        #
+        if (group_str.find("224.0.0.") != -1):
+            lprint("Suppress registration for link-local groups")
+            continue
+        #endif
+
+        #
+        # (*,G) Join or Leave has been received if source count is 0.
+        #
+        # If this is IGMPv2 or just IGMPv3 reporting a group address, encode
+        # a (*,G) for the element in the register_entries array.
+        #
+        if (source_count == 0):
+            register_entries.append([None, group_str, joinleave])
+            lprint("IGMPv3 {} (*, {})".format(bold(j_or_l, False), 
+                bold(group_str, False)))
+        #endif
+
+        #
+        # Process (S,G)s (source records)..
+        #
+        for j in range(source_count):
+            if (len(igmp) < source_size): return
+            address = struct.unpack(source_format, igmp[:source_size])[0]
+            source.address = socket.ntohl(address)
+            source_str = source.print_address_no_iid()
+            register_entries.append([source_str, group_str, joinleave])
+            lprint("{} ({}, {})".format(j_or_l, 
+                green(source_str, False), bold(group_str, False)))
+            igmp = igmp[source_size::]
+        #endfor
+    #endfor
+
+    #
+    # Return (S,G) entries to return to call to send a Map-Register.
+    # They are put in a multicast Info LCAF Type with ourselves as an RLE.
+    # This is spec'ed in RFC 8378.
+    #
+    return(register_entries)
+#enddef
+
+#
 # lisp_glean_map_cache
 #
-# Add or update a gleaned EID/RLOC to the map-cache.
+# Add or update a gleaned EID/RLOC to the map-cache. This function will do
+# this for the source EID of a packet and IGMP reported groups with one call.
 #
-def lisp_glean_map_cache(seid, deid, rloc, encap_port):
+lisp_geid = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+
+def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
 
     #
     # First do lookup to see if EID is in map-cache. Check to see if RLOC
@@ -18898,7 +19220,7 @@ def lisp_glean_map_cache(seid, deid, rloc, encap_port):
         mc.last_refresh_time = lisp_get_timestamp()
 
         cached_rloc = mc.rloc_set[0]
-        if (cached_rloc.rloc.is_exact_match(rloc) and
+        if (igmp == None and cached_rloc.rloc.is_exact_match(rloc) and
             cached_rloc.translated_port == encap_port): return
         
         e = green(seid.print_address(), False)
@@ -18932,79 +19254,24 @@ def lisp_glean_map_cache(seid, deid, rloc, encap_port):
     #
     # Unicast gleaning only.
     #
-    if (deid.is_multicast_address() == False): return
+    if (igmp == None): return
 
     #
-    # Add (S,G) or (*,G) to map-cache. Do group lookup in group-mappings to
-    # determine if group allowed to be joined.
+    # Process IGMP report. For each group, put in map-cache with gleaned
+    # source RLOC and source port.
     #
-    gm = lisp_lookup_group(deid)
-    if (gm == None): return
+    lisp_geid.instance_id = seid.instance_id
 
     #
-    # Support (*,G) only gleaning. Scales better anyway.
+    # Add (S,G) or (*,G) to map-cache. Do not do lookup in group-mappings.
+    # The lisp-etr process will do this.
     #
-    mc = lisp_map_cache_lookup(seid, deid)
-    if (mc == None):
-        mc = lisp_mapping("", "", [])
-        mc.eid.copy_address(seid)
-        mc.eid.address = 0
-        mc.eid.mask_len = 0
-        mc.group.copy_address(deid)
-        mc.mapping_source.copy_address(rloc)
-        mc.map_cache_ttl = LISP_GLEAN_TTL
-        mc.gleaned = True
-        e = green("(*, {})".format(deid.print_address()), False)
-        r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
-        lprint("Add gleaned EID {} to map-cache with RLE {}".format(e, r))
-        mc.add_cache()
-    #endif
-
-    #
-    # Check to see if RLE node exists. If so, update the RLE node RLOC and
-    # encap-port.
-    #
-    rloc_entry = rle_entry = rle_node = None
-    if (mc.rloc_set != []):
-        rloc_entry = mc.rloc_set[0]
-        if (rloc_entry.rle):
-            rle_entry = rloc_entry.rle
-            for rn in rle_entry.rle_nodes:
-                if (rn.address.is_exact_match(rloc.rloc) == False): continue
-                rle_node = rn
-                break
-            #endfor
-        #endif
-    #endif
-    
-    #
-    # Adding RLE to existing rloc-set or create new one.
-    #
-    if (rloc_entry == None):
-        rloc_entry = lisp_rloc()
-        mc.rloc_set = [rloc_entry]
-        rloc_entry.priority = 253
-        rloc_entry.mpriority = 255
-        mc.build_best_rloc_set()
-    #endif
-    if (rle_entry == None):
-        rle_entry = lisp_rle()
-        rloc_entry.rle = rle_entry
-    #endif
-    if (rle_node == None):
-        rle_node = lisp_rle_node()
-        rle_entry.rle_nodes.append(rle_node)
-    #endif
-
-    #
-    # Add or update.
-    #
-    rle_node.store_translated_rloc(rloc, encap_port)
-    rloc_entry.add_to_rloc_probe_list(mc.eid, mc.group)
-
-    e = green("(*, {})".format(deid.print_address()), False)
-    r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
-    lprint("Gleaned EID {} RLE changed to {}".format(e, r))
+    entries = lisp_process_igmp_packet(igmp)
+    for source, group, joinleave in entries:
+        if (source != None or joinleave == False): continue
+        lisp_geid.store_address(group)
+        lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
+    #endfor
 #enddef
     
 #------------------------------------------------------------------------------
