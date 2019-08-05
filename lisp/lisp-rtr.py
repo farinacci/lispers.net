@@ -328,8 +328,7 @@ def lisp_fast_lookup_debug(dest, mc):
 def lisp_latency_debug(ts, msg):
     global lisp_rtr_latency_debug
     
-    if (lisp.lisp_data_plane_logging == False and
-        lisp_rtr_latency_debug == False): return(None)
+    if (lisp_rtr_latency_debug == False): return(None)
 
     #
     # Return the initial timestamp when requested.
