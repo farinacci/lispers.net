@@ -448,13 +448,16 @@ def lisp_rtr_fast_data_plane(packet):
         mc = lisp.lisp_map_cache.lookup_cache(dest, False)
         lisp_fast_lookup_debug(dest, mc)
         if (mc == None): return(False)
-    #endif
 
-    #
-    # Determine if new LISP encap is to be prepended or we are forwarding
-    # a decapsulated packet.
-    #
-    if (mc.action != lisp.LISP_NATIVE_FORWARD_ACTION):
+        length = len(packet)
+        stats = mc.stats
+        lisp_fast_debug("Send", packet)
+    else:
+
+        #
+        # Determine if new LISP encap is to be prepended or we are forwarding
+        # a decapsulated packet.
+        #
         if (mc.best_rloc_set == []): return(False)
         
         dest = mc.best_rloc_set[0]
@@ -503,10 +506,6 @@ def lisp_rtr_fast_data_plane(packet):
         #
         packet = outer + udplisp + packet
         lisp_fast_debug("Encap", packet)
-    else:
-        length = len(packet)
-        stats = mc.stats
-        lisp_fast_debug("Send", packet)
     #endif
 
     #
