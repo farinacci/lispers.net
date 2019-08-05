@@ -375,7 +375,7 @@ lisp_seid_cached = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
 lisp_deid_cached = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
 
 def lisp_rtr_fast_data_plane(packet):
-    global lisp_address_cached, lisp_map_cache, lisp_raw_socket
+    global lisp_map_cache, lisp_raw_socket
 
     ts = lisp_latency_debug(None, "Fast")
 
