@@ -8506,9 +8506,9 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         # entries.
         #
         if (mc == None):
-            allow, nil = lisp_allow_gleaning(eid_record.eid, eid_record.group,
+            glean, nil = lisp_allow_gleaning(eid_record.eid, eid_record.group,
                 None)
-            if (allow == False): continue
+            if (glean): continue
         else:
             if (mc.gleaned): continue
         #endif
@@ -18892,7 +18892,8 @@ def lisp_allow_gleaning(eid, group, rloc):
             e.instance_id = eid.instance_id
             if (eid.is_more_specific(e) == False): continue
         #endif
-        if (group and entry.has_key("group-prefix")):
+        if (entry.has_key("group-prefix")):
+            if (group == None): continue
             g = copy.deepcopy(entry["group-prefix"])
             g.instance_id = group.instance_id
             if (group.is_more_specific(g) == False): continue
