@@ -312,11 +312,12 @@ lisp_rtr_nat_trace_cache = {}
 
 #
 # Configured glean mappings. The data structure is an array of dictionary
-# arrays with keywords "eid-prefix", "rloc-prefix", and "instance-id". If
-# keywords are not in dictionary array, the value is wildcarded. The values
-# eid-prefix and rloc-prefix is lisp_address() so longest match lookups can
-# be performed. The instance-id value is an array of 2 elements that store
-# same value in both elements if not a range or the low and high range values.
+# arrays with keywords "eid-prefix", "group-prefix", "rloc-prefix", and
+# "instance-id". If keywords are not in dictionary array, the value is
+# wildcarded. The values eid-prefix, group-prefix and rloc-prefix is
+# lisp_address() so longest match lookups can be performed. The instance-id
+# value is an array of 2 elements that store same value in both elements if
+# not a range or the low and high range values.
 #
 lisp_glean_mappings = []
 
@@ -8501,6 +8502,18 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         new_mc = (mc == None)
 
         #
+        # Do not let map-cache entries from Map-Replies override gleaned
+        # entries.
+        #
+        if (mc == None):
+            allow, nil = lisp_allow_gleaning(eid_record.eid, eid_record.group,
+                None)
+            if (allow == False): continue
+        else:
+            if (mc.gleaned): continue
+        #endif
+
+        #
         # Process each RLOC record in EID record.
         #
         rloc_set = []
@@ -8536,15 +8549,6 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
                 if (lisp_get_echo_nonce(None, addr_str) == None):
                     lisp_echo_nonce(addr_str)
                 #endif
-            #endif
-
-            #
-            # Set RLOC to the cached RLOC and set port to gleaned port so we
-            # can find the RLOC key in lisp_rloc_probe_list.
-            #
-            if (mc and mc.gleaned):
-                rloc = mc.rloc_set[0]
-                port = rloc.translated_port
             #endif
 
             #
@@ -8657,7 +8661,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         # Add to map-cache. If this is a replace, save uptime.
         #
         uptime = mc.uptime if (mc) else None
-        if (mc == None or mc.gleaned == False):
+        if (mc == None):
             mc = lisp_mapping(eid_record.eid, eid_record.group, rloc_set)
             mc.mapping_source = source
             mc.map_cache_ttl = eid_record.store_ttl()
@@ -9939,6 +9943,10 @@ def lisp_process_multicast_map_notify(packet, source):
         #
         mc = lisp_map_cache_lookup(eid_record.eid, eid_record.group)
         if (mc == None):
+            allow, nil = lisp_allow_gleaning(eid_record.eid, eid_record.group,
+                None)
+            if (allow == False): continue
+
             mc = lisp_mapping(eid_record.eid, eid_record.group, [])
             mc.add_cache()
         #endif
@@ -16418,7 +16426,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             #
             # Do not RLOC-probe gleaned entries if configured.
             #
-            gleaned_eid, do_probe = lisp_allow_gleaning(eid, parent_rloc)
+            gleaned_eid, do_probe = lisp_allow_gleaning(eid, None, parent_rloc)
             if (gleaned_eid and do_probe == False):
                 e = green(eid.print_address(), False)
                 addr_str += ":{}".format(parent_rloc.translated_port)
@@ -18870,7 +18878,7 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
 # mappings. The second return value is either True or False depending if the
 # matched entry was configured to RLOC-probe the RLOC for the gleaned entry.
 #
-def lisp_allow_gleaning(eid, rloc):
+def lisp_allow_gleaning(eid, group, rloc):
     if (lisp_glean_mappings == []): return(False, False)
     
     for entry in lisp_glean_mappings:
@@ -18883,6 +18891,11 @@ def lisp_allow_gleaning(eid, rloc):
             e = copy.deepcopy(entry["eid-prefix"])
             e.instance_id = eid.instance_id
             if (eid.is_more_specific(e) == False): continue
+        #endif
+        if (group and entry.has_key("group-prefix")):
+            g = copy.deepcopy(entry["group-prefix"])
+            g.instance_id = group.instance_id
+            if (group.is_more_specific(g) == False): continue
         #endif
         if (entry.has_key("rloc-prefix")):
             if (rloc != None and rloc.is_more_specific(entry["rloc-prefix"])
@@ -19314,7 +19327,14 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
     entries = lisp_process_igmp_packet(igmp)
     for source, group, joinleave in entries:
         if (source != None): continue
+
+        #
+        # Does policy allow gleaning for this joined multicast group.
+        #
         lisp_geid.store_address(group)
+        allow, nil = lisp_allow_gleaning(seid, lisp_geid, rloc)
+        if (allow == False): continue
+
         if (joinleave):
             lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
         else:

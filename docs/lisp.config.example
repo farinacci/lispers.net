@@ -1141,6 +1141,7 @@ lisp group-mapping {
 lisp glean-mapping {
     instance-id = <0 - 4294967295> | <low-range-iid>-<high-range-iid>
     eid-prefix = <eid-prefix>
+    group-prefix = <group-prefix>
     rloc-prefix = <rloc-prefix>
     rloc-probe = yes | no
 }
@@ -1155,10 +1156,10 @@ Command Description:
     RLOC used in those packets. The RTR will only glean for configured 
     EID-prefixes from RLOCs that are more specific than configured 
     RLOC-prefixes. The "instance-id" parameter can be a range and defaults to 
-    0. The parameters "eid-prefix" and "rloc-prefix" can be omitted which 
-    defaults to accepting from all. If you configure "rloc-probe" then 
-    RLOC-probes are sent to the gleaned entry. The default value is set to 
-    "no".
+    0. The parameters "eid-prefix", "group-prefix" and "rloc-prefix" can be
+    omitted which defaults to accepting from all. If you configure
+    "rloc-probe" then RLOC-probes are sent to the gleaned entry. The default
+    value is set to "no".
 
 Example:
 
@@ -1180,6 +1181,14 @@ lisp glean-mapping {
 lisp glean-mapping {
     instance-id = 1000-2000
     rloc-probe = yes
+}
+
+#
+# Source RLOC is gleaned when IGMP reports groups in the /16 224.1.0.0 prefix.
+#    
+lisp glean-mapping {
+    instance-id = 1000
+    group-prefix = 224.1.0.0/16
 }
 
 -------------------------------------------------------------------------------

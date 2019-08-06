@@ -134,6 +134,11 @@ def lisp_rtr_glean_mapping_command(kv_pair):
             eid.store_prefix(value)
             entry["eid-prefix"] = eid
         #endif
+        if (kw == "group-prefix"):
+            geid = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
+            geid.store_prefix(value)
+            entry["group-prefix"] = geid
+        #endif
         if (kw == "rloc-prefix"):
             rloc = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
             rloc.store_prefix(value)
@@ -152,6 +157,15 @@ def lisp_rtr_glean_mapping_command(kv_pair):
         if (e.has_key("eid-prefix") and entry.has_key("eid-prefix")):
             old = e["eid-prefix"]
             new = entry["eid-prefix"]
+            if (old.is_exact_match(new) == False): continue
+        #endif
+
+        if (e.has_key("group-prefix") ^ entry.has_key("group-prefix")):
+            continue
+        #endif
+        if (e.has_key("group-prefix") and entry.has_key("group-prefix")):
+            old = e["group-prefix"]
+            new = entry["group-prefix"]
             if (old.is_exact_match(new) == False): continue
         #endif
 
@@ -431,7 +445,7 @@ def lisp_rtr_fast_data_plane(packet):
         lisp_seid_cached.address = src
         src_mc = lisp.lisp_map_cache.lookup_cache(lisp_seid_cached, False)
         if (src_mc == None):
-            allow, nil = lisp.lisp_allow_gleaning(lisp_seid_cached, None)
+            allow, nil = lisp.lisp_allow_gleaning(lisp_seid_cached, None, None)
             if (allow): return(False)
         elif (src_mc.gleaned):
             srloc = lisp_fast_address_to_binary(srloc)
@@ -682,7 +696,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Should we glean source information from packet and add it to the
     # map-cache??
     #
-    allow, nil = lisp.lisp_allow_gleaning(packet.inner_source,
+    allow, nil = lisp.lisp_allow_gleaning(packet.inner_source, None,
         packet.outer_source)
     if (allow):
         igmp_packet = packet.packet if (igmp) else None
@@ -690,7 +704,18 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             packet.udp_sport, igmp_packet)
         if (igmp): return
     #endif
-    gleaned_dest, nil = lisp.lisp_allow_gleaning(packet.inner_dest, None)
+
+    #
+    # Is the destination gleaned which means we should suppress a mapping
+    # system lookup.
+    #
+    deid = packet.inner_dest
+    if (deid.is_multicast_address()):
+        gleaned_dest, nil = lisp.lisp_allow_gleaning(packet.inner_source,
+            deid, None)
+    else:
+        gleaned_dest, nil = lisp.lisp_allow_gleaning(deid, None, None)
+    #endif
     packet.gleaned_dest = gleaned_dest
 
     #
@@ -713,7 +738,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             if (mc):
                 packet.gleaned_dest = mc.gleaned
             else:
-                gleaned_dest, nil = lisp.lisp_allow_gleaning(dest_eid, None)
+                gleaned_dest, nil = lisp.lisp_allow_gleaning(dest_eid, None,
+                    None)
                 packet.gleaned_dest = gleaned_dest
             #endif
         #endif
@@ -1357,6 +1383,7 @@ lisp_rtr_commands = {
     "lisp glean-mapping" : [lisp_rtr_glean_mapping_command, {
         "instance-id" : [False], 
         "eid-prefix" : [True], 
+        "group-prefix" : [True], 
         "rloc-prefix" : [True],
         "rloc-probe" : [True, "yes", "no"] }],
 
