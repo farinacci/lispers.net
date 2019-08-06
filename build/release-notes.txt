@@ -2,13 +2,13 @@
                 lispers.net Beta Release Version 0.506
                 --------------------------------------
 
-o Release date:
+o Release date: Mon Aug  5 17:36:57 PDT 2019
 
 o Have the lisp-etr process accept IGMP packets when they are decapsulated.
   We want to run the ETR function on an RTR so a LISP-MN can join multicast
-  groups when it encapsulates IGMP reports in LISP to the RTR. We want the
-  ETR function to decapsulate, process the IGMP report, and register the
-  (S,G) or (*,G) to the mapping system.
+  groups when it LISP encapsulates IGMP reports to the RTR. We want the
+  lisp-etr process to decapsulate the packet, process the IGMP report, and
+  register the (S,G) or (*,G) to the mapping system.
 
 o Support IGMP report gleaning, so (S,G) and (*,G) packets can be replicated
   to gleaned members.
@@ -19,13 +19,13 @@ o Support a newer/faster python RTR data-plane that processes packets by
   lisp_rtr_fast_data_plane() has 5x better forwarding latency over lisp_rtr_
   data_plane().
 
+o Put in RUN-LISP env variable LISP_RTR_FAST_DATA_PLANE to run the fast python
+  data-plane. Defaults to off. Should be used in RTRs that support LISP-MN in
+  glean-mapping mode.
+
 o Put in RUN-LISP env variable LISP_RTR_LATENCY_DEBUG to enable latency
   measurements for lisp_rtr_data_plane() and lisp_rtr_fast_data_plane()
   without any other data-plane debug logging enabled. Defaults to off.
-
-o Put in RUN-LISP env variable LISP_RTR_FAST_DATA_PLANE to run the fast python
-  data-plane. Defaults to off. Should be used in RTRs that support LISP-MN
-  in glean-mapping mode.
 
 -------------------------------------------------------------------------------
 
