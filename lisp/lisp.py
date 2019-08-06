@@ -18967,6 +18967,51 @@ def lisp_build_gleaned_multicast(seid, geid, rloc, port):
 #enddef
 
 #
+# lisp_remove_gleaned_multicast
+#
+# Remove an RLE from a gleaned entry since an IGMP Leave message was received.
+#
+def lisp_remove_gleaned_multicast(seid, geid, rloc, port):
+    
+    #
+    # Support (*,G) only gleaning. Scales better anyway.
+    #
+    mc = lisp_map_cache_lookup(seid, geid)
+    if (mc == None): return
+    
+    rle = mc.rloc_set[0].rle
+    if (rle == None): return
+
+    rloc_name = seid.print_address_no_iid()
+    found = False
+    for rle_node in rle.rle_nodes:
+        if (rle_node.rloc_name == rloc_name):
+            found = True
+            break
+        #endif
+    #endfor
+    if (found == False): return
+
+    #
+    # Found entry to remove.
+    #
+    rle.rle_nodes.remove(rle_node)
+    rle.build_forwarding_list()
+
+    e = green("(*, {})".format(geid.print_address()), False)
+    r = red(rloc.print_address_no_iid() + ":" + str(port), False)
+    lprint("Gleaned EID {} RLE {} removed".format(e, r))
+
+    #
+    # Remove map-cache entry if no more RLEs present.
+    #
+    if (rle.rle_nodes == []):
+        mc.delete_cache()
+        lprint("Gleaned EID {} removed, no more RLEs".format(e, r))
+    #endif
+#enddef
+
+#
 # lisp_process_igmp_packet
 #
 # Process IGMP packets.
@@ -19268,9 +19313,13 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
     #
     entries = lisp_process_igmp_packet(igmp)
     for source, group, joinleave in entries:
-        if (source != None or joinleave == False): continue
+        if (source != None): continue
         lisp_geid.store_address(group)
-        lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
+        if (joinleave):
+            lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
+        else:
+            lisp_remove_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
+        #endif
     #endfor
 #enddef
     
