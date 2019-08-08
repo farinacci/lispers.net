@@ -13027,6 +13027,7 @@ class lisp_mapping():
         self.secondary_iid = None
         self.signature_eid = False
         self.gleaned = False
+        self.gleaned_groups = []
     #enddef
 
     def print_mapping(self, eid_indent, rloc_indent):
@@ -19279,13 +19280,24 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
         mc.last_refresh_time = lisp_get_timestamp()
 
         cached_rloc = mc.rloc_set[0]
-        if (igmp == None and cached_rloc.rloc.is_exact_match(rloc) and
-            cached_rloc.translated_port == encap_port): return
+        old_rloc = cached_rloc.rloc
+        old_port = cached_rloc.translated_port
+        if (igmp == None and old_rloc.is_exact_match(rloc) and
+            old_port == encap_port): return
         
         e = green(seid.print_address(), False)
         r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
         lprint("Gleaned EID {} RLOC changed to {}".format(e, r))
         cached_rloc.delete_from_rloc_probe_list(mc.eid, mc.group)
+
+        #
+        # Change RLOC for each gleaned group this EID has joined.
+        #
+        for group in mc.gleaned_groups:
+            lisp_geid.store_address(group)
+            lisp_remove_gleaned_multicast(seid, lisp_geid, old_rloc, old_port)
+            lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
+        #endfor
     else:
         mc = lisp_mapping("", "", [])
         mc.eid.copy_address(seid)
@@ -19338,8 +19350,10 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
 
         if (joinleave):
             lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
+            mc.gleaned_groups.append(group)
         else:
             lisp_remove_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
+            mc.gleaned_groups.remove(group)
         #endif
     #endfor
 #enddef
