@@ -632,7 +632,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     #
     if (packet.inner_version == 4):
         igmp, packet.packet = lisp.lisp_ipv4_input(packet.packet)
-        if (packet.packet == None or igmp): return
+        if (packet.packet == None): return
         packet.inner_ttl -= 1
     elif (packet.inner_version == 6):
         packet.packet = lisp.lisp_ipv6_input(packet)
@@ -741,7 +741,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     # Setup outer header for either unicast or multicast transmission..
     #
     packet.outer_tos = packet.inner_tos
-    packet.outer_ttl = packet.inner_ttl
+    packet.outer_ttl = 32 if (igmp) else packet.inner_ttl
 
     #
     # Do unicast encapsulation.
