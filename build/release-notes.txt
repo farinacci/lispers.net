@@ -1,4 +1,29 @@
 
+                lispers.net Beta Release Version 0.507
+                --------------------------------------
+
+o Release date: Thu Aug  8 16:19:10 PDT 2019
+
+o Put a "group-prefix" parameter in the "lisp glean-mapping" command so
+  policy can be placed on what multicast groups IGMP sources are gleaned
+  from. This will allow us to suppress sending Map-Requests to the mapping
+  system when a source sends to the group before an RTR gleans a receiver.
+
+o When the RLOC information changes for a gleaned EID, update all (S,G) and
+  (*,G) entries the EID is joined to.
+
+o Have the lispers.net lisp-itr process encapsulate IGMP reports and leave
+  messages to an RTR. Have to not copy ttl 1 to the outer header or the
+  encapsulated packet doesn't make it to the RTR.
+
+o Multicast pings are working from a gleaned multicast source replicated to
+  2 gleaned multicast receivers. One of them is an iPhone running OOR.
+
+o Multicast video streaming is working from a VLC command-line container
+  source to a gleaned receiver on an iPhone running OOR and the VLC client.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.506
                 --------------------------------------
 
