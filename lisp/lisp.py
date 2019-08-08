@@ -18914,6 +18914,8 @@ def lisp_allow_gleaning(eid, group, rloc):
 # Build (*,G) map-cache entry in RTR with gleaned RLOC info from IGMP report.
 #
 def lisp_build_gleaned_multicast(seid, geid, rloc, port):
+    e = green("(*, {})".format(geid.print_address()), False)
+    r = red(rloc.print_address_no_iid() + ":" + str(port), False)
     
     #
     # Support (*,G) only gleaning. Scales better anyway.
@@ -18928,11 +18930,11 @@ def lisp_build_gleaned_multicast(seid, geid, rloc, port):
         mc.mapping_source.copy_address(rloc)
         mc.map_cache_ttl = LISP_IGMP_TTL
         mc.gleaned = True
-        e = green("(*, {})".format(geid.print_address()), False)
-        r = red(rloc.print_address_no_iid() + ":" + str(port), False)
-        lprint("Add gleaned EID {} to map-cache with RLE {}".format(e, r))
         mc.add_cache()
+        lprint("Add gleaned EID {} to map-cache".format(e))
     #endif
+
+    seid_name = seid.print_address_no_iid()
 
     #
     # Check to see if RLE node exists. If so, update the RLE node RLOC and
@@ -18944,7 +18946,7 @@ def lisp_build_gleaned_multicast(seid, geid, rloc, port):
         if (rloc_entry.rle):
             rle_entry = rloc_entry.rle
             for rn in rle_entry.rle_nodes:
-                if (rn.address.is_exact_match(rloc) == False): continue
+                if (rn.rloc_name != seid_name): continue
                 rle_node = rn
                 break
             #endfor
@@ -18967,18 +18969,19 @@ def lisp_build_gleaned_multicast(seid, geid, rloc, port):
     #endif
     if (rle_node == None):
         rle_node = lisp_rle_node()
-        rle_node.rloc_name = seid.print_address_no_iid()
+        rle_node.rloc_name = seid_name
         rle_entry.rle_nodes.append(rle_node)
         rle_entry.build_forwarding_list()
+        lprint("Add RLE {} for gleaned EID {}".format(r, e))
+    elif (rloc.is_exact_match(rle_node.address) == False or
+          port != rle_node.translated_port):
+        lprint("Changed RLE {} for gleaned EID {}".format(r, e))
     #endif
 
     #
     # Add or update.
     #
     rle_node.store_translated_rloc(rloc, port)
-    e = green("(*, {})".format(geid.print_address()), False)
-    r = red(rloc.print_address_no_iid() + ":" + str(port), False)
-    lprint("Gleaned EID {} RLE changed to {}".format(e, r))
 #enddef
 
 #
@@ -19275,29 +19278,31 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
     # or encap-port needs updating. If not, return. Set refresh timer since
     # we received a packet from the source gleaned EID.
     #
+    rloc_change = True
     mc = lisp_map_cache.lookup_cache(seid, True)
     if (mc and len(mc.rloc_set) != 0):
         mc.last_refresh_time = lisp_get_timestamp()
-
+            
         cached_rloc = mc.rloc_set[0]
-        old_rloc = cached_rloc.rloc
-        old_port = cached_rloc.translated_port
-        if (igmp == None and old_rloc.is_exact_match(rloc) and
-            old_port == encap_port): return
+        orloc = cached_rloc.rloc
+        oport = cached_rloc.translated_port
+        rloc_change = (orloc.is_exact_match(rloc) == False or
+            oport != encap_port)
         
-        e = green(seid.print_address(), False)
-        r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
-        lprint("Gleaned EID {} RLOC changed to {}".format(e, r))
-        cached_rloc.delete_from_rloc_probe_list(mc.eid, mc.group)
+        if (rloc_change):
+            e = green(seid.print_address(), False)
+            r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
+            lprint("Change gleaned EID {} to RLOC {}".format(e, r))
+            cached_rloc.delete_from_rloc_probe_list(mc.eid, mc.group)
 
-        #
-        # Change RLOC for each gleaned group this EID has joined.
-        #
-        for group in mc.gleaned_groups:
-            lisp_geid.store_address(group)
-            lisp_remove_gleaned_multicast(seid, lisp_geid, old_rloc, old_port)
-            lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
-        #endfor
+            #
+            # Change RLOC for each gleaned group this EID has joined.
+            #
+            for group in mc.gleaned_groups:
+                lisp_geid.store_address(group)
+                lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
+            #endfor
+        #endif
     else:
         mc = lisp_mapping("", "", [])
         mc.eid.copy_address(seid)
@@ -19313,14 +19318,16 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
     #
     # Adding RLOC to new map-cache entry or updating RLOC for existing entry..
     #
-    rloc_entry = lisp_rloc()
-    rloc_entry.store_translated_rloc(rloc, encap_port)
-    rloc_entry.add_to_rloc_probe_list(mc.eid, mc.group)
-    rloc_entry.priority = 253
-    rloc_entry.mpriority = 255
-    rloc_set = [rloc_entry]
-    mc.rloc_set = rloc_set
-    mc.build_best_rloc_set()
+    if (rloc_change):
+        rloc_entry = lisp_rloc()
+        rloc_entry.store_translated_rloc(rloc, encap_port)
+        rloc_entry.add_to_rloc_probe_list(mc.eid, mc.group)
+        rloc_entry.priority = 253
+        rloc_entry.mpriority = 255
+        rloc_set = [rloc_entry]
+        mc.rloc_set = rloc_set
+        mc.build_best_rloc_set()
+    #endif
 
     #
     # Unicast gleaning only.
@@ -19350,10 +19357,11 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
 
         if (joinleave):
             lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
+            if (group in mc.gleaned_groups): continue
             mc.gleaned_groups.append(group)
         else:
             lisp_remove_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
-            mc.gleaned_groups.remove(group)
+            if (group in mc.gleaned_groups): mc.gleaned_groups.remove(group)
         #endif
     #endfor
 #enddef
