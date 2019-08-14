@@ -33,6 +33,7 @@ import os
 import copy
 import commands
 import binascii
+import struct
 
 #------------------------------------------------------------------------------
 
@@ -113,7 +114,7 @@ def lisp_rtr_database_mapping_command(kv_pair):
 # Add a configured glean_mapping to the lisp_glean_mapping array.
 #
 def lisp_rtr_glean_mapping_command(kv_pair):
-    entry = { "rloc-probe" : False }
+    entry = { "rloc-probe" : False, "igmp-query" : False }
 
     for kw in kv_pair.keys():
         value = kv_pair[kw]
@@ -146,6 +147,9 @@ def lisp_rtr_glean_mapping_command(kv_pair):
         #endif
         if (kw == "rloc-probe"):
             entry["rloc-probe"] = (value == "yes")
+        #endif
+        if (kw == "igmp-query"):
+            entry["igmp-query"] = (value == "yes")
         #endif
     #endfor
 
@@ -445,7 +449,8 @@ def lisp_rtr_fast_data_plane(packet):
         lisp_seid_cached.address = src
         src_mc = lisp.lisp_map_cache.lookup_cache(lisp_seid_cached, False)
         if (src_mc == None):
-            allow, nil = lisp.lisp_allow_gleaning(lisp_seid_cached, None, None)
+            allow, x, y = lisp.lisp_allow_gleaning(lisp_seid_cached, None,
+                None)
             if (allow): return(False)
         elif (src_mc.gleaned):
             srloc = lisp_fast_address_to_binary(srloc)
@@ -697,7 +702,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Should we glean source information from packet and add it to the
     # map-cache??
     #
-    allow, nil = lisp.lisp_allow_gleaning(packet.inner_source, None,
+    allow, x, y = lisp.lisp_allow_gleaning(packet.inner_source, None,
         packet.outer_source)
     if (allow):
         igmp_packet = packet.packet if (igmp) else None
@@ -712,10 +717,10 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #
     deid = packet.inner_dest
     if (deid.is_multicast_address()):
-        gleaned_dest, nil = lisp.lisp_allow_gleaning(packet.inner_source,
+        gleaned_dest, x, y = lisp.lisp_allow_gleaning(packet.inner_source,
             deid, None)
     else:
-        gleaned_dest, nil = lisp.lisp_allow_gleaning(deid, None, None)
+        gleaned_dest, x, y = lisp.lisp_allow_gleaning(deid, None, None)
     #endif
     packet.gleaned_dest = gleaned_dest
 
@@ -739,7 +744,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             if (mc):
                 packet.gleaned_dest = mc.gleaned
             else:
-                gleaned_dest, nil = lisp.lisp_allow_gleaning(dest_eid, None,
+                gleaned_dest, x, y = lisp.lisp_allow_gleaning(dest_eid, None,
                     None)
                 packet.gleaned_dest = gleaned_dest
             #endif
@@ -1000,7 +1005,7 @@ def lisp_rtr_pcap_process_packet(parms, not_used, packet):
 # lisp_rtr_pcap_thread
 #
 # Setup pcap filters for this thread to receive packets in lisps_rtr_pcap_
-# processs_packet().
+# process_packet().
 #
 def lisp_rtr_pcap_thread(lisp_thread):
     lisp.lisp_set_exception()
@@ -1051,11 +1056,170 @@ def lisp_rtr_pcap_thread(lisp_thread):
 #enddef
 
 #
+# lisp_encapsulate_igmp_query
+#
+# LISP encapsulate an IGMP query to the RLOC of the EID that has joined any
+# group.
+#
+def lisp_encapsulate_igmp_query(lisp_raw_socket, eid, geid, igmp):
+
+    #
+    # Setup fields we need for lisp_packet.encode().
+    #
+    packet = lisp.lisp_packet(igmp)
+
+    #
+    # Get RLOC of EID from RLE record.
+    #
+    mc = lisp.lisp_map_cache_lookup(eid, geid)
+    if (mc == None): return
+    if (mc.rloc_set == []): return
+    if (mc.rloc_set[0].rle == None): return
+
+    eid_name = eid.print_address_no_iid()
+    for rle_node in mc.rloc_set[0].rle.rle_nodes:
+        if (rle_node.rloc_name == eid_name):
+            packet.outer_dest.copy_address(rle_node.address)
+            packet.encap_port = rle_node.translated_port
+            break
+        #endif
+    #endfor        
+    if (packet.outer_dest.is_null()): return
+
+    packet.outer_source.copy_address(lisp.lisp_myrlocs[0])
+    packet.outer_version = packet.outer_dest.afi_to_version()
+    packet.outer_ttl = 64
+    packet.gleaned_dest = True
+
+    e = lisp.green(eid.print_address(), False)
+    r = lisp.red("{}:{}".format(packet.outer_dest.print_address_no_iid(),
+        packet.encap_port), False)
+
+    lisp.lprint("Data encapsulate IGMP Query to gleaned EID {}, RLOC {}". \
+        format(e, r))
+
+    #
+    # Build data encapsulation header.
+    #
+    if (packet.encode(None) == None): return
+    packet.print_packet("Send", True)
+
+    packet.send_packet(lisp_raw_socket, packet.outer_dest)
+#enddef
+
+#
+# lisp_send_igmp_queries
+#
+# Send General Query to each EID that has joiined groups. The Group Address
+# field below is set to 0.0.0.0 and the Number of Sources is set to 0.
+#
+#       0                   1                   2                   3
+#       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      |  Type = 0x11  | Max Resp Code |           Checksum            |
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      |                         Group Address                         |
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      | Resv  |S| QRV |     QQIC      |     Number of Sources (N)     |
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      |                       Source Address [1]                      |
+#      +-                                                             -+
+#      |                       Source Address [2]                      |
+#      +-                              .                              -+
+#      .                               .                               .
+#      .                               .                               .
+#      +-                                                             -+
+#      |                       Source Address [N]                      |
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#
+def lisp_send_igmp_queries(lisp_raw_socket):
+    if (lisp.lisp_gleaned_groups == {}): return
+
+    #
+    # Build an IP header and checksum it.
+    #
+    ip = "\x45\x00\x00\x32\xff\xff\x40\x00\x10\x01\x00\x00"
+    myrloc = lisp.lisp_myrlocs[0]
+    rloc = myrloc.address
+    ip += chr((rloc >> 24) & 0xff)
+    ip += chr((rloc >> 16) & 0xff)
+    ip += chr((rloc >> 8) & 0xff)
+    ip += chr(rloc & 0xff)
+    ip += "\xe0\x00\x00\x16"
+    ip = lisp.lisp_ip_checksum(ip)
+
+    #
+    # Build an IGMP query and checksum it.
+    #
+    igmp = "\x11\x40\x00\x00\x00\x00\x00\x00" + "\x00\x3c\x00\x00"
+    g = binascii.hexlify(igmp) 
+    checksum = int(g[0:4], 16)
+    checksum += int(g[4:8], 16)
+    checksum += int(g[8:12], 16)
+    checksum = (checksum >> 16) + (checksum & 0xffff)
+    checksum += checksum >> 16
+    checksum = struct.pack("H", checksum)
+    igmp = igmp[0:2] + checksum + igmp[4::]
+
+    #
+    # Send to EIDs that have joined group and that we have configured to send
+    # queries to.
+    #
+    seid = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
+    geid = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
+
+    for eid in lisp.lisp_gleaned_groups:
+        seid.store_address(eid)
+        for group in lisp.lisp_gleaned_groups[eid]:
+            geid.store_address(group)
+            x, y, query = lisp.lisp_allow_gleaning(seid, geid, None)
+            if (query == False): continue
+            lisp_encapsulate_igmp_query(lisp_raw_socket, seid, geid, ip + igmp)
+        #endfor
+    #endfor
+#enddef
+
+#
+# lisp_timeout_gleaned_groups
+#
+# Go through the lisp_gleaned_groups{} array to see if any timers are older
+# than 3 minutes.
+#
+def lisp_timeout_gleaned_groups():
+    seid = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
+    geid = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
+
+    delete_list = []
+    for eid in lisp.lisp_gleaned_groups:
+        for group in lisp.lisp_gleaned_groups[eid]:
+            last_refresh = lisp.lisp_gleaned_groups[eid][group]
+            elapsed = time.time() - last_refresh
+            if (elapsed < lisp.LISP_IGMP_TIMEOUT_INTERVAL): continue
+            delete_list.append([eid, group])
+        #endfor
+    #endfor
+
+    #
+    # Remove from rloc-set and lisp_gleaned_groups (since we are not
+    # traversing it anymore.
+    #
+    to_str = lisp.bold("timed out", False)
+    for eid, group in delete_list:
+        seid.store_address(eid)
+        geid.store_address(group)
+        e = lisp.green(eid, False)
+        g = lisp.green(group, False)
+        lisp.lprint("{} RLE {} for gleaned group {}".format(e, to_str, g))
+        lisp.lisp_remove_gleaned_multicast(seid, geid)
+    #endfor
+#enddef
+
+#
 # lisp_rtr_process_timer
 #
 # Call general timeout routine to process the RTR map-cache.
 #
-def lisp_rtr_process_timer():
+def lisp_rtr_process_timer(lisp_raw_socket):
     lisp.lisp_set_exception()
 
     #
@@ -1080,9 +1244,21 @@ def lisp_rtr_process_timer():
     lisp.lisp_rtr_nat_trace_cache = {}
 
     #
+    # Process gleaned groups refresh timer. If IGMP reports have not been
+    # received, remove RLE from (*,G) and (S,G) map-cache entries.
+    #
+    lisp_timeout_gleaned_groups()
+
+    #
+    # Send IGMP queries to gleaned EIDs that have joined groups.
+    #
+    lisp_send_igmp_queries(lisp_raw_socket)
+
+    #
     # Restart periodic timer.
     #
-    lisp_periodic_timer = threading.Timer(60, lisp_rtr_process_timer, [])
+    lisp_periodic_timer = threading.Timer(60, lisp_rtr_process_timer,
+        [lisp_raw_socket])
     lisp_periodic_timer.start()
     return
 #enddef
@@ -1197,7 +1373,8 @@ def lisp_rtr_startup():
     #
     # Start map-cache timeout timer.
     #
-    lisp_periodic_timer = threading.Timer(60, lisp_rtr_process_timer, [])
+    lisp_periodic_timer = threading.Timer(60, lisp_rtr_process_timer,
+        [lisp_raw_socket])
     lisp_periodic_timer.start()
     return(True)
 #enddef
@@ -1386,7 +1563,8 @@ lisp_rtr_commands = {
         "eid-prefix" : [True], 
         "group-prefix" : [True], 
         "rloc-prefix" : [True],
-        "rloc-probe" : [True, "yes", "no"] }],
+        "rloc-probe" : [True, "yes", "no"],
+        "igmp-query" : [True, "yes", "no"] }],
 
     "show rtr-rloc-probing" : [lisp_rtr_show_rloc_probe_command, { }],
     "show rtr-keys" : [lisp_rtr_show_keys_command, {}],
@@ -1503,7 +1681,6 @@ while (True):
             lisp.lisp_parse_packet(lisp_send_sockets, packet, source, port)
         #endif
     #endif
-
 #endwhile
 
 lisp_rtr_shutdown()

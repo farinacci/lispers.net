@@ -322,6 +322,26 @@ lisp_rtr_nat_trace_cache = {}
 lisp_glean_mappings = []
 
 #
+# Gleaned groups data structure. Used to find all (S,G) and (*,G) the gleaned
+# EID has joined. This data structure will be used to time out entries that
+# have stopped joining. In which case, the RLE is removed from the (S,G) or
+# (*,G) that join timed out.
+#
+# The dictionary array is indexed by "[<iid>]<eid>" and the value field is a
+# dictoinary array indexed by group address string. The value of the nested
+# dictionay array is a timestamp. When EID 1.1.1.1 has joined groups 224.1.1.1,
+# and 224.2.2.2, here is how timestamp 1111 and 2222 are stored.
+#
+# >>> lisp_gleaned_groups = {}
+# >>> lisp_gleaned_groups["[1539]1.1.1.1"] = {}
+# >>> lisp_gleaned_groups["[1539]1.1.1.1"]["224.1.1.1"] = 1111
+# >>> lisp_gleaned_groups["[1539]1.1.1.1"]["224.2.2.2"] = 2222
+# >>> lisp_gleaned_groups
+# {'[1539]1.1.1.1': {'224.2.2.2': 2222, '224.1.1.1': 1111}}
+#
+lisp_gleaned_groups = {}
+
+#
 # Use this socket for all ICMP Too-Big messages sent by any process. We are
 # centralizing it here.
 #
@@ -411,25 +431,26 @@ LISP_REGISTER_TTL = 3
 LISP_SHORT_TTL    = 1
 LISP_NMR_TTL      = 15
 LISP_GLEAN_TTL    = 15
-LISP_IGMP_TTL     = 150
+LISP_IGMP_TTL     = 240
 
-LISP_SITE_TIMEOUT_CHECK_INTERVAL     = 60 # In units of seconds
-LISP_PUBSUB_TIMEOUT_CHECK_INTERVAL   = 60 # In units of seconds
-LISP_REFERRAL_TIMEOUT_CHECK_INTERVAL = 60 # In units of seconds
-LISP_TEST_MR_INTERVAL                = 60 # In units of seconds
-LISP_MAP_NOTIFY_INTERVAL             = 2  # In units of seconds
-LISP_DDT_MAP_REQUEST_INTERVAL        = 2  # In units of seconds
+LISP_SITE_TIMEOUT_CHECK_INTERVAL     = 60  # In units of seconds
+LISP_PUBSUB_TIMEOUT_CHECK_INTERVAL   = 60  # In units of seconds
+LISP_REFERRAL_TIMEOUT_CHECK_INTERVAL = 60  # In units of seconds
+LISP_TEST_MR_INTERVAL                = 60  # In units of seconds
+LISP_MAP_NOTIFY_INTERVAL             = 2   # In units of seconds
+LISP_DDT_MAP_REQUEST_INTERVAL        = 2   # In units of seconds
 LISP_MAX_MAP_NOTIFY_RETRIES          = 3
-LISP_INFO_INTERVAL                   = 15 # In units of seconds
-LISP_MAP_REQUEST_RATE_LIMIT          = 5  # In units of seconds
-LISP_ICMP_TOO_BIG_RATE_LIMIT         = 1  # In units of seconds
+LISP_INFO_INTERVAL                   = 15  # In units of seconds
+LISP_MAP_REQUEST_RATE_LIMIT          = 5   # In units of seconds
+LISP_ICMP_TOO_BIG_RATE_LIMIT         = 1   # In units of seconds
 #LISP_RLOC_PROBE_TTL                 = 255
 LISP_RLOC_PROBE_TTL                  = 64
-LISP_RLOC_PROBE_INTERVAL             = 10 # In units of seconds
-LISP_RLOC_PROBE_REPLY_WAIT           = 15 # In units of seconds
+LISP_RLOC_PROBE_INTERVAL             = 10  # In units of seconds
+LISP_RLOC_PROBE_REPLY_WAIT           = 15  # In units of seconds
 #LISP_RLOC_PROBE_INTERVAL             = 60 # In units of seconds
-LISP_DEFAULT_DYN_EID_TIMEOUT         = 15 # In units of seconds
-LISP_NONCE_ECHO_INTERVAL             = 10 # In units of seconds
+LISP_DEFAULT_DYN_EID_TIMEOUT         = 15  # In units of seconds
+LISP_NONCE_ECHO_INTERVAL             = 10 
+LISP_IGMP_TIMEOUT_INTERVAL           = 180 # 3 minutes
 
 #
 # Cipher Suites defined in RFC 8061:
@@ -509,6 +530,7 @@ LISP_16_128_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 # Open ./logs/lisp-traceback.log file and write traceback info to it.
 #
 def lisp_record_traceback(*args):
+
     ts = datetime.datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")[:-3]
     fd = open("./logs/lisp-traceback.log", "a")
     fd.write("---------- Exception occurred: {} ----------\n".format(ts))
@@ -8506,7 +8528,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         # entries.
         #
         if (mc == None):
-            glean, nil = lisp_allow_gleaning(eid_record.eid, eid_record.group,
+            glean, x, y = lisp_allow_gleaning(eid_record.eid, eid_record.group,
                 None)
             if (glean): continue
         else:
@@ -9943,7 +9965,7 @@ def lisp_process_multicast_map_notify(packet, source):
         #
         mc = lisp_map_cache_lookup(eid_record.eid, eid_record.group)
         if (mc == None):
-            allow, nil = lisp_allow_gleaning(eid_record.eid, eid_record.group,
+            allow, x, y = lisp_allow_gleaning(eid_record.eid, eid_record.group,
                 None)
             if (allow == False): continue
 
@@ -9957,7 +9979,7 @@ def lisp_process_multicast_map_notify(packet, source):
         # and RTRs store gleaned mappings for group members.
         #
         if (mc.gleaned):
-            lprint("Suppress Map-Notify for gleaned {}".format( \
+            lprint("Ignore Map-Notify for gleaned {}".format( \
                 green(mc.print_eid_tuple(), False)))
             continue
         #endif
@@ -13027,7 +13049,6 @@ class lisp_mapping():
         self.secondary_iid = None
         self.signature_eid = False
         self.gleaned = False
-        self.gleaned_groups = []
     #enddef
 
     def print_mapping(self, eid_indent, rloc_indent):
@@ -13447,7 +13468,7 @@ def lisp_is_group_more_specific(group_str, group_mapping):
 #
 # lisp_lookup_group
 #
-# Lookup group addresss in lisp_group_mapping_list{}.
+# Lookup group address in lisp_group_mapping_list{}.
 #
 def lisp_lookup_group(group):
     best = None
@@ -15468,7 +15489,7 @@ def lisp_test_mr(lisp_sockets, port):
 #
 # Check if local RLOC has changed and update the lisp_rloc() entry in 
 # lisp_db(). That is check to see if the private address changed since this
-# ETR could have moved to another NAT or the same NAT device reasssigned a
+# ETR could have moved to another NAT or the same NAT device reassigned a
 # new private address.
 #
 # This function is also used when the interface address is not private. It
@@ -16427,8 +16448,8 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             #
             # Do not RLOC-probe gleaned entries if configured.
             #
-            gleaned_eid, do_probe = lisp_allow_gleaning(eid, None, parent_rloc)
-            if (gleaned_eid and do_probe == False):
+            x, do_probe, y = lisp_allow_gleaning(eid, None, parent_rloc)
+            if (do_probe == False):
                 e = green(eid.print_address(), False)
                 addr_str += ":{}".format(parent_rloc.translated_port)
                 lprint("Suppress probe to RLOC {} for gleaned EID {}".format( \
@@ -17275,7 +17296,7 @@ def lisp_clear_hardware_walk(mc, parms):
 def lisp_clear_map_cache():
     global lisp_map_cache, lisp_rloc_probe_list
     global lisp_crypto_keys_by_rloc_encap, lisp_crypto_keys_by_rloc_decap
-    global lisp_rtr_list
+    global lisp_rtr_list, lisp_gleaned_groups
 
     clear = bold("User cleared", False)
     count = lisp_map_cache.cache_count
@@ -17303,6 +17324,11 @@ def lisp_clear_map_cache():
     # be added when the next Info-Reply comes in.
     #
     lisp_rtr_list = {}
+
+    #
+    # Clear gleaned groups data structure.
+    #
+    lisp_gleaned_groups = {}
 
     #
     # Tell external data-plane.
@@ -18880,7 +18906,7 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
 # matched entry was configured to RLOC-probe the RLOC for the gleaned entry.
 #
 def lisp_allow_gleaning(eid, group, rloc):
-    if (lisp_glean_mappings == []): return(False, False)
+    if (lisp_glean_mappings == []): return(False, False, False)
     
     for entry in lisp_glean_mappings:
         if (entry.has_key("instance-id")):
@@ -18903,9 +18929,9 @@ def lisp_allow_gleaning(eid, group, rloc):
             if (rloc != None and rloc.is_more_specific(entry["rloc-prefix"])
                 == False): continue
         #endif
-        return(True, entry["rloc-probe"])
+        return(True, entry["rloc-probe"], entry["igmp-query"])
     #endfor
-    return(False, False)
+    return(False, False, False)
 #enddef
 
 #
@@ -18913,8 +18939,11 @@ def lisp_allow_gleaning(eid, group, rloc):
 #
 # Build (*,G) map-cache entry in RTR with gleaned RLOC info from IGMP report.
 #
-def lisp_build_gleaned_multicast(seid, geid, rloc, port):
-    e = green("(*, {})".format(geid.print_address()), False)
+def lisp_build_gleaned_multicast(seid, geid, rloc, port, igmp):
+    group_str = geid.print_address()
+    seid_name = seid.print_address_no_iid()
+    s = green("{}".format(seid_name), False)
+    e = green("(*, {})".format(group_str), False)
     r = red(rloc.print_address_no_iid() + ":" + str(port), False)
     
     #
@@ -18933,8 +18962,6 @@ def lisp_build_gleaned_multicast(seid, geid, rloc, port):
         mc.add_cache()
         lprint("Add gleaned EID {} to map-cache".format(e))
     #endif
-
-    seid_name = seid.print_address_no_iid()
 
     #
     # Check to see if RLE node exists. If so, update the RLE node RLOC and
@@ -18972,16 +18999,28 @@ def lisp_build_gleaned_multicast(seid, geid, rloc, port):
         rle_node.rloc_name = seid_name
         rle_entry.rle_nodes.append(rle_node)
         rle_entry.build_forwarding_list()
-        lprint("Add RLE {} for gleaned EID {}".format(r, e))
+        lprint("Add RLE {} from {} for gleaned EID {}".format(r, s, e))
     elif (rloc.is_exact_match(rle_node.address) == False or
           port != rle_node.translated_port):
-        lprint("Changed RLE {} for gleaned EID {}".format(r, e))
+        lprint("Changed RLE {} from {} for gleaned EID {}".format(r, s, e))
     #endif
 
     #
     # Add or update.
     #
     rle_node.store_translated_rloc(rloc, port)
+
+    #
+    # An IGMP report was received. Update timestamp so we don't time out
+    # actively joined groups.              
+    #
+    if (igmp):
+        seid_str = seid.print_address()
+        if (lisp_gleaned_groups.has_key(seid_str) == False):
+            lisp_gleaned_groups[seid_str] = {}
+        #endif
+        lisp_gleaned_groups[seid_str][group_str] = lisp_get_timestamp()
+    #endif
 #enddef
 
 #
@@ -18989,8 +19028,8 @@ def lisp_build_gleaned_multicast(seid, geid, rloc, port):
 #
 # Remove an RLE from a gleaned entry since an IGMP Leave message was received.
 #
-def lisp_remove_gleaned_multicast(seid, geid, rloc, port):
-    
+def lisp_remove_gleaned_multicast(seid, geid):
+
     #
     # Support (*,G) only gleaning. Scales better anyway.
     #
@@ -19016,17 +19055,43 @@ def lisp_remove_gleaned_multicast(seid, geid, rloc, port):
     rle.rle_nodes.remove(rle_node)
     rle.build_forwarding_list()
 
-    e = green("(*, {})".format(geid.print_address()), False)
-    r = red(rloc.print_address_no_iid() + ":" + str(port), False)
-    lprint("Gleaned EID {} RLE {} removed".format(e, r))
+    group_str = geid.print_address()
+    seid_str = seid.print_address()
+    s = green("{}".format(seid_str), False)
+    e = green("(*, {})".format(group_str), False)
+    lprint("Gleaned EID {} RLE removed for {}".format(e, s))
+
+    #
+    # Remove that EID has joined the group.
+    #
+    if (lisp_gleaned_groups.has_key(seid_str)):
+        if (lisp_gleaned_groups[seid_str].has_key(group_str)):
+            lisp_gleaned_groups[seid_str].pop(group_str)
+        #endif
+    #endif
 
     #
     # Remove map-cache entry if no more RLEs present.
     #
     if (rle.rle_nodes == []):
         mc.delete_cache()
-        lprint("Gleaned EID {} removed, no more RLEs".format(e, r))
+        lprint("Gleaned EID {} remove, no more RLEs".format(e))
     #endif
+#enddef
+
+#
+# lisp_change_gleaned_multicast
+#
+# Change RLOC for each gleaned group this EID has joined.
+#
+def lisp_change_gleaned_multicast(seid, rloc, port):
+    seid_str = seid.print_address()
+    if (lisp_gleaned_groups.has_key(seid_str) == False): return
+
+    for group in lisp_gleaned_groups[seid_str]:
+        lisp_geid.store_address(group)
+        lisp_build_gleaned_multicast(seid, lisp_geid, rloc, port, False)
+    #endfor
 #enddef
 
 #
@@ -19112,8 +19177,12 @@ lisp_igmp_record_types = { 1 : "include-mode", 2 : "exclude-mode",
     6 : "block-old-sources" }
 
 def lisp_process_igmp_packet(packet):
+    source = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+    source.address = socket.ntohl(struct.unpack("I", packet[12:16])[0])
+    source = bold("from {}".format(source.print_address_no_iid()), False)
+
     r = bold("Receive", False)
-    lprint("{} {}-byte IGMP packet: {}".format(r, len(packet), 
+    lprint("{} {}-byte {}, IGMP packet: {}".format(r, len(packet), source,
         lisp_format_packet(packet)))
 
     #
@@ -19294,14 +19363,7 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
             r = red(rloc.print_address_no_iid() + ":" + str(encap_port), False)
             lprint("Change gleaned EID {} to RLOC {}".format(e, r))
             cached_rloc.delete_from_rloc_probe_list(mc.eid, mc.group)
-
-            #
-            # Change RLOC for each gleaned group this EID has joined.
-            #
-            for group in mc.gleaned_groups:
-                lisp_geid.store_address(group)
-                lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
-            #endfor
+            lisp_change_gleaned_multicast(seid, rloc, encap_port)
         #endif
     else:
         mc = lisp_mapping("", "", [])
@@ -19352,16 +19414,14 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
         # Does policy allow gleaning for this joined multicast group.
         #
         lisp_geid.store_address(group)
-        allow, nil = lisp_allow_gleaning(seid, lisp_geid, rloc)
+        allow, x, y = lisp_allow_gleaning(seid, lisp_geid, rloc)
         if (allow == False): continue
 
         if (joinleave):
-            lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
-            if (group in mc.gleaned_groups): continue
-            mc.gleaned_groups.append(group)
+            lisp_build_gleaned_multicast(seid, lisp_geid, rloc, encap_port,
+                True)
         else:
-            lisp_remove_gleaned_multicast(seid, lisp_geid, rloc, encap_port)
-            if (group in mc.gleaned_groups): mc.gleaned_groups.remove(group)
+            lisp_remove_gleaned_multicast(seid, lisp_geid)
         #endif
     #endfor
 #enddef
