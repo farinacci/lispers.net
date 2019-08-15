@@ -1042,7 +1042,8 @@ def lisp_rtr_pcap_thread(lisp_thread):
         "(udp dst port 4342 and ip[28] == 0x12)))").format(afilter)
 
     if (lisp_nat):
-        pfilter += " or (dst net 0.0.0.0/0 and not (host {}))".format(afilter)
+        pfilter += (" or (dst net 0.0.0.0/0 and " + \
+            "not (host {} or src net 127.0.0.0/8))").format(afilter)
     #endif
 
     lisp.lprint("Capturing packets for: '{}'".format(pfilter))
@@ -1088,15 +1089,18 @@ def lisp_encapsulate_igmp_query(lisp_raw_socket, eid, geid, igmp):
 
     packet.outer_source.copy_address(lisp.lisp_myrlocs[0])
     packet.outer_version = packet.outer_dest.afi_to_version()
-    packet.outer_ttl = 64
-    packet.gleaned_dest = True
+    packet.outer_ttl = 32
+    packet.inner_source.copy_address(lisp.lisp_myrlocs[0])
+    packet.inner_dest.store_address("[{}]224.0.0.1".format(geid.instance_id))
+    packet.inner_ttl = 2
 
     e = lisp.green(eid.print_address(), False)
     r = lisp.red("{}:{}".format(packet.outer_dest.print_address_no_iid(),
         packet.encap_port), False)
+    q = lisp.bold("IGMP Query", False)
 
-    lisp.lprint("Data encapsulate IGMP Query to gleaned EID {}, RLOC {}". \
-        format(e, r))
+    lisp.lprint("Data encapsulate {} to gleaned EID {}, RLOC {}".format( \
+        q, e, r))
 
     #
     # Build data encapsulation header.
@@ -1138,20 +1142,21 @@ def lisp_send_igmp_queries(lisp_raw_socket):
     #
     # Build an IP header and checksum it.
     #
-    ip = "\x45\x00\x00\x32\xff\xff\x40\x00\x10\x01\x00\x00"
+    ip = "\x45\x00\x00\x20\xff\xff\x40\x00\x02\x01\x00\x00"
     myrloc = lisp.lisp_myrlocs[0]
     rloc = myrloc.address
     ip += chr((rloc >> 24) & 0xff)
     ip += chr((rloc >> 16) & 0xff)
     ip += chr((rloc >> 8) & 0xff)
     ip += chr(rloc & 0xff)
-    ip += "\xe0\x00\x00\x16"
+    ip += "\xe0\x00\x00\x01"
     ip = lisp.lisp_ip_checksum(ip)
 
     #
-    # Build an IGMP query and checksum it.
+    # Build an IGMP query and checksum it. The mrc is 100 (10 secs), qrv is 2,
+    # and qqic is 60. Just like cisco would send.
     #
-    igmp = "\x11\x40\x00\x00\x00\x00\x00\x00" + "\x00\x3c\x00\x00"
+    igmp = "\x11\x64\x00\x00" + "\x00\x00\x00\x00" + "\x02\x3c\x00\x00"
     g = binascii.hexlify(igmp) 
     checksum = int(g[0:4], 16)
     checksum += int(g[4:8], 16)
