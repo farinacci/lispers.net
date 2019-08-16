@@ -1142,7 +1142,7 @@ def lisp_send_igmp_queries(lisp_raw_socket):
     #
     # Build an IP header and checksum it.
     #
-    ip = "\x45\x00\x00\x20\xff\xff\x40\x00\x02\x01\x00\x00"
+    ip = "\x45\x00\x00\x20\xff\xff\x40\x00\x02\x02\x00\x00"
     myrloc = lisp.lisp_myrlocs[0]
     rloc = myrloc.address
     ip += chr((rloc >> 24) & 0xff)
