@@ -1092,7 +1092,7 @@ def lisp_encapsulate_igmp_query(lisp_raw_socket, eid, geid, igmp):
     packet.outer_ttl = 32
     packet.inner_source.copy_address(lisp.lisp_myrlocs[0])
     packet.inner_dest.store_address("[{}]224.0.0.1".format(geid.instance_id))
-    packet.inner_ttl = 2
+    packet.inner_ttl = 1
 
     e = lisp.green(eid.print_address(), False)
     r = lisp.red("{}:{}".format(packet.outer_dest.print_address_no_iid(),
@@ -1136,13 +1136,13 @@ def lisp_encapsulate_igmp_query(lisp_raw_socket, eid, geid, igmp):
 #      |                       Source Address [N]                      |
 #      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
-def lisp_send_igmp_queries(lisp_raw_socket):
+def lisp_send_igmp_queries(lisp_raw_socket, seid):
     if (lisp.lisp_gleaned_groups == {}): return
 
     #
     # Build an IP header and checksum it.
     #
-    ip = "\x45\x00\x00\x20\xff\xff\x40\x00\x02\x02\x00\x00"
+    ip = "\x45\x00\x00\x20\xff\xff\x40\x00\x01\x02\x00\x00"
     myrloc = lisp.lisp_myrlocs[0]
     rloc = myrloc.address
     ip += chr((rloc >> 24) & 0xff)
