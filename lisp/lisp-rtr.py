@@ -1136,7 +1136,7 @@ def lisp_encapsulate_igmp_query(lisp_raw_socket, eid, geid, igmp):
 #      |                       Source Address [N]                      |
 #      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
-def lisp_send_igmp_queries(lisp_raw_socket, seid):
+def lisp_send_igmp_queries(lisp_raw_socket):
     if (lisp.lisp_gleaned_groups == {}): return
 
     #
