@@ -19318,7 +19318,7 @@ def lisp_process_igmp_packet(packet):
         #
         joinleave = False
         if (record_type in (1, 5)): joinleave = True
-        if (record_type == 4 and source_count == 0): joinleave = True
+        if (record_type in (2, 4) and source_count == 0): joinleave = True
         j_or_l = "join" if (joinleave) else "leave"
 
         #
