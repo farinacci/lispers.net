@@ -1,4 +1,27 @@
 
+                lispers.net Beta Release Version 0.508
+                --------------------------------------
+
+o Release date: Mon Aug 19 16:15:10 PDT 2019
+
+o Use new data structure to store gleaned groups. So when the gleaned EID
+  map-cache entry times out, we still want to keep state about its joined
+  groups.
+
+o Time out RLE entries when IGMP reports stop arriving.
+
+o Add an option "send-query" for the "lisp glean-mapping" command so IGMP
+  queries are sent to gleaned EIDs. Most apps will trigger IGMP report
+  and leave messages but won't stay joined unless there is an IGMP querier.
+  On a LISP tunnel there is only the RTR to do this. Default this to off
+  since lispers.net applications send perioidc IGMP reports when running
+  with app lisp-join.py.
+
+o When an RTR is doing interworking, it should not receive UDP packets
+  addressed to 127.0.0.x.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.507
                 --------------------------------------
 
