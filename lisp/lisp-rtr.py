@@ -33,7 +33,6 @@ import os
 import copy
 import commands
 import binascii
-import struct
 
 #------------------------------------------------------------------------------
 
@@ -1128,8 +1127,6 @@ def lisp_encapsulate_igmp_query(lisp_raw_socket, eid, geid, igmp):
 #      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #      |                       Source Address [1]                      |
 #      +-                                                             -+
-#      |                       Source Address [2]                      |
-#      +-                              .                              -+
 #      .                               .                               .
 #      .                               .                               .
 #      +-                                                             -+
@@ -1140,9 +1137,10 @@ def lisp_send_igmp_queries(lisp_raw_socket):
     if (lisp.lisp_gleaned_groups == {}): return
 
     #
-    # Build an IP header and checksum it.
+    # Build an IP header and checksum it. Put Router-Alert option after
+    # destination address.
     #
-    ip = "\x45\x00\x00\x20\xff\xff\x40\x00\x01\x02\x00\x00"
+    ip = "\x46\xc0\x00\x24\x00\x00\x40\x00\x01\x02\x00\x00"
     myrloc = lisp.lisp_myrlocs[0]
     rloc = myrloc.address
     ip += chr((rloc >> 24) & 0xff)
@@ -1150,21 +1148,15 @@ def lisp_send_igmp_queries(lisp_raw_socket):
     ip += chr((rloc >> 8) & 0xff)
     ip += chr(rloc & 0xff)
     ip += "\xe0\x00\x00\x01"
-    ip = lisp.lisp_ip_checksum(ip)
+    ip += "\x94\x04\x00\x00"
+    ip = lisp.lisp_ip_checksum(ip, 24)
 
     #
     # Build an IGMP query and checksum it. The mrc is 100 (10 secs), qrv is 2,
     # and qqic is 60. Just like cisco would send.
     #
     igmp = "\x11\x64\x00\x00" + "\x00\x00\x00\x00" + "\x02\x3c\x00\x00"
-    g = binascii.hexlify(igmp) 
-    checksum = int(g[0:4], 16)
-    checksum += int(g[4:8], 16)
-    checksum += int(g[8:12], 16)
-    checksum = (checksum >> 16) + (checksum & 0xffff)
-    checksum += checksum >> 16
-    checksum = struct.pack("H", checksum)
-    igmp = igmp[0:2] + checksum + igmp[4::]
+    igmp = lisp.lisp_igmp_checksum(igmp)
 
     #
     # Send to EIDs that have joined group and that we have configured to send

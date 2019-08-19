@@ -1196,8 +1196,8 @@ def lisp_gethostbyname(string):
 # Input to this function is 20-bytes in packed form. Calculate IP header
 # checksum and place in byte 10 and byte 11 of header.
 #
-def lisp_ip_checksum(data):
-    if (len(data) < 20): 
+def lisp_ip_checksum(data, hdrlen=20):
+    if (len(data) < hdrlen): 
         lprint("IPv4 packet too short, length {}".format(len(data)))
         return(data)
     #endif
@@ -1208,7 +1208,7 @@ def lisp_ip_checksum(data):
     # Go 2-bytes at a time so we only have to fold carry-over once.
     #
     checksum = 0
-    for i in range(0, 40, 4):
+    for i in range(0, hdrlen*2, 4):
         checksum += int(ip[i:i+4], 16)
     #endfor
 
@@ -1338,6 +1338,38 @@ def lisp_udp_checksum(source, dest, data):
     checksum = struct.pack("H", checksum)
     udp = data[0:6] + checksum + data[8::]
     return(udp)
+#enddef
+
+#
+# lisp_igmp_checksum
+#
+# Comppute IGMP checksum. This is specialzed for an IGMP query 12-byte
+# header.
+#
+def lisp_igmp_checksum(igmp):
+    g = binascii.hexlify(igmp) 
+
+    #
+    # Go 2-bytes at a time so we only have to fold carry-over once.
+    #
+    checksum = 0
+    for i in range(0, 24, 4):
+        checksum += int(g[i:i+4], 16)
+    #endfor
+
+    #
+    # Add in carry and byte-swap.
+    #
+    checksum = (checksum >> 16) + (checksum & 0xffff)
+    checksum += checksum >> 16
+    checksum = socket.htons(~checksum & 0xffff)
+
+    #
+    # Pack in 2-byte buffer and insert at bytes 10 and 11.
+    #
+    checksum = struct.pack("H", checksum)
+    igmp = igmp[0:2] + checksum + igmp[4::]
+    return(igmp)
 #enddef
 
 #
