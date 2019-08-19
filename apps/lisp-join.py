@@ -27,7 +27,7 @@
 #
 # This program modifies file /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts.
 #
-# Usage: python lisp-join.py <group> [<interface>]
+# Usage: python lisp-join.py <group> [<interface>] [interval=<secs>]
 #
 # When an overlay multicast group is joined an <interface> is not required.
 # So for example, say an overlay multicast group 224.1.1.1 is being joined
@@ -131,11 +131,19 @@ def leave_socket(msocket, group, intf):
 # Get group and interface parameters from command line.
 #
 if (len(sys.argv) < 2):
-    print "Need to supply IPv4 group address"
+    print "Usage: python lisp-join.py <group> [<interface>] [interval=<secs>]"
     exit(1)
 #endif    
 group = sys.argv[1]
 intf = sys.argv[2] if len(sys.argv) == 3 else "lo"
+rejoin_interval = sys.argv[3] if len(sys.argv) == 4 else "interval=60"
+
+if (intf.find("interval=") != -1):
+    rejoin_interval = intf
+    intf = "lo"
+#endif
+rejoin_interval = rejoin_interval.split("=")[1]
+rejoin_interval = int(rejoin_interval)
 
 #
 # If we are using ping to test group connectivity, make sure kernel allows
@@ -181,11 +189,13 @@ else:
 # is a IGMP querier on the LAN. Assume there isn't one in a virtual/container
 # environment.
 #
+print "Using rejoin interval of {} seconds".format(rejoin_interval)
+
 while (True):
     print "Rejoining group {} on {}, pid {} ...".format(group, intf, mypid),
     leave_socket(msocket, group, intf)
     join_socket(msocket, group, intf)
     print "done"
-    time.sleep(60)
+    time.sleep(rejoin_interval)
 #endwhile
 exit(0)
