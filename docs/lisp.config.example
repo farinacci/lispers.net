@@ -1144,6 +1144,7 @@ lisp glean-mapping {
     group-prefix = <group-prefix>
     rloc-prefix = <rloc-prefix>
     rloc-probe = yes | no
+    igmp-query = yes | no
 }
 
 Command Description:
@@ -1159,7 +1160,9 @@ Command Description:
     0. The parameters "eid-prefix", "group-prefix" and "rloc-prefix" can be
     omitted which defaults to accepting from all. If you configure
     "rloc-probe" then RLOC-probes are sent to the gleaned entry. The default
-    value is set to "no".
+    value is set to "no". If you configure igmp-query, then EIDs that join
+    groups will be IGMP queried so they can stay joinied. The default value
+    is set to "no".
 
 Example:
 
@@ -1181,6 +1184,7 @@ lisp glean-mapping {
 lisp glean-mapping {
     instance-id = 1000-2000
     rloc-probe = yes
+    igmp-query = yes
 }
 
 #
