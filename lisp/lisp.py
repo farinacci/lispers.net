@@ -19200,6 +19200,21 @@ def lisp_change_gleaned_multicast(seid, rloc, port):
 #     |                                                               |
 #     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
+#
+# The function returns a boolean (True) when packet is an IGMP query and
+# an array when it is a report. Caller must check where there is context
+# to deal with IGMP queries.
+#
+# IMPORTANT NOTE: for encapsulated IGMP Queries to be forwarded correctly
+# after the ETR decapsulates them, you need this in the kernel (put this
+# statement in the RL script):
+#
+#    ip route add 224.0.0.1/32 dev lo
+#
+# For OOR runnnig as a LISP-MN use:
+#
+#    ip route add 224.0.0.1/32 dev utun4
+#
 igmp_types = { 17 : "IGMP-query", 18 : "IGMPv1-report", 19 : "DVMRP",
     20 : "PIMv1", 22 : "IGMPv2-report", 23 : "IGMPv2-leave",  
     30 : "mtrace-response", 31 : "mtrace-request", 34 : "IGMPv3-report" }
@@ -19227,7 +19242,19 @@ def lisp_process_igmp_packet(packet):
     #
     igmp = packet[header_offset::]
     igmp_type = struct.unpack("B", igmp[0])[0]
+
+    #
+    # Maybe this is an IGMPv1 or IGMPv2 message so get group address. If 
+    # IGMPv3, we will fix up group address in loop (for each group record).
+    #
     group = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+    group.address = socket.ntohl(struct.unpack("II", igmp[:8])[1])
+    group_str = group.print_address_no_iid()
+
+    if (igmp_type == 17):
+        lprint("IGMP Query for group {}".format(group_str))
+        return(True)
+    #endif
 
     reports_and_leaves_only = (igmp_type in (0x12, 0x16, 0x17, 0x22))
     if (reports_and_leaves_only == False):
@@ -19241,13 +19268,6 @@ def lisp_process_igmp_packet(packet):
         lprint("IGMP message too small")
         return([])
     #endif
-
-    #
-    # Maybe this is an IGMPv1 or IGMPv2 message so get group address. If 
-    # IGMPv3, we will fix up group address in loop (for each group record).
-    #
-    group.address = socket.ntohl(struct.unpack("II", igmp[:8])[1])
-    group_str = group.print_address_no_iid()
 
     #
     # Process either IGMPv1 or IGMPv2 and exit.
@@ -19439,6 +19459,8 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
     # The lisp-etr process will do this.
     #
     entries = lisp_process_igmp_packet(igmp)
+    if (type(entries) == bool): return
+
     for source, group, joinleave in entries:
         if (source != None): continue
 
