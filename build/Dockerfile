@@ -38,15 +38,15 @@ RUN mkdir /lispers.net
 #
 # Dropbox option.
 #        
-ENV LISP_URL https://www.dropbox.com/s/0t36qe03lh1t9c1/lispers.net.tgz
-RUN cd /lispers.net; curl --insecure -L $LISP_URL | gzip -dc | tar -xf - 
+#ENV LISP_URL https://www.dropbox.com/s/0t36qe03lh1t9c1/lispers.net.tgz
+#RUN cd /lispers.net; curl --insecure -L $LISP_URL | gzip -dc | tar -xf - 
 
 #
 # Git repo option.
 #        
-#ENV LISP_TGZ ./latest/lispers.net.tgz
-#COPY $LISP_TGZ /lispers.net/.
-#RUN cd /lispers.net; cat `basename $LISP_TGZ` | gzip -dc | tar -xf - 
+ENV LISP_TGZ ./latest/lispers.net.tgz
+COPY $LISP_TGZ /lispers.net/.
+RUN cd /lispers.net; cat `basename $LISP_TGZ` | gzip -dc | tar -xf - 
 
 #
 # Install python modules the lispers.net directory depends on.
