@@ -53,7 +53,9 @@ lisp_threads = []
 
 #
 # In AWS, the source RLOC must be a private address or it will not outbound
-# forward encapsulated packets.
+# forward encapsulated packets. dmidecode MUST BE installed in the AWS VM
+# so we can tell if lispers.net is running on AWS. And if a container is
+# running on an AWS VM, dmidecode must be installed in the container.
 #
 lisp_rtr_source_rloc = None
 
