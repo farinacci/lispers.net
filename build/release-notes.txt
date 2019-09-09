@@ -2,7 +2,7 @@
                 lispers.net Beta Release Version 0.509
                 --------------------------------------
 
-o Release date:
+o Release date: Mon Sep  9 16:44:32 PDT 2019
 
 o Have lisp-join.py command line take command-line parameter "interval=<secs>".
   Type in "python lisp-join.py" to get help string:
