@@ -10,6 +10,13 @@
 #
 
 set REL=release-$1
+
+set APP=apps-release-$1
+ls releases/$APP >& /dev/null
+if ($status != "0") then
+    set APP=""
+endif
+
 echo -n "Commit and tag release $REL? (y/n): "
 set yn = $<
 if ($yn != "y") then
@@ -22,18 +29,40 @@ if ($status != "0") then
     exit
 endif
 
+#
+# Add new files from release and apps-release directories.
+#
 echo "git add -f $REL ..."
 git add -f releases/*$REL
 
+if ($APP != "") then
+    echo "git add -f $APP ..."
+    git add -f releases/*$APP
+endif
+
+#
+# Commiit and push files.
+#
 echo "git commit ..."
 git commit -m "Commit build release $REL" release-notes.txt latest \
     releases/$REL
+if ($APP != "") then
+    git commit -m "Commit build apps release $APP" releases/$APP
+endif
 
 echo "git push ..."
 git push
 
+#
+# Now tag current repo.
+#
 echo "git tag -a $REL ..."
 git tag -a -m "Tag build release $REL" $REL
+
+if ($APP != "") then
+    echo "git tag -a $APP ..."
+    git tag -a -m "Tag build apps release $APP" $REL
+endif
 
 echo "git push origin $REL ..."
 git push origin $REL
