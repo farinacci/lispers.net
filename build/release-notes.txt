@@ -1,4 +1,26 @@
 
+                lispers.net Beta Release Version 0.509
+                --------------------------------------
+
+o Release date:
+
+o Have lisp-join.py command line take command-line parameter "interval=<secs>".
+  Type in "python lisp-join.py" to get help string:
+
+  Usage: python lisp-join.py <group> [<interface>] [interval=<secs>]
+
+  This way we can control how often when IGMP reports are pushed from group
+  joiners.
+
+o Change Dockerfile to get latest lispers.net image from build/latest git
+  directory versus Dino's dropbox account.
+
+o Put comments in lisp-rtr.py to note that a container running on a AWS VM
+  needs dmidecode to recognize it is running on Amazon because it won't allow
+  us to encapsulate packets out of Amazon with a global source RLOC.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.508
                 --------------------------------------
 
