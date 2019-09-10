@@ -657,6 +657,10 @@ def lisp_is_linux():
 #
 def lisp_on_aws():
     vm = commands.getoutput("sudo dmidecode -s bios-version")
+    if (vm.find("command not found") != -1 and lisp_on_docker()):
+        aws = bold("AWS check", False)
+        lprint("{} - dmidecode not installed in docker container".format(aws))
+    #endif
     return(vm.lower().find("amazon") != -1)
 #enddef
 
@@ -668,6 +672,15 @@ def lisp_on_aws():
 def lisp_on_gcp():
     vm = commands.getoutput("sudo dmidecode -s bios-version")
     return(vm.lower().find("google") != -1)
+#enddef
+
+#
+# lisp_on_docker
+#
+# Are we in a docker container?
+#
+def lisp_on_docker():
+    return(os.path.exists("/.dockerenv"))
 #enddef
 
 #
