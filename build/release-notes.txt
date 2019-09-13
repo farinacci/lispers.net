@@ -1,4 +1,17 @@
 
+                lispers.net Beta Release Version 0.510
+                --------------------------------------
+
+o Release date: Fri Sep 13 12:13:24 PDT 2019
+
+o Do a check in lisp_on_aws() to see if docker is runnnig and dmidecode is
+  not installed. And if so, issue log message.
+
+o Fix potential crash in processing Map-Register and Map-Notify-Ack messages
+  when a supplied key-id is not configured in the map-server.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.509
                 --------------------------------------
 
