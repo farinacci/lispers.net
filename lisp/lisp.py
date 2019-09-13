@@ -9710,8 +9710,11 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
         # to use this to bypass the authentication check.
         #
         key_id = map_register.key_id
-        if (site.auth_key.has_key(key_id) == False): key_id = 0
-        password = site.auth_key[key_id]
+        if (site.auth_key.has_key(key_id)):
+            password = site.auth_key[key_id]
+        else:
+            password = ""
+        #endif
 
         auth_good = lisp_verify_auth(orig_packet, map_register.alg_id, 
             map_register.auth_data, password)
@@ -10240,8 +10243,11 @@ def lisp_process_map_notify_ack(packet, source):
         site.map_notify_acks_received += 1
 
         key_id = map_notify.key_id
-        if (site.auth_key.has_key(key_id) == False): key_id = 0
-        password = site.auth_key[key_id]
+        if (site.auth_key.has_key(key_id)):
+            password = site.auth_key[key_id]
+        else:
+            password = ""
+        #endif
 
         auth_good = lisp_verify_auth(packet, map_notify.alg_id, 
             map_notify.auth_data, password)
