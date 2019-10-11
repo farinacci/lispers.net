@@ -1,4 +1,15 @@
 
+                lispers.net Beta Release Version 0.511
+                --------------------------------------
+
+o Release date:
+
+o Have ./STOP-LISP not stop a lisp-join.py process. Because when restarting
+  the lispers.net subsystem, multicast applications may still be running
+  and need to have lisp-join.py keep joining groups.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.510
                 --------------------------------------
 
