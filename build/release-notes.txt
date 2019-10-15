@@ -2,11 +2,19 @@
                 lispers.net Beta Release Version 0.511
                 --------------------------------------
 
-o Release date:
+o Release date: Tue Oct 15 09:40:43 PDT 2019
 
 o Have ./STOP-LISP not stop a lisp-join.py process. Because when restarting
   the lispers.net subsystem, multicast applications may still be running
   and need to have lisp-join.py keep joining groups.
+
+o When the RTR encapsulates a multicast packet it needs to use a source RLOC
+  that is a private address on eth0 or AWS won't forward it out of the cloud.
+
+o Add feature to store the last 4 recent sources per map-cache entry. This
+  aids in debugging to see if packets are going where they are suppose to
+  go. To get the "Recent Sources", hover pointer over map-cache entry on
+  ITR and RTR map-cache table displays.
 
 -------------------------------------------------------------------------------
 
