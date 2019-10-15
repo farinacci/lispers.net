@@ -662,6 +662,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     # Do map-cache lookup.
     #
     mc = lisp.lisp_map_cache_lookup(packet.inner_source, packet.inner_dest)
+    if (mc): mc.add_recent_source(packet.inner_source)
 
     #
     # If "secondary-iid" is configured, we want to check the secondary 
@@ -674,6 +675,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         dest_eid = packet.inner_dest
         dest_eid.instance_id = secondary_iid
         mc = lisp.lisp_map_cache_lookup(packet.inner_source, dest_eid)
+        if (mc): mc.add_recent_source(packet.inner_source)
     #endif
 
     #

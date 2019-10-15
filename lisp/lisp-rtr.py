@@ -458,6 +458,11 @@ def lisp_rtr_fast_data_plane(packet):
             srloc = lisp_fast_address_to_binary(srloc)
             if (src_mc.rloc_set[0].rloc.address != srloc): return(False)
         #endif
+
+        #
+        # Cache source for map-cache display.
+        #
+        mc.add_recent_source(lisp_seid_cached)
     #endif
 
     #
@@ -730,6 +735,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Do map-cache lookup. If no entry found, send Map-Request.
     #
     mc = lisp.lisp_map_cache_lookup(packet.inner_source, packet.inner_dest)
+    if (mc): mc.add_recent_source(packet.inner_source)
 
     #
     # Check if we are doing secondary-instance-ids only when we have a 
@@ -745,6 +751,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             mc = lisp.lisp_map_cache_lookup(packet.inner_source, dest_eid)
             if (mc):
                 packet.gleaned_dest = mc.gleaned
+                mc.add_recent_source(packet.inner_source)
             else:
                 gleaned_dest, x, y = lisp.lisp_allow_gleaning(dest_eid, None,
                     None)
@@ -886,7 +893,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
 
             version = packet.outer_dest.afi_to_version()
             packet.outer_version = version
-            source_rloc = lisp.lisp_myrlocs[0] if (version == 4) else \
+
+            source_rloc = lisp_rtr_source_rloc if (version == 4) else \
                 lisp.lisp_myrlocs[1]
             packet.outer_source.copy_address(source_rloc)
 

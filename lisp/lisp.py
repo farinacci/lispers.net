@@ -13100,6 +13100,7 @@ class lisp_mapping():
         self.secondary_iid = None
         self.signature_eid = False
         self.gleaned = False
+        self.recent_sources = {}
     #enddef
 
     def print_mapping(self, eid_indent, rloc_indent):
@@ -13465,6 +13466,10 @@ class lisp_mapping():
             if (rloc.is_rtr()): return(True)
         #endfor
         return(False)
+    #enddef
+
+    def add_recent_source(self, source):
+        self.recent_sources[source.print_address()] = lisp_get_timestamp()
     #enddef
 #endclass
 

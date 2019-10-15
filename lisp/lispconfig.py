@@ -2271,7 +2271,14 @@ def lisp_map_cache_command(kv_pair):
 def lisp_display_map_cache(mc, output):
     ts = lisp.lisp_print_elapsed(mc.uptime)
     mc_ts = ts
-    eid_str = mc.print_eid_tuple()
+    eid_str= mc.print_eid_tuple()
+    hover = "Recent Sources: "
+    hover += "none\n" if (mc.recent_sources == {}) else "\n"
+    for s in mc.recent_sources:
+        t = mc.recent_sources[s]
+        hover += "  " + s + ": " + lisp.lisp_print_elapsed(t) + "\n"
+    #endfor
+    eid_str = lisp.lisp_span(eid_str, hover[0:-1])
     action = mc.action
 
     #
