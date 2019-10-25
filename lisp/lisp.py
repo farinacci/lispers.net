@@ -9200,8 +9200,10 @@ def lisp_queue_multicast_map_notify(lisp_sockets, rle_list):
         found_rtrs = False
         if (sg_site_eid.eid.address == 0 and sg_site_eid.eid.mask_len == 0):
             notify_str = []
-            rle_nodes = [] if len(sg_rloc_set) == 0 else \
-                sg_rloc_set[0].rle.rle_nodes
+            rle_nodes = []
+            if (len(sg_rloc_set) != 0 and sg_rloc_set[0].rle != None):
+	        rle_nodes = sg_rloc_set[0].rle.rle_nodes
+            #endif
             for rle_node in rle_nodes: 
                 notify.append(rle_node.address)
                 notify_str.append(rle_node.address.print_address_no_iid())
