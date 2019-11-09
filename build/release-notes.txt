@@ -1,4 +1,17 @@
 
+                lispers.net Beta Release Version 0.512
+                --------------------------------------
+
+o Release date: Fri Nov  8 16:06:26 PST 2019
+
+o Fix crash in lisp_queue_multicast_map_notify() when no RLEs are registered
+  in an RLOC-set.
+
+o When returning RLEs in a restful API response, do not include special
+  formatting characters.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.511
                 --------------------------------------
 
