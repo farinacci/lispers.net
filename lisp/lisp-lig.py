@@ -115,7 +115,7 @@ def process_eid_records(record_count, nonce, packet):
                 print "        elp: {}".format(elp)
             #endif
             if (rloc_record.rle):
-                rle = rloc_record.rle.print_rle(False)
+                rle = rloc_record.rle.print_rle(False, True)
                 print "        rle: {}".format(rle)
             #endif
             if (rloc_record.json):

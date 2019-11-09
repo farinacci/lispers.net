@@ -2343,7 +2343,7 @@ def lisp_display_map_cache(mc, output):
             rloc_str += "elp: {}<br>".format(elp)
         #endif
         if (rloc.rle): 
-            rle = rloc.rle.print_rle(True)
+            rle = rloc.rle.print_rle(True, True)
             rloc_str += "rle: {}<br>".format(rle)
         #endif
         if (rloc.json): 
@@ -2883,7 +2883,7 @@ def lisp_show_rle_list(output):
     rle_list = sorted(lisp.lisp_rle_list)
     for rle_name in rle_list:
         rle = lisp.lisp_rle_list[rle_name]
-        output += lisp_table_row(rle_name, rle.print_rle(True))
+        output += lisp_table_row(rle_name, rle.print_rle(True, True))
     #endfor
     output += lisp_table_footer()
     return(output)

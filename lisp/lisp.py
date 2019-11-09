@@ -5357,7 +5357,7 @@ class lisp_rloc_record():
         if (self.rle):
             name = ""
             if (self.rle.rle_name): name = "'{}' ".format(self.rle.rle_name)
-            rle_str = ", rle: {}{}".format(name, self.rle.print_rle(False))
+            rle_str = ", rle: {}{}".format(name, self.rle.print_rle(False, True))
         #endif
         json_str = ""
         if (self.json):
@@ -10083,7 +10083,8 @@ def lisp_process_multicast_map_notify(packet, source):
             lisp_write_ipc_map_cache(True, mc)
 
             lprint("Update {} map-cache entry with RLE {}".format( \
-                green(mc.print_eid_tuple(), False), rloc.rle.print_rle(False)))
+                green(mc.print_eid_tuple(), False),
+                rloc.rle.print_rle(False, True)))
         #endfor
     #endfor
     return
@@ -12388,12 +12389,17 @@ class lisp_rle():
         return(rle)
     #enddef
  
-    def print_rle(self, html):
+    def print_rle(self, html, do_formatting):
         rle_str = ""
         for rle_node in self.rle_nodes:
             port = rle_node.translated_port
-            rle_name_str = blue(rle_node.rloc_name, html) if \
-                rle_node.rloc_name != None else ""
+
+            rle_name_str = ""
+            if (rle_node.rloc_name != None):
+                rle_name_str = rle_node.rloc_name
+                if (do_formatting): rle_name_str = blue(rle_name_str, html)
+            #endif
+
             addr_str = rle_node.address.print_address_no_iid()
             if (rle_node.address.is_local()): addr_str = red(addr_str, html)
             rle_str += "{}{}(L{}){}, ".format(addr_str, "" if port == 0 \
@@ -16064,7 +16070,7 @@ def lisp_gather_map_cache_data(mc, data):
         r["state"] = rloc.print_state()
         if (rloc.geo): r["geo"] = rloc.geo.print_geo()
         if (rloc.elp): r["elp"] = rloc.elp.print_elp(False)
-        if (rloc.rle): r["rle"] = rloc.rle.print_rle(False)
+        if (rloc.rle): r["rle"] = rloc.rle.print_rle(False, False)
         if (rloc.json): r["json"] = rloc.json.print_json(False)
         if (rloc.rloc_name): r["rloc-name"] = rloc.rloc_name
         stats = rloc.stats.get_stats(False, False)
@@ -16274,7 +16280,7 @@ def lisp_gather_site_cache_data(se, data):
 
         if (rloc.geo): r["geo"] = rloc.geo.print_geo()
         if (rloc.elp): r["elp"] = rloc.elp.print_elp(False)
-        if (rloc.rle): r["rle"] = rloc.rle.print_rle(False)
+        if (rloc.rle): r["rle"] = rloc.rle.print_rle(False, True)
         if (rloc.json): r["json"] = rloc.json.print_json(False)
         if (rloc.rloc_name): r["rloc-name"] = rloc.rloc_name
         r["uptime"] = lisp_print_elapsed(rloc.uptime)
