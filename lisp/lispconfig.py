@@ -4072,7 +4072,7 @@ def lisp_interface_command(kv_pair):
     if (lisp_nat):
         check = "sudo iptables -t nat -C POSTROUTING -o {} -j MASQUERADE"
         check  = commands.getoutput(check.format(device_name))
-        if (check.find("No chain") != -1):
+        if (check != ""):
             loopback = lisp.lisp_get_loopback_address()
             if (loopback):
                 add = "sudo iptables -t nat -A POSTROUTING -s {} -j ACCEPT"

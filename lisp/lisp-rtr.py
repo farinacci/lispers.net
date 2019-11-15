@@ -724,8 +724,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #
     deid = packet.inner_dest
     if (deid.is_multicast_address()):
-        gleaned_dest, x, y = lisp.lisp_allow_gleaning(packet.inner_source,
-            deid, None)
+        gleaned_dest = False
+        x, y, z = lisp.lisp_allow_gleaning(packet.inner_source, deid, None)
     else:
         gleaned_dest, x, y = lisp.lisp_allow_gleaning(deid, None, None)
     #endif
