@@ -1,4 +1,18 @@
 
+                lispers.net Beta Release Version 0.513
+                --------------------------------------
+
+o Release date: Thu Nov 14 17:30:08 PST 2019
+
+o Do not mistake a destination multicast group address as a gleaned EID. This
+  is causing Map-Request suppression to the mapping system.
+
+o When doing a "sudo iptables -t nat -C POSTROUTING -o {} -j MASQUERADE", the
+  rule exists if the return string is "". Do this more robust check. This was
+  causing lisp-nat=yes on Debian to not get enabled.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.512
                 --------------------------------------
 
