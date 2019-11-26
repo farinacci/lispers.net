@@ -11737,7 +11737,7 @@ class lisp_address():
 
     def store_iid_range(self, iid, mask_len):
         if (self.afi == LISP_AFI_NONE):
-            if (iid is 0 and mask_len is 0): self.afi = LISP_AFI_ULTIMATE_ROOT
+            if (iid == 0 and mask_len == 0): self.afi = LISP_AFI_ULTIMATE_ROOT
             else: self.afi = LISP_AFI_IID_RANGE
         #endif
         self.instance_id = iid
@@ -13232,7 +13232,7 @@ class lisp_mapping():
         packet = lisp_packet.packet
         inner_version = lisp_packet.inner_version
         length = len(self.best_rloc_set)
-        if (length is 0): 
+        if (length == 0): 
             self.stats.increment(len(packet))
             return([None, None, None, self.action, None, None])
         #endif

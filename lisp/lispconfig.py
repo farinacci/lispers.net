@@ -2595,7 +2595,7 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
 
         ts = lisp.lisp_print_elapsed(mr.last_used)
         lnmr = lisp.lisp_print_elapsed(mr.last_reply)
-        avg_rtt = 0 if mr.neg_map_replies_received is 0 else \
+        avg_rtt = 0 if mr.neg_map_replies_received == 0 else \
             float(mr.total_rtt / mr.neg_map_replies_received)
         avg_rtt = str(round(avg_rtt, 3)) + " ms"
 
