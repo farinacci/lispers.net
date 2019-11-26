@@ -1155,7 +1155,12 @@ def lisp_etr_data_plane(parms, not_used, packet):
     #endif
 
     #
-    # Check if database-mapping exists for our local destination.
+    # Check if database-mapping exists for our local destination. When the
+    # destination is a multicast address, check if the source is our EID.
+    # That means we sent to a group we are members of. If using an RTR,
+    # it can't tell since the source RLOC could be rewritten by a NAT so
+    # the ETR must process the packet. If it decaps, the ITR on this system
+    # will pcap it and encap again. This will happen until the TTL reaches 0.
     #
     if (packet.inner_dest.is_multicast_address() == False):
         db = lisp.lisp_db_for_lookups.lookup_cache(packet.inner_dest, False)
@@ -1164,6 +1169,11 @@ def lisp_etr_data_plane(parms, not_used, packet):
         else:
             lisp.dprint("No database-mapping found for EID {}".format( \
                 lisp.green(packet.inner_dest.print_address(), False)))
+            return
+        #endif
+    else:
+        if (lisp.lisp_db_for_lookups.lookup_cache(packet.inner_source, False)):
+            lisp.dprint("Discard echoed multicast packet (through NAT)")
             return
         #endif
     #endif
@@ -1309,7 +1319,12 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     lisp.lisp_decap_stats["good-packets"].increment(len(packet.packet))
 
     #
-    # Check if database-mapping exists for our local destination.
+    # Check if database-mapping exists for our local destination. When the
+    # destination is a multicast address, check if the source is our EID.
+    # That means we sent to a group we are members of. If using an RTR,
+    # it can't tell since the source RLOC could be rewritten by a NAT so
+    # the ETR must process the packet. If it decaps, the ITR on this system
+    # will pcap it and encap again. This will happen until the TTL reaches 0.
     #
     if (packet.inner_dest.is_multicast_address() == False):
         db = lisp.lisp_db_for_lookups.lookup_cache(packet.inner_dest, False)
@@ -1319,6 +1334,11 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
             lisp.dprint("No database-mapping found for EID {}".format( \
                 lisp.green(packet.inner_dest.print_address(), False)))
             #endif
+        #endif
+    else:
+        if (lisp.lisp_db_for_lookups.lookup_cache(packet.inner_source, False)):
+            lisp.dprint("Discard echoed multicast packet")
+            return
         #endif
     #endif
 
