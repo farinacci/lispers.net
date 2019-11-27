@@ -1,4 +1,20 @@
 
+                lispers.net Beta Release Version 0.514
+                --------------------------------------
+
+o Release date: Tue Nov 26 15:53:01 PST 2019
+
+o Change python "is" occurences to "==" so it can pass new version of pyflakes.
+
+o When an xTR joins a (*,G) group, an RTR may replicate a packet back to
+  the xTR when it originates a multicast packet. It cannot tell that the
+  packet will loop since the source RLOC is rewritten by a NAT. So the
+  ETR side of the xTR must decap packet and check source EID for its own.
+  If it is, discard packet otherwise the ITR side will encap again to the RTR
+  until TTL reaches 0.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.513
                 --------------------------------------
 
