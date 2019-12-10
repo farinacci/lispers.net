@@ -801,6 +801,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Update stats for entry. Stats per RLOC is done in lisp_mapping.select_
     # rloc().
     #
+    mc.last_refresh_time = time.time()
     mc.stats.increment(len(packet.packet))
 
     #

@@ -708,6 +708,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     # Update stats for entry. Stats per RLOC is done in lisp_mapping.select_
     # rloc().
     #
+    mc.last_refresh_time = time.time()
     mc.stats.increment(len(packet.packet))
 
     #
