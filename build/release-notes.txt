@@ -1,4 +1,18 @@
 
+                lispers.net Beta Release Version 0.515
+                --------------------------------------
+
+o Release date: Tue Dec 10 10:49:08 PST 2019
+
+o Update mc.last_refresh_time when we increment a map-cache stats. That means
+  the map-cache is fresh since we are using it. There was a bug we were
+  continually sending Map-Request Refresh messages when the uptime of a
+  map-cache entry was greater than the TTL. We only want to send the refreshing
+  Map-Request if the elapsed time from the last received packt is within 10%
+  of TTL expiry.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.514
                 --------------------------------------
 
