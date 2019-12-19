@@ -112,6 +112,7 @@ Installation Problems?
     -r pip-requirements.txt" command from above:
 
     sudo apt-get install python-dev
+    sudo yum install python-devel
 
 (3) If you get this error "unable to execute 'x86_64-linux-gnu-gcc': No such 
     file or directory", install gcc by typing in:
@@ -157,7 +158,8 @@ Installation Problems?
     is not loaded are TCP checksum errors over IPv6.
 
 -------------------------------------------------------------------------------
-                 Last updated: Mon Dec  3 10:01:11 PST 2018
+                 Last updated: Thu Dec 12 23:35:15 EST 2019
+
 
 
 
