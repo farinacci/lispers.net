@@ -431,6 +431,7 @@ LISP_REGISTER_TTL = 3
 LISP_SHORT_TTL    = 1
 LISP_NMR_TTL      = 15
 LISP_GLEAN_TTL    = 15
+LISP_MCAST_TTL    = 15
 LISP_IGMP_TTL     = 240
 
 LISP_SITE_TIMEOUT_CHECK_INTERVAL     = 60  # In units of seconds
@@ -8731,7 +8732,17 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
         if (mc == None):
             mc = lisp_mapping(eid_record.eid, eid_record.group, rloc_set)
             mc.mapping_source = source
-            mc.map_cache_ttl = eid_record.store_ttl()
+
+            #
+            # If this is a multicast map-cache entry in an RTR, set map-cache
+            # TTL small so Map-Requests can be sent more often to capture
+            # RLE changes.
+            #
+            if (lisp_i_am_rtr and eid_record.group.is_null() == False):
+                mc.map_cache_ttl = LISP_MCAST_TTL
+            else:
+                mc.map_cache_ttl = eid_record.store_ttl()
+            #endif
             mc.action = eid_record.action
             mc.add_cache(rloc_set_change)
         #endif
@@ -13109,6 +13120,7 @@ class lisp_mapping():
         self.signature_eid = False
         self.gleaned = False
         self.recent_sources = {}
+        self.last_multicast_map_request = 0
     #enddef
 
     def print_mapping(self, eid_indent, rloc_indent):
@@ -13145,6 +13157,36 @@ class lisp_mapping():
             ttl = str(ttl) + " secs"
         #endif
         return(ttl)
+    #enddef
+
+    def refresh(self):
+        if (self.group.is_null()): return(self.refresh_unicast())
+        return(self.refresh_multicast())
+    #enddef
+
+    def refresh_unicast(self):
+        return(self.is_active() and self.has_ttl_elapsed() and
+            self.gleaned == False)
+    #enddef
+
+    def refresh_multicast(self):
+
+        #
+        # Take uptime modulo TTL and if the value is greater than 10% of
+        # TTL, refresh entry. So that is around every 13 or 14 seconds.
+        #
+        elapsed = int((time.time() - self.uptime) % self.map_cache_ttl)
+        refresh = (elapsed in [0, 1, 2])
+        if (refresh == False): return(False)
+
+        #
+        # Don't send a refreshing Map-Request if we just sent one.
+        #
+        rate_limit = ((time.time() - self.last_multicast_map_request) <= 2)
+        if (rate_limit): return(False)
+
+        self.last_multicast_map_request = lisp_get_timestamp()
+        return(True)
     #enddef
 
     def has_ttl_elapsed(self):
