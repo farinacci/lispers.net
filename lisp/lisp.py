@@ -16554,8 +16554,8 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             #
             # Do not RLOC-probe gleaned entries if configured.
             #
-            x, do_probe, y = lisp_allow_gleaning(eid, None, parent_rloc)
-            if (do_probe == False):
+            glean, do_probe, y = lisp_allow_gleaning(eid, None, parent_rloc)
+            if (glean and do_probe == False):
                 e = green(eid.print_address(), False)
                 addr_str += ":{}".format(parent_rloc.translated_port)
                 lprint("Suppress probe to RLOC {} for gleaned EID {}".format( \
