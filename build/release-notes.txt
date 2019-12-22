@@ -1,4 +1,22 @@
 
+                lispers.net Beta Release Version 0.516
+                --------------------------------------
+
+o Release date: Sun Dec 22 12:33:49 PST 2019
+
+o In the RTR, set uptime of (*,G) map-cache entries to 15 secs so we can
+  send refreshing Map-Requests every 13/14 seconds to capture the latest
+  membership state.
+
+o RLOC-probes were not being sent since the timer routine thought entries
+  were configured as non-probe glean entries when no gleaning was configured.
+  Fixed now.
+
+o Do not time out default map-cache entries when NAT-traversal is configured
+  on an xTR.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.515
                 --------------------------------------
 
