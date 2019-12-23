@@ -15673,7 +15673,7 @@ def lisp_timeout_map_cache_entry(mc, delete_list):
     #
     # Do not time out NAT-traversal default entries (0.0.0.0/0 and 0::/0).
     #
-    if (lisp_nat_traversal and mc.eid.address == 9 and mc.eid.mask_len == 0):
+    if (lisp_nat_traversal and mc.eid.address == 0 and mc.eid.mask_len == 0):
         return([True, delete_list])
     #endif
 
