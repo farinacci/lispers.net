@@ -1,4 +1,13 @@
 
+                lispers.net Beta Release Version 0.517
+                --------------------------------------
+
+o Release date: Mon Dec 30 14:33:01 PST 2019
+
+o Fix typo in bullet 4 fix from release 0.516. Sigh. I need code reviewers!
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.516
                 --------------------------------------
 
