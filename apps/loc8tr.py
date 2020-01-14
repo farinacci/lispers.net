@@ -115,6 +115,7 @@ curl_command = 'curl --silent --insecure -u "{}" {}://{}/lisp/api/data/map-cache
 # The parameters we use for traceroute.
 #
 tr_command = "traceroute -n -m 15 -q 1 -w 1 {}"
+ios_tr_command = 'dohost "traceroute {}"'
 
 #
 # Logging names.
@@ -151,18 +152,33 @@ debug = ("-d" in sys.argv)
 #
 # massage
 #
-# Massage the output of traceroute to return the IP adress of hop and rtt for
+# Massage the output of traceroute to return the IP address of hop and rtt for
 # hop.
 #
-def massage(tr):
+def massage(tr, cisco):
     hops = []
-    for line in tr.split("\n")[1::]:
+    lines = tr.split("\n")
+    lines = lines[4::] if cisco else lines[1::]
+
+    for line in lines:
         l = line.split()
+        if (len(l) == 0): continue
         if (l[1].find("Invalid") != -1):
             hops.append(["?", "?"])
             continue
         #endif
-        hops.append([l[1], l[-2]])
+
+        #
+        # Cisco will display output from the same hop on multiple lines.
+        # Skip it since we just get the first query RTT (since we can't do
+        # -q 1 like we can with linux traceroute.
+        #
+        if (cisco):
+            if (l[2] == "msec"): continue
+            hops.append([l[1], l[2]])
+        else:
+            hops.append([l[1], l[-2]])
+        #endif
     #endfor
     return(hops)
 #enddef
@@ -303,14 +319,25 @@ Print("")
 # Start traceroute to each RLOC.
 #
 for addr in rloc_cache:
-    cmd = tr_command.format(addr)
+
+    #
+    # Determine if we should use linux traceroute or if we are running on
+    # cisco guestshell. If the latter, run IOS traceroute.
+    #
+    cisco = os.path.exists("/cisco/guestshell")
+    if (cisco):
+        cmd = ios_tr_command.format(addr)
+    else:
+        cmd = tr_command.format(addr)
+    #endif
+
     Print("Run {} ...".format(bold(cmd))) 
     
     out = commands.getoutput(cmd)
 
     rloc = rloc_cache[addr]
     rloc[TR_OUTPUT] = out
-    rloc[TR_HOPS] = massage(rloc[TR_OUTPUT])
+    rloc[TR_HOPS] = massage(rloc[TR_OUTPUT], cisco)
     if (no_dns): name = "-"
 
     for hop in rloc[TR_HOPS]:
