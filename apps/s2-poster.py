@@ -37,7 +37,7 @@ def main():
     #
     # Spin loop.
     #
-    sleep_time = 30
+    sleep_time = 10
     while (True):
 
         #
@@ -50,30 +50,20 @@ def main():
         #
         for loc8tr_dir in what_to_post:
             loc8tr_json = "{}/loc8tr.json".format(loc8tr_dir)
-            print "Found {} to format and post".format(loc8tr_dir)
+            print "Found {} to format and post".format(bold(loc8tr_dir))
 
             #
             # Format for Selector.
             #
             selector_json = format_json(loc8tr_json)
-            if (selector_json == {}):
-                time.sleep(sleep_time)
-                continue
-            #endif
+            if (selector_json == {}): continue
 
             #
             # Send to each server configured on command line.
             #
             post_count = 0
             for server in servers:
-                print "Post {} to server {} ...".format(loc8tr_json, server),
-                good = post_json(server, selector_json)
-                if (good):
-                    print "succeeded"
-                    post_count += 1
-                else:
-                    print "failed"
-                #endif
+                post_count += post_json(server, selector_json)
             #endfor
 
             #
@@ -175,6 +165,7 @@ def format_json(loc8tr_json):
         f = open(loc8tr_json, "r"); buf = f.read(); f.close()
     except:
         print "Cannot open file {}".format(loc8tr_json)
+        print ""
         return({})
     #endtry
 
@@ -205,23 +196,50 @@ def format_json(loc8tr_json):
 #
 # Send post formatted json data to server.
 #
-# Selector's location on the server is "col/api/collection/nm/reports".
-# Typically to port 8000.
+# Selector's location on the server is "col/api/netmon/nm". Typically to port
+# 8000.
 #
 def post_json(server, selector_json):
-    url = "http://{}/col/api/collection/nm/reports".format(server)
-    header = { 'Content-type': 'application/json', 'Accept': 'text/plain' }
+    url = "http://{}/col/api/netmon/nm".format(server)
     data = json.dumps(selector_json)
+
+    print "Post to {} ...".format(url),
+
     try:
-        r = requests.post(url, data=data, headers=header, timeout=5)
-        if (r and r.status_code == 200):
-            print "Post response: {}".format(json.loads(r.content))
-            return(True)
-        #endif
+        r = requests.post(url, data=data, timeout=5)
+        print "{}, return-code: {}".format(green("succeeded"), r.status_code)
+        return(1)
     except Exception as e:
-        print "Post failed: {}".format(e)
+        print "{}, error response:\n{}\n".format(red("failed"), e.message)
     #endtry
-    return(False)
+    return(0)
+#enddef
+
+#
+# bold
+#
+# Return boldface string.
+#
+def bold(string):
+    return("\033[1m" + string + "\033[0m")
+#enddef
+
+#
+# red
+#
+# Return red colored string.
+#
+def red(string):
+    return("\033[91m" + string + "\033[0m")
+#enddef
+
+#
+# green
+#
+# Return green colored string.
+#
+def green(string):
+    return("\033[92m" + string + "\033[0m")
 #enddef
 
 #------------------------------------------------------------------------------
