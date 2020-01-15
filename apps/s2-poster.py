@@ -150,14 +150,15 @@ def get_directories():
 #
 # Selector (output) format:
 #
-# { "<hostname-of-poster>" :
+# { "reports" :
+# [{ "<hostname-of-poster>" :
 #   {
 #     "<rloc-1>" : { "traceroute" : <string>, "rtts" : [<fp1>, <fp2>, <fp3>],
 #                    "hop-counts" : [<str1>, <str2>, <str3>] },
 #     ...
 #     "<rloc-n>" : { "traceroute" : <string>, "rtts" : [<fp1>, <fp2>, <fp3>],
 #                    "hop-counts" : [<str1>, <str2>, <str3>] }
-#   } 
+#   }] 
 # }
 #
 def format_json(loc8tr_json):
@@ -176,7 +177,7 @@ def format_json(loc8tr_json):
     # Selector data.
     #
     hostname = socket.gethostname() 
-    s2_data = { hostname : {} }
+    s2_data = { "reports" : [{hostname : {}}] }
 
     #
     # Traverse through each key in the loc8tor.py dictionary array.
@@ -186,7 +187,7 @@ def format_json(loc8tr_json):
         entry["traceroute"] = json_data[rloc][0]
         entry["rtts"] = json_data[rloc][2]
         entry["hop-counts"] = json_data[rloc][3]
-        s2_data[hostname][rloc] = entry
+        s2_data["reports"][0][hostname][rloc] = entry
     #endfor
     return(s2_data)
 #enddef
