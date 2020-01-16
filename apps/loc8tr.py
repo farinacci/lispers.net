@@ -358,7 +358,7 @@ for addr in rloc_cache:
             continue
         #endif
 
-        Print("{}  {} ({}), rtt {}ms {}".format(num, hop[0], name, hop[1],
+        Print("{}  {} ({}), rtt {} ms {}".format(num, hop[0], name, hop[1],
             bangx))
     #endfor
     Print("")
