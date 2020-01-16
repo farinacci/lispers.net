@@ -47,8 +47,8 @@ def main():
         print "{} scanning loc8tr directories ...".format(bold(date)),
 
         what_to_post = get_directories()
-        posted = int(commands.getoutput("ls -1d loc8tr-* | wc -l")) 
-        posted -= len(what_to_post)
+        posted = commands.getoutput("ls -1d loc8tr-* | wc -l")
+        posted = int(posted) - len(what_to_post) if posted.isdigit() else 0
         print "found posted {}, new {}".format(posted, len(what_to_post))
 
         #
