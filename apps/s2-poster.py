@@ -43,7 +43,13 @@ def main():
         #
         # Check if there have been any new innovcations of loc8tr.py.
         #
+        date = commands.getoutput("date")
+        print "{} scanning loc8tr directories ...".format(bold(date)),
+
         what_to_post = get_directories()
+        posted = int(commands.getoutput("ls -1d loc8tr-* | wc -l")) 
+        posted -= len(what_to_post)
+        print "found posted {}, new {}".format(posted, len(what_to_post))
 
         #
         # For each new loc8tr directory created, process the json file within.
