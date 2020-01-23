@@ -1,4 +1,36 @@
 
+                lispers.net Beta Release Version 0.519
+                --------------------------------------
+
+o Release date:
+
+o Add telemetry data to RLOC-probe Map-Request and Map-Reply processing.
+  A user must configure a "lisp json" command clause with "json-name" equal
+  to "telemetry". See lisp.config.xtr-telemetry for details.
+
+o With this telemetry feature an ITR can measure the one-way latency of an
+  RLOC-probe Map-Request transmission from ITR and ETR as well as the one-way
+  latency of the RLOC-probe Map-Reply transmission from ETR to ITR.
+
+o The functionality also works from ITR to RTR, andn RTR to ETR.
+
+o The informtion will be available with recent-rtts and recent-hops via the
+  API when querying the map-cache RLOC-set and will be called "latency" and
+  "recent-latencies" (providing the last 3 latency measurements).
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.518
+                --------------------------------------
+
+o Release date: Tue Jan 14 13:27:48 PST 2020
+
+o Have loc8tr.py run IOS traceroute from a cisco guestshell. At the moment
+  there is no way for the guestshell to receive ICMP Time-Exceeded messages
+  so guestshell CentOS traceroute cannot be used.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.517
                 --------------------------------------
 
