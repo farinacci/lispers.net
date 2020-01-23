@@ -25,7 +25,7 @@ FROM ubuntu:latest
 RUN apt-get update && apt-get install -y \
     gcc libc-dev python python-dev golang libffi-dev openssl libpcap-dev \
     curl iptables iproute2 tcpdump tcsh sudo traceroute iputils-ping \
-    net-tools procps emacs vim jq
+    net-tools procps emacs vim jq python-pip
 
 #
 # Install LISP release in /lispers.net directory. Two options exist to get
@@ -51,7 +51,6 @@ RUN cd /lispers.net; cat `basename $LISP_TGZ` | gzip -dc | tar -xf -
 #
 # Install python modules the lispers.net directory depends on.
 #
-RUN python /lispers.net/get-pip.py
 RUN pip install -r /lispers.net/pip-requirements.txt
 
 #
