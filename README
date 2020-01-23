@@ -20,6 +20,10 @@ The implementation runs on the following OS platforms:
     Raspbian, Alpine Linux
     Docker (running guest-OS Ubuntu, Debian, Centos, or Alpine Linux)
 
+And the implementation has been tested on these vendor platforms;
+
+    Arista EOS (Linux Fedora), cisco IOS-XE guestshell (Linux CentOS)
+
 The lispers.net implementation supports the following IETF LISP Working Group
 RFCs and Internet-Drafts:
 
