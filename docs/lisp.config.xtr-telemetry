@@ -48,12 +48,10 @@ lisp user-account {
     super-user = yes
 }
 lisp xtr-parameters {
-    rloc-probing = no
+    rloc-probing = yes
     data-plane-security = no
     nat-traversal = no
-    nonce-echoing = no
     data-plane-logging = no
-    flow-logging = no
 }
 lisp map-resolver {
     dns-name = <dns-name-of-map-resolver>
@@ -65,14 +63,17 @@ lisp map-server {
 lisp database-mapping {
     prefix {
         instance-id = <non-zero-if-configuring-vpn>
-	eid-prefix = <you-fill-in-any-address-family-prefix>
+    	eid-prefix = <you-fill-in-any-address-family-prefix>
     }
     prefix {
         instance-id = <non-zero-if-configuring-vpn>
-	eid-prefix = '<you-fill-in-an-eid-distinguished-name>'
+    	eid-prefix = '<you-fill-in-an-eid-distinguished-name>'
     }
     rloc {
         address = <you-fill-in-a-routable-address-on-one-of-your-interfaces>
+    }    
+    rloc {
+        interface = eth0
     }    
 }
 
