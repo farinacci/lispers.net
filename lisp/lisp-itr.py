@@ -1398,6 +1398,10 @@ lisp_itr_commands = {
         "geo-name" : [False],
         "geo-tag" : [False] }],
 
+    "lisp json" : [lispconfig.lisp_json_command, {
+        "json-name" : [False],
+        "json-string" : [False] }],
+
     "show itr-map-cache" : [lisp_itr_show_command, { }],
     "show itr-rloc-probing" : [lisp_itr_show_rloc_probe_command, { }],
     "show itr-keys" : [lisp_itr_show_keys_command, {}],
