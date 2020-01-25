@@ -133,6 +133,7 @@ mc_file = "loc8tr-mc.json"
 #  [["<tr-hop>", "<tr-ms>"], ...],
 #  [<rtt1>, <rtt2>, rtt3>],
 #  ["<fhop1>/<rhop1>", "<fhop2>/<rhop2>", "<fhop3>/<rhop3>"],
+#  ["<flat1>/<rlat1>", "<flat2>/<rlat2>", "<flat3>/<rlat3>"],
 #  ["<eid>", ...]
 # 
 rloc_cache = {}
@@ -140,7 +141,8 @@ TR_OUTPUT  = 0
 TR_HOPS    = 1
 RTTS       = 2
 HOPS       = 3
-EIDS       = 4
+LATS       = 4
+EIDS       = 5
 
 no_dns = ("-n" in sys.argv)
 debug = ("-d" in sys.argv)
@@ -293,7 +295,11 @@ for entry in map_cache:
             for rtt in rloc["recent-rloc-probe-rtts"]: rtts.append(float(rtt))
             hops = []
             for hop in rloc["recent-rloc-hop-counts"]: hops.append(str(hop))
-            rloc_cache[address] = [None, [], rtts, hops, []]
+            lats = []
+            for lat in rloc["recent-rloc-probe-latencies"]:
+                lats.append(str(lat))
+            #endfor
+            rloc_cache[address] = [None, [], rtts, hops, lats, []]
         #endif
         rloc_cache[address][EIDS].append(eid)
     #endfor
@@ -309,8 +315,10 @@ for addr in rloc_cache:
     rloc = rloc_cache[addr]
     rtts = rloc[RTTS]
     hops = rloc[HOPS]
+    lats = rloc[LATS]
     eids = rloc[EIDS]
-    Print("RLOC {}, rtts(secs) {}, hops {}".format(bold(addr), rtts, hops))
+    Print("RLOC {}, rtts(secs) {}, hops {}, latencies {}".format(bold(addr),
+        rtts, hops, lats))
     Print("     EIDs: {}".format(eids))
 #endfor
 Print("")

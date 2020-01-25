@@ -147,10 +147,12 @@ def get_directories():
 #
 # {
 #   "<rloc-1>" :
-#     [ "<traceroute-data>", <ignore>, [<rtts>], [<hop-counts>], <ignore> ], 
+#     [ "<traceroute-data>", <ignore>, [<rtts>], [<hop-counts>], [<latency>],
+#       <ignore> ], 
 #   ...
 #   "<rloc-n>" :
-#     [ "<traceroute-data>", <ignore>, [<rtts>], [<hop-counts>], <ignore> ]
+#     [ "<traceroute-data>", <ignore>, [<rtts>], [<hop-counts>], [<latency>],
+#       <ignore> ], 
 # }
 #
 #
@@ -160,10 +162,12 @@ def get_directories():
 # [{ "<hostname-of-poster>" :
 #   {
 #     "<rloc-1>" : { "traceroute" : <string>, "rtts" : [<fp1>, <fp2>, <fp3>],
-#                    "hop-counts" : [<str1>, <str2>, <str3>] },
+#                    "hop-counts" : [<str1>, <str2>, <str3>],
+#                    "latencies" : [<str1>, <str2>, <str3>] },
 #     ...
 #     "<rloc-n>" : { "traceroute" : <string>, "rtts" : [<fp1>, <fp2>, <fp3>],
-#                    "hop-counts" : [<str1>, <str2>, <str3>] }
+#                    "hop-counts" : [<str1>, <str2>, <str3>],
+#                    "latencies" : [<str1>, <str2>, <str3>] },
 #   }] 
 # }
 #
@@ -193,6 +197,7 @@ def format_json(loc8tr_json):
         entry["traceroute"] = json_data[rloc][0]
         entry["rtts"] = json_data[rloc][2]
         entry["hop-counts"] = json_data[rloc][3]
+        entry["latencies"] = json_data[rloc][4]
         s2_data["reports"][0][hostname][rloc] = entry
     #endfor
     return(s2_data)

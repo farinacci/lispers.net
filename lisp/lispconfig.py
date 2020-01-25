@@ -64,7 +64,8 @@ lisp_commands = {
     "lisp replication-list-entry"   : ["lisp-itr", "lisp-rtr", "lisp-etr",
                                        "lisp-ms"],
     "lisp geo-coordinates"          : ["lisp-itr", "lisp-etr", "lisp-ms"],
-    "lisp json"                     : ["lisp-etr", "lisp-rtr", "lisp-ms"],
+    "lisp json"                     : ["lisp-itr", "lisp-etr" "lisp-rtr",
+                                       "lisp-ms"],
     "lisp ddt-root"                 : ["lisp-mr"],
     "lisp referral-cache"           : ["lisp-mr"],
     "lisp site"                     : ["lisp-ms"],
@@ -2346,9 +2347,11 @@ def lisp_display_map_cache(mc, output):
             rle = rloc.rle.print_rle(True, True)
             rloc_str += "rle: {}<br>".format(rle)
         #endif
-        if (rloc.json): 
-            json = "json: { ... }<br>"
-            rloc_str += lisp.lisp_span(json, rloc.json.print_json(False))
+        if (rloc.json):
+            if (lisp.lisp_is_json_telemetry(rloc.json.json_string) == None):
+                json = "json: { ... }<br>"
+                rloc_str += lisp.lisp_span(json, rloc.json.print_json(False))
+            #endif
         #endif
 
         #
@@ -2372,8 +2375,11 @@ def lisp_display_map_cache(mc, output):
 
             if (lisp.lisp_rloc_probing):
                 rtt = r.print_rloc_probe_rtt()
-                if (rtt != "none"): state += "<br>rtt: {}, hops: {}".format( \
-                    rtt, r.print_rloc_probe_hops())
+                if (rtt != "none"):
+                    state += "<br>rtt: {}, hops: {}, latency: {}".format( \
+                      rtt, r.print_rloc_probe_hops(),
+                      r.print_rloc_probe_latency())
+                #endif
             #endif
 
             if (lisp.lisp_rloc_probing and r.rloc_next_hop != None):
@@ -2740,21 +2746,26 @@ def lisp_itr_rtr_show_rloc_probe_command(itr_or_rtr):
         req = lisp.lisp_print_cour(req)
         rep = lisp.lisp_print_elapsed(r.last_rloc_probe_reply)
         rep = lisp.lisp_print_cour(rep)
-        col2 = ("Last probe-request sent: {}, " + \
-            "last probe-reply received: {}<br>").format(req, rep)
-
         n = lisp.lisp_hex_string(r.last_rloc_probe_nonce)
         n = lisp.lisp_print_cour("0x" + n)
+        col2 = ("Last probe-request sent: {}, " + \
+            "last probe-reply received: {}, nonce: {}<br>").format(req, rep, n)
+
         rtt = r.print_recent_rloc_probe_rtts()
         rtt = lisp.lisp_print_cour(rtt)
         hops = r.print_recent_rloc_probe_hops()
         hops = lisp.lisp_print_cour(hops)
+        lat = r.print_recent_rloc_probe_latencies()
+        lat = lisp.lisp_print_cour(lat)
         h = r.print_rloc_probe_hops()
         h = lisp.lisp_print_cour(h)
+        l = r.print_rloc_probe_latency()
+        l = lisp.lisp_print_cour(l)
         r = r.print_rloc_probe_rtt()
         r = lisp.lisp_print_cour(r)
-        col2 += ("Nonce: {}, rtt: {}, hops: {}<br>" + \
-            "Recent-rtts: {}, recent-hops: {}").format(n, r, h, rtt, hops)
+        col2 += ("Telemetry: rtt: {}, hops: {}, latency: {}<br>" + \
+            "recent-rtts: {}, recent-hops: {}, recent-latencies: {}"). \
+            format(r, h, l, rtt, hops, lat)
 
         #
         # Print 2-column row.

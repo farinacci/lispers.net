@@ -4199,6 +4199,7 @@ class lisp_map_request():
         self.map_request_signature = None
         self.subscribe_bit = False
         self.xtr_id = None
+        self.json_telemetry = None
     #enddef
 
     def print_prefix(self):
@@ -4237,11 +4238,18 @@ class lisp_map_request():
 
         keys = self.keys
         for itr in self.itr_rlocs:
-            lprint("  itr-rloc: afi {} {}{}".format(itr.afi, 
-                red(itr.print_address_no_iid(), False), 
+            if (itr.afi == LISP_AFI_LCAF and self.json_telemetry != None):
+                continue
+            #endif
+            itr_str = red(itr.print_address_no_iid(), False)
+            lprint("  itr-rloc: afi {} {}{}".format(itr.afi, itr_str,
                 "" if (keys == None) else ", " + keys[1].print_keys()))
             keys = None
         #endfor
+        if (self.json_telemetry != None):
+            lprint("  itr-rloc: afi {} telemetry: {}".format(LISP_AFI_LCAF,
+                self.json_telemetry))
+        #endif
     #enddef
 
     def sign_map_request(self, privkey):
@@ -4290,9 +4298,25 @@ class lisp_map_request():
         return(good)
     #enddef
 
+    def encode_json(self, json_string):
+        lcaf_type = LISP_LCAF_JSON_TYPE
+        lcaf_afi = socket.htons(LISP_AFI_LCAF)
+        lcaf_len = socket.htons(len(json_string) + 2)
+        json_len = socket.htons(len(json_string))
+        packet = struct.pack("HBBBBHH", lcaf_afi, 0, 0, lcaf_type, 0, lcaf_len,
+            json_len)
+        packet += json_string
+        packet += struct.pack("H", 0)
+        return(packet)
+    #enddef
+
     def encode(self, probe_dest, probe_port):
         first_long = (LISP_MAP_REQUEST << 28) | self.record_count
+
+        telemetry = lisp_telemetry_configured() if (self.rloc_probe) else None
+        if (telemetry != None): self.itr_rloc_count += 1
         first_long = first_long | (self.itr_rloc_count << 8)
+
         if (self.auth_bit): first_long |= 0x08000000
         if (self.map_data_present): first_long |= 0x04000000
         if (self.rloc_probe): first_long |= 0x02000000
@@ -4332,14 +4356,7 @@ class lisp_map_request():
             encode_sig = True
         #endif
         if (encode_sig):
-            lcaf_type = LISP_LCAF_JSON_TYPE
-            lcaf_afi = socket.htons(LISP_AFI_LCAF)
-            lcaf_len = socket.htons(len(json_string) + 2)
-            json_len = socket.htons(len(json_string))
-            packet += struct.pack("HBBBBHH", lcaf_afi, 0, 0, lcaf_type, 0, 
-                lcaf_len, json_len)
-            packet += json_string
-            packet += struct.pack("H", 0)
+            packet += self.encode_json(json_string)
         else:
             if (self.source_eid.instance_id != 0):
                 packet += struct.pack("H", socket.htons(LISP_AFI_LCAF))
@@ -4381,6 +4398,16 @@ class lisp_map_request():
                 packet += itr.pack_address()
             #endif
         #endfor
+
+        #
+        # Add telemetry, if configured and this is an RLOC-probe Map-Request.
+        #
+        if (telemetry != None):
+            ts = str(time.time())
+            telemetry = lisp_encode_telemetry(telemetry, io=ts)
+            self.json_telemetry = telemetry
+            packet += self.encode_json(telemetry)
+        #endif
 
         mask_len = 0 if self.target_eid.is_binary() == False else \
             self.target_eid.mask_len
@@ -4438,12 +4465,15 @@ class lisp_map_request():
         #
         # Pull out JSON string from packet.
         #
-        try:
-            json_string = json.loads(packet[0:json_len])
-        except:
-            return(None)
-        #endtry
+        json_string = packet[0:json_len]
         packet = packet[json_len::]
+
+        #
+        # If telemetry data in the JSON, do not need to convert to dict array.
+        #
+        if (lisp_is_json_telemetry(json_string) != None):
+            self.json_telemetry = json_string
+        #endif
 
         #
         # Get JSON encoded afi-address in JSON, we are expecting AFI of 0.
@@ -4453,6 +4483,17 @@ class lisp_map_request():
         afi = struct.unpack(packet_format, packet[:format_size])[0]
         packet = packet[format_size::]
         if (afi != 0): return(packet)
+
+        if (self.json_telemetry != None): return(packet)
+
+        #
+        # Convert string to dictionary array.
+        #
+        try:
+            json_string = json.loads(json_string)
+        except:
+            return(None)
+        #endtry
 
         #
         # Store JSON data internally.
@@ -4545,14 +4586,23 @@ class lisp_map_request():
 
         no_crypto = (os.getenv("LISP_NO_CRYPTO") != None)
         self.itr_rlocs = []
+
         while (self.itr_rloc_count != 0):
             format_size = struct.calcsize("H")
             if (len(packet) < format_size): return(None)
 
             afi = struct.unpack("H", packet[:format_size])[0]
-
+            afi = socket.ntohs(afi)
             itr = lisp_address(LISP_AFI_NONE, "", 32, 0)
-            itr.afi = socket.ntohs(afi)
+            itr.afi = afi
+
+            #
+            # We may have telemetry in the ITR-RLOCs. Check here to avoid
+            # security key material logic.
+            #
+            if (afi == LISP_AFI_LCAF):
+                packet = self.lcaf_decode_json(packet[format_size::])
+            #endif
 
             #
             # If Security Type LCAF, get security parameters and store in
@@ -4586,7 +4636,12 @@ class lisp_map_request():
                 # decryption key.
                 #
                 lisp_write_ipc_decap_key(addr_str, None)
-            else:
+
+            elif (self.json_telemetry == None):
+                
+                #
+                # Decode key material if we found no telemetry data.
+                #
                 orig_packet = packet
                 decode_key = lisp_keys(1)
                 packet = decode_key.decode_lcaf(orig_packet, 0)
@@ -5358,7 +5413,8 @@ class lisp_rloc_record():
         if (self.rle):
             name = ""
             if (self.rle.rle_name): name = "'{}' ".format(self.rle.rle_name)
-            rle_str = ", rle: {}{}".format(name, self.rle.print_rle(False, True))
+            rle_str = ", rle: {}{}".format(name, self.rle.print_rle(False,
+                True))
         #endif
         json_str = ""
         if (self.json):
@@ -5434,6 +5490,30 @@ class lisp_rloc_record():
         self.mweight = rloc_entry.mweight
     #enddef
 
+    def encode_json(self, json_string):
+        lcaf_type = LISP_LCAF_JSON_TYPE
+        lcaf_afi = socket.htons(LISP_AFI_LCAF)
+        addr_len = self.rloc.addr_length() + 2
+
+        lcaf_len = socket.htons(len(json_string) + addr_len)
+
+        json_len = socket.htons(len(json_string))
+        packet = struct.pack("HBBBBHH", lcaf_afi, 0, 0, lcaf_type, 0, lcaf_len,
+            json_len)
+        packet += json_string
+
+        #
+        # If telemetry, store RLOC address in LCAF.
+        #
+        if (lisp_is_json_telemetry(json_string)):
+            packet += struct.pack("H", socket.htons(self.rloc.afi))
+            packet += self.rloc.pack_address()
+        else:
+            packet += struct.pack("H", 0)
+        #endif
+        return(packet)
+    #enddef
+
     def encode_lcaf(self):
         lcaf_afi = socket.htons(LISP_AFI_LCAF)
         gpkt = "" 
@@ -5482,12 +5562,7 @@ class lisp_rloc_record():
 
         jpkt = ""
         if (self.json):
-            lcaf_len = socket.htons(len(self.json.json_string) + 2)
-            json_len = socket.htons(len(self.json.json_string))
-            jpkt = struct.pack("HBBBBHH", lcaf_afi, 0, 0, LISP_LCAF_JSON_TYPE, 
-                0, lcaf_len, json_len)
-            jpkt += self.json.json_string
-            jpkt += struct.pack("H", 0)
+            jpkt = self.encode_json(self.json.json_string)
         #endif
 
         spkt = ""
@@ -5600,6 +5675,17 @@ class lisp_rloc_record():
             packet = packet[format_size::]
             self.json = lisp_json("", packet[0:json_len])
             packet = packet[json_len::]
+
+            #
+            # If telemetry, store RLOC address in LCAF.
+            #
+            afi = socket.ntohs(struct.unpack("H", packet[:2])[0])
+            packet = packet[2::]
+
+            if (afi != 0 and lisp_is_json_telemetry(self.json.json_string)):
+                self.rloc.afi = afi
+                packet = self.rloc.unpack_address(packet)
+            #endif
 
         elif (lcaf_type == LISP_LCAF_ELP_TYPE):
 
@@ -6873,6 +6959,7 @@ def lisp_receive(lisp_socket, internal):
 #
 def lisp_parse_packet(lisp_sockets, packet, source, udp_sport, ttl=-1):
     trigger_flag = False
+    timestamp = time.time()
 
     header = lisp_control_header()
     if (header.decode(packet) == None):
@@ -6893,10 +6980,10 @@ def lisp_parse_packet(lisp_sockets, packet, source, udp_sport, ttl=-1):
 
     if (header.type == LISP_MAP_REQUEST): 
         lisp_process_map_request(lisp_sockets, packet, None, 0, source, 
-            udp_sport, False, ttl)
+            udp_sport, False, ttl, timestamp)
 
     elif (header.type == LISP_MAP_REPLY): 
-        lisp_process_map_reply(lisp_sockets, packet, source, ttl)
+        lisp_process_map_reply(lisp_sockets, packet, source, ttl, timestamp)
 
     elif (header.type == LISP_MAP_REGISTER): 
         lisp_process_map_register(lisp_sockets, packet, source, udp_sport)
@@ -6940,21 +7027,21 @@ def lisp_parse_packet(lisp_sockets, packet, source, udp_sport, ttl=-1):
 # Process Map-Request with RLOC-probe bit set.
 #
 def lisp_process_rloc_probe_request(lisp_sockets, map_request, source, port,
-    ttl):
+    ttl, timestamp):
 
     p = bold("RLOC-probe", False)
 
     if (lisp_i_am_etr):
         lprint("Received {} Map-Request, send RLOC-probe Map-Reply".format(p))
         lisp_etr_process_map_request(lisp_sockets, map_request, source, port,
-            ttl)
+            ttl, timestamp)
         return
     #endif
 
     if (lisp_i_am_rtr):
         lprint("Received {} Map-Request, send RLOC-probe Map-Reply".format(p))
         lisp_rtr_process_map_request(lisp_sockets, map_request, source, port,
-            ttl)
+            ttl, timestamp)
         return
     #endif
 
@@ -6983,8 +7070,13 @@ def lisp_process_smr_invoked_request(map_request):
 #
 # Build a Map-Reply and return a packet to the caller.
 #
-def lisp_build_map_reply(eid, group, rloc_set, nonce, action, ttl, rloc_probe,
+def lisp_build_map_reply(eid, group, rloc_set, nonce, action, ttl, map_request,
     keys, enc, auth, mr_ttl=-1):
+
+    rloc_probe = map_request.rloc_probe if (map_request != None) else False
+    json_telemetry = map_request.json_telemetry if (map_request != None) else \
+        None
+
     map_reply = lisp_map_reply()
     map_reply.rloc_probe = rloc_probe
     map_reply.echo_nonce_capable = enc
@@ -6996,6 +7088,7 @@ def lisp_build_map_reply(eid, group, rloc_set, nonce, action, ttl, rloc_probe,
 
     eid_record = lisp_eid_record()
     eid_record.rloc_count = len(rloc_set)
+    if (json_telemetry != None): eid_record.rloc_count += 1
     eid_record.authoritative = auth
     eid_record.record_ttl = ttl
     eid_record.action = action
@@ -7007,6 +7100,7 @@ def lisp_build_map_reply(eid, group, rloc_set, nonce, action, ttl, rloc_probe,
 
     local_rlocs = lisp_get_all_addresses() + lisp_get_all_translated_rlocs()
 
+    probe_rloc = None
     for rloc_entry in rloc_set:
         rloc_record = lisp_rloc_record()
         addr_str = rloc_entry.rloc.print_address_no_iid()
@@ -7019,10 +7113,26 @@ def lisp_build_map_reply(eid, group, rloc_set, nonce, action, ttl, rloc_probe,
             #endif
         #endif
         rloc_record.store_rloc_entry(rloc_entry)
+        if (probe_rloc == None): probe_rloc = rloc_entry.rloc
         rloc_record.reach_bit = True
         rloc_record.print_record("    ")
         packet += rloc_record.encode()
     #endfor
+
+    #
+    # Add etr-out-ts if telemetry data was present in Map-Request.
+    #
+    if (json_telemetry != None):
+        rloc_record = lisp_rloc_record()
+        if (probe_rloc): rloc_record.rloc.copy_address(probe_rloc)
+        rloc_record.local_bit = True
+        rloc_record.probe_bit = True
+        rloc_record.reach_bit = True
+        js = lisp_encode_telemetry(json_telemetry, eo=str(time.time()))
+        rloc_record.json = lisp_json("telemetry", js)
+        rloc_record.print_record("    ")
+        packet += rloc_record.encode()
+    #endif
     return(packet)
 #enddef
 
@@ -7109,7 +7219,7 @@ def lisp_build_map_referral(eid, group, ddt_entry, action, ttl, nonce):
 # Do ETR processing of a Map-Request.
 #
 def lisp_etr_process_map_request(lisp_sockets, map_request, source, sport,
-    ttl):
+    ttl, etr_in_ts):
 
     if (map_request.target_group.is_null()):
         db = lisp_db_for_lookups.lookup_cache(map_request.target_eid, False)
@@ -7142,10 +7252,19 @@ def lisp_etr_process_map_request(lisp_sockets, map_request, source, sport,
     enc = lisp_nonce_echoing
     keys = map_request.keys
 
+    #
+    # If we found telemetry data in the Map-Request, add the input timestamp
+    # now and add output timestamp when building the Map-Reply.
+    #
+    jt = map_request.json_telemetry
+    if (jt != None):
+        map_request.json_telemetry = lisp_encode_telemetry(jt, ei=etr_in_ts)
+    #endif
+
     db.map_replies_sent += 1
 
     packet = lisp_build_map_reply(db.eid, db.group, db.rloc_set, nonce, 
-        LISP_NO_ACTION, 1440, map_request.rloc_probe, keys, enc, True, ttl)
+        LISP_NO_ACTION, 1440, map_request, keys, enc, True, ttl)
 
     #
     # If we are sending a RLOC-probe Map-Reply to an RTR, data encapsulate it.
@@ -7184,7 +7303,7 @@ def lisp_etr_process_map_request(lisp_sockets, map_request, source, sport,
 # Do ETR processing of a Map-Request.
 #
 def lisp_rtr_process_map_request(lisp_sockets, map_request, source, sport,
-    ttl):
+    ttl, etr_in_ts):
 
     #
     # Get ITR-RLOC to return Map-Reply to.
@@ -7208,8 +7327,17 @@ def lisp_rtr_process_map_request(lisp_sockets, map_request, source, sport,
     enc = lisp_nonce_echoing
     keys = map_request.keys
 
+    #
+    # If we found telemetry data in the Map-Request, add the input timestamp
+    # now and add output timestamp in building the Map-Reply.
+    #
+    jt = map_request.json_telemetry
+    if (jt != None):
+        map_request.json_telemetry = lisp_encode_telemetry(jt, ei=etr_in_ts)
+    #endif
+
     packet = lisp_build_map_reply(eid, group, rloc_set, nonce, LISP_NO_ACTION,
-        1440, True, keys, enc, True, ttl)
+        1440, map_request, keys, enc, True, ttl)
     lisp_send_map_reply(lisp_sockets, packet, itr_rloc, sport)
     return
 #enddef
@@ -7739,7 +7867,7 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
         # information in a Map-Notify.
         #
         packet = lisp_build_map_reply(reply_eid, reply_group, rloc_set, 
-            nonce, action, ttl, False, None, enc, False)
+            nonce, action, ttl, map_request, None, enc, False)
 
         if (pubsub):
             lisp_process_pubsub(lisp_sockets, packet, reply_eid, itr_rloc, 
@@ -8165,7 +8293,7 @@ def lisp_send_negative_map_reply(sockets, eid, group, nonce, dest, port, ttl,
         action = LISP_SEND_MAP_REQUEST_ACTION
     #endif
 
-    packet = lisp_build_map_reply(eid, group, [], nonce, action, ttl, False,
+    packet = lisp_build_map_reply(eid, group, [], nonce, action, ttl, None,
         None, False, False)
     
     #
@@ -8394,7 +8522,7 @@ def lisp_mr_process_map_request(lisp_sockets, packet, map_request, ecm_source,
 # Process received Map-Request as a Map-Server or an ETR.
 #
 def lisp_process_map_request(lisp_sockets, packet, ecm_source, ecm_port, 
-    mr_source, mr_port, ddt_request, ttl):
+    mr_source, mr_port, ddt_request, ttl, timestamp):
 
     orig_packet = packet
     map_request = lisp_map_request()
@@ -8410,8 +8538,8 @@ def lisp_process_map_request(lisp_sockets, packet, ecm_source, ecm_port,
     # If RLOC-probe request, process separately.
     #
     if (map_request.rloc_probe): 
-        lisp_process_rloc_probe_request(lisp_sockets, map_request, 
-            mr_source, mr_port, ttl)
+        lisp_process_rloc_probe_request(lisp_sockets, map_request, mr_source,
+            mr_port, ttl, timestamp)
         return
     #endif
 
@@ -8434,7 +8562,7 @@ def lisp_process_map_request(lisp_sockets, packet, ecm_source, ecm_port,
     #
     if (lisp_i_am_etr):
         lisp_etr_process_map_request(lisp_sockets, map_request, mr_source,
-            mr_port, ttl)
+            mr_port, ttl, timestamp)
     #endif
 
     #
@@ -8507,7 +8635,7 @@ def lisp_store_mr_stats(source, nonce):
 #
 # Process received Map-Reply.
 #
-def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
+def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
     global lisp_map_cache
 
     map_reply = lisp_map_reply()
@@ -8620,6 +8748,17 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
             #endif
 
             #
+            # Add itr-in timestamp if telemetry data included in RLOC record..
+            #
+            if (rloc.json):
+                if (lisp_is_json_telemetry(rloc.json.json_string)):
+                    js = rloc.json.json_string
+                    js = lisp_encode_telemetry(js, ii=itr_in_ts)
+                    rloc.json.json_string = js
+                #endif
+            #endif
+
+            #
             # Process state for RLOC-probe reply from this specific RLOC. And
             # update RLOC state for map-cache entry. Ignore an RLOC with a
             # different address-family of the recieved packet. The ITR really
@@ -8628,8 +8767,8 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl):
             #
             if (map_reply.rloc_probe and rloc_record.probe_bit):
                 if (rloc.rloc.afi == source.afi):
-                    lisp_process_rloc_probe_reply(rloc.rloc, source, port,
-                        map_reply.nonce, map_reply.hop_count, ttl)
+                    lisp_process_rloc_probe_reply(rloc, source, port,
+                        map_reply, ttl)
                 #endif
             #endif
 
@@ -10576,8 +10715,9 @@ def lisp_process_ecm(lisp_sockets, packet, source, ecm_port):
     # Process Map-Request.
     #
     mr_port = ecm.udp_sport
+    timestamp = time.time()
     lisp_process_map_request(lisp_sockets, packet, source, ecm_port, 
-        ecm.source, mr_port, ecm.ddt, -1)
+        ecm.source, mr_port, ecm.ddt, -1, timestamp)
     return
 #enddef
 
@@ -12641,6 +12781,8 @@ class lisp_rloc():
         self.recent_rloc_probe_rtts = [-1, -1, -1]
         self.rloc_probe_hops = "?/?"
         self.recent_rloc_probe_hops = ["?/?", "?/?", "?/?"]
+        self.rloc_probe_latency = "?/?"
+        self.recent_rloc_probe_latencies = ["?/?", "?/?", "?/?"]
         self.last_rloc_probe_nonce = 0
         self.echo_nonce_capable = False
         self.map_notify_requested = False
@@ -12905,7 +13047,28 @@ class lisp_rloc():
         self.recent_rloc_probe_hops = [last] + last_list[0:-1]
     #enddef
 
-    def process_rloc_probe_reply(self, nonce, eid, group, hop_count, ttl):
+    def store_rloc_probe_latencies(self, json_telemetry):
+        tel = lisp_decode_telemetry(json_telemetry)
+
+        fl = round(float(tel["etr-in"]) - float(tel["itr-out"]), 3)
+        rl = round(float(tel["itr-in"]) - float(tel["etr-out"]), 3)
+
+        last = self.rloc_probe_latency
+        self.rloc_probe_latency = str(fl) + "/" + str(rl)
+        last_list = self.recent_rloc_probe_latencies
+        self.recent_rloc_probe_latencies = [last] + last_list[0:-1]
+    #enddef
+
+    def print_rloc_probe_latency(self):
+        return(self.rloc_probe_latency)
+    #enddef
+
+    def print_recent_rloc_probe_latencies(self):
+        latencies = str(self.recent_rloc_probe_latencies)
+        return(latencies)
+    #enddef
+
+    def process_rloc_probe_reply(self, nonce, eid, group, hop_count, ttl, jt):
         rloc = self
         while (True):
             if (rloc.last_rloc_probe_nonce == nonce): break
@@ -12917,6 +13080,9 @@ class lisp_rloc():
             #endif
         #endwhile
 
+        #
+        # Compute RTTs.
+        #
         rloc.last_rloc_probe_reply = lisp_get_timestamp()
         rloc.compute_rloc_probe_rtt()
         state_string = rloc.print_state_change("up")
@@ -12928,7 +13094,15 @@ class lisp_rloc():
             if (mc): lisp_write_ipc_map_cache(True, mc)
         #endif
 
+        #
+        # Store hops.
+        #
         rloc.store_rloc_probe_hops(hop_count, ttl)
+
+        #
+        # Store one-way latency if telemetry data json in Map-Reply.
+        #
+        if (jt): rloc.store_rloc_probe_latencies(jt)
 
         probe = bold("RLOC-probe reply", False)
         addr_str = rloc.rloc.print_address_no_iid()
@@ -12941,10 +13115,14 @@ class lisp_rloc():
             nh = ", nh {}({})".format(n, d)
         #endif
                                       
+        lat = bold(rloc.print_rloc_probe_latency(), False)
+        lat = ", latency {}".format(lat) if jt else ""
+
         e = green(lisp_print_eid_tuple(eid, group), False)
+
         lprint(("    Received {} from {}{} for {}, {}, rtt {}{}, " + \
-            "to-ttl/from-ttl {}").format(probe, red(addr_str, False), p, e, 
-            state_string, rtt, nh, str(hop_count) + "/" + str(ttl)))
+            "to-ttl/from-ttl {}{}").format(probe, red(addr_str, False), p, e, 
+            state_string, rtt, nh, str(hop_count) + "/" + str(ttl), lat))
 
         if (rloc.rloc_next_hop == None): return
 
@@ -16137,6 +16315,9 @@ def lisp_gather_map_cache_data(mc, data):
         r["rloc-hop-count"] = rloc.rloc_probe_hops
         r["recent-rloc-hop-counts"] = rloc.recent_rloc_probe_hops
 
+        r["rloc-probe-latency"] = rloc.rloc_probe_latency
+        r["recent-rloc-probe-latencies"] = rloc.recent_rloc_probe_latencies
+
         recent_rtts = []
         for rtt in rloc.recent_rloc_probe_rtts: recent_rtts.append(str(rtt))
         r["recent-rloc-probe-rtts"] = recent_rtts
@@ -16811,11 +16992,15 @@ def lisp_update_rtr_updown(rtr, updown):
 #
 # We have received a RLOC-probe Map-Reply, process it.
 #
-def lisp_process_rloc_probe_reply(rloc, source, port, nonce, hop_count, ttl):
+def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl):
+    rloc = rloc_entry.rloc
+    nonce = map_reply.nonce
+    hop_count = map_reply.hop_count
     probe = bold("RLOC-probe reply", False)
     map_reply_addr = rloc.print_address_no_iid()
     source_addr = source.print_address_no_iid()
     pl = lisp_rloc_probe_list
+    jt = rloc_entry.json.json_string if rloc_entry.json else None
 
     #
     # If we can't find RLOC address from the Map-Reply in the probe-list,
@@ -16845,7 +17030,7 @@ def lisp_process_rloc_probe_reply(rloc, source, port, nonce, hop_count, ttl):
         if (lisp_i_am_rtr and rloc.translated_port != 0 and 
             rloc.translated_port != port): continue
             
-        rloc.process_rloc_probe_reply(nonce, eid, group, hop_count, ttl)
+        rloc.process_rloc_probe_reply(nonce, eid, group, hop_count, ttl, jt)
     #endfor
     return
 #enddef
@@ -18878,11 +19063,12 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     #endif
 
     #
-    # Add recent-rtts and recent-hops.
+    # Add recent-rtts, recent-hops, and recent-latencies.
     #
     if (rloc_entry != None):
         entry["rtts"] = rloc_entry.recent_rloc_probe_rtts
         entry["hops"] = rloc_entry.recent_rloc_probe_hops
+        entry["latencies"] = rloc_entry.recent_rloc_probe_latencies
     #endif
 
     #
@@ -19559,6 +19745,83 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
             lisp_remove_gleaned_multicast(seid, lisp_geid)
         #endif
     #endfor
+#enddef
+
+#
+# lisp_is_json_telemetry
+#
+# Return dictionary arraay if json string has the following two key/value
+# pairs in it. Otherwise, return None.
+#
+# { "type" : "telemetry", "sub-type" : "timestamps" }
+#
+def lisp_is_json_telemetry(json_string):
+    try:
+        tel = json.loads(json_string)
+    except:
+        lprint("Could not decode telemetry json: {}".format(json_string))
+        return(None)
+    #endtry
+
+    if (tel.has_key("type") == False): return(None)
+    if (tel.has_key("sub-type") == False): return(None)
+    if (tel["type"] != "telemetry"): return(None)
+    if (tel["sub-type"] != "timestamps"): return(None)
+    return(tel)
+#enddef
+
+#
+# lisp_encode_telemetry
+#
+# Take json string:
+#
+# { "type" : "telemetry", "sub-type" : "timestamps", "itr-out" : "?",
+#   "etr-in" : "?", "etr-out" : "?", "itr-in" : "?" }
+#
+# And fill in timestamps for the 4 fields. Input to this function is a string.
+#
+def lisp_encode_telemetry(json_string, ii="?", io="?", ei="?", eo="?"):
+    tel = lisp_is_json_telemetry(json_string)
+    if (tel == None): return(json_string)
+
+    if (tel["itr-in"] == "?"): tel["itr-in"] = ii
+    if (tel["itr-out"] == "?"): tel["itr-out"] = io
+    if (tel["etr-in"] == "?"): tel["etr-in"] = ei
+    if (tel["etr-out"] == "?"): tel["etr-out"] = eo
+    json_string = json.dumps(tel)
+    return(json_string)
+#enddef
+
+#
+# lisp_decode_telemetry
+#
+# Take json string:
+#
+# { "type" : "telemetry", "sub-type" : "timestamps", "itr-out" : "?",
+#   "etr-in" : "?", "etr-out" : "?", "itr-in" : "?" }
+#
+# And return values in a dictionary array. Input to this function is a string.
+#
+def lisp_decode_telemetry(json_string):
+    tel = lisp_is_json_telemetry(json_string)
+    if (tel == None): return({})
+    return(tel)
+#enddef
+
+#
+# lisp_telemetry_configured
+#
+# Return JSON string template of telemetry data if it has been configured.
+# If it has been configured we'll find a "lisp json" command with json-name
+# "telemetry". If found, return the json string. Otherwise, return None.
+#
+def lisp_telemetry_configured():
+    if (lisp_json_list.has_key("telemetry") == False): return(None)
+
+    json_string = lisp_json_list["telemetry"].json_string
+    if (lisp_is_json_telemetry(json_string) == None): return(None)
+
+    return(json_string)
 #enddef
     
 #------------------------------------------------------------------------------
