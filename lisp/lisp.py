@@ -19758,6 +19758,7 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
 def lisp_is_json_telemetry(json_string):
     try:
         tel = json.loads(json_string)
+        if (type(tel) != dict): return(None)
     except:
         lprint("Could not decode telemetry json: {}".format(json_string))
         return(None)

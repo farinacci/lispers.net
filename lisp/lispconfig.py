@@ -64,7 +64,7 @@ lisp_commands = {
     "lisp replication-list-entry"   : ["lisp-itr", "lisp-rtr", "lisp-etr",
                                        "lisp-ms"],
     "lisp geo-coordinates"          : ["lisp-itr", "lisp-etr", "lisp-ms"],
-    "lisp json"                     : ["lisp-itr", "lisp-etr" "lisp-rtr",
+    "lisp json"                     : ["lisp-itr", "lisp-etr", "lisp-rtr",
                                        "lisp-ms"],
     "lisp ddt-root"                 : ["lisp-mr"],
     "lisp referral-cache"           : ["lisp-mr"],
