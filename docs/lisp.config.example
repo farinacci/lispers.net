@@ -418,7 +418,13 @@ Command Description:
         Turns on sending of RLOC-Probe Map-Requests in ITRs and RTRs. When
         RLOC-probing is enabled and there are no RLOC-Probe Map-Replies 
         returned, the RLOC is put in "unreach-state" and is not used for
-        encapsulating packets. The default setting is "no".
+        encapsulating packets. The default setting is "no". RLOC-probing
+        has underlay telemetry features built in. Round-trip times and
+        forward and reverse underlay hop-count is computed. If you would
+        like one-way latency measurements, use the "lisp json" command
+        with "json-name" equal to "telemetry" to enable forward and reverse
+        latency measurements. See the "lisp json" command description below
+        for specific details.    
 
     nonce-echoing
         Turns on data nonce-echoing requests in an ITR/RTR and echoing of data 
@@ -1091,6 +1097,19 @@ lisp database-mapping {
         json-name = contact-info
     }
 }
+
+#
+# This is specific JSON configuration to enable one-way latency telemetry
+# measurements. When configured in the lisp.config file, timestamps are
+# inserted for the "?" when an ITR sends an RLOC-probe request, when the ETR
+# receives the RLOC-probe request, when the ETR sends the RLOC-probe reply,
+# and when the ITR receives the RLOC-probe reply.
+#            
+lisp json {
+    json-name = telemetry
+    json-string = { "type" : "telemetry", "sub-type" : "timestamps", "itr-out" : "?", "etr-in" : "?", "etr-out" : "?", "itr-in" : "?" }
+}
+        
 
 -------------------------------------------------------------------------------
 
