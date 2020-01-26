@@ -1103,13 +1103,13 @@ lisp database-mapping {
 # measurements. When configured in the lisp.config file, timestamps are
 # inserted for the "?" when an ITR sends an RLOC-probe request, when the ETR
 # receives the RLOC-probe request, when the ETR sends the RLOC-probe reply,
-# and when the ITR receives the RLOC-probe reply.
+# and when the ITR receives the RLOC-probe reply. Timestamps inserted are
+# in UTC Linux format and assumes a synchronized clock between xTRs.    
 #            
 lisp json {
     json-name = telemetry
     json-string = { "type" : "telemetry", "sub-type" : "timestamps", "itr-out" : "?", "etr-in" : "?", "etr-out" : "?", "itr-in" : "?" }
 }
-        
 
 -------------------------------------------------------------------------------
 
