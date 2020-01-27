@@ -1,8 +1,15 @@
 
-                lispers.net Beta Release Version 0.519
+                lispers.net Beta Release Version 0.520
                 --------------------------------------
 
 o Release date:
+
+-------------------------------------------------------------------------------
+
+                lispers.net Beta Release Version 0.519
+                --------------------------------------
+
+o Release date: Mon Jan 27 15:44:47 PST 2020
 
 o Add telemetry data to RLOC-probe Map-Request and Map-Reply processing.
   A user must configure a "lisp json" command clause with "json-name" equal
@@ -17,6 +24,11 @@ o The functionality also works from ITR to RTR, andn RTR to ETR.
 o The informtion will be available with recent-rtts and recent-hops via the
   API when querying the map-cache RLOC-set and will be called "latency" and
   "recent-latencies" (providing the last 3 latency measurements).
+
+o Remove the need to use get-pip.py in the Dockerfile. We can apt-get python-
+  pip. Keep get-pip.py in the lispers.net tarball for non-Docker users.
+
+o Modify loc8tr and s2-poster apps to support recent-latencies.
 
 -------------------------------------------------------------------------------
 
