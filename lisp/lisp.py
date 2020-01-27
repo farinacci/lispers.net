@@ -7104,7 +7104,7 @@ def lisp_build_map_reply(eid, group, rloc_set, nonce, action, ttl, map_request,
 
     local_rlocs = lisp_get_all_addresses() + lisp_get_all_translated_rlocs()
 
-    probe_rloc = None
+    probing_rloc = None
     for rloc_entry in rloc_set:
         rloc_record = lisp_rloc_record()
         addr_str = rloc_entry.rloc.print_address_no_iid()
@@ -7115,9 +7115,9 @@ def lisp_build_map_reply(eid, group, rloc_set, nonce, action, ttl, map_request,
             if (rloc_entry.priority == 254 and lisp_i_am_rtr):
                 rloc_record.rloc_name = "RTR"
             #endif
+            if (probing_rloc == None): probing_rloc = rloc_entry.rloc
         #endif
         rloc_record.store_rloc_entry(rloc_entry)
-        if (probe_rloc == None): probe_rloc = rloc_entry.rloc
         rloc_record.reach_bit = True
         rloc_record.print_record("    ")
         packet += rloc_record.encode()
@@ -7128,7 +7128,7 @@ def lisp_build_map_reply(eid, group, rloc_set, nonce, action, ttl, map_request,
     #
     if (json_telemetry != None):
         rloc_record = lisp_rloc_record()
-        if (probe_rloc): rloc_record.rloc.copy_address(probe_rloc)
+        if (probing_rloc): rloc_record.rloc.copy_address(probing_rloc)
         rloc_record.local_bit = True
         rloc_record.probe_bit = True
         rloc_record.reach_bit = True
