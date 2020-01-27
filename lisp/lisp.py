@@ -13068,7 +13068,7 @@ class lisp_rloc():
         return(latencies)
     #enddef
 
-    def process_rloc_probe_reply(self, nonce, eid, group, hop_count, ttl, jt):
+    def process_rloc_probe_reply(self, ts, nonce, eid, group, hc, ttl, jt):
         rloc = self
         while (True):
             if (rloc.last_rloc_probe_nonce == nonce): break
@@ -13083,7 +13083,7 @@ class lisp_rloc():
         #
         # Compute RTTs.
         #
-        rloc.last_rloc_probe_reply = lisp_get_timestamp()
+        rloc.last_rloc_probe_reply = ts
         rloc.compute_rloc_probe_rtt()
         state_string = rloc.print_state_change("up")
         if (rloc.state != LISP_RLOC_UP_STATE):
@@ -13097,7 +13097,7 @@ class lisp_rloc():
         #
         # Store hops.
         #
-        rloc.store_rloc_probe_hops(hop_count, ttl)
+        rloc.store_rloc_probe_hops(hc, ttl)
 
         #
         # Store one-way latency if telemetry data json in Map-Reply.
@@ -13122,7 +13122,7 @@ class lisp_rloc():
 
         lprint(("    Received {} from {}{} for {}, {}, rtt {}{}, " + \
             "to-ttl/from-ttl {}{}").format(probe, red(addr_str, False), p, e, 
-            state_string, rtt, nh, str(hop_count) + "/" + str(ttl), lat))
+            state_string, rtt, nh, str(hc) + "/" + str(ttl), lat))
 
         if (rloc.rloc_next_hop == None): return
 
@@ -16995,7 +16995,7 @@ def lisp_update_rtr_updown(rtr, updown):
 def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl):
     rloc = rloc_entry.rloc
     nonce = map_reply.nonce
-    hop_count = map_reply.hop_count
+    hc = map_reply.hop_count
     probe = bold("RLOC-probe reply", False)
     map_reply_addr = rloc.print_address_no_iid()
     source_addr = source.print_address_no_iid()
@@ -17026,11 +17026,14 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl):
     # Look for RLOC in the RLOC-probe list for EID tuple and fix-up stored
     # RLOC-probe state.
     #
+    ts = lisp_get_timestamp()
     for rloc, eid, group in lisp_rloc_probe_list[addr]:
-        if (lisp_i_am_rtr and rloc.translated_port != 0 and 
-            rloc.translated_port != port): continue
-            
-        rloc.process_rloc_probe_reply(nonce, eid, group, hop_count, ttl, jt)
+        if (lisp_i_am_rtr):
+            if (rloc.translated_port != 0 and rloc.translated_port != port):
+                continue
+            #endif
+        #endif
+        rloc.process_rloc_probe_reply(ts, nonce, eid, group, hc, ttl, jt)
     #endfor
     return
 #enddef

@@ -2313,7 +2313,7 @@ def lisp_display_map_cache(mc, output):
         rloc_str = ""
         if (rloc.rloc_exists()):
             if (rloc.rloc.is_null() == False):
-                rloc_str = rloc.rloc.print_address_no_iid() + "<br>"
+                rloc_str += rloc.rloc.print_address_no_iid() + "<br>"
                 hover = ""
                 enc = lisp.lisp_nonce_echoing and rloc.echo_nonce_capable
                 if (lisp.lisp_rloc_probing):
