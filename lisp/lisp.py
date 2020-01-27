@@ -16776,6 +16776,12 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                     e = green(lisp_print_eid_tuple(eid, group), False)
                     lprint("Suppress probe to duplicate RLOC {} for {}". \
                         format(red(addr_str, False), e))
+
+                    #
+                    # Copy last-rloc send probe timer, so all EIDs using the
+                    # same RLOC can have sync'ed rtts.
+                    #
+                    parent_rloc.last_rloc_probe = last_rloc.last_rloc_probe
                     continue
                 #endif
             #endif
