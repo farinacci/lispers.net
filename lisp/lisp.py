@@ -4553,7 +4553,7 @@ class lisp_map_request():
         self.xtr_id_present = True if (first_long & 0x00100000) else False
         self.local_xtr = True if (first_long & 0x00004000) else False
         self.dont_reply_bit = True if (first_long & 0x00002000) else False
-        self.itr_rloc_count = ((first_long >> 8) & 0x1f) + 1
+        self.itr_rloc_count = ((first_long >> 8) & 0x1f)
         self.record_count = first_long & 0xff
         self.nonce = nonce[0]
 
@@ -4586,13 +4586,13 @@ class lisp_map_request():
 
         no_crypto = (os.getenv("LISP_NO_CRYPTO") != None)
         self.itr_rlocs = []
-
-        while (self.itr_rloc_count != 0):
+        itr_rloc_count = self.itr_rloc_count + 1
+        
+        while (itr_rloc_count != 0):
             format_size = struct.calcsize("H")
             if (len(packet) < format_size): return(None)
 
-            afi = struct.unpack("H", packet[:format_size])[0]
-            afi = socket.ntohs(afi)
+            afi = socket.ntohs(struct.unpack("H", packet[:format_size])[0])
             itr = lisp_address(LISP_AFI_NONE, "", 32, 0)
             itr.afi = afi
 
@@ -4600,8 +4600,11 @@ class lisp_map_request():
             # We may have telemetry in the ITR-RLOCs. Check here to avoid
             # security key material logic.
             #
-            if (afi == LISP_AFI_LCAF):
-                packet = self.lcaf_decode_json(packet[format_size::])
+            if (itr.afi == LISP_AFI_LCAF):
+                orig_packet = packet
+                json_packet = packet[format_size::]
+                packet = self.lcaf_decode_json(json_packet)
+                if (packet == json_packet): packet = orig_packet
             #endif
 
             #
@@ -4615,7 +4618,7 @@ class lisp_map_request():
 
                 if (no_crypto):
                     self.itr_rlocs.append(itr)
-                    self.itr_rloc_count -= 1
+                    itr_rloc_count -= 1
                     continue
                 #endif
 
@@ -4645,6 +4648,7 @@ class lisp_map_request():
                 orig_packet = packet
                 decode_key = lisp_keys(1)
                 packet = decode_key.decode_lcaf(orig_packet, 0)
+
                 if (packet == None): return(None)
 
                 #
@@ -4677,7 +4681,7 @@ class lisp_map_request():
 
                 if (no_crypto):
                     self.itr_rlocs.append(itr)
-                    self.itr_rloc_count -= 1
+                    itr_rloc_count -= 1
                     continue
                 #endif
                     
@@ -4728,7 +4732,7 @@ class lisp_map_request():
             #endif 
 
             self.itr_rlocs.append(itr)
-            self.itr_rloc_count -= 1
+            itr_rloc_count -= 1
         #endwhile
 
         format_size = struct.calcsize("BBH")
