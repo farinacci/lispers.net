@@ -158,7 +158,7 @@ def get_directories():
 #
 # Selector (output) format:
 #
-# { "reports" :
+# { "Reports" :
 #   { "reporter" : "<hostname-of-poster>", "report-data" : [
 #     { "rloc" : "<rloc-1>", "rloc-data" :
 #         { "traceroute" : <string>, "rtts" : ["<fp1>", "<fp2>", "<fp3>"],
@@ -194,7 +194,16 @@ def format_json(loc8tr_json):
     # Selector data.
     #
     hostname = socket.gethostname() 
-    s2_data = { "reports" : { "reporter" : hostname, "report-data" : [] } }
+    s2_data = { "Reports" : { "reporter" : hostname, "report-data" : [] } }
+
+    #
+    # Get lispers.net version number from file lisp-version.txt.
+    #
+    version = "?"
+    if (os.path.exists("./lisp-version.txt")):
+        version = commands.getoutput("cat ./lisp-version.txt")
+    #endif
+    s2_data["Label"] = "lispers.net version {}".format(version)
 
     #
     # Traverse through each key in the loc8tor.py dictionary array.
@@ -205,7 +214,7 @@ def format_json(loc8tr_json):
         entry["rloc-data"]["rtts"] = json_data[rloc][2]
         entry["rloc-data"]["hop-counts"] = json_data[rloc][3]
         entry["rloc-data"]["latencies"] = json_data[rloc][4]
-        s2_data["reports"]["report-data"].append(entry)
+        s2_data["Reports"]["report-data"].append(entry)
     #endfor
     return(s2_data)
 #enddef
