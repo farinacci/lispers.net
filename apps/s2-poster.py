@@ -19,6 +19,11 @@ import json
 import socket
 import requests
 
+#
+# For temporary print()s.
+#
+debug = False
+
 #------------------------------------------------------------------------------
 
 #
@@ -158,7 +163,7 @@ def get_directories():
 #
 # Selector (output) format:
 #
-# { "Reports" :
+# { "Reports" : [
 #   { "reporter" : "<hostname-of-poster>", "report-data" : [
 #     { "rloc" : "<rloc-1>", "rloc-data" :
 #         { "traceroute" : <string>, "rtts" : ["<fp1>", "<fp2>", "<fp3>"],
@@ -176,7 +181,7 @@ def get_directories():
 #         }
 #     }
 #   ] }
-# }
+# ] }
 #
 def format_json(loc8tr_json):
     try:
@@ -194,7 +199,7 @@ def format_json(loc8tr_json):
     # Selector data.
     #
     hostname = socket.gethostname() 
-    s2_data = { "Reports" : { "reporter" : hostname, "report-data" : [] } }
+    s2_data = { "Reports" : [{ "reporter" : hostname, "report-data" : [] }] }
 
     #
     # Get lispers.net version number from file lisp-version.txt.
@@ -214,8 +219,13 @@ def format_json(loc8tr_json):
         entry["rloc-data"]["rtts"] = json_data[rloc][2]
         entry["rloc-data"]["hop-counts"] = json_data[rloc][3]
         entry["rloc-data"]["latencies"] = json_data[rloc][4]
-        s2_data["Reports"]["report-data"].append(entry)
+        s2_data["Reports"][0]["report-data"].append(entry)
     #endfor
+
+    if (debug):
+        print "Selector JSON:"
+        print s2_data
+    #endif
     return(s2_data)
 #enddef
 
@@ -224,11 +234,11 @@ def format_json(loc8tr_json):
 #
 # Send post formatted json data to server.
 #
-# Selector's location on the server is "col/api/netmon/nm". Typically to port
+# Selector's location on the server is "col/api/netmon/lisp". Typically to port
 # 8000.
 #
 def post_json(server, selector_json):
-    url = "http://{}/col/api/netmon/nm".format(server)
+    url = "http://{}/col/api/netmon/lisp".format(server)
     data = json.dumps(selector_json)
 
     print "Post to {} ...".format(url),
