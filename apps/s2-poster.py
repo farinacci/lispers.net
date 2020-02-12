@@ -175,7 +175,7 @@ def get_directories():
 #     ...
 #
 #     { "rloc" : "<rloc-n>", "rloc-data" :
-#         { "traceroute" : <string>, "rtts" : ["<fp1>", "<fp2>", "<fp3>"],
+#         { "traceroute" : <string>, "rtts" : [<fp1>, <fp2>, <fp3>],
 #           "hop-counts" : ["<fhc1>/<rhc1>", "<fhc2>/<rhc2>", "<fhc3>/<rhc3>"]
 #           "latencies" : ["<fl1>/<rl1>", "<fl2>/<rl2>", "<fl3>/<rl3>"]
 #         }
