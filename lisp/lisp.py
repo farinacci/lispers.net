@@ -218,9 +218,12 @@ lisp_ms_rtr_list = []                    # Array of type lisp.lisp_address()
 lisp_nat_state_info = {}
 
 #
-# Used for doing global rate-limiting of Map-Requests.
+# Used for doing global rate-limiting of Map-Requests. When the process
+# starts up or the map-cache is cleared by user we don't do rate-limiting for
+# 1 minute so we can load up the cache quicker.
 #
 lisp_last_map_request_sent = None
+lisp_no_map_request_rate_limit = time.time()
 
 #
 # Used for doing global rate-limiting of ICMP Too Big messages.
@@ -434,24 +437,24 @@ LISP_GLEAN_TTL    = 15
 LISP_MCAST_TTL    = 15
 LISP_IGMP_TTL     = 240
 
-LISP_SITE_TIMEOUT_CHECK_INTERVAL     = 60  # In units of seconds
-LISP_PUBSUB_TIMEOUT_CHECK_INTERVAL   = 60  # In units of seconds
-LISP_REFERRAL_TIMEOUT_CHECK_INTERVAL = 60  # In units of seconds
-LISP_TEST_MR_INTERVAL                = 60  # In units of seconds
+LISP_SITE_TIMEOUT_CHECK_INTERVAL     = 60  # In units of seconds, 1 minute
+LISP_PUBSUB_TIMEOUT_CHECK_INTERVAL   = 60  # In units of seconds, 1 minute
+LISP_REFERRAL_TIMEOUT_CHECK_INTERVAL = 60  # In units of seconds, 1 minute
+LISP_TEST_MR_INTERVAL                = 60  # In units of seconds, 1 minute
 LISP_MAP_NOTIFY_INTERVAL             = 2   # In units of seconds
 LISP_DDT_MAP_REQUEST_INTERVAL        = 2   # In units of seconds
 LISP_MAX_MAP_NOTIFY_RETRIES          = 3
 LISP_INFO_INTERVAL                   = 15  # In units of seconds
-LISP_MAP_REQUEST_RATE_LIMIT          = 5   # In units of seconds
+LISP_MAP_REQUEST_RATE_LIMIT          = .5  # In units of seconds, 500 ms
+LISP_NO_MAP_REQUEST_RATE_LIMIT_TIME  = 60  # In units of seconds, 1 minute
 LISP_ICMP_TOO_BIG_RATE_LIMIT         = 1   # In units of seconds
 #LISP_RLOC_PROBE_TTL                 = 255
 LISP_RLOC_PROBE_TTL                  = 64
 LISP_RLOC_PROBE_INTERVAL             = 10  # In units of seconds
 LISP_RLOC_PROBE_REPLY_WAIT           = 15  # In units of seconds
-#LISP_RLOC_PROBE_INTERVAL             = 60 # In units of seconds
 LISP_DEFAULT_DYN_EID_TIMEOUT         = 15  # In units of seconds
 LISP_NONCE_ECHO_INTERVAL             = 10 
-LISP_IGMP_TIMEOUT_INTERVAL           = 180 # 3 minutes
+LISP_IGMP_TIMEOUT_INTERVAL           = 180 # In units of seconds, 3 minutes
 
 #
 # Cipher Suites defined in RFC 8061:
@@ -11466,7 +11469,7 @@ class lisp_address():
 
     def is_ipv4_link_local(self):
         if (self.is_ipv4() == False): return(False)
-        return(((self.address >> 16) & 0xffff) == 0xa9fe)
+        return(((self.address >> 16) & 0xffff) == 0xa9fe)    
     #enddef
 
     def is_ipv4_loopback(self):
@@ -12557,9 +12560,9 @@ class lisp_rle():
 
             addr_str = rle_node.address.print_address_no_iid()
             if (rle_node.address.is_local()): addr_str = red(addr_str, html)
-            rle_str += "{}{}(L{}){}, ".format(addr_str, "" if port == 0 \
-                else ":" + str(port), rle_node.level, 
-                "" if rle_node.rloc_name == None else rle_name_str)
+            rle_str += "{}{}({}), ".format(addr_str, "" if port == 0 else \
+                ":" + str(port), "" if rle_node.rloc_name == None else \
+                rle_name_str)
         #endfor
         return(rle_str[0:-2] if rle_str != "" else "")
     #enddef
@@ -15088,16 +15091,29 @@ def lisp_mac_input(packet):
 # LISP_MAP_REQUEST_RATE_LIMIT seconds. Return True if we should not send
 # a Map-Request (rate-limit it).
 #
-def lisp_rate_limit_map_request(source, dest):
-    if (lisp_last_map_request_sent == None): return(False)
+def lisp_rate_limit_map_request(dest):
     now = lisp_get_timestamp()
+    
+    #
+    # Do we have rate-limiting disabled temporarily?
+    #
+    elapsed = now - lisp_no_map_request_rate_limit
+    if (elapsed < LISP_NO_MAP_REQUEST_RATE_LIMIT_TIME):
+        left = int(LISP_NO_MAP_REQUEST_RATE_LIMIT_TIME - elapsed)
+        dprint("No Rate-Limit Mode for another {} secs".format(left))
+        return(False)
+    #endif
+
+    #
+    # Do we send a Map-Request recently?
+    #
+    if (lisp_last_map_request_sent == None): return(False)
     elapsed = now - lisp_last_map_request_sent
     rate_limit = (elapsed < LISP_MAP_REQUEST_RATE_LIMIT)
 
     if (rate_limit):
-        if (source != None): source = source.print_address()
-        dest = dest.print_address()
-        dprint("Rate-limiting Map-Request for {} -> {}".format(source, dest))
+        dprint("Rate-limiting Map-Request for {}, sent {} secs ago".format( \
+            green(dest.print_address(), False), round(elapsed, 3)))
     #endif
     return(rate_limit)
 #enddef
@@ -15300,7 +15316,7 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc):
         mr.map_resolver)
 
     #
-    # Set global timestamp for rate-limiting.
+    # Set global timestamp for Map-Request rate-limiting.
     #
     lisp_last_map_request_sent = lisp_get_timestamp()
 
@@ -17608,6 +17624,7 @@ def lisp_clear_map_cache():
     global lisp_map_cache, lisp_rloc_probe_list
     global lisp_crypto_keys_by_rloc_encap, lisp_crypto_keys_by_rloc_decap
     global lisp_rtr_list, lisp_gleaned_groups
+    global lisp_no_map_request_rate_limit
 
     clear = bold("User cleared", False)
     count = lisp_map_cache.cache_count
@@ -17617,6 +17634,11 @@ def lisp_clear_map_cache():
         lisp_map_cache.walk_cache(lisp_clear_hardware_walk, None)
     #endif
     lisp_map_cache = lisp_cache()
+
+    #
+    # Clear rate-limiting temporarily.
+    #
+    lisp_no_map_request_rate_limit = lisp_get_timestamp()
 
     #
     # Need to clear the RLOC-probe list or else we'll have RLOC-probes 
@@ -18806,7 +18828,7 @@ def lisp_process_punt(punt_socket, lisp_send_sockets, lisp_ephem_port):
             # Check if we should rate-limit Map-Request and if not send
             # Map-Request.
             #
-            if (lisp_rate_limit_map_request(seid, deid)): return
+            if (lisp_rate_limit_map_request(deid)): return
             lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
                 seid, deid, None)
         else:

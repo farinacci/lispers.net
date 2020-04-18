@@ -724,6 +724,11 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #
     deid = packet.inner_dest
     if (deid.is_multicast_address()):
+        if (deid.is_link_local_multicast()):
+            deid_str = lisp.green(deid.print_address(), False)
+            lisp.dprint("Drop link-local multicast EID {}".format(deid_str))
+            return
+        #endif
         gleaned_dest = False
         x, y, z = lisp.lisp_allow_gleaning(packet.inner_source, deid, None)
     else:
@@ -772,8 +777,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #endif
 
     if (mc == None or mc.action == lisp.LISP_SEND_MAP_REQUEST_ACTION):
-        if (lisp.lisp_rate_limit_map_request(packet.inner_source, 
-            packet.inner_dest)): return
+        if (lisp.lisp_rate_limit_map_request(packet.inner_dest)): return
         lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
             packet.inner_source, packet.inner_dest, None)
 
@@ -790,10 +794,12 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # entry that is about to time out.
     #
     if (mc and mc.refresh()):
-        lisp.lprint("Refresh map-cache entry {}".format( \
-            lisp.green(mc.print_eid_tuple(), False)))
-        lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
-            packet.inner_source, packet.inner_dest, None)
+        if (lisp.lisp_rate_limit_map_request(packet.inner_dest) == False):
+            lisp.lprint("Refresh map-cache entry {}".format( \
+                lisp.green(mc.print_eid_tuple(), False)))
+            lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
+                packet.inner_source, packet.inner_dest, None)
+        #endif
     #endif
 
     #
