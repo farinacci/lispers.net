@@ -2,7 +2,18 @@
                 lispers.net Beta Release Version 0.520
                 --------------------------------------
 
-o Release date:
+o Release date: Sat Apr 18 13:12:08 PDT 2020
+
+o Change Map-Request rate-limit from 5 seconds to 500 milliseconds. It is
+  taking too long to populate an RTR map-cache. Also allow to be in a non
+  rate-limiting mode for 1 minute after RTR restart or when the user clears
+  the map-cache. Revisit how to deal with synchronized clock intervals causing
+  demand for Map-Requesing within the 500 millisecond rate-limit window.
+
+o Remove "(L128)" when printing an RLE entry. It is using up too much precious
+  horiztonal space.
+
+o Do not process packets destined to link-local group EIDs.
 
 -------------------------------------------------------------------------------
 
