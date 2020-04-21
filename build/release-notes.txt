@@ -1,4 +1,20 @@
 
+                lispers.net Beta Release Version 0.521
+                --------------------------------------
+
+o Release date: Tue Apr 21 14:56:37 PDT 2020
+
+o The maximum number of EID records we put in a Map-Register is 20. For
+  typical EIDs that fills an MTU-sized UDP message. For large EIDs (
+  long distingusihed-names) or large RLOCs (JSON records), we can't even
+  fit 8 EID-records in 1500 bytes. So test the packet size as well as the
+  number of records to determine when to split up EID-records across
+  multiple Map-Register messages. When the EID-records total 1100 bytes,
+  we build the next Map-Register message to accomodate the rest of the EIDs
+  that need registering.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.520
                 --------------------------------------
 
