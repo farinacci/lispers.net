@@ -594,7 +594,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         #
         msl[0] += eid_records
 
-        if (msl[1] == 20): 
+        if (msl[1] == 20 or len(msl[0]) > 1100):
             msl = ["", 0]
             ms_list[ms_dns_name].append(msl)
         #endif
