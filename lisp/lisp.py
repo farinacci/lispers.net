@@ -297,6 +297,7 @@ lisp_ipc_socket = None
 # Configured in the "lisp encryption-keys" command.
 #
 lisp_ms_encryption_keys = {}
+lisp_ms_json_keys = {}
 
 #
 # Used to stare NAT translated address state in an RTR when a ltr client
@@ -5376,6 +5377,24 @@ class lisp_ecm():
 #    |              AFI = x          |       Locator Address ...     |
 #    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
+#   JSON Data Model Type Address Format:
+#  
+#     0                   1                   2                   3
+#     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+#    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#    |           AFI = 16387         |     Rsvd1     |     Flags     |
+#    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#    |   Type = 14   | kid | Rvd2|E|B|            Length             |
+#    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#    |           JSON length         | JSON binary/text encoding ... |
+#    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#    |              AFI = x          |       Optional Address ...    |
+#    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#
+#    When the E-bit is set to 1, then the kid is key-id and indicates that
+#    value fields in JSON string are encrypted with the encryption key
+#    associated with key-id 'kid'.
+#
 class lisp_rloc_record():
     def __init__(self):
         self.priority = 0
@@ -5497,7 +5516,13 @@ class lisp_rloc_record():
         self.mweight = rloc_entry.mweight
     #enddef
 
-    def encode_json(self, json_string):
+    def encode_json(self, lisp_json):
+        json_string = lisp_json.json_string
+        kid = 0
+        if (lisp_json.json_encrypted):
+            kid = (lisp_json.json_key_id << 5) | 0x02
+        #endif
+        
         lcaf_type = LISP_LCAF_JSON_TYPE
         lcaf_afi = socket.htons(LISP_AFI_LCAF)
         addr_len = self.rloc.addr_length() + 2
@@ -5505,8 +5530,8 @@ class lisp_rloc_record():
         lcaf_len = socket.htons(len(json_string) + addr_len)
 
         json_len = socket.htons(len(json_string))
-        packet = struct.pack("HBBBBHH", lcaf_afi, 0, 0, lcaf_type, 0, lcaf_len,
-            json_len)
+        packet = struct.pack("HBBBBHH", lcaf_afi, 0, 0, lcaf_type, kid,
+            lcaf_len, json_len)
         packet += json_string
 
         #
@@ -5569,7 +5594,7 @@ class lisp_rloc_record():
 
         jpkt = ""
         if (self.json):
-            jpkt = self.encode_json(self.json.json_string)
+            jpkt = self.encode_json(self.json)
         #endif
 
         spkt = ""
@@ -5667,6 +5692,7 @@ class lisp_rloc_record():
             self.geo = geo
 
         elif (lcaf_type == LISP_LCAF_JSON_TYPE):
+            encrypted_json = rsvd2 & 0x02
 
             #
             # Process JSON LCAF.
@@ -5680,7 +5706,7 @@ class lisp_rloc_record():
             if (lcaf_len < format_size + json_len): return(None)
 
             packet = packet[format_size::]
-            self.json = lisp_json("", packet[0:json_len])
+            self.json = lisp_json("", packet[0:json_len], encrypted_json)
             packet = packet[json_len::]
 
             #
@@ -12594,9 +12620,36 @@ class lisp_rle():
 #endclass
 
 class lisp_json():
-    def __init__(self, name, string):
+    def __init__(self, name, string, encrypted=False):
         self.json_name = name
         self.json_string = string
+        self.json_encrypted = False
+
+        #
+        # Decide to encrypt or decrypt. The map-server encrypts and stores
+        # ciphertext in mapping system. The lig client decrypts to show user
+        # data if it has the key in env variable LISP_JSON_KEY. Format of
+        # env variable is "<key>" or "[<key-id>]<key>".
+        #
+        if (len(lisp_ms_json_keys) != 0):
+            self.json_key_id = lisp_ms_json_keys.keys()[0]
+            self.json_key = lisp_ms_json_keys[self.json_key_id]
+            self.encrypt_json()
+        #endif
+
+        if (lisp_log_id == "lig" and encrypted):
+            key = os.getenv("LISP_JSON_KEY")
+            if (key != None):
+                index = -1
+                if (key[0] == "[" and "]" in key):
+                    index = key.find("]")
+                    self.json_key_id = int(key[1:index])
+                #endif
+                self.json_key = key[index+1::]
+                #endif
+                self.decrypt_json()
+            #endif
+        #endif
     #enddef
 
     def add(self):
@@ -12627,6 +12680,37 @@ class lisp_json():
             return(False)
         #endtry
         return(True)
+    #enddef
+
+    def encrypt_json(self):
+        ekey = self.json_key.zfill(32)
+        iv = "0" * 8
+
+        jd = json.loads(self.json_string)
+        for key in jd:
+            value = jd[key]
+            value = chacha.ChaCha(ekey, iv).encrypt(value)
+            jd[key] = binascii.hexlify(value)
+        #endfor
+        self.json_string = json.dumps(jd)
+        self.json_encrypted = True
+    #enddef
+
+    def decrypt_json(self):
+        ekey = self.json_key.zfill(32)
+        iv = "0" * 8
+
+        jd = json.loads(self.json_string)
+        for key in jd:
+            value = binascii.unhexlify(jd[key])
+            jd[key] = chacha.ChaCha(ekey, iv).encrypt(value)
+        #endfor
+        try:
+            self.json_string = json.dumps(jd)
+            self.json_encrypted = False
+        except:
+            pass
+        #endtry
     #enddef
 #endclass
 

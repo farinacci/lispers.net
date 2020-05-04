@@ -410,6 +410,9 @@ def lisp_ms_encryption_keys_command(kv_pair):
         if (kw == "map-register-key"): 
             lisp.lisp_ms_encryption_keys = lisp.lisp_parse_auth_key(value)
         #endif
+        if (kw == "json-key"): 
+            lisp.lisp_ms_json_keys = lisp.lisp_parse_auth_key(value)
+        #endif
     #endfor
     return
 #enddef
@@ -1062,6 +1065,7 @@ lisp_ms_commands = {
         "eid-prefix" : [False] }],
 
     "lisp encryption-keys" : [lisp_ms_encryption_keys_command, {
+        "json-key" : [False],
         "map-register-key" : [False] }],
 
     "lisp geo-coordinates" : [lispconfig.lisp_geo_command, {
