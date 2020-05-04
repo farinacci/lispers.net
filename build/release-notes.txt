@@ -1,4 +1,20 @@
 
+                lispers.net Beta Release Version 0.522
+                --------------------------------------
+
+o Release date: Mon May  4 09:02:11 PDT 2020
+
+o Encrypt value fields in a JSON string that is stored in an RLOC record.
+  This is to allow having sensitive data stay encrypted at rest when stored
+  in the mapping system.
+
+o For Map-Server command clause "lisp encryption-keys", a new sub-command
+  "json-key" is created to allow configuration of an encryption key and
+  key-id. When the map-server parses an RLOC-record that is in JSON format
+  and "json-key" is configured, the value fields will be chacha20 encrypted.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.521
                 --------------------------------------
 
