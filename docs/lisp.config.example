@@ -1622,6 +1622,7 @@ lisp eid-crypto-hash {
 
 lisp encryption-keys {
     map-register-key = [<key-id-0-7>]<string> ... [<key-id-0-7>]<string>
+    json-key = [<key-id-0-7>]<string> ... [<key-id-0-7>]<string>
 }    
 
 Command Description:
@@ -1636,6 +1637,14 @@ Command Description:
     decrypted incorrectly, it cannot be process and is dropped. A log message
     will be issued in this case.
 
+    The "json-key" will allow the map-server to encrypt value fields from a
+    JSON string. This is so data at rest, in the mapping database not be
+    in plaintext. When a Map-Request is sent to the mapping system and
+    encrypted JSON value fields are returned, the requester can decrypt
+    if it sets an environment variable LISP_JSON_KEY with the shared password
+    key and key-id. The format of the env variable is "<key>" or
+    "[<key-id>]<key>".
+
 Example:
 
 #
@@ -1646,6 +1655,18 @@ Example:
 lisp encryption-keys {
     map-register-key = [0]foo [1]bar [2]group3 [3]group4
 }    
+
+#
+# Map-server side.
+#            
+lisp encryption-keys {
+    json-key = [1]foo
+}
+
+#
+# Lig client side.
+#            
+setenv LISP_JSON_KEY "[1]foo"
     
 -------------------------------------------------------------------------------
 
