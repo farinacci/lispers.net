@@ -7135,11 +7135,13 @@ def lisp_build_map_reply(eid, group, rloc_set, nonce, action, ttl, map_request,
 
     probing_rloc = None
     for rloc_entry in rloc_set:
+        multicast = rloc_entry.rloc.is_multicast_address()
         rloc_record = lisp_rloc_record()
+        probe_bit = rloc_probe and (multicast or json_telemetry == None)
         addr_str = rloc_entry.rloc.print_address_no_iid()
-        if (addr_str in local_rlocs):
+        if (addr_str in local_rlocs or multicast):
             rloc_record.local_bit = True
-            rloc_record.probe_bit = rloc_probe
+            rloc_record.probe_bit = probe_bit
             rloc_record.keys = keys
             if (rloc_entry.priority == 254 and lisp_i_am_rtr):
                 rloc_record.rloc_name = "RTR"
@@ -8717,7 +8719,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
         # Some RLOC-probe Map-Replies may have no EID value in the EID-record.
         # Like from RTRs or PETRs.
         #
-        if (eid_record.eid.is_null()): continue
+        if (multicast == False and eid_record.eid.is_null()): continue
 
         #
         # Do not lose state for other RLOCs that may be stored in an already
@@ -8746,6 +8748,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
         # Process each RLOC record in EID record.
         #
         rloc_set = []
+        mrloc = None
         for j in range(eid_record.rloc_count):
             rloc_record = lisp_rloc_record()
             rloc_record.keys = map_reply.keys
@@ -8801,8 +8804,9 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
             if (map_reply.rloc_probe and rloc_record.probe_bit):
                 if (rloc.rloc.afi == source.afi):
                     lisp_process_rloc_probe_reply(rloc, source, port,
-                        map_reply, ttl)
+                        map_reply, ttl, mrloc)
                 #endif
+                if (rloc.rloc.is_multicast_address()): mrloc = rloc
             #endif
 
             #
@@ -12879,6 +12883,7 @@ class lisp_rloc():
         self.map_notify_requested = False
         self.rloc_next_hop = None
         self.next_rloc = None
+        self.multicast_rloc_probe_list = {}
 
         if (recurse == False): return
         
@@ -17102,7 +17107,8 @@ def lisp_update_rtr_updown(rtr, updown):
 #
 # We have received a RLOC-probe Map-Reply, process it.
 #
-def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl):
+def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
+    mrloc):
     rloc = rloc_entry.rloc
     nonce = map_reply.nonce
     hc = map_reply.hop_count
@@ -17111,7 +17117,30 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl):
     source_addr = source.print_address_no_iid()
     pl = lisp_rloc_probe_list
     jt = rloc_entry.json.json_string if rloc_entry.json else None
+    ts = lisp_get_timestamp()
 
+    #
+    # If this RLOC-probe reply is in response to a RLOC-probe request to a
+    # multicast RLOC, then store all responses. Create a lisp_rloc() for new
+    # entries.
+    #
+    if (mrloc != None):
+        multicast_rloc = mrloc.rloc.print_address_no_iid()
+        if (mrloc.multicast_rloc_probe_list.has_key(map_reply_addr) == False):
+            nrloc = lisp_rloc()
+            nrloc = copy.deepcopy(mrloc)
+            nrloc.rloc.copy_address(rloc)
+            nrloc.multicast_rloc_probe_list = {}
+            mrloc.multicast_rloc_probe_list[map_reply_addr] = nrloc
+        #endif
+        nrloc = mrloc.multicast_rloc_probe_list[map_reply_addr]
+        nrloc.last_rloc_probe_nonce = mrloc.last_rloc_probe_nonce
+        nrloc.last_rloc_probe = mrloc.last_rloc_probe
+        r, eid, group = lisp_rloc_probe_list[multicast_rloc][0]
+        nrloc.process_rloc_probe_reply(ts, nonce, eid, group, hc, ttl, jt)
+        return
+    #endif
+        
     #
     # If we can't find RLOC address from the Map-Reply in the probe-list,
     # maybe the same ETR is sending sourcing from a different address. Check
@@ -17136,7 +17165,6 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl):
     # Look for RLOC in the RLOC-probe list for EID tuple and fix-up stored
     # RLOC-probe state.
     #
-    ts = lisp_get_timestamp()
     for rloc, eid, group in lisp_rloc_probe_list[addr]:
         if (lisp_i_am_rtr):
             if (rloc.translated_port != 0 and rloc.translated_port != port):

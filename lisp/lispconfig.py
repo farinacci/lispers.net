@@ -2740,32 +2740,51 @@ def lisp_itr_rtr_show_rloc_probe_command(itr_or_rtr):
         col1 = rs + eid_str
 
         #
-        # Build column 2 with 2 wide rows.
+        # If a multicast RLOC, print out all ETRs that have replied.
         #
-        req = lisp.lisp_print_elapsed(r.last_rloc_probe)
-        req = lisp.lisp_print_cour(req)
-        rep = lisp.lisp_print_elapsed(r.last_rloc_probe_reply)
-        rep = lisp.lisp_print_cour(rep)
-        n = lisp.lisp_hex_string(r.last_rloc_probe_nonce)
-        n = lisp.lisp_print_cour("0x" + n)
-        col2 = ("Last probe-request sent: {}, " + \
-            "last probe-reply received: {}, nonce: {}<br>").format(req, rep, n)
+        probe_list = [r]
+        if (r.multicast_rloc_probe_list != {}):
+            probe_list += r.multicast_rloc_probe_list.values()
+        #endif
 
-        rtt = r.print_recent_rloc_probe_rtts()
-        rtt = lisp.lisp_print_cour(rtt)
-        hops = r.print_recent_rloc_probe_hops()
-        hops = lisp.lisp_print_cour(hops)
-        lat = r.print_recent_rloc_probe_latencies()
-        lat = lisp.lisp_print_cour(lat)
-        h = r.print_rloc_probe_hops()
-        h = lisp.lisp_print_cour(h)
-        l = r.print_rloc_probe_latency()
-        l = lisp.lisp_print_cour(l)
-        r = r.print_rloc_probe_rtt()
-        r = lisp.lisp_print_cour(r)
-        col2 += ("Telemetry: rtt: {}, hops: {}, latency: {}<br>" + \
-            "recent-rtts: {}, recent-hops: {}, recent-latencies: {}"). \
-            format(r, h, l, rtt, hops, lat)
+        #
+        # Build column 2.
+        #
+        col2 = ""
+        for r in probe_list:
+            if (len(probe_list) != 1):
+                rs = r.rloc.print_address_no_iid()
+                rs = lisp.bold(lisp.lisp_print_cour(rs), True)
+                if (probe_list.index(r) != 0): col2 += "<br><br>"
+                col2 += "RLOC {}:<br>".format(rs)
+            #endif
+
+            req = lisp.lisp_print_elapsed(r.last_rloc_probe)
+            req = lisp.lisp_print_cour(req)
+            rep = lisp.lisp_print_elapsed(r.last_rloc_probe_reply)
+            rep = lisp.lisp_print_cour(rep)
+            n = lisp.lisp_hex_string(r.last_rloc_probe_nonce)
+            n = lisp.lisp_print_cour("0x" + n)
+            col2 += ("Last probe-request sent: {}, " + \
+                "last probe-reply received: {}, nonce: {}<br>").format(req,
+                rep, n)
+
+            rtt = r.print_recent_rloc_probe_rtts()
+            rtt = lisp.lisp_print_cour(rtt)
+            hops = r.print_recent_rloc_probe_hops()
+            hops = lisp.lisp_print_cour(hops)
+            lat = r.print_recent_rloc_probe_latencies()
+            lat = lisp.lisp_print_cour(lat)
+            h = r.print_rloc_probe_hops()
+            h = lisp.lisp_print_cour(h)
+            l = r.print_rloc_probe_latency()
+            l = lisp.lisp_print_cour(l)
+            r = r.print_rloc_probe_rtt()
+            r = lisp.lisp_print_cour(r)
+            col2 += ("Telemetry: rtt: {}, hops: {}, latency: {}<br>" + \
+                "recent-rtts: {}, recent-hops: {}, recent-latencies: {}"). \
+                format(r, h, l, rtt, hops, lat)
+        #endfor
 
         #
         # Print 2-column row.
