@@ -17138,6 +17138,7 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
         nrloc.last_rloc_probe = mrloc.last_rloc_probe
         r, eid, group = lisp_rloc_probe_list[multicast_rloc][0]
         nrloc.process_rloc_probe_reply(ts, nonce, eid, group, hc, ttl, jt)
+        mrloc.process_rloc_probe_reply(ts, nonce, eid, group, hc, ttl, jt)
         return
     #endif
         
