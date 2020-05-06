@@ -450,7 +450,7 @@ LISP_MAP_REQUEST_RATE_LIMIT          = .5  # In units of seconds, 500 ms
 LISP_NO_MAP_REQUEST_RATE_LIMIT_TIME  = 60  # In units of seconds, 1 minute
 LISP_ICMP_TOO_BIG_RATE_LIMIT         = 1   # In units of seconds
 #LISP_RLOC_PROBE_TTL                 = 255
-LISP_RLOC_PROBE_TTL                  = 64
+LISP_RLOC_PROBE_TTL                  = 128
 LISP_RLOC_PROBE_INTERVAL             = 10  # In units of seconds
 LISP_RLOC_PROBE_REPLY_WAIT           = 15  # In units of seconds
 LISP_DEFAULT_DYN_EID_TIMEOUT         = 15  # In units of seconds
@@ -6768,7 +6768,7 @@ def lisp_send(lisp_sockets, dest, port, packet):
     #
     # If Map-Request/Reply RLOC-probe set TTL for outgoing packet to 255.
     #
-    set_ttl = (LISP_RLOC_PROBE_TTL == 255)
+    set_ttl = (LISP_RLOC_PROBE_TTL == 128)
     if (set_ttl):
         lisp_type = struct.unpack("B", packet[0])[0]
         set_ttl = (lisp_type in [0x12, 0x28])
@@ -18505,6 +18505,7 @@ def lisp_build_crypto_decap_lookup_key(addr, port):
 def lisp_set_ttl(lisp_socket, ttl):
     try: 
         lisp_socket.setsockopt(socket.SOL_IP, socket.IP_TTL, ttl)
+        lisp_socket.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_TTL, ttl)
     except: 
         lprint("socket.setsockopt(IP_TTL) not supported")
         pass
