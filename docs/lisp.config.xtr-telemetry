@@ -78,6 +78,48 @@ lisp database-mapping {
 }
 
 #
+# For underlay multicast RLOC probing.
+#        
+lisp map-cache {
+    prefix {
+        instance-id = <non-zero-if-configuring-vpn>
+        eid-prefix = 0.0.0.0/0
+        group-prefix = <group-eid-prefix>
+    }
+    rloc {
+        address = <underlay-group-rloc>
+    }
+}
+
+#
+# It is important that the group RLOC comes before the unicast RLOC.
+#    
+lisp database-mapping {
+    prefix {
+        instance-id = <non-zero-if-configuring-vpn>
+        eid-prefix = 0.0.0.0/0
+        group-prefix = <group-eid-prefix>
+    }
+    rloc {
+        address = <underlay-group-rloc>
+    }
+    rloc {
+        interface = eth0
+    }
+}
+
+#
+# Need the rle-address to be underlay-group-rloc or we won't pcap RLOC-probe
+# request in the ETR.
+#
+lisp group-mapping {
+    group-name = multicast-probing
+    group-prefix = 224.0.0.0/4
+    instance-id = <non-zero-if-configuring-vpn>
+    rle-address = <underlay-group-rloc>
+}
+
+#
 # If we are doing one-way latency measurements in RLOC-probing, the following
 # JSON string is included as one of the ITR-RLOCs in the Map-Request and a
 # RLOC-record in a Map-Reply. The ITR will fill in itr-in and itr-out UTC
