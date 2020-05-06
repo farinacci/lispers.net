@@ -16395,41 +16395,19 @@ def lisp_gather_map_cache_data(mc, data):
     #
     rloc_set = []
     for rloc in mc.rloc_set:
-        r = {}
-        if (rloc.rloc_exists()): 
-            r["address"] = rloc.rloc.print_address_no_iid()
-        #endif
+        r = lisp_fill_rloc_in_json(rloc)
 
-        if (rloc.translated_port != 0):
-            r["encap-port"] = str(rloc.translated_port)
+        #
+        # If this is a multicast RLOC, then add the array for member RLOCs
+        # that may have responded to a multicast RLOC-probe.
+        #
+        if (rloc.rloc.is_multicast_address()):
+            r["multicast-rloc-set"] = []
+            for mrloc in rloc.multicast_rloc_probe_list.values():
+                mr = lisp_fill_rloc_in_json(mrloc)
+                r["multicast-rloc-set"].append(mr)
+            #endfor
         #endif
-        r["state"] = rloc.print_state()
-        if (rloc.geo): r["geo"] = rloc.geo.print_geo()
-        if (rloc.elp): r["elp"] = rloc.elp.print_elp(False)
-        if (rloc.rle): r["rle"] = rloc.rle.print_rle(False, False)
-        if (rloc.json): r["json"] = rloc.json.print_json(False)
-        if (rloc.rloc_name): r["rloc-name"] = rloc.rloc_name
-        stats = rloc.stats.get_stats(False, False)
-        if (stats): r["stats"] = stats
-        r["uptime"] = lisp_print_elapsed(rloc.uptime)
-        r["upriority"] = str(rloc.priority)
-        r["uweight"] = str(rloc.weight)
-        r["mpriority"] = str(rloc.mpriority)
-        r["mweight"] = str(rloc.mweight)
-        reply = rloc.last_rloc_probe_reply
-        if (reply):
-            r["last-rloc-probe-reply"] = lisp_print_elapsed(reply)
-            r["rloc-probe-rtt"] = str(rloc.rloc_probe_rtt)
-        #endif
-        r["rloc-hop-count"] = rloc.rloc_probe_hops
-        r["recent-rloc-hop-counts"] = rloc.recent_rloc_probe_hops
-
-        r["rloc-probe-latency"] = rloc.rloc_probe_latency
-        r["recent-rloc-probe-latencies"] = rloc.recent_rloc_probe_latencies
-
-        recent_rtts = []
-        for rtt in rloc.recent_rloc_probe_rtts: recent_rtts.append(str(rtt))
-        r["recent-rloc-probe-rtts"] = recent_rtts
 
         rloc_set.append(r)
     #endfor
@@ -16437,6 +16415,51 @@ def lisp_gather_map_cache_data(mc, data):
     
     data.append(entry)
     return([True, data])
+#enddef
+
+#
+# lisp_fill_rloc_in_json
+#
+# Fill in fields from lisp_rloc() into the JSON that is reported via the
+# restful API.
+#
+def lisp_fill_rloc_in_json(rloc):
+    r = {}
+    if (rloc.rloc_exists()): 
+        r["address"] = rloc.rloc.print_address_no_iid()
+    #endif
+
+    if (rloc.translated_port != 0):
+        r["encap-port"] = str(rloc.translated_port)
+    #endif
+    r["state"] = rloc.print_state()
+    if (rloc.geo): r["geo"] = rloc.geo.print_geo()
+    if (rloc.elp): r["elp"] = rloc.elp.print_elp(False)
+    if (rloc.rle): r["rle"] = rloc.rle.print_rle(False, False)
+    if (rloc.json): r["json"] = rloc.json.print_json(False)
+    if (rloc.rloc_name): r["rloc-name"] = rloc.rloc_name
+    stats = rloc.stats.get_stats(False, False)
+    if (stats): r["stats"] = stats
+    r["uptime"] = lisp_print_elapsed(rloc.uptime)
+    r["upriority"] = str(rloc.priority)
+    r["uweight"] = str(rloc.weight)
+    r["mpriority"] = str(rloc.mpriority)
+    r["mweight"] = str(rloc.mweight)
+    reply = rloc.last_rloc_probe_reply
+    if (reply):
+        r["last-rloc-probe-reply"] = lisp_print_elapsed(reply)
+        r["rloc-probe-rtt"] = str(rloc.rloc_probe_rtt)
+    #endif
+    r["rloc-hop-count"] = rloc.rloc_probe_hops
+    r["recent-rloc-hop-counts"] = rloc.recent_rloc_probe_hops
+
+    r["rloc-probe-latency"] = rloc.rloc_probe_latency
+    r["recent-rloc-probe-latencies"] = rloc.recent_rloc_probe_latencies
+
+    recent_rtts = []
+    for rtt in rloc.recent_rloc_probe_rtts: recent_rtts.append(str(rtt))
+    r["recent-rloc-probe-rtts"] = recent_rtts
+    return(r)
 #enddef
 
 #
