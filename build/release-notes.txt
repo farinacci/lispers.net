@@ -1,4 +1,28 @@
 
+                lispers.net Beta Release Version 0.523
+                --------------------------------------
+
+o Release date: Thu May  7 15:50:00 PDT 2020
+
+o Support underlay telemetry for multicast RLOCs. What this means is that
+  an ITR will send an RLOC-probe to a multicast RLOC where the underlay
+  running native-multicast will deliver the RLOC-probe to all ETRs on the
+  underlay distribution tree. Each ETR responds with an RLOC-probe reply
+  unicasted to the ITR. The ITR collects all telemetry data from each ETR.
+
+o Modified lisp.config.xtr-telemetry to guide user on how to configure
+  an ITR and ETR for multicast RLOC telemetry.
+
+o For the restful output at https://<host>:8080/lisp/api/data/map-cache,
+  add "multicast-rloc-set" as a key to the JSON which is an array or RLOC
+  records. This is so member ETRs for the multicast RLOC can be reported.
+
+o Have Map-Requests with a multicast destination address use a TTL > 1. Now
+  all RLOC-probe Map-Requests and RLOC-probe Map-Replies use a TTL of 128
+  for both unicast and multicast RLOCs.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.522
                 --------------------------------------
 
