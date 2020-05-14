@@ -1,4 +1,24 @@
 
+                lispers.net Beta Release Version 0.524
+                --------------------------------------
+
+o Release date: Thu May 14 16:32:16 PDT 2020
+
+o Have loc8tr support multicast RLOC-probe telemetry data. Encode the telemetry
+  data as an array to support multiple RLOC-probe repliers.
+
+o Have s2-poster format and send multicast RLOC-probe telemetry data to a
+  S2 data collection server. There was no code change but the comment added:
+
+  #
+  # Note that <rloc-1> ... <rloc-n> are in a unicast RLOC format of "1.1.1.1"
+  # or a multicast RLOC format of "1.1.1.1%224.1.1.1", for example, to show
+  # when the RLOC information is a reply to a multicast RLOC-probe request
+  # (in this case to a Map-Request to 224.1.1.1).
+  #          
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.523
                 --------------------------------------
 
