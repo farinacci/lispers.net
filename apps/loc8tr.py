@@ -248,6 +248,22 @@ def bold(string):
 #enddef
 
 #
+# is_multicast
+#
+# Return true if first octet is in range 224 through 239, inclusive.
+#
+def is_multicast(address):
+    if (address.find(".") != -1):
+        addr = int(address.split(".")[0])
+        return(addr >= 224 and addr <= 239)
+    #endif
+    if (address.find(":") != -1):
+        return(address[0:1].lower() == "ff")
+    #endif
+    return(False)
+#enddef
+
+#
 # ---------- Main Entry Point ----------
 #
 
@@ -286,10 +302,33 @@ if (len(map_cache) == 1 and map_cache[0].has_key("?")):
 # Build rloc_cache data structure with IPv4 and IPv6 RLOC-types only.
 #
 for entry in map_cache:
-    eid = "[{}]{}".format(entry["instance-id"], entry["eid-prefix"])
+    eid = "[{}]".format(entry["instance-id"])
+    if (entry.has_key("group-prefix")):
+        eid += "({}, {})".format(entry["eid-prefix"], entry["group-prefix"])
+    else:
+        eid += "{}".format(entry["eid-prefix"])
+    #endif
+
+    rloc_set = {}
     for rloc in entry["rloc-set"]:
         address = rloc["address"]
         if (is_v4v6(address) == False): continue
+
+        if (rloc.has_key("multicast-rloc-set")):
+            for mrloc in rloc["multicast-rloc-set"]:
+                addr = mrloc["address"]
+                if (is_multicast(addr) == False): addr += "%" + address
+                rloc_set[addr] = rloc
+            #endfor
+        else:
+            rloc_set[address] = rloc
+        #endif
+    #endfor
+
+    for address in rloc_set:
+        rloc = rloc_set[address]
+        if (is_v4v6(rloc["address"]) == False): continue
+
         if (rloc_cache.has_key(address) == False):
             rtts = []
             for rtt in rloc["recent-rloc-probe-rtts"]: rtts.append(float(rtt))
@@ -317,8 +356,16 @@ for addr in rloc_cache:
     hops = rloc[HOPS]
     lats = rloc[LATS]
     eids = rloc[EIDS]
-    Print("RLOC {}, rtts(secs) {}, hops {}, latencies {}".format(bold(addr),
-        rtts, hops, lats))
+
+    a = addr.split("%")
+    if (len(a) == 2):
+        a = bold(a[0]) + "(" + a[1] + ")"
+    else:
+        a = bold(addr)
+    #endif
+
+    Print("RLOC {}, rtts(secs) {}, hops {}, latencies {}".format(a, rtts, hops,
+        lats))
     Print("     EIDs: {}".format(eids))
 #endfor
 Print("")
@@ -327,6 +374,14 @@ Print("")
 # Start traceroute to each RLOC.
 #
 for addr in rloc_cache:
+    if (is_multicast(addr)):
+        Print("Suppress traceroute to multicast RLOC {}".format(addr))
+        Print("")
+        continue
+    #endif
+
+    address = addr.split("%")
+    address = address[1] if (len(a) == 2) else address[0]
 
     #
     # Determine if we should use linux traceroute or if we are running on
@@ -334,9 +389,9 @@ for addr in rloc_cache:
     #
     cisco = os.path.exists("/cisco/guestshell")
     if (cisco):
-        cmd = ios_tr_command.format(addr)
+        cmd = ios_tr_command.format(address)
     else:
-        cmd = tr_command.format(addr)
+        cmd = tr_command.format(address)
     #endif
 
     Print("Run {} ...".format(bold(cmd))) 
@@ -359,7 +414,7 @@ for addr in rloc_cache:
         #endif
 
         bangx = "" if (hop != rloc[TR_HOPS][-1]) else bold(green("!")) if \
-            (hop[0] == addr) else bold(red("X"))
+            (hop[0] == address) else bold(red("X"))
 
         if (hop[0] == "*"):
             Print("{}  * {}".format(num, bangx))
