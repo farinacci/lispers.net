@@ -373,6 +373,8 @@ Print("")
 #
 for addr in rloc_cache:
     if (is_multicast(addr)):
+        rloc[TR_OUTPUT] = ""
+        rloc[TR_HOPS] = []
         Print("Suppress traceroute to multicast RLOC {}".format(addr))
         Print("")
         continue

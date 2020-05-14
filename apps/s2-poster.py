@@ -22,7 +22,7 @@ import requests
 #
 # For temporary print()s.
 #
-debug = False
+debug = True
 
 #------------------------------------------------------------------------------
 
@@ -182,6 +182,9 @@ def get_directories():
 #     }
 #   ] }
 # ] }
+#
+# Note that <rloc-1> ... <rloc-n> is in a unicast RLOC format of 1.1.1.1
+# and a multicast RLOC format of 1.1.1.1%224.1.1.1 for example.
 #
 def format_json(loc8tr_json):
     try:
