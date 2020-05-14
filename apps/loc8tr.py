@@ -314,14 +314,12 @@ for entry in map_cache:
         address = rloc["address"]
         if (is_v4v6(address) == False): continue
 
+        rloc_set[address] = rloc
         if (rloc.has_key("multicast-rloc-set")):
             for mrloc in rloc["multicast-rloc-set"]:
-                addr = mrloc["address"]
-                if (is_multicast(addr) == False): addr += "%" + address
-                rloc_set[addr] = rloc
+                addr = mrloc["address"] + "%" + address
+                rloc_set[addr] = mrloc
             #endfor
-        else:
-            rloc_set[address] = rloc
         #endif
     #endfor
 
