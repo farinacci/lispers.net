@@ -22,7 +22,7 @@ import requests
 #
 # For temporary print()s.
 #
-debug = True
+debug = False
 
 #------------------------------------------------------------------------------
 
