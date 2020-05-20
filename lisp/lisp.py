@@ -6193,7 +6193,13 @@ lisp_map_referral_action_string = [
 #      |                          EID-prefix                           |
 #      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
-#    Info-Request specific information following the EID-prefix:
+#    Info-Request specific information following the EID-prefix with
+#    EID-prefix-AFI set to 0. EID appened below follows with hostname
+#    or AFI=0:
+#
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#      |             AFI = 17          |  <hostname--null-terminated>  |
+#      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
 #      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #      |             AFI = 0           |   <Nothing Follows AFI=0>     |
@@ -6265,13 +6271,15 @@ class lisp_info():
         #
         # Encode first-long, nonce, key-id longword, TTL and EID mask-len/
         # EID-prefix AFI. There is no auth data field since auth len is 0.
+        # Zero out key-id, auth-data-len, ttl, reserved, eid-mask-len, and
+        # eid-prefix-afi.
         #
         packet = struct.pack("I", socket.htonl(first_long))
         packet += struct.pack("Q", self.nonce)
         packet += struct.pack("III", 0, 0, 0)
         
         #
-        # Add hostname null terminated string with AFI 17, 
+        # Add hostname null terminated string with AFI 17.
         #
         if (self.info_reply == False):
             if (self.hostname == None):
