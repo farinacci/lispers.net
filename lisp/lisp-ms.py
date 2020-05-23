@@ -171,6 +171,14 @@ def lisp_site_command(kv_pairs):
                 site_eid.require_signature = yes_or_no
             #endfor
         #endif
+        if (kw == "encrypt-json"):
+            for i in range(len(allowed_eid_set)):
+                rloc = allowed_eid_set[i]
+                v = value[i]
+                yes_or_no = True if (v == "yes") else False
+                site_eid.encrypt_json = yes_or_no
+            #endfor
+        #endif
         if (kw == "policy-name"):
             for i in range(len(allowed_eid_set)):
                 site_eid = allowed_eid_set[i]
@@ -545,6 +553,10 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     yesno = "yes" if site_eid.require_signature else "no"
     yesno = lisp.lisp_print_cour(yesno)
     output += "{}Require signatures: {}<br>".format(indent4, yesno)
+
+    yesno = "yes" if site_eid.encrypt_json else "no"
+    yesno = lisp.lisp_print_cour(yesno)
+    output += "{}Encrypt JSON RLOC-records: {}<br>".format(indent4, yesno)
 
     #
     # Print configured allowed RLOC-sets, if any.
@@ -1040,6 +1052,7 @@ lisp_ms_commands = {
         "pitr-proxy-reply-drop" : [True, "yes", "no"],
         "proxy-reply-action" : [True, "native-forward", "drop"],
         "require-signature" : [True, "yes", "no"],
+        "encrypt-json" : [True, "yes", "no"],
         "allowed-rloc" : [],
         "address" : [True], 
         "priority" : [True, 0, 255], 

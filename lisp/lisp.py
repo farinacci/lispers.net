@@ -5636,7 +5636,7 @@ class lisp_rloc_record():
         return(packet)
     #enddef
 
-    def decode_lcaf(self, packet, nonce):
+    def decode_lcaf(self, packet, nonce, ms_json_encrypt):
         packet_format = "HBBBBH"
         format_size = struct.calcsize(packet_format)
         if (len(packet) < format_size): return(None)
@@ -5662,7 +5662,7 @@ class lisp_rloc_record():
                 afi = socket.ntohs(afi)
 
                 if (afi == LISP_AFI_LCAF): 
-                    packet = self.decode_lcaf(packet, nonce)
+                    packet = self.decode_lcaf(packet, nonce, ms_json_encrypt)
                     if (packet == None): return(None)
                 else:
                     packet = packet[format_size::]
@@ -5706,7 +5706,8 @@ class lisp_rloc_record():
             if (lcaf_len < format_size + json_len): return(None)
 
             packet = packet[format_size::]
-            self.json = lisp_json("", packet[0:json_len], encrypted_json)
+            self.json = lisp_json("", packet[0:json_len], encrypted_json,
+                ms_json_encrypt)
             packet = packet[json_len::]
 
             #
@@ -5792,7 +5793,7 @@ class lisp_rloc_record():
             #
             orig_packet = packet
             decode_key = lisp_keys(1)
-            packet = decode_key.decode_lcaf(orig_packet, lcaf_len)
+            packet = decode_key.decode_lcaf(orig_packet, lcaf_len, False)
             if (packet == None): return(None)
 
             #
@@ -5809,7 +5810,7 @@ class lisp_rloc_record():
             else:
                 key = lisp_keys(1, do_poly=False, do_chacha=False)
             #endif
-            packet = key.decode_lcaf(orig_packet, lcaf_len)
+            packet = key.decode_lcaf(orig_packet, lcaf_len, False)
             if (packet == None): return(None)
 
             if (len(packet) < 2): return(None)
@@ -5889,7 +5890,7 @@ class lisp_rloc_record():
         return(packet)
     #enddef
 
-    def decode(self, packet, nonce):
+    def decode(self, packet, nonce, ms_json_encrypt):
         packet_format = "BBBBHH"
         format_size = struct.calcsize(packet_format)
         if (len(packet) < format_size): return(None)
@@ -5905,7 +5906,7 @@ class lisp_rloc_record():
 
         if (afi == LISP_AFI_LCAF):
             packet = packet[format_size-2::]
-            packet = self.decode_lcaf(packet, nonce)
+            packet = self.decode_lcaf(packet, nonce, ms_json_encrypt)
         else:
             self.rloc.afi = afi
             packet = packet[format_size::]
@@ -5917,7 +5918,7 @@ class lisp_rloc_record():
 
     def end_of_rlocs(self, packet, rloc_count):
         for i in range(rloc_count): 
-            packet = self.decode(packet, None)
+            packet = self.decode(packet, None, False)
             if (packet == None): return(None)
         #endfor
         return(packet)
@@ -9984,6 +9985,7 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
                 site_eid = lisp_site_eid(site)
                 site_eid.eid.copy_address(parent.eid)
                 site_eid.group.copy_address(parent.group)
+                site_eid.encrypt_json = parent.encrypt_json
                 parent.individual_registrations[key] = site_eid
             #endif
         else:
@@ -10017,7 +10019,7 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
         start_rloc_records = packet
         for j in range(eid_record.rloc_count):
             rloc_record = lisp_rloc_record()
-            packet = rloc_record.decode(packet, None)
+            packet = rloc_record.decode(packet, None, site_eid.encrypt_json)
             if (packet == None):
                 lprint("  Could not decode RLOC-record in Map-Register packet")
                 return
@@ -12632,7 +12634,7 @@ class lisp_rle():
 #endclass
 
 class lisp_json():
-    def __init__(self, name, string, encrypted=False):
+    def __init__(self, name, string, encrypted=False, ms_encrypt=False):
         self.json_name = name
         self.json_string = string
         self.json_encrypted = False
@@ -12643,7 +12645,11 @@ class lisp_json():
         # data if it has the key in env variable LISP_JSON_KEY. Format of
         # env variable is "<key>" or "[<key-id>]<key>".
         #
+        # If the LISP site-eid is not configured to encrypt the JSON than
+        # store in plaintext.
+        #
         if (len(lisp_ms_json_keys) != 0):
+            if (ms_encrypt == False): return
             self.json_key_id = lisp_ms_json_keys.keys()[0]
             self.json_key = lisp_ms_json_keys[self.json_key_id]
             self.encrypt_json()
@@ -13931,6 +13937,7 @@ class lisp_site_eid():
         self.inconsistent_registration = False
         self.policy = None
         self.require_signature = False
+        self.encrypt_json = False
     #enddef
 
     def print_eid_tuple(self):
@@ -14214,6 +14221,7 @@ class lisp_site_eid():
         self.echo_nonce_capable = parent.echo_nonce_capable
         self.policy = parent.policy
         self.require_signature = parent.require_signature
+        self.encrypt_json = parent.encrypt_json
     #enddef
 
     def rtrs_in_rloc_set(self):

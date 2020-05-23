@@ -584,6 +584,7 @@ def lisp_setup_kv_pairs(clause):
         kv_pairs["pitr-proxy-reply-drop"] = [""] * count
         kv_pairs["proxy-reply-action"] = [""] * count
         kv_pairs["require-signature"] = [""] * count
+        kv_pairs["encrypt-json"] = [""] * count
         kv_pairs["echo-nonce-capable"] = [""] * count
         kv_pairs["policy-name"] = [""] * count
     #endif

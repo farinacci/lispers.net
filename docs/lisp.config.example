@@ -1304,6 +1304,7 @@ lisp site {
         force-ttl = <seconds>
         echo-nonce-capable = yes | no
         require-signature = yes | no
+        encrypt-json = yes | no
         policy-name = <policy-name>
     }
     ... 
@@ -1392,6 +1393,14 @@ Command Description:
             command. See the command for more details on how to register
             hash->pubkey mappings used for signature verification.
     
+        encrypt-json = yes | no
+            If the EID-prefix is registered with an RLOC-set that has JSON
+            encoded RLOC-records, than the value fields will be encrypted
+            when stored in the mapping system. The key used to encrypt is
+            configured by the "json-key" parameter in the "lisp encryption-
+            keys" command clause. This setting is ignored if no JSON key is
+            configured.
+        
 	    policy-name = <policy-name>
             Configures the policy defined in the "lisp policy" command clause.
 
