@@ -1,4 +1,19 @@
 
+                lispers.net Beta Release Version 0.525
+                --------------------------------------
+
+o Release date: Sat May 23 12:49:18 PDT 2020
+
+o Create a new parameter "encrypt-json = yes|no" of the "allowed-prefix"
+  sub-command of the "lisp site" command clause. This allows one to configure
+  when to encrypt JSON value fields on a per EID-prefix registration. Used
+  in conjunction with the "json-key" parameter of the "lisp encryption-keys"
+  command clause. This allows support for some EID-prefix JSON RLOC-record
+  registrations to store JSON in ciphertext and other registrations in
+  plaintext.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.524
                 --------------------------------------
 
