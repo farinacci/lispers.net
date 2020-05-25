@@ -215,6 +215,9 @@ def lisp_get_api_data(data_structure, data):
         if (lisp.lisp_is_running("lisp-etr")): 
             lisp.lisp_ipc_lock.acquire()
             lisp.lisp_ipc(ipc, lisp_ipc_socket, "lisp-etr")
+        elif (lisp.lisp_is_running("lisp-itr")): 
+            lisp.lisp_ipc_lock.acquire()
+            lisp.lisp_ipc(ipc, lisp_ipc_socket, "lisp-itr")
         else:
             return(json.dumps([]))
         #endif
