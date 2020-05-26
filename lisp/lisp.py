@@ -12596,13 +12596,13 @@ class lisp_rle():
             if (rle_node.rloc_name != None):
                 rle_name_str = rle_node.rloc_name
                 if (do_formatting): rle_name_str = blue(rle_name_str, html)
+                rle_name_str = "({})".format(rle_name_str)
             #endif
 
             addr_str = rle_node.address.print_address_no_iid()
             if (rle_node.address.is_local()): addr_str = red(addr_str, html)
-            rle_str += "{}{}({}), ".format(addr_str, "" if port == 0 else \
-                ":" + str(port), "" if rle_node.rloc_name == None else \
-                rle_name_str)
+            rle_str += "{}{}{}, ".format(addr_str, "" if port == 0 else \
+                ":" + str(port), rle_name_str)
         #endfor
         return(rle_str[0:-2] if rle_str != "" else "")
     #enddef
