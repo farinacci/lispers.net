@@ -765,11 +765,14 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
 
     #
     # Find all (*,G) entries in entries array and replace with (S,G) entries
-    # from lisp_group_mapping_list.
+    # from lisp_group_mapping_list. The comment to avoid the source check
+    # is there so we can build a g_entry that can validate against group
+    # mappings. Have to fix to allow different sources for the same G when
+    # (S,G) is reported.
     #
     g_entries = []
     for source, group, joinleave in entries:
-        if (source != None): continue
+#       if (source != None): continue
         g_entries.append([group, joinleave])
     #endfor
 
@@ -787,6 +790,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
 
         lisp.lprint("Use group-mapping '{}' {} for group {}".format( \
             ms_gm.group_name, ms_gm.group_prefix.print_prefix(), group))
+
         iid = ms_gm.group_prefix.instance_id
         ms_name = ms_gm.use_ms_name
         rle = ms_gm.rle_address
@@ -811,7 +815,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
             entries.append([s, group, iid, key, rle, joinleave])
         #endfor
     #endfor
-                
+
     length = len(entries)
     if (length == 0): return
 
