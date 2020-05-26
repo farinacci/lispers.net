@@ -5890,7 +5890,7 @@ class lisp_rloc_record():
         return(packet)
     #enddef
 
-    def decode(self, packet, nonce, ms_json_encrypt):
+    def decode(self, packet, nonce, ms_json_encrypt=False):
         packet_format = "BBBBHH"
         format_size = struct.calcsize(packet_format)
         if (len(packet) < format_size): return(None)
