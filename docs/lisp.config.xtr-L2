@@ -66,8 +66,8 @@ lisp map-server {
 lisp database-mapping {
     prefix {
         instance-id = <non-zero-if-configuring-vpn>
-	eid-prefix = 0000-0000-0000/0
-	dynamic-eid = yes
+    	eid-prefix = 0000-0000-0000/0
+    	dynamic-eid = yes
     }
     rloc {
         address = <you-fill-in-a-routable-address-on-one-of-your-interfaces>

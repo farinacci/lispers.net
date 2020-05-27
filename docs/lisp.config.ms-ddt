@@ -67,7 +67,7 @@ lisp site {
     authentication-key = <same-as-on-map-server-command-on-xtr>
     allowed-prefix {
         instance-id = <same-as-on-database-mapping-command-on-xtr>
-	accept-more-specifics = yes
+    	accept-more-specifics = yes
     }
 }
 lisp site {
@@ -75,7 +75,7 @@ lisp site {
     authentication-key = <same-as-on-map-server-command-on-xtr>
     allowed-prefix {
         instance-id = <same-as-on-database-mapping-command-on-xtr>
-	eid-prefix = <exact-prefix-on-database-mapping-comamnd-on-xtr>
+    	eid-prefix = <exact-prefix-on-database-mapping-comamnd-on-xtr>
     }
 }
 lisp site {
@@ -83,9 +83,9 @@ lisp site {
     authentication-key = <same-as-on-map-server-command-on-xtr>
     allowed-prefix {
         instance-id = <same-as-on-database-mapping-command-on-xtr>
-	accept-more-specifics = yes
-	force-proxy-reply = yes
-	force-nat-proxy-reply = yes
+    	accept-more-specifics = yes
+    	force-proxy-reply = yes
+    	force-nat-proxy-reply = yes
     }
 }
 #-----------------------------------------------------------------------------#
