@@ -1301,9 +1301,25 @@ def lisp_rtr_startup():
     # Get interface address for RTR source RLOC if env variable defined. It
     # should be the private translatable address from a AWS resident NAT.
     #
+    # Get device name from command line. Some AWS VMs may not have interface
+    # "eth0" but something like "ens5".
+    #
     lisp_rtr_source_rloc = lisp.lisp_myrlocs[0]
     if (lisp.lisp_on_aws()):
-        lisp_rtr_source_rloc = lisp.lisp_get_interface_address("eth0")
+        aws = lisp.bold("AWS RTR", False)
+        rloc = None
+        for device in ["eth0", "ens5"]:
+            rloc = lisp.lisp_get_interface_address(device)
+            if (rloc != None): break
+        #endfor
+        if (rloc != None):
+            lisp_rtr_source_rloc = rloc
+            addr = rloc.print_address_no_iid()
+            lisp.lprint("{} using RLOC {} on {}".format(aws, addr, device))
+        else:
+            addr = lisp_rtr_source_rloc.print_address_no_iid()
+            lisp.lprint("{} cannot obtain RLOC, using {}".format(aws, addr))
+        #endif
     #endif
 
     #
