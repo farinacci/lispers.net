@@ -1,4 +1,18 @@
 
+                lispers.net Beta Release Version 0.527
+                --------------------------------------
+
+o Release date: Fri May 29 17:43:25 PDT 2020
+
+o When an RTR runs on an AWS VM, the VM may not provide a "eth0" device name.
+  We need to get the private address since Amazon WILL NOT forward packets
+  out of the VM with the global RLOC source address. There are increasingly
+  more VMs that have device interface "ens5". Print more lisp-rtr.log messages
+  when starting up so we can detect this situation and learn about new device
+  names Amazon introduces. Sigh.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.526
                 --------------------------------------
 
