@@ -504,6 +504,7 @@ def lisp_setup_kv_pairs(clause):
         kv_pairs["ms-name"] = [""] * count
         kv_pairs["dynamic-eid"] = [""] * count
         kv_pairs["signature-eid"] = [""] * count
+        kv_pairs["register-ttl"] = [""] * count
         kv_pairs["send-map-request"] = [""] * count
     #endif
 
@@ -3739,7 +3740,12 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None):
                 db.signature_eid = (v == "yes")
             #endfor
         #endif
-
+        if (kw == "register-ttl"):
+            for i in range(len(prefix_set)):
+                db = prefix_set[i]
+                db.register_ttl = int(value[i])
+            #endfor
+        #endif
         if (kw == "priority"): 
             for i in range(len(rloc_set)):
                 rloc = rloc_set[i]

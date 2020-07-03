@@ -13395,6 +13395,7 @@ class lisp_mapping():
         self.action = LISP_NO_ACTION
         self.expires = None
         self.map_cache_ttl = None
+        self.register_ttl = LISP_REGISTER_TTL
         self.last_refresh_time = self.uptime
         self.source_cache = None
         self.map_replies_sent = 0

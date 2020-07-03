@@ -1343,6 +1343,7 @@ lisp_itr_commands = {
         "group-prefix" : [True], 
         "dynamic-eid" : [True, "yes", "no"],
         "signature-eid" : [True, "yes", "no"],
+        "register-ttl" : [True, 1, 0xffffffff], 
         "rloc" : [], 
         "rloc-record-name" : [True],
         "elp-name" : [True],

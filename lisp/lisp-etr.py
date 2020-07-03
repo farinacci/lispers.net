@@ -535,6 +535,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
     map_register = lisp.lisp_map_register()
     map_register.nonce = 0xaabbccdddfdfdf00
     map_register.xtr_id_present = True
+    map_register.use_ttl_for_timeout = True
 
     if (ttl == None): ttl = lisp.LISP_REGISTER_TTL
 
@@ -583,6 +584,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
             #endfor
         else:            
             if (eid_only == None):
+                if (ttl != 0): ttl = db.register_ttl
                 eid_records, count = lisp_build_map_register_records(quiet, db,
                     db.eid, db.group, ttl)
                 msl[1] += count
@@ -1883,6 +1885,7 @@ lisp_etr_commands = {
         "group-prefix" : [True], 
         "dynamic-eid" : [True, "yes", "no"],
         "signature-eid" : [True, "yes", "no"],
+        "register-ttl" : [True, 1, 0xffffffff], 
         "rloc" : [], 
         "rloc-record-name" : [True],
         "elp-name" : [True],
