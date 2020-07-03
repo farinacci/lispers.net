@@ -1,4 +1,18 @@
 
+                lispers.net Beta Release Version 0.528
+                --------------------------------------
+
+o Release date: Fri Jul  3 11:01:06 PDT 2020
+
+o Update pip-requirements.txt library versions according to github
+  recommendations. Updated libraries are pyopenssl, pycrypto, and requests.
+
+o Add new command "register-ttl = <1-0xffffffff>" under the "prefix" clause
+  of the "lisp database-mapping" command so you can configure on a per
+  EID-prefix the Time-To-Live in minutes in Map-Register messages.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.527
                 --------------------------------------
 
