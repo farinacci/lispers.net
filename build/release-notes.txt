@@ -1,4 +1,13 @@
 
+                lispers.net Beta Release Version 0.529
+                --------------------------------------
+
+o Release date: Sun Jul  5 16:17:10 PDT 2020
+
+o Put pycrypto to version 2.6.1 in pip-requirements.txt.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.528
                 --------------------------------------
 
