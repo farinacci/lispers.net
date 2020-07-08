@@ -763,6 +763,18 @@ def lprint(*args):
 #enddef
 
 #
+# fprint
+#
+# Do a lprint() when debug logging is off but "force" flag is supplied and
+# can print messages..
+#
+def fprint(*args):
+    nargs = args + ("force",)
+    lprint(*nargs)
+    return
+#enddef
+
+#
 # dprint
 #
 # Data-plane logging. Call lprint() only if lisp.lisp_data_plane_logging is

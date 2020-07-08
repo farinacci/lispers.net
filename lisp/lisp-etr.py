@@ -56,6 +56,14 @@ lisp_mac_header = None
 
 LISP_MAP_REGISTER_INTERVAL = 60 # In units of seconds
 
+#
+# Test mode. Allows a batch of database-mapping commands to be read from
+# lisp.config before any Map-Registers are sent. When an EID 'eid-done' is
+# found (which is placed as the last database-mapping command in lisp.config),
+# then lisp_build_map_register() is called via the 5-second delay timer.
+#
+lisp_etr_test_mode = False
+
 #------------------------------------------------------------------------------
 
 #
@@ -81,8 +89,17 @@ def lisp_etr_database_mapping_command(kv_pair):
     if (lisp_trigger_register_timer != None and
         lisp_trigger_register_timer.is_alive()): return
 
+    #
+    # Wait until a large set of database-mapping commands are processed
+    # before sending the first set of Map-Registers. Used in test mode only.
+    #
+    if (lisp_etr_test_mode):
+        db = lisp.lisp_db_list[-1]
+        if (db.eid.is_dist_name() and db.eid.address != "eid-done"): return
+    #endif
+
     if (len(lisp.lisp_map_servers_list) > 0): 
-        lisp_trigger_register_timer = threading.Timer(5, 
+        lisp_trigger_register_timer = threading.Timer(5,
             lisp_process_register_timer, [lisp_send_sockets])
         lisp_trigger_register_timer.start()
     #endif
@@ -714,7 +731,7 @@ def lisp_etr_process_info_timer(ms):
 # Time to send a periodic Map-Register.
 #
 def lisp_process_register_timer(lisp_sockets):
-    global lisp_register_timer
+    global lisp_register_timer, lisp_trigger_register_timer
     global lisp_ephem_socket
 
     lisp.lisp_set_exception()
@@ -736,6 +753,7 @@ def lisp_process_register_timer(lisp_sockets):
     #
     # Restart periodic timer.
     #
+    if (lisp_trigger_register_timer): lisp_trigger_register_timer.cancel()
     if (lisp_register_timer): lisp_register_timer.cancel()
     lisp_register_timer = threading.Timer(LISP_MAP_REGISTER_INTERVAL, 
         lisp_process_register_timer, [lisp_send_sockets])
