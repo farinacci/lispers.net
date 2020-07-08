@@ -807,6 +807,15 @@ def debug(*args):
 #enddef
 
 #
+# lisp_print_caller
+#
+# Print out calling stack.
+#
+def lisp_print_caller():
+    fprint(traceback.print_last())
+#enddef
+
+#
 # lisp_print_banner
 #
 # Print out startup and shutdown banner.
