@@ -88,6 +88,15 @@ setenv LISP_GEO_ZOOM_LEVEL 10
 #setenv LISP_ITR_WAIT_TIME 1
 
 #
+# Put ETR in test mode. Which allows it to be a batch EID loader of entries
+# to the mapping system. This is used for scaling testing. Note for this
+# to work as designed you need a "lisp database-mapping" command at the
+# end of the lisp.config file with an distingusihed-name eid-prefix of
+# 'eid-done'.
+#
+#setenv LISP_ETR_TEST_MODE 1
+
+#
 # Bail if "python" does not give us version 2.7.x.
 #
 python -V |& egrep 2.7 > /dev/null

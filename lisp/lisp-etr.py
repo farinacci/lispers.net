@@ -62,7 +62,7 @@ LISP_MAP_REGISTER_INTERVAL = 60 # In units of seconds
 # found (which is placed as the last database-mapping command in lisp.config),
 # then lisp_build_map_register() is called via the 5-second delay timer.
 #
-lisp_etr_test_mode = False
+lisp_etr_test_mode = (os.getenv("LISP_ETR_TEST_MODE") != None)
 lisp_seen_eid_done = False
 
 #------------------------------------------------------------------------------
