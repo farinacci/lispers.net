@@ -3657,7 +3657,7 @@ def lisp_replace_db_list(db):
 # This function supports adding additional RLOCs to a database-mapping entry
 # that already exists.
 #
-def lisp_database_mapping_command(kv_pair, ephem_port=None):
+def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
     nat_interfaces = []
     rloc_set = []
     if (kv_pair.has_key("address")):
@@ -3842,7 +3842,7 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None):
         db.rloc_set = copy.deepcopy(db.rloc_set)
         db.sort_rloc_set()
         db.add_db()
-        if (lisp_replace_db_list(db)): continue
+        if (replace and lisp_replace_db_list(db)): continue
         lisp.lisp_db_list.append(db)
     #endfor
 

@@ -76,8 +76,17 @@ lisp_seen_eid_done = False
 def lisp_etr_database_mapping_command(kv_pair):
     global lisp_register_timer, lisp_trigger_register_timer
     global lisp_send_sockets, lisp_seen_eid_done
+    global lisp_seen_eid_done_count
 
-    lispconfig.lisp_database_mapping_command(kv_pair, lisp_ephem_port)
+    #
+    # This is to fix an issue with the same set of database-mappings being
+    # sent a second time. Only in test-mode we don't want to dup process for
+    # large numbers of entries.
+    #
+    if (lisp_etr_test_mode and lisp_seen_eid_done): return
+
+    lispconfig.lisp_database_mapping_command(kv_pair, lisp_ephem_port,
+        (lisp_etr_test_mode == False))
 
     #
     # Trigger Map-Register when all databaase-mappings are configured.
@@ -94,8 +103,6 @@ def lisp_etr_database_mapping_command(kv_pair):
     # before sending the first set of Map-Registers. Used in test mode only.
     #
     if (lisp_etr_test_mode):
-        if (lisp_seen_eid_done): return
-
         db_size = len(lisp.lisp_db_list)
         if (db_size % 1000 == 0):
             lisp.fprint("{} database-mappings processed".format(db_size))
@@ -352,12 +359,17 @@ def lisp_map_server_command(kv_pairs):
     #endif
 
     #
+    # Do not start the trigger timer if we are in test-mode. We may already
+    # be sending a huge list of Map-Registers after "eid-done".
+    #
+    if (lisp_etr_test_mode and lisp_seen_eid_done): return
+
+    #
     # Handle case where "lisp database-mapping" comes before "lisp map-server"
     # in configuration file. We have to start periodic timer.
     #
     if (len(lisp.lisp_db_list) > 0): 
         if (lisp_trigger_register_timer != None): return
-
         lisp_trigger_register_timer = threading.Timer(5, 
             lisp_process_register_timer, [lisp_send_sockets])
         lisp_trigger_register_timer.start()
@@ -525,8 +537,13 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         if (db_list_len == 0): return
     #endif
 
-    lisp.lprint("Build Map-Register for {} database-mapping entries". \
-        format(db_list_len))
+    if (lisp_etr_test_mode):
+        lisp.fprint("Build Map-Register for {} database-mapping entries". \
+            format(db_list_len))
+    else:
+        lisp.fprint("Build Map-Register for {} database-mapping entries". \
+            format(db_list_len))
+    #endif
 
     #
     # Set boolean if "decentralized-pull-xtr-[modulus,dns-suffix]" configured.
@@ -575,6 +592,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
     #
     # Traverse the databas-mapping associative array.
     #
+    mtu = 65000 if (lisp_etr_test_mode) else 1100
     for db in lisp.lisp_db_list:
         if (decent):
             ms_dns_name = lisp.lisp_get_decent_dns_name(db.eid)
@@ -629,7 +647,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         #
         msl[0] += eid_records
 
-        if (msl[1] == 20 or len(msl[0]) > 1100):
+        if (msl[1] == 20 or len(msl[0]) > mtu):
             msl = ["", 0]
             ms_list[ms_dns_name].append(msl)
         #endif
@@ -638,6 +656,8 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
     #
     # Send Map-Register to each configured map-server.
     #
+    sleep_time = .500 if (lisp_etr_test_mode) else .001
+    count = 0
     for ms in lisp.lisp_map_servers_list.values():
         if (ms_only != None and ms != ms_only): continue
 
@@ -678,8 +698,18 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
 
             ms.map_registers_sent += 1
             lisp.lisp_send_map_register(lisp_sockets, packet, map_register, ms)
-            time.sleep(.001)
+
+            count += 1
+            if (count % 100 == 0 and lisp_etr_test_mode):
+                lisp.fprint("Sent {} Map-Registers".format(count))
+            #endif
+
+            time.sleep(sleep_time)
         #endfor
+
+        if (lisp_etr_test_mode):
+            lisp.fprint("Sent total {} Map-Registers".format(count))
+        #endif
 
         #
         # Do DNS lookup for Map-Server if "dns-name" configured.
