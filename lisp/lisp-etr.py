@@ -83,7 +83,7 @@ def lisp_etr_database_mapping_command(kv_pair):
     # sent a second time. Only in test-mode we don't want to dup process for
     # large numbers of entries.
     #
-    if (lisp_etr_test_mode and lisp_seen_eid_done): return
+    if (lisp_seen_eid_done): return
 
     lispconfig.lisp_database_mapping_command(kv_pair, lisp_ephem_port,
         (lisp_etr_test_mode == False))
@@ -701,9 +701,10 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
 
             count += 1
             if (count % 100 == 0 and lisp_etr_test_mode):
-                lisp.fprint("Sent {} Map-Registers".format(count))
+                sleep_time += .1
+                lisp.fprint("Sent {} Map-Registers, ipd {}".format(count,
+                    sleep_time))
             #endif
-
             time.sleep(sleep_time)
         #endfor
 
