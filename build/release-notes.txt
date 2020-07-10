@@ -1,4 +1,45 @@
 
+                lispers.net Beta Release Version 0.530
+                --------------------------------------
+
+o Release date: Thu Jul  9 21:57:18 PDT 2020
+
+o Create new function lisp.fprint() that forces output when debug logging is
+  disabled. This allows to selectively turn on existing lisp.lprint() calls
+  when testing.
+
+o Create lisp_etr_test_mode boolean to allow the entire set of database-mapping
+  commands to be read from the lisp.config file before sending any Map-
+  Register messages. This is used for an ETR to do scaling tests by registering
+  large numbers of EID-prefixes. The 5 second delay timer is set to send a
+  Map-Register when an database-mapping command has "eid-prefix = 'eid-done'"
+  as the last "lisp database-mapping" command in the lisp.config file.
+
+o If the lisp_trigger_register_timer caused a call to lisp_process_register_
+  timer(), then make sure it gets canceled. This way we don't have two timers
+  being used to call lisp_process_register_timer(). This is causing excessive
+  CPU use on an ETR with lots of database-mapping commands.
+
+o Create new function lisp.lisp_print_caller() to print out caller stack when
+  debugging.
+
+o When the lisp-etr process is in test-mode, do not try to lookup EID-prefix
+  to replace it. That causes an n^2 traversal. We assume in test mode that we
+  process each database-mapping command once and stop when the EID 'eid-done'.
+  Adding this test-mode to the lisp-etr process into an Ixia box. ;-)
+
+o When the lisp-etr process is in test-mode, send 65000-byte packets and yes
+  IP fragmentation will occur. But we get more packets per register loop in a
+  packet. We will increase 100ms inter-packet delay between packets per 100
+  packets so we don't have output queue overflow and to give processing time
+  to the receiver (the map-server). Now we can get 20 CT entries in a
+  Map-Register from a previous of 6.
+
+o Put LISP_ETR_TEST_MODE env variable so a user can run test-mode and batch
+  large numbers of entries in Map-Registers to Map-Servers.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.529
                 --------------------------------------
 
