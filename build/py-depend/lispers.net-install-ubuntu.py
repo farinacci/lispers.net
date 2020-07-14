@@ -31,6 +31,12 @@
 import os
 
 #
+# Do an update
+#
+print "Running 'sudo apt-get update' ..." 
+os.system("sudo apt-get update")
+
+#
 # We are going to install libssl. We always do.
 #
 print "Running 'sudo apt-get install libssl-dev' ..." 
@@ -65,8 +71,7 @@ os.system("sudo python get-pip.py")
 # Do the heavy lifting.
 #
 print "Running 'sudo pip install' ..." 
-os.system("sudo pip install -r pip-requirements.txt " + \
-    "--allow-external pcappy --allow-unverified pcappy")
+os.system("sudo pip install -r pip-requirements.txt")
 
 #
 # Now test to see that everything lispers.net needs is installed.
