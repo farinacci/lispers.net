@@ -1288,7 +1288,6 @@ def lisp_ms_scale_inject():
         site_eid.eid = copy.deepcopy(eid)
         site_eid.eid.address = hmac.new("ct", str(phone),
             hashlib.sha256).hexdigest()
-        site_eid.group = copy.deepcopy(group)
 
         site_eid.dynamic = True
         site_eid.parent_for_more_specifics = parent_site
