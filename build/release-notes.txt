@@ -1,4 +1,18 @@
 
+                lispers.net Beta Release Version 0.531
+                --------------------------------------
+
+o Release date: Wed Jul 15 12:58:31 PDT 2020
+
+o Update lispers.net-install-ubuntu to do an initial "apt-get update" as well
+  as remove the "--allow-external pcappy --allow-unverified pcappy".
+
+o Put a scale test mode into the Map-Server. When you use the environment
+  variable "setenv LISP_MS_INJECT <count>", <count> distingusihed-name EID
+  entries are created with two JSON based RLOC-records in instance-ID 1300.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.530
                 --------------------------------------
 
