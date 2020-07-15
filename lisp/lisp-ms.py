@@ -26,6 +26,10 @@ import lisp
 import lispconfig
 import threading
 import time
+import os
+import hmac
+import hashlib
+import copy
 
 #------------------------------------------------------------------------------
 
@@ -40,6 +44,13 @@ lisp_sites_by_name = {}
 lisp_sites_by_name_sorted = []
 lisp_site_timer = None
 lisp_pubsub_timer = None
+
+#
+# Inject mode will take value from env variable LISP_MS_INJECT and create
+# n site-eid entries in instance-ID 1300.
+# 
+count = os.getenv("LISP_MS_INJECT")
+lisp_inject_mode_count = 0 if count == None else int(count)
 
 #------------------------------------------------------------------------------
 
@@ -1223,12 +1234,121 @@ def lisp_timeout_sites():
 #enddef
 
 #
+# lisp_ms_scale_inject
+#
+# Use env variable LISP_MS_INJECT to add a ton of entries. Use IID 1300.
+#
+def lisp_ms_scale_inject():
+    global lisp_inject_mode_count
+
+    #
+    # Only do it once or never.
+    #
+    if (lisp_inject_mode_count == 0): return
+    
+    count = lisp_inject_mode_count
+    i = lisp.bold("Injecting", False)
+    lisp.fprint("{} {} entries into mapping system for scale testing". \
+        format(i, count))
+
+    #
+    # Create EID-record info.
+    #
+    iid = 1300
+    phone = 9990000000
+    eid = lisp.lisp_address(lisp.LISP_AFI_NAME, "ct", 0, iid)
+    group = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
+
+    parent_site = lisp.lisp_site_eid_lookup(eid, group, False)
+    if (parent_site == None):
+        lisp.fprint("No site found for instance-ID {}".format(iid))
+        return
+    #endif
+    if (parent_site.accept_more_specifics == False):
+        lisp.fprint("Site must be configured with accept-more-specifics")
+        return
+    #endif
+    
+    #
+    # Create RLOC-record info.
+    #
+    rloc = lisp.lisp_rloc()
+
+    gps_record = ' "phone" : "{}", "text-interval" : "10", ' + \
+        '"gps" : "(37.623322,-122.384974579)" '
+
+    hs_record = ' "phone" : "{}", "health-state" : "not-tested" '
+
+    #
+    # Now loop.
+    #
+    ts = lisp.lisp_get_timestamp()
+    for i in range(1, count + 1):
+        site_eid = lisp.lisp_site_eid(parent_site.site)
+        site_eid.eid = copy.deepcopy(eid)
+        site_eid.eid.address = hmac.new("ct", str(phone),
+            hashlib.sha256).hexdigest()
+        site_eid.group = copy.deepcopy(group)
+
+        site_eid.dynamic = True
+        site_eid.parent_for_more_specifics = parent_site
+        site_eid.add_cache()
+        site_eid.inherit_from_ams_parent()
+        parent_site.more_specific_registrations.append(site_eid)
+
+        #
+        # Add GPS and HS RLOC records for EID entry.
+        #
+        gr = copy.deepcopy(rloc)
+        json_string = "{" + gps_record.format(phone) + "}"
+        gr.json = lisp.lisp_json(site_eid.eid.address, json_string)
+        hr = copy.deepcopy(rloc)
+        json_string = "{" + hs_record.format(phone) + "}"
+        hr.json = lisp.lisp_json(site_eid.eid.address, json_string)
+        site_eid.registered_rlocs = [gr, hr]
+
+        #
+        # Print every 100 added.
+        #
+        if (i % 100 == 0):
+            lisp.fprint("Added {} site-eid entries".format(i))
+        #endif
+
+        #
+        # Pause after 10000.
+        #
+        if (i % 10000 == 0 and i != count):
+            lisp.fprint("Sleeping for 100ms ...")
+            time.sleep(.1)
+        #endif
+        phone += 1
+    #endfor
+
+    #
+    # Compute and print elapsed time.
+    #
+    ts = time.time() - ts
+    if (ts < 60):
+        lisp.fprint("Finished in {} secs".format(round(ts, 3)))
+    else:
+        ts = ts / 60
+        lisp.fprint("Finished in {} mins".format(round(ts, 1)))
+    #endif
+    lisp_inject_mode_count = 0
+#enddef
+
+#
 # lisp_timeout_pubsub
 #
 # Time out entries in lisp_pubsub_cache.
 #
 def lisp_timeout_pubsub():
     lisp.lisp_set_exception()
+
+    #
+    # Return quickly if inject mode is not enabled.
+    #
+    lisp_ms_scale_inject()
 
     now = lisp.lisp_get_timestamp()
 
@@ -1312,8 +1432,9 @@ def lisp_ms_startup():
     #
     # Start pubsub-cache timeout timer.
     #
-    lisp_pubsub_timer = threading.Timer( \
-        lisp.LISP_PUBSUB_TIMEOUT_CHECK_INTERVAL, lisp_timeout_pubsub, [])
+    timer = lisp.LISP_PUBSUB_TIMEOUT_CHECK_INTERVAL
+    if (lisp_inject_mode_count != 0): timer = 5
+    lisp_pubsub_timer = threading.Timer(timer, lisp_timeout_pubsub, [])
     lisp_pubsub_timer.start()
     return(True)
 #enddef

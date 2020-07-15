@@ -97,6 +97,13 @@ setenv LISP_GEO_ZOOM_LEVEL 10
 #setenv LISP_ETR_TEST_MODE 1
 
 #
+# This is used for scale testing on a Map-Server. It will inject <count>
+# contact-tracing entries into instance-ID 1300. This help size memory
+# in cloud provider VMs.
+#
+#setenv LISP_MS_INJECT <count>
+
+#
 # Bail if "python" does not give us version 2.7.x.
 #
 python -V |& egrep 2.7 > /dev/null
