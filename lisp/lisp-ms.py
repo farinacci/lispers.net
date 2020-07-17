@@ -30,6 +30,7 @@ import os
 import hmac
 import hashlib
 import copy
+import sys
 
 #------------------------------------------------------------------------------
 
@@ -1283,6 +1284,7 @@ def lisp_ms_scale_inject():
     # Now loop.
     #
     ts = lisp.lisp_get_timestamp()
+    mem = 0
     for i in range(1, count + 1):
         site_eid = lisp.lisp_site_eid(parent_site.site)
         site_eid.eid = copy.deepcopy(eid)
@@ -1305,6 +1307,7 @@ def lisp_ms_scale_inject():
         json_string = "{" + hs_record.format(phone) + "}"
         hr.json = lisp.lisp_json(site_eid.eid.address, json_string)
         site_eid.registered_rlocs = [gr, hr]
+        mem += sys.getsizeof(site_eid)
 
         #
         # Print every 100 added.
@@ -1328,10 +1331,10 @@ def lisp_ms_scale_inject():
     #
     ts = time.time() - ts
     if (ts < 60):
-        lisp.fprint("Finished in {} secs".format(round(ts, 3)))
+        lisp.fprint("Finished in {} secs, memory {}".format(round(ts, 3), mem))
     else:
         ts = ts / 60
-        lisp.fprint("Finished in {} mins".format(round(ts, 1)))
+        lisp.fprint("Finished in {} mins, memory {}".format(round(ts, 1), mem))
     #endif
     lisp_inject_mode_count = 0
 #enddef

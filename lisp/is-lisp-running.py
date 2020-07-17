@@ -87,14 +87,23 @@ if (os.path.exists("/etc/alpine-release")):
 pid = "PID".ljust(8)
 cpu = "%CPU".ljust(8)
 mem = "%MEM".ljust(8)
+mb = "MEM".ljust(8)
 process = "Process"
-print "{}{}{}{}".format(pid, cpu, mem, process)
+print "{}{}{}{}{}".format(pid, cpu, mem, mb, process)
 
 for line in lines:
     items = line.split()
     pid = items[1].ljust(8)
     cpu = items[2].ljust(8)
     mem = items[3].ljust(8)
+
+    mb = int(items[4]) / 1000
+    gm = "M"
+    if (mb >= 1000):
+        mb = mb / 1000
+        gm = "G"
+    #endif
+    mb = "{}{}".format(mb, gm).ljust(8)
 
     if (line.find("lisp-core.py") != -1):
         process = items[-2] + " " + items[-1]
@@ -106,6 +115,6 @@ for line in lines:
         process = items[-1]
     #endif
 
-    print "{}{}{}{}".format(pid, cpu, mem, process)
+    print "{}{}{}{}{}".format(pid, cpu, mem, mb, process)
 #endfor
 exit(0)
