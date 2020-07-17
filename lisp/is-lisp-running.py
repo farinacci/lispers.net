@@ -100,7 +100,7 @@ for line in lines:
     mb = int(items[4]) / 1000
     gm = "M"
     if (mb >= 1000):
-        mb = mb / 1000
+        mb = round(float(mb) / 1000, 1)
         gm = "G"
     #endif
     mb = "{}{}".format(mb, gm).ljust(8)
