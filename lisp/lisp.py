@@ -11064,15 +11064,12 @@ class lisp_cache():
         ml, key = self.build_key(prefix)
         if (self.cache.has_key(ml) == False):
             self.cache[ml] = lisp_cache_entries()
-            self.cache[ml].entries = {}
-            self.cache[ml].entries_sorted = []
-            self.cache_sorted = sorted(self.cache)
+            self.cache_sorted = self.sort_in_entry(self.cache_sorted, ml)
         #endif
         if (self.cache[ml].entries.has_key(key) == False): 
             self.cache_count += 1
         #endif
         self.cache[ml].entries[key] = entry
-        self.cache[ml].entries_sorted = sorted(self.cache[ml].entries)
     #enddef
         
     def lookup_cache(self, prefix, exact):
@@ -11086,13 +11083,8 @@ class lisp_cache():
         found = None
         for ml in self.cache_sorted:
             if (ml_key < ml): return(found)
-            for entry_key in self.cache[ml].entries_sorted:
-                entries = self.cache[ml].entries
-                if (entry_key in entries):
-                    entry = entries[entry_key]
-                    if (entry == None): continue
-                    if (prefix.is_more_specific(entry.eid)): found = entry
-                #endif
+            for entry in self.cache[ml].entries.values():
+                if (prefix.is_more_specific(entry.eid)): found = entry
             #endfor
         #endfor
         return(found)
@@ -11103,19 +11095,39 @@ class lisp_cache():
         if (self.cache.has_key(ml) == False): return
         if (self.cache[ml].entries.has_key(key) == False): return
         self.cache[ml].entries.pop(key)
-        self.cache[ml].entries_sorted.remove(key)
         self.cache_count -= 1
     #enddef
 
     def walk_cache(self, function, parms):
         for ml in self.cache_sorted:
-            for key in self.cache[ml].entries_sorted:
-                entry = self.cache[ml].entries[key]
+            for entry in self.cache[ml].entries.values():
                 status, parms = function(entry, parms)
                 if (status == False): return(parms)
             #endfor
         #endfor
         return(parms)
+    #enddef
+
+    def sort_in_entry(self, table, value):
+        if (table == []): return([value])
+
+        t = table
+        while (True):
+            if (len(t) == 1):
+                if (value == t[0]): return(table)
+                index = table.index(t[0])
+                if (value < t[0]):
+                    return(table[0:index] + [value] + table[index::])
+                #endif
+                if (value > t[0]):
+                    return(table[0:index+1] + [value] + table[index+1::])
+                #endif
+            #endif
+            index = len(t) / 2
+            t = t[0:index] if (value < t[index]) else t[index::]
+        #endwhile
+
+        return([])
     #enddef
 
     def print_cache(self):
@@ -11125,7 +11137,7 @@ class lisp_cache():
             return
         #endif
         for ml in self.cache_sorted:
-            for key in self.cache[ml].entries_sorted:
+            for key in self.cache[ml].entries:
                 entry = self.cache[ml].entries[key]
                 lprint("  Mask-length: {}, key: {}, entry: {}".format(ml, key, 
                     entry))
