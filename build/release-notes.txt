@@ -1,4 +1,28 @@
 
+                lispers.net Beta Release Version 0.532
+                --------------------------------------
+
+o Release date: Fri Jul 17 16:01:22 PDT 2020
+
+o Do not have lisp_cache.add_cache() sort the entire cache when a new entry
+  is created. This is causing tons of CPU use and slowness of adding millions
+  of entries. The sorting of the dictionary array keys causes ordered walks
+  and possibly binary search lookups when EIDs hash to the same mask-length.
+  Will save a bunch of memory too. We can now store 1M site entries in a
+  map-server in 17G (also tested 1.25M entries in 22G). Python is not a snake
+  but a pig. ;-)
+
+o Add binary search insertion for lisp_cache(). This is less needed now but
+  will sort multiple mask-lengths for a map-cache or site-cache. We can use
+  this new code for binary search lookups when the cache is all of one
+  mask-length and hence in a linear linked list.
+
+o Add memory calculation to lisp_ms_scale_inject().
+
+o Have ./pslisp print absolute memory with memory percentage.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.531
                 --------------------------------------
 
