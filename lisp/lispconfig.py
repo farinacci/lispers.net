@@ -3742,6 +3742,7 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
         #endif
         if (kw == "register-ttl"):
             for i in range(len(prefix_set)):
+                if (value[i] == ""): continue
                 db = prefix_set[i]
                 db.register_ttl = int(value[i])
             #endfor
