@@ -174,7 +174,7 @@ def lisp_get_api_system():
 # lisp_get_api_data
 #
 # Send IPC message to process that owns the dynamic data strucutre we 
-# are retrieving via the API. Variable data for the 'map-cache' and 
+# are retrieving via the API. Variable data for the 'map-cache' and
 # 'site-cache' API contains:
 #
 # { "eid-prefix" : <eid>, "group-prefix" : <group>, "instance-id" : <iid> }
@@ -183,9 +183,11 @@ def lisp_get_api_system():
 #
 # { "address" : <address>" } or { "dns-name" : <dns-name> }
 #
+# For 'site-cache-summary', there is no data required.
+#
 def lisp_get_api_data(data_structure, data):
     valid_apis = ["site-cache", "map-cache", "system", "map-resolver",
-        "map-server", "database-mapping"]
+        "map-server", "database-mapping", "site-cache-summary"]
 
     if (data_structure not in valid_apis): return(json.dumps([]))
 
@@ -222,7 +224,7 @@ def lisp_get_api_data(data_structure, data):
             return(json.dumps([]))
         #endif
     #endif
-    if (data_structure == "site-cache"):
+    if (data_structure in ["site-cache", "site-cache-summary"]):
         if (lisp.lisp_is_running("lisp-ms")): 
             lisp.lisp_ipc_lock.acquire()
             lisp.lisp_ipc(ipc, lisp_ipc_socket, "lisp-ms")

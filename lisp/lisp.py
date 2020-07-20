@@ -16379,6 +16379,9 @@ def lisp_process_api(process, lisp_socket, data_structure):
             data = lisp_process_api_site_cache_entry(json.loads(parms))
         #endif
     #endif
+    if (api_name == "site-cache-summary"):
+        data = lisp_process_api_site_cache_summary(lisp_sites_by_eid)
+    #endif
     if (api_name ==  "map-server"):
         parms = {} if (parms == "") else json.loads(parms)
         data = lisp_process_api_ms_or_mr(True, parms)
@@ -16546,14 +16549,54 @@ def lisp_process_api_map_cache_entry(parms):
 #enddef
 
 #
+# lisp_process_api_site_cache_summary
+#
+# Returns:
+#
+# [ { "site" : '<site-name>", "registrations" : [  {"eid-prefix" : "<eid>",
+#     "count" : "<count>", "registered-count" : "<registered>" }, ... ]
+# } ]
+#
+def lisp_process_api_site_cache_summary(site_cache):
+    site = { "site" : "", "registrations" : [] }
+    entry = { "eid-prefix" : "",  "count" : 0, "registered-count" : 0 }
+
+    sites = {}
+    for ml in site_cache.cache_sorted:
+        for se in site_cache.cache[ml].entries.values():
+            if (se.accept_more_specifics == False): continue
+            if (sites.has_key(se.site.site_name) == False):
+                sites[se.site.site_name] = []
+            #endif
+            e = copy.deepcopy(entry)
+            e["eid-prefix"] = se.eid.print_prefix()
+            e["count"] = len(se.more_specific_registrations)
+            for mse in se.more_specific_registrations:
+                if (mse.registered): e["registered-count"] += 1
+            #endfor
+            sites[se.site.site_name].append(e)
+        #endfor
+    #endfor
+
+    data = []
+    for site_name in sites:
+        s = copy.deepcopy(site)
+        s["site"] = site_name
+        s["registrations"] = sites[site_name]
+        data.append(s)
+    #endfor
+    return(data)
+#enddef    
+    
+#
 # lisp_process_api_site_cache
 #
-# Return map-cache to API caller.
+# Return site-cache to API caller.
 #
 def lisp_process_api_site_cache(se, data):
     
     #
-    # There is only destination state in this map-cache entry.
+    # There is only destination state in this site-cache entry.
     #
     if (se.group.is_null()): return(lisp_gather_site_cache_data(se, data))
 
