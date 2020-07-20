@@ -1,4 +1,23 @@
 
+                lispers.net Beta Release Version 0.533
+                --------------------------------------
+
+o Release date: Mon Jul 20 13:48:59 PDT 2020
+
+o When processing the command "register-ttl" check for "" before trying to
+  convert to an integer type.
+
+o Create new API "https://<host>:8080/lisp/api/data/site-cache-summary" that
+  will summarize map-server registrations. So for large tables, we don't have
+  to do bulk transfers. The format returned is:
+
+  [ { "site" : '<site-name>", "registrations" : [
+    { "eid-prefix" : "<eid>", "count" : <cnt>, "registered-count" : <reged> },
+      ...  ]
+  } ]
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.532
                 --------------------------------------
 
