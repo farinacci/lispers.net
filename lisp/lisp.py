@@ -1186,8 +1186,9 @@ def lisp_gethostbyname(string):
     ipv6 = string.split(":")
     mac = string.split("-")
 
-    if (len(ipv4) > 1):
-        if (ipv4[0].isdigit()): return(string)
+    if (len(ipv4) == 4):
+        if (ipv4[0].isdigit() and ipv4[1].isdigit() and ipv4[2].isdigit() and
+            ipv4[3].isdigit()): return(string)
     #endif
     if (len(ipv6) > 1):
         try:
