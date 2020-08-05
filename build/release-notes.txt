@@ -1,4 +1,15 @@
 
+                lispers.net Beta Release Version 0.534
+                --------------------------------------
+
+o Release date: Tue Aug  4 19:54:01 PDT 2020
+
+o Have lisp_gethostbyname() work when a DNS name could look like dotted
+  decimal. Meaning 3 dots in the name. Check to see after a split() that
+  all array elements are integers.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.533
                 --------------------------------------
 
