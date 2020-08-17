@@ -4327,7 +4327,7 @@ class lisp_map_request():
     def encode_json(self, json_string):
         lcaf_type = LISP_LCAF_JSON_TYPE
         lcaf_afi = socket.htons(LISP_AFI_LCAF)
-        lcaf_len = socket.htons(len(json_string) + 2)
+        lcaf_len = socket.htons(len(json_string) + 4)
         json_len = socket.htons(len(json_string))
         packet = struct.pack("HBBBBHH", lcaf_afi, 0, 0, lcaf_type, 0, lcaf_len,
             json_len)
