@@ -1,0 +1,150 @@
+#!/bin/tcsh
+# -----------------------------------------------------------------------------
+#             
+# Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.    
+# 
+# -----------------------------------------------------------------------------
+#
+# RL - Restart LISP Wrapper Script
+#
+# This is a wrapper script for ./RESTART-LISP. You want to use it to do
+# EID address assignment on kernel created interfaces as well as setting
+# default and other static route parameters.
+#
+# Most importantly, you can tell this script where your ./RESTART-LISP script
+# is and pass parameters to the script such as the RLOC interface you use.
+#
+# Put a call to this script in /etc/rc.local so on system startup the LISP 
+# subsystem will start automatically. For example, add this line to /etc/rc.
+# local:
+#
+#    /home/<install-directory>/lispers.net/RL || exit 1
+#
+#------------------------------------------------------------------------------
+
+#
+# Remove the following lines (including the exit line) after this file has 
+# been modified and the script actually does something. Copy it from 
+# RL-template to file RL.
+#
+echo "(1) Type 'cp RL-template RL'"
+echo "(2) Customize your RL file"
+echo "(3) Remove the echo and exit lines from the top of your RL file"
+echo "(4) Use ./RL as a wrapper script for RESTART-LISP"
+exit
+
+# -------------------- xTR EID Address Configuration --------------------
+
+#
+# If you want to set an EID on the loopback interface for IPv4 and IPv6
+# respectively substitute the "x" with meaningful values. 2001:5:3::/48
+# is RIPE allocated to lispers.net for IPv6 EID experimentation. Note in
+# docker containers, an IPv6 EID MUST NOT be configured on the lo interface
+# (on Linux).
+#
+#sudo ip addr add x.x.x.x/32 dev lo >& /dev/null
+#sudo ip addr add x::x/128 dev eth0 >& /dev/null
+#sudo ip addr add 2001:5:3::x/128 eth0 lo >& /dev/null
+
+#
+# MacOS syntax for configuring addresses.
+#
+#sudo ifconfig lo0 x.x.x.x/32 alias
+#sudo ifconfig lo0 inet6 2001:5:3::x/128 alias
+
+# -------------------- Must set MTU on EID Interface --------------------
+
+#sudo ifconfig lo mtu 1400
+#sudo ifconfig lo0 mtu 1400
+
+# -------------------- EID Source Address Selection --------------------
+
+#
+# If you want to use an EID for all sourced packets, use the src directive.
+# Then all apps do not have to do explicit source address selection. The
+# EID <eid-from-above> will be used and the lispers.net code will get all
+# packets to encap to destinations LISP sites or non-LISP sites.
+#
+#sudo ip route add default via <default-router> src <ipv4-eid-from-above>
+#sudo ip route add 0::/0 via fe80::1 dev eth0 src <ipv6-eid-from-above>
+
+#
+# Blackhole routes are useful so packets are not routed by kernel and that
+# we can assign the source-EID with the route.
+#
+#ip route add blackhole <prefix> src <local-eid>
+
+# -------------------- IPv6 Default Route Configuration --------------------
+
+#
+# Add default route and next-hop neighbor for IPv6 since it ususally
+# doesn't get configured by default.
+#
+#sudo ip route add 0::/0 via fe80::1 dev eth0
+#sudo ip nei add fe80::1 lladdr 0:0:0:0:0:1 dev eth0
+#sudo ip nei change fe80::1 lladdr 0:0:0:0:0:1 dev eth0
+
+#
+# MacOS syntax for configuring IPv6 default routes.
+#
+#sudo ndp -s fe80::1%en0 0:0:0:0:0:1
+#sudo route add -inet6 0::/0 fe80::1%en0
+
+# -------------------- RTR Specific Configuration --------------------
+
+#
+# Note about RTRs that are deployed in cloud providers, which means they
+# are behind NATs. You need to configure the global address on the 
+# loopback interface since it needs to know to get the ETR's RLOC address 
+# from the mapping versus its own address it could mistakenly select as an 
+# ETR RLOC because the RTR is comparing its local address to its global 
+# address in the mapping, when it isn't the same. So use the commands below
+# to start the RTR.
+#
+# There is also situations where an RTR may supply a private address in an
+# RLOC-probe reply. If it is behind a NAT, it needs to supply a global RLOC
+# address because if lisp-crypto is being used you want the decap-keys on an
+# xTR to reflect the same address that is being used for encapsulation from
+# the RTR. So the global address needs to be assignerd to the loopback
+# interface and the command line below needs to be "./RESTART-LISP 8080 lo".
+#
+#sudo ip addr add <rtr-translated-rloc>/32 dev lo >& /dev/null
+set RTR_ADDRESS = "<rtr-translated-rloc>"
+#sudo ip addr add $RTR_ADDRESS/32 dev lo >& /dev/null
+
+#
+# In RTRs doing LISP-NAT, to avoid jumbo frames with DF-bit set (which means
+# the RTR would drop packets), we need to disable TCP-segment-offload and
+# scatter-gather. Also, lower MSS so there is room for LISP headers for TCP
+# packets. In GCP device is ens4 in AWS device is eth0.
+#
+set DEVICE = "eth0"
+#sudo ethtool -K $DEVICE tso off
+#sudo ethtool -K $DEVICE sg off
+sudo iptables -t mangle -C POSTROUTING -o $DEVICE -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
+if ($status == "1") then
+#    sudo iptables -t mangle -A POSTROUTING -o $DEVICE -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
+endif
+
+# -------------------- LISP Subsystem Startup --------------------
+
+#
+# Start the lispers.net LISP subsystem. Use an absolute path name.
+#
+#/usr/local/bin/lispers.net/RESTART-LISP 8080 eth0
+#/root/lispers.net/RESTART-LISP 8080 eth0
+#/home/dino/lispers.net/RESTART-LISP 8080 eth0
+
+#------------------------------------------------------------------------------

@@ -1,4 +1,16 @@
 
+                lispers.net Beta Release Version 0.535
+                --------------------------------------
+
+o Release date: Mon Aug 17 16:12:36 PDT 2020
+
+o When encoding a JSON LCAF make sure the LCAF length is 4 more bytes than
+  the JSON length. The JSON length is the length in bytes of the JSON string.
+  And the LCAF length includes this 2-byte length as well as 2 bytes for the
+  trailing AFI=0 2 bytes. So the lengths have a difference of 4.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.534
                 --------------------------------------
 
