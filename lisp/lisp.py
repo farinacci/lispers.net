@@ -3897,6 +3897,7 @@ class lisp_map_register():
         self.nonce, self.key_id, self.alg_id, self.auth_len = \
             struct.unpack(packet_format, packet[:format_size])
 
+        self.nonce = byte_swap_64(self.nonce)
         self.auth_len = socket.ntohs(self.auth_len)
         self.proxy_reply_requested = True if (first_long & 0x08000000) \
             else False
