@@ -1,4 +1,14 @@
 
+                lispers.net Beta Release Version 0.536
+                --------------------------------------
+
+o Release date: Tue Aug 25 13:34:13 PDT 2020
+
+o When nonce is incrementing by 1 in Map-Register, the Map-Server doesn't
+  see it. Need to byte-swap the 64-bit nonce value.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.535
                 --------------------------------------
 
