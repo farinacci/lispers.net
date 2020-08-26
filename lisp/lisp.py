@@ -10004,7 +10004,7 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
                 #endif
             #endif
 
-            key = source.address + map_register.xtr_id
+            key = map_register.xtr_id
             if (site_eid.individual_registrations.has_key(key)):
                 site_eid = site_eid.individual_registrations[key]
             else:
