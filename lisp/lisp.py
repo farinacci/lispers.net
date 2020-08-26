@@ -9778,7 +9778,10 @@ def lisp_decrypt_map_register(packet):
     d = bold("Decrypt", False)
     lprint("{} Map-Register with key-id {}".format(d, ekey_id))
 
-    plaintext = chacha.ChaCha(ekey, iv).decrypt(packet[4::])
+    #
+    # Use 20 rounds so we can interoperate with ct-lisp mobile platforms.
+    #
+    plaintext = chacha.ChaCha(ekey, iv, 20).decrypt(packet[4::])
     return(packet[0:4] + plaintext)
 #enddef
 
@@ -10825,12 +10828,13 @@ def lisp_send_map_register(lisp_sockets, packet, map_register, ms):
 
     #
     # Should we encrypt the Map-Register? Use 16-byte key which is
-    # 32 string characters.
+    # 32 string characters. Use 20 rounds so the decrypter can interoperate
+    # with ct-lisp mobile platforms.
     #
     if (ms.ekey != None):
         ekey = ms.ekey.zfill(32)
         iv = "0" * 8
-        ciphertext = chacha.ChaCha(ekey, iv).encrypt(packet[4::])
+        ciphertext = chacha.ChaCha(ekey, iv, 20).encrypt(packet[4::])
         packet = packet[0:4] + ciphertext
         e = bold("Encrypt", False)
         lprint("{} Map-Register with key-id {}".format(e, ms.ekey_id))
