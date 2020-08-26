@@ -1,4 +1,14 @@
 
+                lispers.net Beta Release Version 0.537
+                --------------------------------------
+
+o Release date: Wed Aug 26 11:13:45 PDT 2020
+
+o Have Map-Register encryption use 20 rounds of the chacha cipher. Will help
+  interoperating with other platform implementations.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.536
                 --------------------------------------
 
