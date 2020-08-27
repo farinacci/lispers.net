@@ -1,4 +1,18 @@
 
+                lispers.net Beta Release Version 0.538
+                --------------------------------------
+
+o Release date: Thu Aug 27 15:01:25 PDT 2020
+
+o Do not create multiple individual registration entries when merge-semantic
+  registration is used in the map-server. When the xTR-ID is the same,
+  replace the individual registration. The IP address of the xTR can change
+  and we don't want two different registrations from the same xTR that may
+  take long to time out. Use xTR-ID only as key to lookup (it was previously
+  using a concatenation of IP address and xTR-ID).
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.537
                 --------------------------------------
 
