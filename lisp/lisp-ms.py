@@ -489,7 +489,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     if (site_eid.last_registerer.afi == lisp.LISP_AFI_NONE): 
         reger = "none"
     else:
-        reger = site_eid.last_registerer.print_address()
+        reger = site_eid.last_registerer.print_address_no_iid()
     #endif
     reger = lisp.lisp_print_cour(reger)
     shutdown = ", " + lisp.lisp_print_cour("site is in admin-shutdown") if \
@@ -645,7 +645,8 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
         auth_type = lisp.lisp_print_cour(auth_type)
         flags = site_eid.print_flags(False)
         flags = lisp.lisp_print_cour(flags)
-        a = lisp.lisp_print_cour(site_eid.last_registerer.print_address())
+        a = lisp.lisp_print_cour( \
+            site_eid.last_registerer.print_address_no_iid())
         fr = lisp.lisp_print_elapsed(site_eid.first_registered)
         fr = lisp.lisp_print_cour(fr)
         lr = lisp.lisp_print_elapsed(site_eid.last_registered)
@@ -901,7 +902,7 @@ def lisp_display_site_eid_entry(site_eid, site, first, output):
     if (site_eid.registered): flags = site_eid.print_flags(True)
     registerer = "--" 
     if (site_eid.last_registerer.afi != lisp.LISP_AFI_NONE): 
-        registerer = site_eid.last_registerer.print_address()
+        registerer = site_eid.last_registerer.print_address_no_iid()
     #endif
     registered = lisp.green("yes", True) if site_eid.registered else \
         lisp.red("no", True)
