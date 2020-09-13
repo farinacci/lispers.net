@@ -1,4 +1,15 @@
 
+                lispers.net Beta Release Version 0.539
+                --------------------------------------
+
+o Release date: Sun Sep 13 16:36:43 PDT 2020
+
+o When display RLOC IP addresses in Map-Server displays, do not display
+  instance-ID brackets. Instance-IDs are associated with EIDs and not RLOCs
+  and we waste horizontal screen real estate.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.538
                 --------------------------------------
 
