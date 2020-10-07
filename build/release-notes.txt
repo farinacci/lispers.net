@@ -1,4 +1,14 @@
 
+                lispers.net Beta Release Version 0.540
+                --------------------------------------
+
+o Release date:
+
+o When a JSON RLOC-record is being encrypted and one of the values is not
+  a string, convert it from integer to string.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.539
                 --------------------------------------
 

@@ -12746,6 +12746,7 @@ class lisp_json():
         jd = json.loads(self.json_string)
         for key in jd:
             value = jd[key]
+            if (type(value) != str): value = str(value)
             value = chacha.ChaCha(ekey, iv).encrypt(value)
             jd[key] = binascii.hexlify(value)
         #endfor
