@@ -643,6 +643,8 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
             lisp.red("no", True)
         auth_type = "sha1" if (site_eid.auth_sha1_or_sha2) else "sha2"
         auth_type = lisp.lisp_print_cour(auth_type)
+        ttl = str(site_eid.register_ttl / 60) + " mins"
+        ttl = lisp.lisp_print_cour(ttl)
         flags = site_eid.print_flags(False)
         flags = lisp.lisp_print_cour(flags)
         a = lisp.lisp_print_cour( \
@@ -660,9 +662,9 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
 
         output += '''
             {}Registerer: {}, xTR-ID: 0x{}, site-id: {}, registered: {}<br>
-            {}First registered: {}, last registered: {}, auth-type: {}, 
-            registration flags: {}<br>
-        '''.format(indent4, a, xi, si, yesno, indent4, fr, lr, auth_type, 
+            {}First registered: {}, last registered: {}, registration TTL: {},
+            auth-type: {}, registration flags: {}<br>
+        '''.format(indent4, a, xi, si, yesno, indent4, fr, lr, ttl, auth_type, 
             flags)
 
         none = "none" if len(site_eid.registered_rlocs) == 0 else ""
