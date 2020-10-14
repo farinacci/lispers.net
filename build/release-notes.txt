@@ -2,10 +2,13 @@
                 lispers.net Beta Release Version 0.540
                 --------------------------------------
 
-o Release date:
+o Release date: Tue Oct 13 21:53:21 PDT 2020
 
 o When a JSON RLOC-record is being encrypted and one of the values is not
   a string, convert it from integer to string.
+
+o Display registration TTL advertised by registerer in the Individual
+  Registration display on the map-server webpage.
 
 -------------------------------------------------------------------------------
 
