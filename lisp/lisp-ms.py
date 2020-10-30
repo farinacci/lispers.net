@@ -31,6 +31,7 @@ import hmac
 import hashlib
 import copy
 import sys
+import datetime
 
 #------------------------------------------------------------------------------
 
@@ -902,9 +903,11 @@ def lisp_display_site_eid_entry(site_eid, site, first, output):
     site_name = site.site_name if first else ""
     flags = "--"
     if (site_eid.registered): flags = site_eid.print_flags(True)
-    registerer = "--" 
+    registerer = "--"
+    ttl = "--"
     if (site_eid.last_registerer.afi != lisp.LISP_AFI_NONE): 
         registerer = site_eid.last_registerer.print_address_no_iid()
+        ttl = str(datetime.timedelta(seconds=site_eid.register_ttl))
     #endif
     registered = lisp.green("yes", True) if site_eid.registered else \
         lisp.red("no", True)
@@ -930,7 +933,7 @@ def lisp_display_site_eid_entry(site_eid, site, first, output):
     #endif
 
     output += lispconfig.lisp_table_row(site_name, eid_str, registered,
-        registerer, lts, fts, flags)
+        registerer, fts, lts, ttl, flags)
     return(output)
 #enddef
 
@@ -985,7 +988,7 @@ def lisp_ms_show_site_command(parameter):
     title = lisp.lisp_span("LISP-MS Site Information:", hover)
     output += lispconfig.lisp_table_header(title, "Site Name", 
         "EID-Prefix or (S,G)", "Registered", "Last Registerer", 
-        "Last Registered", "First Registered", "Registration Flags")
+        "First Registered", "Last Registered", "TTL", "Registration Flags")
 
     for site_name in lisp_sites_by_name_sorted:
         site = lisp_sites_by_name[site_name]
