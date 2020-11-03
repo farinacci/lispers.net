@@ -12675,8 +12675,14 @@ class lisp_rle():
 class lisp_json():
     def __init__(self, name, string, encrypted=False, ms_encrypt=False):
         self.json_name = name
-        self.json_string = string
         self.json_encrypted = False
+        try:
+            json.loads(string)
+        except:
+            lprint("Invalid JSON string: '{}'".format(string))
+            string = '{ "?" : "?" }'
+        #endtry
+        self.json_string = string
 
         #
         # Decide to encrypt or decrypt. The map-server encrypts and stores
