@@ -1,4 +1,18 @@
 
+                lispers.net Beta Release Version 0.541
+                --------------------------------------
+
+o Release date: Mon Nov  2 17:31:01 PST 2020
+
+o Add registration TTL to the main Map-Server display page.
+
+o Swap the "First Registered" and "Last Registered" columns so the TTL can be
+  to the right of the "Last Registered" column in the Map-Server display page.
+
+o Check for invalid formated JSON before storing in site-cache on map-server.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.540
                 --------------------------------------
 
