@@ -1,4 +1,14 @@
 
+                lispers.net Beta Release Version 0.542
+                --------------------------------------
+
+o Release date:
+
+o Change lisp_get_decent_index() from using hashlib.sha256() to hmac.new()
+  passing "" as password.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.541
                 --------------------------------------
 
