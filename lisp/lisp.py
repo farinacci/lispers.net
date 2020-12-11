@@ -19241,7 +19241,7 @@ def lisp_is_decent_dns_suffix(dns_name):
 #
 def lisp_get_decent_index(eid):
     eid_str = eid.print_prefix()
-    hash_value = hashlib.sha256(eid_str).hexdigest()
+    hash_value = hmac.new("", eid_str, hashlib.sha256).hexdigest()
     index = int(hash_value, 16) % lisp_decent_modulus
     return(index)
 #enddef
