@@ -19237,12 +19237,37 @@ def lisp_is_decent_dns_suffix(dns_name):
 #
 # lisp_get_decent_index
 #
-# Hash the EID-prefix and mod the configured LISP-Decent modulus value.
+# Hash the EID-prefix and mod the configured LISP-Decent modulus value. We
+# do a sha256() over a string representation of "[<iid>]<eid>", take the
+# high-order 6 bytes from the hash and do the modulus on that value.
+#
+# The seed/password for the sha256 hash is string "".
 #
 def lisp_get_decent_index(eid):
     eid_str = eid.print_prefix()
     hash_value = hmac.new("", eid_str, hashlib.sha256).hexdigest()
-    index = int(hash_value, 16) % lisp_decent_modulus
+
+    #
+    # Get hash-length to modulate from LISP_DECENT_HASH_WIDTH in bytes.
+    #
+    hash_width = os.getenv("LISP_DECENT_HASH_WIDTH")
+    if (hash_width in ["", None]):
+        hash_width = 12
+    else:
+        hash_width = int(hash_width)
+        if (hash_width > 32):
+            hash_width = 12
+        else:
+            hash_width *= 2
+        #endif
+    #endif
+
+    mod_value = hash_value[0:hash_width]
+    index = int(mod_value, 16) % lisp_decent_modulus
+
+    lprint("LISP-Decent modulus {}, hash-width {}, mod-value {}, index {}". \
+        format(lisp_decent_modulus, hash_width/2 , mod_value, index))
+
     return(index)
 #enddef
 

@@ -104,6 +104,15 @@ setenv LISP_GEO_ZOOM_LEVEL 10
 #setenv LISP_MS_INJECT <count>
 
 #
+# Configure what part of the LISP-Decent EID hash is used to perform the
+# modulus funciton on. It is in unit of bytes. The entire sha256() hash
+# output is 256 bits or 32 bytes. The default to use 6 bytes if the following
+# env variable is not set/defined. When the value is < 32, the high-order
+# bytes of the hash are used.
+#
+#setenv LISP_DECENT_HASH_WIDTH 32
+
+#
 # Bail if "python" does not give us version 2.7.x.
 #
 python -V |& egrep 2.7 > /dev/null
