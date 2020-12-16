@@ -1,11 +1,28 @@
 
+                lispers.net Beta Release Version 0.543
+                --------------------------------------
+
+o Release date: Tue Dec 15 16:25:31 PST 2020
+
+o Change lisp_get_decent_index() to use a modulus value that is the high-order
+  6 bytes of the sha256() hash output (versus the entire 32-byte value). This
+  is to interoperate with the mobile apps that can't convert a 32-byte hash
+  string into an integer.
+
+o In RUN-LISP, parameterize the width used for the LISP-DECENT hash. Env
+  variable LISP_DECENT_HASH_WIDTH is used to indicate how many high-order bytes
+  of a sha256 hash are used to perform the modulus over. The default is 6
+  bytes when the env variable is not defined.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.542
                 --------------------------------------
 
-o Release date:
+o Release date: Fri Dec 11 21:04:00 PST 2020
 
 o Change lisp_get_decent_index() from using hashlib.sha256() to hmac.new()
-  passing "" as password.
+  passing "" as password. 
 
 -------------------------------------------------------------------------------
 
