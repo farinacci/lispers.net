@@ -639,7 +639,28 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     #endif
     output += "<br>Individual registrations: {}<br>".format(none)
 
-    for site_eid in site_eid.individual_registrations.values():
+    #
+    # Sort individual registrations so the registered RLOCs are displayed
+    # first.
+    #
+    ir = []
+    for se in site_eid.individual_registrations.values():
+        if (se.registered):
+            ttl = se.register_ttl / 2
+            if (time.time() - se.last_registered >= ttl): continue
+            ir.append(se)
+        #endif
+    #endfor
+    for se in site_eid.individual_registrations.values():
+        if (se.registered == False):
+            ir.append(se)
+            continue
+        #endif
+        ttl = se.register_ttl / 2
+        if (time.time() - se.last_registered >= ttl): ir.append(se)
+    #endfor
+
+    for site_eid in ir:
         yesno = lisp.green("yes", True) if site_eid.registered else \
             lisp.red("no", True)
         auth_type = "sha1" if (site_eid.auth_sha1_or_sha2) else "sha2"
