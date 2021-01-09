@@ -641,23 +641,22 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
 
     #
     # Sort individual registrations so the registered RLOCs are displayed
-    # first.
+    # first, then ones that are timing out, and then finally not registered.
     #
     ir = []
     for se in site_eid.individual_registrations.values():
-        if (se.registered):
-            ttl = se.register_ttl / 2
-            if (time.time() - se.last_registered >= ttl): continue
-            ir.append(se)
-        #endif
+        if (se.registered == False): continue
+        ttl = se.register_ttl / 2
+        if (time.time() - se.last_registered >= ttl): continue
+        ir.append(se)
     #endfor
     for se in site_eid.individual_registrations.values():
-        if (se.registered == False):
-            ir.append(se)
-            continue
-        #endif
+        if (se.registered == False): continue
         ttl = se.register_ttl / 2
         if (time.time() - se.last_registered >= ttl): ir.append(se)
+    #endfor
+    for se in site_eid.individual_registrations.values():
+        if (se.registered == False): ir.append(se)
     #endfor
 
     for site_eid in ir:
