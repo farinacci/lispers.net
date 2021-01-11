@@ -1,4 +1,16 @@
 
+                lispers.net Beta Release Version 0.544
+                --------------------------------------
+
+o Release date: Mon Jan 11 15:41:41 PST 2021
+
+o When displaying individual registrations, first display the actively
+  registered RLOCs and have the timed-out RLOCs print second. If the actively
+  registered RLOCs have not updated in half the TTL, display then second as
+  well. Then display the timed-out registrations third.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.543
                 --------------------------------------
 
