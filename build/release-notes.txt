@@ -1,4 +1,14 @@
 
+                lispers.net Beta Release Version 0.545
+                --------------------------------------
+
+o Release date: Fri Jan 15 11:15:06 PST 2021
+
+o In lisp_get_decent_index() when the sha256 hash is performed over the EID,
+  use key "lisp-decent" versus a null string key.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.544
                 --------------------------------------
 
