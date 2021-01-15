@@ -11,4 +11,4 @@ curve25519-donna==1.3
 geopy==1.11.0
 python-pytun==0.2
 ecdsa==0.13
-pycryptodome==3.5.1
+pycryptodome==3.6.6
