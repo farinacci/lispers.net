@@ -68,6 +68,60 @@ lisp_seen_eid_done = False
 #------------------------------------------------------------------------------
 
 #
+# lisp_etr_map_server_command
+#
+# Configure a Map-Server and trigger ETR functionality.
+#
+def lisp_etr_map_server_command(kv_pair):
+    global lisp_trigger_register_timer
+    global lisp_etr_info_timer
+
+    ms = lispconfig.lisp_map_server_command(kv_pair)
+
+    #
+    # Trigger a Info-Request if we are doing NAT-traversal if this is the
+    # first Map-Server..
+    #
+    first_ms = (len(lisp.lisp_map_servers_list) == 1)
+    if (first_ms):
+        ms = lisp.lisp_map_servers_list.values()[0]
+        lisp_etr_info_timer = threading.Timer(2, lisp_etr_process_info_timer, 
+            [ms.map_server])
+        lisp_etr_info_timer.start()
+    else:
+
+        #
+        # Trigger Map-Register to newly configured Map-Server.
+        #
+        # Do not trigger Map-Register if NAT-traveral is configured. We may not
+        # have the global RLOC yet from Info-Replies. When the Info-Reply comes
+        # in we do trigger Map-Registers to all map-servers.
+        #
+        if (lisp.lisp_nat_traversal): return
+        if (ms and len(lisp.lisp_db_list) > 0): 
+            lisp_build_map_register(lisp_send_sockets, None, None, ms, False)
+        #endif
+    #endif
+
+    #
+    # Do not start the trigger timer if we are in test-mode. We may already
+    # be sending a huge list of Map-Registers after "eid-done".
+    #
+    if (lisp_etr_test_mode and lisp_seen_eid_done): return
+
+    #
+    # Handle case where "lisp database-mapping" comes before "lisp map-server"
+    # in configuration file. We have to start periodic timer.
+    #
+    if (len(lisp.lisp_db_list) > 0): 
+        if (lisp_trigger_register_timer != None): return
+        lisp_trigger_register_timer = threading.Timer(5, 
+            lisp_process_register_timer, [lisp_send_sockets])
+        lisp_trigger_register_timer.start()
+    #endif
+#enddef
+
+#
 # lisp_etr_database_mapping_command
 # 
 # This function supports adding additional RLOCs to a database-mapping entry
@@ -246,135 +300,6 @@ def lisp_etr_show_command(clause):
 #
 def lisp_etr_show_keys_command(parameter):
     return(lispconfig.lisp_show_crypto_list("ETR"))
-#enddef
-
-#
-# lisp_map_server_command
-#
-# Store configured map-servers.
-#
-def lisp_map_server_command(kv_pairs):
-    global lisp_trigger_register_timer
-    global lisp_etr_info_timer
-
-    addresses = []
-    dns_names = []
-    key_id = 0
-    alg_id = 0
-    password = ""
-    proxy_reply = False
-    merge = False
-    refresh = False
-    want = False
-    site_id = 0
-    ms_name = None
-    ekey_id = 0
-    ekey = None
-
-    for kw in kv_pairs.keys():
-        value = kv_pairs[kw]
-        if (kw == "ms-name"): 
-            ms_name = value[0]
-        #endif
-        if (kw == "address"):
-            for i in range(len(value)):
-                addresses.append(value[i])
-            #endfor
-        #endif
-        if (kw == "dns-name"):
-            for i in range(len(value)):
-                dns_names.append(value[i])
-            #endfor
-        #endif
-        if (kw == "authentication-type"):
-            alg_id = lisp.LISP_SHA_1_96_ALG_ID if (value == "sha1") else \
-                lisp.LISP_SHA_256_128_ALG_ID if (value == "sha2") else ""
-        #endif
-        if (kw == "authentication-key"):
-            if (alg_id == 0): alg_id = lisp.LISP_SHA_256_128_ALG_ID
-            auth_key = lisp.lisp_parse_auth_key(value)
-            key_id = auth_key.keys()[0]
-            password = auth_key[key_id]
-        #endif
-        if (kw == "proxy-reply"):
-            proxy_reply = True if value == "yes" else False
-        #endif
-        if (kw == "merge-registrations"):
-            merge = True if value == "yes" else False
-        #endif
-        if (kw == "refresh-registrations"):
-            refresh = True if value == "yes" else False
-        #endif
-        if (kw == "want-map-notify"):
-            want = True if value == "yes" else False
-        #endif
-        if (kw == "site-id"):
-            site_id = int(value)
-        #endif
-        if (kw == "encryption-key"):
-            ekey = lisp.lisp_parse_auth_key(value)
-            ekey_id = ekey.keys()[0]
-            ekey = ekey[ekey_id]
-        #Endif
-    #endfor
-
-    #
-    # Store internal data structure.
-    #
-    ms = None
-    for addr_str in addresses:
-        if (addr_str == ""): continue
-        ms = lisp.lisp_ms(addr_str, None, ms_name, alg_id, key_id, password, 
-            proxy_reply, merge, refresh, want, site_id, ekey_id, ekey)
-    #endfor
-    for name in dns_names:
-        if (name == ""): continue
-        ms = lisp.lisp_ms(None, name, ms_name, alg_id, key_id, password, 
-            proxy_reply, merge, refresh, want, site_id, ekey_id, ekey)
-    #endfor
-
-    #
-    # Trigger a Info-Request if we are doing NAT-traversal if this is the
-    # first Map-Server..
-    #
-    first_ms = (len(lisp.lisp_map_servers_list) == 1)
-    if (first_ms):
-        ms = lisp.lisp_map_servers_list.values()[0]
-        lisp_etr_info_timer = threading.Timer(2, lisp_etr_process_info_timer, 
-            [ms.map_server])
-        lisp_etr_info_timer.start()
-    else:
-
-        #
-        # Trigger Map-Register to newly configured Map-Server.
-        #
-        # Do not trigger Map-Register if NAT-traveral is configured. We may not
-        # have the global RLOC yet from Info-Replies. When the Info-Reply comes
-        # in we do trigger Map-Registers to all map-servers.
-        #
-        if (lisp.lisp_nat_traversal): return
-        if (ms and len(lisp.lisp_db_list) > 0): 
-            lisp_build_map_register(lisp_send_sockets, None, None, ms, False)
-        #endif
-    #endif
-
-    #
-    # Do not start the trigger timer if we are in test-mode. We may already
-    # be sending a huge list of Map-Registers after "eid-done".
-    #
-    if (lisp_etr_test_mode and lisp_seen_eid_done): return
-
-    #
-    # Handle case where "lisp database-mapping" comes before "lisp map-server"
-    # in configuration file. We have to start periodic timer.
-    #
-    if (len(lisp.lisp_db_list) > 0): 
-        if (lisp_trigger_register_timer != None): return
-        lisp_trigger_register_timer = threading.Timer(5, 
-            lisp_process_register_timer, [lisp_send_sockets])
-        lisp_trigger_register_timer.start()
-    #endif
-    return
 #enddef
 
 #
@@ -1935,7 +1860,7 @@ lisp_etr_commands = {
         "lisp-nat" : [True, "yes", "no"],
         "dynamic-eid-timeout" : [True, 0, 0xff] }],
 
-    "lisp map-server" : [lisp_map_server_command, {
+    "lisp map-server" : [lisp_etr_map_server_command, {
         "ms-name" : [True],
         "address" : [True], 
         "dns-name" : [True], 

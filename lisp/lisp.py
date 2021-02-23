@@ -7061,7 +7061,7 @@ def lisp_parse_packet(lisp_sockets, packet, source, udp_sport, ttl=-1):
         elif (lisp_is_running("lisp-rtr")):
             lisp_process_multicast_map_notify(packet, source)
         elif (lisp_is_running("lisp-itr")):
-            lisp_process_unicast_map_notify(packet, source)
+            lisp_process_unicast_map_notify(lisp_sockets, packet, source)
         #endif
 
     elif (header.type == LISP_MAP_NOTIFY_ACK): 
@@ -7572,7 +7572,7 @@ def lisp_get_partial_rloc_set(registered_rloc_set, mr_source, multicast):
 def lisp_store_pubsub_state(reply_eid, itr_rloc, mr_sport, nonce, ttl, xtr_id):
     pubsub = lisp_pubsub(itr_rloc, mr_sport, nonce, ttl, xtr_id)
     pubsub.add(reply_eid)
-    return
+    return(pubsub)
 #enddef
 
 #
@@ -7651,7 +7651,8 @@ def lisp_process_pubsub(lisp_sockets, packet, reply_eid, itr_rloc, port, nonce,
     #
     # Store subscriber state.
     #
-    lisp_store_pubsub_state(reply_eid, itr_rloc, port, nonce, ttl, xtr_id)
+    pubsub = lisp_store_pubsub_state(reply_eid, itr_rloc, port, nonce, ttl,
+        xtr_id)
 
     eid = green(reply_eid.print_prefix(), False)
     itr = red(itr_rloc.print_address_no_iid(), False)
@@ -7665,6 +7666,7 @@ def lisp_process_pubsub(lisp_sockets, packet, reply_eid, itr_rloc, port, nonce,
     #
     packet = lisp_convert_reply_to_notify(packet)
     lisp_send_map_notify(lisp_sockets, packet, itr_rloc, port)
+    pubsub.map_notify_count += 1
     return
 #enddef
 
@@ -10213,7 +10215,7 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
 # Have ITR process a Map-Notify as a result of sending a subscribe-request.
 # Update map-cache entry with new RLOC-set.
 #
-def lisp_process_unicast_map_notify(packet, source):
+def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
     map_notify = lisp_map_notify("")
     packet = map_notify.decode(packet)
     if (packet == None):
@@ -10322,6 +10324,18 @@ def lisp_process_unicast_map_notify(packet, source):
         mc.build_best_rloc_set()
         lisp_write_ipc_map_cache(True, mc)
     #endfor
+
+    #
+    # Find map-server data structure from source address of Map-Notify then
+    # send Map-Notify-Ack to it.
+    #
+    ms = lisp_get_map_server(source)
+    if (ms == None):
+        lprint("Cannot find Map-Server for Map-Notify source address {}".\
+            format(source.print_address_no_iid()))
+        return
+    #endif
+    lisp_send_map_notify_ack(lisp_sockets, eid_records, map_notify, ms)
 #enddef
 
 #

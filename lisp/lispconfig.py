@@ -55,7 +55,7 @@ lisp_commands = {
     "lisp map-cache"                : ["lisp-itr", "lisp-rtr"],
     "lisp itr-map-cache"            : ["lisp-itr"],
     "lisp rtr-map-cache"            : ["lisp-rtr"],
-    "lisp map-server"               : ["lisp-etr"], 
+    "lisp map-server"               : ["lisp-itr", "lisp-etr"], 
     "lisp database-mapping"         : ["lisp-itr", "lisp-etr", "lisp-rtr"],
     "lisp group-mapping"            : ["lisp-etr"],
     "lisp glean-mapping"            : ["lisp-rtr"],
@@ -3658,6 +3658,89 @@ def lisp_replace_db_list(db):
     lisp.lisp_db_list[index] = db
     return(True)
 #endddef
+
+#
+# lisp_map_server_command
+#
+# Store configured map-servers.
+#
+def lisp_map_server_command(kv_pairs):
+    addresses = []
+    dns_names = []
+    key_id = 0
+    alg_id = 0
+    password = ""
+    proxy_reply = False
+    merge = False
+    refresh = False
+    want = False
+    site_id = 0
+    ms_name = None
+    ekey_id = 0
+    ekey = None
+
+    for kw in kv_pairs.keys():
+        value = kv_pairs[kw]
+        if (kw == "ms-name"): 
+            ms_name = value[0]
+        #endif
+        if (kw == "address"):
+            for i in range(len(value)):
+                addresses.append(value[i])
+            #endfor
+        #endif
+        if (kw == "dns-name"):
+            for i in range(len(value)):
+                dns_names.append(value[i])
+            #endfor
+        #endif
+        if (kw == "authentication-type"):
+            alg_id = lisp.LISP_SHA_1_96_ALG_ID if (value == "sha1") else \
+                lisp.LISP_SHA_256_128_ALG_ID if (value == "sha2") else ""
+        #endif
+        if (kw == "authentication-key"):
+            if (alg_id == 0): alg_id = lisp.LISP_SHA_256_128_ALG_ID
+            auth_key = lisp.lisp_parse_auth_key(value)
+            key_id = auth_key.keys()[0]
+            password = auth_key[key_id]
+        #endif
+        if (kw == "proxy-reply"):
+            proxy_reply = True if value == "yes" else False
+        #endif
+        if (kw == "merge-registrations"):
+            merge = True if value == "yes" else False
+        #endif
+        if (kw == "refresh-registrations"):
+            refresh = True if value == "yes" else False
+        #endif
+        if (kw == "want-map-notify"):
+            want = True if value == "yes" else False
+        #endif
+        if (kw == "site-id"):
+            site_id = int(value)
+        #endif
+        if (kw == "encryption-key"):
+            ekey = lisp.lisp_parse_auth_key(value)
+            ekey_id = ekey.keys()[0]
+            ekey = ekey[ekey_id]
+        #Endif
+    #endfor
+
+    #
+    # Store internal data structure.
+    #
+    for addr_str in addresses:
+        if (addr_str == ""): continue
+        ms = lisp.lisp_ms(addr_str, None, ms_name, alg_id, key_id, password, 
+            proxy_reply, merge, refresh, want, site_id, ekey_id, ekey)
+    #endfor
+    for name in dns_names:
+        if (name == ""): continue
+        ms = lisp.lisp_ms(None, name, ms_name, alg_id, key_id, password, 
+            proxy_reply, merge, refresh, want, site_id, ekey_id, ekey)
+    #endfor
+    return(ms)
+#enddef
 
 #
 # lisp_database_mapping_command

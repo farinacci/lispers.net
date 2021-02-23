@@ -630,7 +630,6 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     #
     # Do input processing for currently supported packet types..
     #
-    igmp = False
     if (packet.inner_version == 4):
         igmp, packet.packet = lisp.lisp_ipv4_input(packet.packet)
         if (packet.packet == None): return
@@ -1335,6 +1334,19 @@ lisp_itr_commands = {
         "ms-name" : [True],
         "dns-name" : [True],
         "address" : [True] }],
+
+    "lisp map-server" : [lispconfig.lisp_map_server_command, {
+        "ms-name" : [True],
+        "address" : [True], 
+        "dns-name" : [True], 
+        "authentication-type" : [False, "sha1", "sha2"],
+        "authentication-key" : [False], 
+        "encryption-key" : [False], 
+        "proxy-reply" : [False, "yes", "no"],
+        "want-map-notify" : [False, "yes", "no"],
+        "merge-registrations" : [False, "yes", "no"],
+        "refresh-registrations" : [False, "yes", "no"],
+        "site-id" : [False, 1, 0xffffffffffffffff] }],
 
     "lisp database-mapping" : [lisp_itr_database_mapping_command, {
         "prefix" : [], 
