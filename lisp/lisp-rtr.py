@@ -678,7 +678,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #
     # Process inner header (checksum and decrement ttl).
     #
-    igmp = None
+    igmp = False
     if (packet.inner_dest.is_mac()):
         packet.packet = lisp.lisp_mac_input(packet.packet)
         if (packet.packet == None): return
@@ -776,10 +776,12 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         return
     #endif
 
-    if (mc == None or mc.action == lisp.LISP_SEND_MAP_REQUEST_ACTION):
+    if (mc == None or lisp.lisp_mr_or_pubsub(mc.action)):
         if (lisp.lisp_rate_limit_map_request(packet.inner_dest)): return
+
+        pubsub = (mc.action == lisp.LISP_SEND_PUBSUB_ACTION)
         lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
-            packet.inner_source, packet.inner_dest, None)
+            packet.inner_source, packet.inner_dest, None, pubsub)
 
         if (packet.is_trace()):
             s = lisp_trace_listen_socket
@@ -1528,6 +1530,7 @@ lisp_rtr_commands = {
         "eid-prefix" : [True], 
         "group-prefix" : [True], 
         "send-map-request" : [True, "yes", "no"], 
+        "subscribe-request" : [True, "yes", "no"], 
         "rloc" : [], 
         "rloc-record-name" : [True],
         "rle-name" : [True],

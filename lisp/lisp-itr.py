@@ -630,6 +630,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     #
     # Do input processing for currently supported packet types..
     #
+    igmp = False
     if (packet.inner_version == 4):
         igmp, packet.packet = lisp.lisp_ipv4_input(packet.packet)
         if (packet.packet == None): return
@@ -681,10 +682,12 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     #
     # Map-cache lookup miss.
     #
-    if (mc == None or mc.action == lisp.LISP_SEND_MAP_REQUEST_ACTION):
+    if (mc == None or lisp.lisp_mr_or_pubsub(mc.action)):
         if (lisp.lisp_rate_limit_map_request(packet.inner_dest)): return
+
+        pubsub = (mc.action == lisp.LISP_SEND_PUBSUB_ACTION)
         lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
-            packet.inner_source, packet.inner_dest, None)
+            packet.inner_source, packet.inner_dest, None, pubsub)
 
         if (packet.is_trace()):
             lisp.lisp_trace_append(packet, reason="map-cache miss")
@@ -1361,6 +1364,7 @@ lisp_itr_commands = {
         "eid-prefix" : [True], 
         "group-prefix" : [True], 
         "send-map-request" : [True, "yes", "no"], 
+        "subscribe-request" : [True, "yes", "no"], 
         "rloc" : [], 
         "rloc-record-name" : [True],
         "rle-name" : [True],

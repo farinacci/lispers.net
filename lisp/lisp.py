@@ -392,9 +392,11 @@ LISP_SEND_MAP_REQUEST_ACTION = 2
 LISP_DROP_ACTION             = 3
 LISP_POLICY_DENIED_ACTION    = 4
 LISP_AUTH_FAILURE_ACTION     = 5
+LISP_SEND_PUBSUB_ACTION      = 6
 
 lisp_map_reply_action_string = ["no-action", "native-forward", 
-    "send-map-request", "drop-action", "policy-denied", "auth-failure" ]
+    "send-map-request", "drop-action", "policy-denied",
+    "auth-failure", "send-subscribe"]
 
 #
 # Various HMACs alg-ids and lengths (in bytes) used by LISP.
@@ -7056,11 +7058,10 @@ def lisp_parse_packet(lisp_sockets, packet, source, udp_sport, ttl=-1):
     elif (header.type == LISP_MAP_NOTIFY): 
         if (from_ipc == "lisp-etr"):
             lisp_process_multicast_map_notify(packet, source)
-        else:
-            if (lisp_is_running("lisp-rtr")):
-                lisp_process_multicast_map_notify(packet, source)
-            #endif
-            lisp_process_map_notify(lisp_sockets, packet, source)
+        elif (lisp_is_running("lisp-rtr")):
+            lisp_process_multicast_map_notify(packet, source)
+        elif (lisp_is_running("lisp-itr")):
+            lisp_process_unicast_map_notify(packet, source)
         #endif
 
     elif (header.type == LISP_MAP_NOTIFY_ACK): 
@@ -10204,6 +10205,123 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
             site, True)
     #endif
     return
+#enddef
+
+#
+# lisp_process_unicast_map_notify
+#
+# Have ITR process a Map-Notify as a result of sending a subscribe-request.
+# Update map-cache entry with new RLOC-set.
+#
+def lisp_process_unicast_map_notify(packet, source):
+    map_notify = lisp_map_notify("")
+    packet = map_notify.decode(packet)
+    if (packet == None):
+        lprint("Could not decode Map-Notify packet")
+        return
+    #endif
+
+    map_notify.print_notify()
+    if (map_notify.record_count == 0): return
+
+    eid_records = map_notify.eid_records
+
+    for i in range(map_notify.record_count):
+        eid_record = lisp_eid_record()
+        eid_records = eid_record.decode(eid_records)
+        if (packet == None): return
+        eid_record.print_record("  ", False)
+        eid_str = eid_record.print_eid_tuple()
+
+        #
+        # If no map-cache entry exists or does not have action LISP_SEND_
+        # PUBSUB_ACTION, ignore.
+        #
+        mc = lisp_map_cache_lookup(eid_record.eid, eid_record.eid)
+        if (mc == None or mc.action != LISP_SEND_PUBSUB_ACTION):
+            e = green(eid_str, False)
+            lprint("Ignoring non-subscribed EID {}".format(e))
+            continue
+        #endif
+
+        #
+        # Check if this is the map-cache entry for the EID or the SEND_PUBSUB
+        # configured map-cache entry. Reuse the memory if the EID entry exists
+        # and empty RLOC-set since we will rebuild it.
+        #
+        old_rloc_set = []
+        if (mc.action == LISP_SEND_PUBSUB_ACTION):
+            mc = lisp_mapping(eid_record.eid, eid_record.group, [])
+            mc.add_cache()
+        elif (len(old_rloc_set) != 0):
+            old_rloc_set = mc.rloc_set
+            mc.delete_rlocs_from_rloc_probe_list()
+            mc.rloc_set = []
+        #endif
+
+        #
+        # Store some data from the EID-record of the Map-Notify.
+        #
+        mc.mapping_source = None if source == "lisp-itr" else source
+        mc.map_cache_ttl = eid_record.store_ttl()
+
+        #
+        # If no RLOCs in the Map-Notify and we had RLOCs in the existing
+        # map-cache entry, remove them.
+        #
+        if (len(old_rloc_set) != 0 and eid_record.rloc_count == 0):
+            mc.build_best_rloc_set()
+            lisp_write_ipc_map_cache(True, mc)
+            lprint("Update {} map-cache entry with no RLOC-set".format( \
+                green(eid_str, False)))
+            continue
+        #endif
+
+        #
+        # Now add all RLOCs to a new RLOC-set. If the RLOC existed in old set,
+        # copy old RLOC data. We want to retain, uptimes, stats, and RLOC-
+        # probe data in the new entry with the same RLOC address.
+        #
+        new = replaced = 0
+        for j in range(eid_record.rloc_count):
+            rloc_record = lisp_rloc_record()
+            eid_records = rloc_record.decode(eid_records, None)
+            rloc_record.print_record("    ")
+            rloc = lisp_rloc()
+
+            #
+            # See if this RLOC address is in old RLOC-set, if so, do copy.
+            #
+            found = False
+            for r in old_rloc_set:
+                if (r.rloc.is_exact_match(rloc_record.rloc)):
+                    found = True
+                    break
+                #endif
+            #endfor
+            if (found):
+                rloc = copy.deepcopy(r)
+                replaced += 1
+            else:
+                new += 1
+            #endif
+
+            #
+            # Move data from RLOC-record of Map-Notify to RLOC entry.
+            #
+            rloc.store_rloc_from_record(rloc_record, None, mc.mapping_source)
+            mc.rloc_set.append(rloc)
+        #endfor
+
+        lprint("Update {} map-cache entry with {}/{} new/replaced RLOCs".\
+            format(green(eid_str, False), new, replaced))
+
+        #
+        # Build best RLOC-set and write to external data-plane, if any.
+        #
+        mc.build_best_rloc_set()
+        lisp_write_ipc_map_cache(True, mc)
+    #endfor
 #enddef
 
 #
@@ -15275,7 +15393,8 @@ def lisp_rate_limit_map_request(dest):
 #
 # From this process, build and send a Map-Request for supplied EID.
 #
-def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc):
+def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
+    pubsub=False):
     global lisp_last_map_request_sent
 
     #
@@ -15306,6 +15425,8 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc):
     map_request.record_count = 1
     map_request.nonce = lisp_get_control_nonce()
     map_request.rloc_probe = (probe_dest != None)
+    map_request.subscribe_bit = pubsub
+    map_request.xtr_id_present = pubsub
 
     #
     # Hold request nonce so we can match replies from xTRs that have multiple
@@ -19065,15 +19186,17 @@ def lisp_process_punt(punt_socket, lisp_send_sockets, lisp_ephem_port):
     #
     if (deid):
         mc = lisp_map_cache_lookup(seid, deid)
-        if (mc == None or mc.action == LISP_SEND_MAP_REQUEST_ACTION):
+        if (mc == None or lisp_mr_or_pubsub(mc.action)):
 
             #
             # Check if we should rate-limit Map-Request and if not send
             # Map-Request.
             #
             if (lisp_rate_limit_map_request(deid)): return
+
+            pubsub = (mc.action == LISP_SEND_PUBSUB_ACTION)
             lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
-                seid, deid, None)
+                seid, deid, None, pubsub)
         else:
             e = green(deid.print_address(), False)
             lprint("Map-cache entry for {} already exists".format(e))
@@ -20126,6 +20249,15 @@ def lisp_telemetry_configured():
     if (lisp_is_json_telemetry(json_string) == None): return(None)
 
     return(json_string)
+#enddef
+
+#
+# lisp_mr_or_pubsub
+#
+# Test action for Map-Request or Map-Request with Subscribe bit set.
+#
+def lisp_mr_or_pubsub(action):
+    return(action in [LISP_SEND_MAP_REQUEST_ACTION, LISP_SEND_PUBSUB_ACTION])
 #enddef
     
 #------------------------------------------------------------------------------

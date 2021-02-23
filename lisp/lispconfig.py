@@ -506,6 +506,7 @@ def lisp_setup_kv_pairs(clause):
         kv_pairs["signature-eid"] = [""] * count
         kv_pairs["register-ttl"] = [""] * count
         kv_pairs["send-map-request"] = [""] * count
+        kv_pairs["subscribe-request"] = [""] * count
     #endif
 
     count = clause.count(" rloc {")
@@ -2193,6 +2194,13 @@ def lisp_map_cache_command(kv_pair):
                 mc = prefix_set[i]
                 v = value[i]
                 if (v == "yes"): mc.action = lisp.LISP_SEND_MAP_REQUEST_ACTION
+            #endfor
+        #endif
+        if (kw == "subscribe-request"):
+            for i in range(len(prefix_set)):
+                mc = prefix_set[i]
+                v = value[i]
+                if (v == "yes"): mc.action = lisp.LISP_SEND_PUBSUB_ACTION
             #endfor
         #endif
         if (kw == "rle-name"):
