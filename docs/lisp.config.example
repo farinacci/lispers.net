@@ -606,6 +606,7 @@ lisp map-cache {
         eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
         group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
         send-map-request = yes | no
+        subscribe-request = yes | no
     }
     rloc {
         address = x.x.x.x | xxxx:yyyy::zzzz | xxxx-xxxx-xxxx
@@ -628,6 +629,12 @@ Command Description:
     When "send-map-request" is set to "yes", an "rloc" clause is not required.
     The entry will cause any destination EID that matches the eid-prefix to
     send a Map-Request to the mapping system.
+
+    When "subscribe-request" is set to "yes", an "rloc" clause is not required.
+    The entry will cause any destination EID that matches the eid-prefix to
+    send a Map-Request with the subscribe-bit set. That means the xTR will
+    get Map-Notify messages from the mapping system when an RLOC-set changes.
+    This implements the LISP PubSub design in an xTR.
 
 Example:
 
