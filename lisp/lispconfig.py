@@ -2281,7 +2281,6 @@ def lisp_map_cache_command(kv_pair):
 #
 def lisp_display_map_cache(mc, output):
     ts = lisp.lisp_print_elapsed(mc.uptime)
-    mc_ts = ts
     eid_str= mc.print_eid_tuple()
     hover = "Recent Sources: "
     hover += "none\n" if (mc.recent_sources == {}) else "\n"
@@ -2376,7 +2375,9 @@ def lisp_display_map_cache(mc, output):
         r = rloc
         while (True):
             state_change = lisp.lisp_print_elapsed(r.last_state_change)
-            if (state_change == "never"): state_change = mc_ts
+            if (state_change == "never"):
+                state_change = lisp.lisp_print_elapsed(r.uptime)
+            #endif
             s = r.print_state()
             if (r.unreach_state() or r.no_echoed_nonce_state()): 
                 s = lisp.red(s, True)

@@ -10333,7 +10333,6 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
             rloc_record = lisp_rloc_record()
             eid_records = rloc_record.decode(eid_records, None)
             rloc_record.print_record("    ")
-            rloc = lisp_rloc()
 
             #
             # See if this RLOC address is in old RLOC-set, if so, do copy.
@@ -10349,6 +10348,7 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
                 rloc = copy.deepcopy(r)
                 replaced += 1
             else:
+                rloc = lisp_rloc()
                 new += 1
             #endif
 
@@ -13094,7 +13094,7 @@ class lisp_rloc():
         self.weight = 0
         self.mpriority = 255
         self.mweight = 0
-        self.uptime = 0
+        self.uptime = lisp_get_timestamp()
         self.state = LISP_RLOC_UP_STATE
         self.last_state_change = None
         self.rle_name = None
