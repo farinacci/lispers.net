@@ -7618,24 +7618,36 @@ def lisp_convert_reply_to_notify(packet):
 # There has been an RLOC-set change, inform all subscribers who have subscribed
 # to this EID-prefix.
 #
-def lisp_notify_subscribers(lisp_sockets, eid_record, eid, site):
-    eid_str = eid.print_prefix()
-    if (lisp_pubsub_cache.has_key(eid_str) == False): return
+def lisp_notify_subscribers(lisp_sockets, eid_record, rloc_records,
+    registered_eid, site):
 
-    for pubsub in lisp_pubsub_cache[eid_str].values():
-        itr = pubsub.itr
-        port = pubsub.port
-        itr_str = red(itr.print_address_no_iid(), False)
-        sub_str = bold("subscriber", False)
-        xtr_id = "0x" + lisp_hex_string(pubsub.xtr_id)
-        nonce = "0x" + lisp_hex_string(pubsub.nonce)
+    for peid in lisp_pubsub_cache:
+        for pubsub in lisp_pubsub_cache[peid].values():
+            e = pubsub.eid_prefix
+            if (e.is_more_specific(registered_eid) == False): continue
+
+            itr = pubsub.itr
+            port = pubsub.port
+            itr_str = red(itr.print_address_no_iid(), False)
+            sub_str = bold("subscriber", False)
+            xtr_id = "0x" + lisp_hex_string(pubsub.xtr_id)
+            nonce = "0x" + lisp_hex_string(pubsub.nonce)
   
-        lprint("    Notify {} {}:{} xtr-id {} for {}, nonce {}".format( \
-            sub_str, itr_str, port, xtr_id, green(eid_str, False), nonce))
+            lprint("    Notify {} {}:{} xtr-id {} for {}, nonce {}".format( \
+                sub_str, itr_str, port, xtr_id, green(peid, False), nonce))
 
-        lisp_build_map_notify(lisp_sockets, eid_record, [eid_str], 1, itr, 
-            port, pubsub.nonce, 0, 0, 0, site, False)
-        pubsub.map_notify_count += 1
+            #
+            # Do not use memory from EID-record of Map-Register since we are
+            # over-writing EID for Map-Notify message.
+            #
+            pubsub_record = copy.deepcopy(eid_record)
+            pubsub_record.eid.copy_address(e)
+            pubsub_record = pubsub_record.encode() + rloc_records
+            lisp_build_map_notify(lisp_sockets, pubsub_record, [peid], 1, itr,
+                port, pubsub.nonce, 0, 0, 0, site, False)
+
+            pubsub.map_notify_count += 1
+        #endfor
     #endfor
     return
 #enddef
@@ -7930,6 +7942,15 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
             reply_group = group
             action = LISP_AUTH_FAILURE_ACTION
             rloc_set = []
+        #endif
+
+        #
+        # When replying to a subscribe-request, return target EID and not
+        # maybe shorter matched EID-prefix regitered.
+        #
+        if (pubsub):
+            reply_eid = eid
+            reply_group = group
         #endif
 
         #
@@ -10164,6 +10185,7 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
         # not consider RLOC-sets with RLEs in them because at the end of
         # the EID-record loop, we'll send a multicast Map-Notify.
         #
+        peid_record = copy.deepcopy(eid_record)
         eid_record = eid_record.encode()
         eid_record += start_rloc_records
         el = [site_eid.print_eid_tuple()]
@@ -10180,7 +10202,8 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
         #
         # Check subscribers.
         #
-        lisp_notify_subscribers(lisp_sockets, eid_record, site_eid.eid, site)
+        lisp_notify_subscribers(lisp_sockets, peid_record, start_rloc_records,
+            site_eid.eid, site)
     #endfor
 
     #
@@ -10240,10 +10263,25 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
         # PUBSUB_ACTION, ignore.
         #
         mc = lisp_map_cache_lookup(eid_record.eid, eid_record.eid)
-        if (mc == None or mc.action != LISP_SEND_PUBSUB_ACTION):
+        if (mc == None):
             e = green(eid_str, False)
-            lprint("Ignoring non-subscribed EID {}".format(e))
+            lprint("Ignoring Map-Notify EID {}, no subscribe-request entry". \
+                format(e))
             continue
+        #endif
+
+        #
+        # Check if map-cache entry is configured subscribe-request entry.
+        # Otherwise, it is an entry created from the subscribe-request entry
+        # from a returned Map-Notify.
+        #
+        if (mc.action != LISP_SEND_PUBSUB_ACTION):
+            if (mc.subscribed_eid == None):
+                e = green(eid_str, False)
+                lprint("Ignoring Map-Notify for non-subscribed EID {}". \
+                    format(e))
+                continue
+            #endif
         #endif
 
         #
@@ -10255,7 +10293,11 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
         if (mc.action == LISP_SEND_PUBSUB_ACTION):
             mc = lisp_mapping(eid_record.eid, eid_record.group, [])
             mc.add_cache()
-        elif (len(old_rloc_set) != 0):
+            subscribed_eid = copy.deepcopy(eid_record.eid)
+            subscribed_group = copy.deepcopy(eid_record.group)
+        else:
+            subscribed_eid = mc.subscribed_eid
+            subscribed_group = mc.subscribed_group
             old_rloc_set = mc.rloc_set
             mc.delete_rlocs_from_rloc_probe_list()
             mc.rloc_set = []
@@ -10266,6 +10308,8 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
         #
         mc.mapping_source = None if source == "lisp-itr" else source
         mc.map_cache_ttl = eid_record.store_ttl()
+        mc.subscribed_eid = subscribed_eid
+        mc.subscribed_group = subscribed_group
 
         #
         # If no RLOCs in the Map-Notify and we had RLOCs in the existing
@@ -13588,6 +13632,8 @@ class lisp_mapping():
         self.gleaned = False
         self.recent_sources = {}
         self.last_multicast_map_request = 0
+        self.subscribed_eid = None
+        self.subscribed_group = None
     #enddef
 
     def print_mapping(self, eid_indent, rloc_indent):
@@ -15025,9 +15071,11 @@ class lisp_pubsub():
         self.ttl = ttl
         self.xtr_id = xtr_id
         self.map_notify_count = 0
+        self.eid_prefix = None
     #enddef
 
     def add(self, eid_prefix):
+        self.eid_prefix = eid_prefix
         ttl = self.ttl
         eid = eid_prefix.print_prefix()
         if (lisp_pubsub_cache.has_key(eid) == False): 
