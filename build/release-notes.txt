@@ -1,4 +1,35 @@
 
+                lispers.net Beta Release Version 0.546
+                --------------------------------------
+
+o Release date: Tue Mar  9 13:56:27 PST 2021
+
+o Fix crash in lisp_itr_data_plane() where local variable 'igmp' was not
+  initialized when an IPv6 packet comes into the function. Change the
+  initialization for the local variable 'igmp' in lisp_rtr_data_plane() from
+  None to False.
+
+o Support LISP PubSub functionality according to LISP WG draft draft-ietf-
+  lisp-pubsub-08. There was already support in the map-server implementation
+  and implemented a simple xTR pubsub from the lig client. Now there is full
+  support for an xTR implementation. The xTR can subscribe on a per EID-prefix
+  basis and process Map-Notify messages returned by the map-server when
+  RLOC-set changes occur. This version does not yet unsubscribe. That will
+  come in a release soon.
+
+o Found a serious bug in lisp_cache.lookup_cache(). If a lookup for a /32 is
+  done where there are matching prefixes /24 and /8 already in the cache
+  and the /8 comes after the /24 in the data structure, the returned entry is
+  the /8. It should be the /24. Found this in the map-server when accept-more-
+  specifics was configured for instance-ID 1541. When a default route
+  [1541]0.0.0.0/0 was added, it came before the 1541 entry. So when a lookup
+  for [1541]0.0.0.0/0 was done, it returned the 1541 entry (the last one found
+  that was more specific then the lookup prefix), meaning it would never find
+  the existing 0.0.0.0/0 entry. This was causing the map-server registrations
+  to grow with duplicate 0.0.0.0/0 entries.
+
+-------------------------------------------------------------------------------
+    
                 lispers.net Beta Release Version 0.545
                 --------------------------------------
 
