@@ -11266,7 +11266,10 @@ class lisp_cache():
         for ml in self.cache_sorted:
             if (ml_key < ml): return(found)
             for entry in self.cache[ml].entries.values():
-                if (prefix.is_more_specific(entry.eid)): found = entry
+                if (prefix.is_more_specific(entry.eid)):
+                    if (found == None or
+                        entry.eid.is_more_specific(found.eid)): found = entry
+                #endif
             #endfor
         #endfor
         return(found)
@@ -18101,7 +18104,7 @@ def lisp_clear_map_cache():
 # Input to this function is a RLOC-probe Map-Request and the NAT-traversal
 # information for an ETR that sits behind a NAT. We need to get the RLOC-probe
 # through the NAT so we have to data encapsulated with a source-port of 4341
-# and a destination adddress and port that was translated by the NAT. That
+# and a destination address and port that was translated by the NAT. That
 # information is in the lisp_nat_info() class.
 #
 def lisp_encapsulate_rloc_probe(lisp_sockets, rloc, nat_info, packet):
