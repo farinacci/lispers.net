@@ -779,7 +779,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     if (mc == None or lisp.lisp_mr_or_pubsub(mc.action)):
         if (lisp.lisp_rate_limit_map_request(packet.inner_dest)): return
 
-        pubsub = (mc.action == lisp.LISP_SEND_PUBSUB_ACTION)
+        pubsub = (mc and mc.action == lisp.LISP_SEND_PUBSUB_ACTION)
         lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
             packet.inner_source, packet.inner_dest, None, pubsub)
 

@@ -19259,7 +19259,7 @@ def lisp_process_punt(punt_socket, lisp_send_sockets, lisp_ephem_port):
             #
             if (lisp_rate_limit_map_request(deid)): return
 
-            pubsub = (mc.action == LISP_SEND_PUBSUB_ACTION)
+            pubsub = (mc and mc.action == LISP_SEND_PUBSUB_ACTION)
             lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
                 seid, deid, None, pubsub)
         else:
