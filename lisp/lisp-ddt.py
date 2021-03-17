@@ -90,23 +90,23 @@ def lisp_ddt_auth_prefix_command(kv_pair):
 #
 def lisp_ddt_delegation_command(kv_pair):
     prefix_set = []
+    if (lispconfig.lisp_clause_syntax_error(kv_pair, "eid-prefix",
+        "prefix")): return
     for i in range(len(kv_pair["eid-prefix"])):
         ddt_entry = lisp.lisp_ddt_entry()
         prefix_set.append(ddt_entry)
     #endwhile
 
     eid_prefix_list = []
-    if (kv_pair.has_key("eid-prefix")):
-        for i in kv_pair["eid-prefix"]: eid_prefix_list.append(i)
-    #endif
+    for i in kv_pair["eid-prefix"]: eid_prefix_list.append(i)
 
     child_set = []
-    if (kv_pair.has_key("address")):
-        for i in range(len(kv_pair["address"])):
-            child = lisp.lisp_ddt_node()
-            child_set.append(child)
-        #endfor
-    #endif
+    if (lispconfig.lisp_clause_syntax_error(kv_pair, "address",
+        "delegate")): return
+    for i in range(len(kv_pair["address"])):
+        child = lisp.lisp_ddt_node()
+        child_set.append(child)
+    #endfor
 
     for kw in kv_pair.keys():
         value = kv_pair[kw]

@@ -677,6 +677,22 @@ def lisp_setup_kv_pairs(clause):
 #enddef
 
 #
+# lisp_clause_syntax_error
+#
+# If lisp_syntax_check() built an array for the command 'parm', then it was
+# in the required sub-command clause. Otherwise, we return an error and
+# display a message to the log.
+#
+def lisp_clause_syntax_error(kv_pair, parm, clause):
+    is_array = (kv_pair.has_key(parm) and type(kv_pair[parm]) == list)
+    if (is_array): return(False)
+
+    err_str = lisp.bold("Syntax error", False)
+    lisp.fprint("{}, '{}' not in '{}' clause".format(err_str, parm, clause))
+    return(True)
+#enddef
+
+#
 # lisp_syntax_check
 #
 # Return null string if the syntax checking was clean. Otherwise, return
@@ -2151,6 +2167,7 @@ def lisp_map_resolver_command(kv_pair):
 #
 def lisp_map_cache_command(kv_pair):
     prefix_set = []
+    if (lisp_clause_syntax_error(kv_pair, "eid-prefix", "prefix")): return
     for i in range(len(kv_pair["eid-prefix"])):
         mc = lisp.lisp_mapping("", "", [])
         prefix_set.append(mc)
@@ -2158,6 +2175,7 @@ def lisp_map_cache_command(kv_pair):
 
     rloc_set = []
     if (kv_pair.has_key("address")):
+        if (lisp_clause_syntax_error(kv_pair, "address", "rloc")): return
         for i in range(len(kv_pair["address"])):
             rloc = lisp.lisp_rloc()
             rloc_set.append(rloc)
@@ -3751,15 +3769,23 @@ def lisp_map_server_command(kv_pairs):
 #
 def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
     nat_interfaces = []
-    rloc_set = []
-    if (kv_pair.has_key("address")):
-        for i in range(len(kv_pair["address"])):
-            rloc = lisp.lisp_rloc()
-            rloc_set.append(rloc)
-        #endfor
-    #endif
-
     prefix_set = []
+    rloc_set = []
+
+    num_rlocs = 1
+    if (kv_pair.has_key("address")):
+        if (lisp_clause_syntax_error(kv_pair, "address", "rloc")): return
+        num_rlocs = len(kv_pair["address"])
+    elif (kv_pair.has_key("interface")):
+        if (lisp_clause_syntax_error(kv_pair, "interface", "rloc")): return
+        num_rlocs = len(kv_pair["interface"])
+    #endif
+    for i in range(num_rlocs):
+        rloc = lisp.lisp_rloc()
+        rloc_set.append(rloc)
+    #endfor
+
+    if (lisp_clause_syntax_error(kv_pair, "eid-prefix", "prefix")): return
     for i in range(len(kv_pair["eid-prefix"])):
         db = lisp.lisp_mapping("", "", rloc_set)
         prefix_set.append(db)

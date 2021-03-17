@@ -128,18 +128,20 @@ def lisp_ddt_root_command(kv_pair):
 def lisp_referral_cache_command(kv_pair):
 
     prefix_set = []
+    if (lispconfig.lisp_clause_syntax_error(kv_pair, "eid-prefix",
+        "prefix")): return
     for i in range(len(kv_pair["eid-prefix"])):
         referral = lisp.lisp_referral()
         prefix_set.append(referral)
     #endfor
 
     referral_set = []
-    if (kv_pair.has_key("address")):
-        for i in range(len(kv_pair["address"])):
-            ref_node = lisp.lisp_referral_node()
-            referral_set.append(ref_node)
-        #endfor
-    #endif
+    if (lispconfig.lisp_clause_syntax_error(kv_pair, "address",
+        "referral")): return
+    for i in range(len(kv_pair["address"])):
+        ref_node = lisp.lisp_referral_node()
+        referral_set.append(ref_node)
+    #endfor
 
     for kw in kv_pair.keys():
         value = kv_pair[kw]

@@ -69,6 +69,8 @@ def lisp_site_command(kv_pairs):
 
     allowed_rloc_set = []
     if (kv_pairs.has_key("address")):
+        if (lispconfig.lisp_clause_syntax_error(kv_pairs, "address",
+            "allowed-rloc")): return
         for addr in kv_pairs["address"]:
             rloc = lisp.lisp_rloc()
             allowed_rloc_set.append(rloc)
@@ -76,12 +78,12 @@ def lisp_site_command(kv_pairs):
     #endif
     
     allowed_eid_set = []
-    if (kv_pairs.has_key("eid-prefix")):
-        for eid in kv_pairs["eid-prefix"]:
-            site_eid = lisp.lisp_site_eid(site)
-            allowed_eid_set.append(site_eid)
-        #endfor
-    #endif
+    if (lispconfig.lisp_clause_syntax_error(kv_pairs, "eid-prefix",
+        "allowed-prefix")): return
+    for eid in kv_pairs["eid-prefix"]:
+        site_eid = lisp.lisp_site_eid(site)
+        allowed_eid_set.append(site_eid)
+    #endfor
 
     for kw in kv_pairs.keys():
         value = kv_pairs[kw]
@@ -303,6 +305,8 @@ def lisp_ms_auth_prefix_command(kv_pair):
 #
 def lisp_ms_map_server_peer_command(kv_pair):
     prefix_set = []
+    if (lispconfig.lisp_clause_syntax_error(kv_pair, "eid-prefix",
+        "prefix")): return
     for i in range(len(kv_pair["eid-prefix"])):
         ddt_entry = lisp.lisp_ddt_entry()
         prefix_set.append(ddt_entry)
@@ -310,13 +314,13 @@ def lisp_ms_map_server_peer_command(kv_pair):
 
     peer_set = []
 
-    if (kv_pair.has_key("address")):
-        for i in range(len(kv_pair["address"])):
-            peer = lisp.lisp_ddt_node()
-            peer.map_server_peer = True
-            peer_set.append(peer)
-        #endfor
-    #endif
+    if (lispconfig.lisp_clause_syntax_error(kv_pair, "address",
+        "peer")): return
+    for i in range(len(kv_pair["address"])):
+        peer = lisp.lisp_ddt_node()
+        peer.map_server_peer = True
+        peer_set.append(peer)
+    #endfor
 
     for kw in kv_pair.keys():
         value = kv_pair[kw]
