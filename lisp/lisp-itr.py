@@ -630,6 +630,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     #
     # Do input processing for currently supported packet types..
     #
+    igmp = False
     if (packet.inner_version == 4):
         igmp, packet.packet = lisp.lisp_ipv4_input(packet.packet)
         if (packet.packet == None): return
