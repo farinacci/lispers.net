@@ -37,6 +37,12 @@ incrementally ready for python3.
     from subprocess import getouptut
     command.getoutput() calls -> getoutput()
 
+    try:
+        from commands import getoutput
+    except:
+        from subprocess import getoutput
+    #entry    
+
 (10) pip3 install geopy, and vincenty not found
 
 (11) pip3 install curve25519
@@ -49,6 +55,14 @@ incrementally ready for python3.
 
 (15) Check bytes() usage inside of strings. May be able to remove hex() calls
      and binascii() calls. Crypto and packet usage needs careful analysis.
+
+(16) Change Queue to queue, around:
+
+    try: 
+       import queue
+    except ImportError:
+       import Queue as queue    
+    #entry    
 
 -------------------------------------------------------------------------------
     
