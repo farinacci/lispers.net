@@ -100,7 +100,6 @@
 # used when lispers.net API is running with a password on username root.
 #
 #------------------------------------------------------------------------------
-
 from __future__ import print_function
 import sys
 import struct

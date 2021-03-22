@@ -23,7 +23,6 @@
 # Do a wget on supplied URL and install in current directory.
 # 
 # -----------------------------------------------------------------------------
-
 from __future__ import print_function
 import sys
 import os

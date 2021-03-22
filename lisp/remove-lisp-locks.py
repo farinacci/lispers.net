@@ -21,7 +21,6 @@
 # This python script will remove an named socket file descriptors
 # 
 # -----------------------------------------------------------------------------
-
 from __future__ import print_function
 import os
 try:

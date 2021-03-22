@@ -25,7 +25,6 @@
 #     rig [<iid>]<dest-eid> to <ddt-node> [debug] [follow-all-referrals]
 #
 #------------------------------------------------------------------------------
-
 from __future__ import print_function
 import lisp
 import sys

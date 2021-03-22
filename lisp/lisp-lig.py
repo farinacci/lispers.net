@@ -29,7 +29,6 @@
 # is not supplied, interactive input is requested.
 #
 #------------------------------------------------------------------------------
-
 from __future__ import print_function
 import lisp
 import sys

@@ -22,7 +22,6 @@
 # send and receive functions for the LISP protocol according to RFC 6830.
 #
 #------------------------------------------------------------------------------
-
 from __future__ import print_function
 import socket
 import time
@@ -38,7 +37,6 @@ import threading
 import operator
 import netifaces
 import platform
-import queue
 import traceback
 from Crypto.Cipher import AES
 import ecdsa
@@ -48,13 +46,16 @@ import chacha
 import poly1305
 import geopy
 import curve25519
-use_chacha = (os.getenv("LISP_USE_CHACHA") != None)
-use_poly = (os.getenv("LISP_USE_POLY") != None)
 try:
     from commands import getoutput
 except:
     from subprocess import getoutput
-#entry    
+#entry
+try:
+    import queue
+except:
+    import Queue as queue
+#endtry
 
 #
 # For printing the lisp_rloc_probe_list{}.
@@ -533,6 +534,9 @@ LISP_CS_25519_CHACHA = 6
 LISP_4_32_MASK   = 0xFFFFFFFF
 LISP_8_64_MASK   = 0xFFFFFFFFFFFFFFFF
 LISP_16_128_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
+use_chacha = (os.getenv("LISP_USE_CHACHA") != None)
+use_poly = (os.getenv("LISP_USE_POLY") != None)
 
 #------------------------------------------------------------------------------
 
