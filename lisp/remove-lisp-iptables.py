@@ -26,7 +26,11 @@
 
 import os
 import platform
-import commands
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#entry    
 
 #------------------------------------------------------------------------------
 
@@ -54,7 +58,7 @@ def more_specific(agg, prefix):
 
 if (platform.uname()[0] != "Linux"): exit(0)
 
-print "Removing iptables configuration"
+print("Removing iptables configuration")
 
 iptables_commands = [
   "sudo iptables -t raw -D PREROUTING -j lisp",
@@ -77,15 +81,15 @@ for command in iptables_commands:
 #
 # Logic below is only executed when we are programing hardware.
 #
-grep = commands.getoutput("egrep 'program-hardware = yes' ./lisp.config")
+grep = getoutput("egrep 'program-hardware = yes' ./lisp.config")
 if (grep == "" or grep[0] != " "): exit(0)
 
-print "Removing programmed routes and arp entries"
+print("Removing programmed routes and arp entries")
 
 command = 'ip route | egrep vlan4094 | egrep -v "metric 1"'
-routes = commands.getoutput(command)
+routes = getoutput(command)
 routes = [] if routes == "" else routes.split("\n")
-arps = commands.getoutput("arp -n | egrep vlan4094")
+arps = getoutput("arp -n | egrep vlan4094")
 arps = [] if arps == "" else arps.split("\n")
 
 for route in routes:
@@ -103,7 +107,7 @@ for arp in arps:
 # configured prefixes as well as all learned more-specifics.
 #
 grep = "pcregrep -M 'eid-prefix = .*\n.*dynamic-eid = yes' lisp.config"
-grep = commands.getoutput(grep)
+grep = getoutput(grep)
 if (grep == ""): exit(0)
 if (grep[0] in ["<", ">", "#"]): exit(0)
 grep = grep.split("\n")
@@ -115,9 +119,9 @@ for line in grep:
     agg_routes.append(route)
 #endfor
 
-print "Found {} dynamic-EID prefixes: {}".format(len(agg_routes), agg_routes)
+print("Found {} dynamic-EID prefixes: {}".format(len(agg_routes), agg_routes))
 
-routes = commands.getoutput("ip route")
+routes = getoutput("ip route")
 routes = routes.split("\n")
 
 agg = None
@@ -137,8 +141,8 @@ for route in routes:
 for route in delete_routes:
     os.system("ip route delete {}".format(route))
 #endif
-print "Deleted {} dynamic-EIDs:".format(len(delete_routes))
-print "  ", delete_routes
+print("Deleted {} dynamic-EIDs:".format(len(delete_routes)))
+print("  ", delete_routes)
 
 exit(0)
 

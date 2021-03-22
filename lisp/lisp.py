@@ -23,6 +23,7 @@
 #
 #------------------------------------------------------------------------------
 
+from __future__ import print_function
 import socket
 import time
 import struct
@@ -37,19 +38,23 @@ import threading
 import operator
 import netifaces
 import platform
-import Queue
+import queue
 import traceback
 from Crypto.Cipher import AES
 import ecdsa
 import json
-import commands
 import copy
 import chacha
 import poly1305
-from geopy.distance import vincenty
+import geopy
 import curve25519
 use_chacha = (os.getenv("LISP_USE_CHACHA") != None)
 use_poly = (os.getenv("LISP_USE_POLY") != None)
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#entry    
 
 #
 # For printing the lisp_rloc_probe_list{}.
@@ -658,12 +663,32 @@ def lisp_is_linux():
 #enddef
 
 #
+# lisp_is_python2
+#
+# Return True if this code is running Python 2.7.x.
+#
+def lisp_is_python2():
+    ver = sys.version.split()[0]
+    return(ver[0:3] == "2.7")
+#enddef
+
+#
+# lisp_is_python3
+#
+# Return True if this code is running Python 3.7.x.
+#
+def lisp_is_python3():
+    ver = sys.version.split()[0]
+    return(ver[0:3] == "3.7")
+#enddef
+
+#
 # lisp_on_aws
 #
 # Return True if this node is running in an Amazon VM on AWS.
 #
 def lisp_on_aws():
-    vm = commands.getoutput("sudo dmidecode -s bios-vendor")
+    vm = getoutput("sudo dmidecode -s bios-vendor")
     if (vm.find("command not found") != -1 and lisp_on_docker()):
         aws = bold("AWS check", False)
         lprint("{} - dmidecode not installed in docker container".format(aws))
@@ -677,7 +702,7 @@ def lisp_on_aws():
 # Return True if this node is running in an Google Compute Engine VM.
 #
 def lisp_on_gcp():
-    vm = commands.getoutput("sudo dmidecode -s bios-version")
+    vm = getoutput("sudo dmidecode -s bios-version")
     return(vm.lower().find("google") != -1)
 #enddef
 
@@ -751,14 +776,14 @@ def lprint(*args):
     lisp_process_logfile()
     ts = datetime.datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")
     ts = ts[:-3]
-    print "{}: {}:".format(ts, lisp_log_id),
+    print("{}: {}:".format(ts, lisp_log_id), end=" ")
 
     for arg in args:
         if (arg == "force"): continue
-        print arg,
+        print(arg, end=" ")
     #endfor
-    print ""
-
+    print()
+    
     try: sys.stdout.flush()
     except: pass
     return
@@ -799,10 +824,10 @@ def debug(*args):
     ts = datetime.datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")
     ts = ts[:-3]
 
-    print red(">>>", False), 
-    print "{}:".format(ts),
-    for arg in args: print arg,
-    print red("<<<\n", False)
+    print(red(">>>", False), end=" ")
+    print("{}:".format(ts), end=" ")
+    for arg in args: print(arg, end=" ")
+    print(red("<<<\n", False))
     try: sys.stdout.flush()
     except: pass
     return
@@ -826,7 +851,7 @@ def lisp_print_banner(string):
     global lisp_version, lisp_hostname
 
     if (lisp_version == ""):
-        lisp_version = commands.getoutput("cat lisp-version.txt")
+        lisp_version = getoutput("cat lisp-version.txt")
     #endif
     hn = bold(lisp_hostname, False)
     lprint("lispers.net LISP {} {}, version {}, hostname {}".format(string, 
@@ -1558,7 +1583,7 @@ def lisp_get_local_macs():
 # address. Get interface name from "netstat -rn" to grep for.
 #
 def lisp_get_local_rloc():
-    out = commands.getoutput("netstat -rn | egrep 'default|0.0.0.0'")
+    out = getoutput("netstat -rn | egrep 'default|0.0.0.0'")
     if (out == ""): return(lisp_address(LISP_AFI_IPV4, "", 32, 0))
 
     #
@@ -1570,14 +1595,14 @@ def lisp_get_local_rloc():
     addr = ""
     macos = lisp_is_macos()
     if (macos):
-        out = commands.getoutput("ifconfig {} | egrep 'inet '".format(device))
+        out = getoutput("ifconfig {} | egrep 'inet '".format(device))
         if (out == ""): return(lisp_address(LISP_AFI_IPV4, "", 32, 0))
     else:
         cmd = 'ip addr show | egrep "inet " | egrep "{}"'.format(device)
-        out = commands.getoutput(cmd)
+        out = getoutput(cmd)
         if (out == ""):
             cmd = 'ip addr show | egrep "inet " | egrep "global lo"'
-            out = commands.getoutput(cmd)
+            out = getoutput(cmd)
         #endif
         if (out == ""): return(lisp_address(LISP_AFI_IPV4, "", 32, 0))
     #endif
@@ -1753,7 +1778,7 @@ def lisp_get_all_addresses():
 #
 def lisp_get_all_multicast_rles():
     rles = []
-    out = commands.getoutput('egrep "rle-address =" ./lisp.config')
+    out = getoutput('egrep "rle-address =" ./lisp.config')
     if (out == ""): return(rles)
 
     lines = out.split("\n")
@@ -2221,7 +2246,7 @@ class lisp_packet():
 
         try:
             lisp_icmp_raw_socket.sendto(ip, (dest, 0))
-        except socket.error, e:
+        except socket.error as e:
             lprint("lisp_icmp_raw_socket.sendto() failed: {}".format(e))
             return(False)
         #endtry
@@ -2391,7 +2416,7 @@ class lisp_packet():
             #endif
 
             try: lisp_raw_socket.sendto(fragment, (dest, 0))
-            except socket.error, e:
+            except socket.error as e:
                 lprint("socket.sendto() failed: {}".format(e))
             #endtry
         #endfor
@@ -2410,7 +2435,7 @@ class lisp_packet():
         packet = mac_header + self.packet
 
 #        try: l2_socket.send(packet)
-#        except socket.error, e:
+#        except socket.error as e:
 #            lprint("send_l2_packet(): socket.send() failed: {}".format(e))
 #        #endtry
 #        return
@@ -2434,7 +2459,7 @@ class lisp_packet():
         except: return
 
         try: socket.send(self.packet)
-        except socket.error, e:
+        except socket.error as e:
             lprint("bridge_l2_packet(): socket.send() failed: {}".format(e))
         #endtry
     #enddef
@@ -3437,9 +3462,9 @@ class lisp_keys():
         # context = "0001" || "lisp-crypto" || "<lpub> xor <rpub>" || "0100"
         #
         l = self.local_public_key
-        if (type(l) != long): l = int(binascii.hexlify(l), 16)
+        if (type(l) != int): l = int(binascii.hexlify(l), 16)
         r = self.remote_public_key
-        if (type(r) != long): r = int(binascii.hexlify(r), 16)
+        if (type(r) != int): r = int(binascii.hexlify(r), 16)
         context = "0001" + "lisp-crypto" + lisp_hex_string(l ^ r) + "0100"
 
         key_material = hmac.new(context, data, alg).hexdigest()
@@ -3634,7 +3659,7 @@ class lisp_thread():
         self.thread_number = -1
         self.number_of_pcap_threads = 0
         self.number_of_worker_threads = 0
-        self.input_queue = Queue.Queue()
+        self.input_queue = queue.Queue()
         self.input_stats = lisp_stats()
         self.lisp_packet = lisp_packet(None)
     #enddef
@@ -6726,7 +6751,7 @@ def lisp_ipc(packet, send_socket, node):
             retry_count = 0
             sleep_time = .001
 
-        except socket.error, e:
+        except socket.error as e:
             if (retry_count == 12):
                 lprint("Giving up on {}, consider it down".format(node))
                 break
@@ -6810,7 +6835,7 @@ def lisp_send(lisp_sockets, dest, port, packet):
     #endif
 
     try: lisp_socket.sendto(packet, (address, port))
-    except socket.error, e:
+    except socket.error as e:
         lprint("socket.sendto() failed: {}".format(e))
     #endtry
 
@@ -7975,8 +8000,8 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
     #
     rloc_count = len(site_eid.registered_rlocs)
     if (rloc_count == 0):
-        lprint("Requested EID {} found site '{}' with EID-prefix {} with " + \
-            "no registered RLOCs".format(green(eid_str, False), site_name, 
+        lprint(("Requested EID {} found site '{}' with EID-prefix {} with " + \
+            "no registered RLOCs").format(green(eid_str, False), site_name, 
             green(prefix_str, False)))
         return([site_eid.eid, site_eid.group, LISP_DDT_ACTION_MS_ACK])
     #endif
@@ -9445,7 +9470,7 @@ def lisp_queue_multicast_map_notify(lisp_sockets, rle_list):
             notify_str = []
             rle_nodes = []
             if (len(sg_rloc_set) != 0 and sg_rloc_set[0].rle != None):
-	        rle_nodes = sg_rloc_set[0].rle.rle_nodes
+                rle_nodes = sg_rloc_set[0].rle.rle_nodes
             #endif
             for rle_node in rle_nodes: 
                 notify.append(rle_node.address)
@@ -12667,7 +12692,7 @@ class lisp_geo():
     def get_distance(self, geo_point):
         dd_prefix = self.dms_to_decimal()
         dd_point = geo_point.dms_to_decimal()
-        distance = vincenty(dd_prefix, dd_point)
+        distance = geopy.distance.distance(dd_prefix, dd_point)
         return(distance.km)
     #enddef
 
@@ -14980,15 +15005,15 @@ class lisp_policy():
         self.policy_name = policy_name
         self.match_clauses = []
         self.set_action = None
-	self.set_record_ttl = None
+        self.set_record_ttl = None
         self.set_source_eid = None
         self.set_dest_eid = None
-	self.set_rloc_address = None
-	self.set_rloc_record_name = None
-	self.set_geo_name = None
-	self.set_elp_name = None
-	self.set_rle_name = None
-	self.set_json_name = None
+        self.set_rloc_address = None
+        self.set_rloc_record_name = None
+        self.set_geo_name = None
+        self.set_elp_name = None
+        self.set_rle_name = None
+        self.set_json_name = None
     #enddef
    
     def match_policy_map_request(self, mr, srloc):
@@ -17733,7 +17758,7 @@ def lisp_policy_command(kv_pair):
         if (kw == "set-action"):
             p.set_action = value
         #endif
-	if (kw == "set-record-ttl"):
+        if (kw == "set-record-ttl"):
             p.set_record_ttl = int(value)
         #endif
         if (kw == "set-instance-id"):
@@ -17852,7 +17877,7 @@ def lisp_send_to_arista(command, interface):
 #
 def lisp_arista_is_alive(prefix):
     cmd = "enable\nsh plat trident l3 software routes {}\n".format(prefix)
-    output = commands.getoutput("FastCli -c '{}'".format(cmd))
+    output = getoutput("FastCli -c '{}'".format(cmd))
 
     #
     # Skip over header line.
@@ -17932,7 +17957,7 @@ def lisp_program_vxlan_hardware(mc):
     #
     # Check to see if route is already present. If so, just return.
     #
-    route = commands.getoutput("ip route get {} | egrep vlan4094".format( \
+    route = getoutput("ip route get {} | egrep vlan4094".format( \
         eid_prefix))
     if (route != ""):
         lprint("Route {} already in hardware: '{}'".format( \
@@ -17945,7 +17970,7 @@ def lisp_program_vxlan_hardware(mc):
     # exist, issue message and return. If we don't have an IP address on
     # vlan4094, then exit as well.
     #
-    ifconfig = commands.getoutput("ifconfig | egrep 'vxlan|vlan4094'")
+    ifconfig = getoutput("ifconfig | egrep 'vxlan|vlan4094'")
     if (ifconfig.find("vxlan") == -1):
         lprint("No VXLAN interface found, cannot program hardware")
         return
@@ -17954,7 +17979,7 @@ def lisp_program_vxlan_hardware(mc):
         lprint("No vlan4094 interface found, cannot program hardware")
         return
     #endif
-    ipaddr = commands.getoutput("ip addr | egrep vlan4094 | egrep inet")
+    ipaddr = getoutput("ip addr | egrep vlan4094 | egrep inet")
     if (ipaddr == ""):
         lprint("No IP address found on vlan4094, cannot program hardware")
         return
@@ -17969,7 +17994,7 @@ def lisp_program_vxlan_hardware(mc):
     # to the VTEP address.
     #
     arp_entries = []
-    arp_lines = commands.getoutput("arp -i vlan4094").split("\n")
+    arp_lines = getoutput("arp -i vlan4094").split("\n")
     for line in arp_lines:
         if (line.find("vlan4094") == -1): continue
         if (line.find("(incomplete)") == -1): continue
@@ -18179,7 +18204,7 @@ def lisp_get_default_route_next_hops():
     #
     if (lisp_is_macos()): 
         cmd = "route -n get default"
-        fields = commands.getoutput(cmd).split("\n")
+        fields = getoutput(cmd).split("\n")
         gw = interface = None
         for f in fields:
             if (f.find("gateway: ") != -1): gw = f.split(": ")[1]
@@ -18192,7 +18217,7 @@ def lisp_get_default_route_next_hops():
     # Get default route next-hop info for Linuxes.
     #
     cmd = "ip route | egrep 'default via'"
-    default_routes = commands.getoutput(cmd).split("\n")
+    default_routes = getoutput(cmd).split("\n")
 
     next_hops = []
     for route in default_routes:
@@ -18219,7 +18244,7 @@ def lisp_get_default_route_next_hops():
 #
 def lisp_get_host_route_next_hop(rloc):
     cmd = "ip route | egrep '{} via'".format(rloc)
-    route = commands.getoutput(cmd).split(" ")
+    route = getoutput(cmd).split(" ")
 
     try: index = route.index("via") + 1
     except: return(None)
@@ -18919,7 +18944,7 @@ def lisp_ipc_write_xtr_parameters(cp, dp):
 #
 def lisp_external_data_plane():
     cmd = 'egrep "ipc-data-plane = yes" ./lisp.config'
-    if (commands.getoutput(cmd) != ""): return(True)
+    if (getoutput(cmd) != ""): return(True)
     
     if (os.getenv("LISP_RUN_LISP_XTR") != None): return(True)
     return(False)

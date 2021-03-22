@@ -26,8 +26,12 @@
 #
 #------------------------------------------------------------------------------
 
-import commands
 import os
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#entry    
 
 def bold(string):
     return("\033[1m" + string + "\033[0m")
@@ -36,8 +40,8 @@ def bold(string):
 #
 # Add title.
 #
-version = commands.getoutput("cat lisp-version.txt")
-rv = commands.getoutput("head -1 logs/lisp-core.log")
+version = getoutput("cat lisp-version.txt")
+rv = getoutput("head -1 logs/lisp-core.log")
 if (rv.find("version") != -1):
     rv = rv.split("version ")[1]
     rv = rv.split(",")[0]
@@ -51,14 +55,14 @@ else:
 #
 command = "ps auxww | egrep 'lisp-' |" + \
     "egrep -v 'grep|is-lisp-running|tee|pslisp|sudo|log'"
-output = commands.getoutput(command)
+output = getoutput(command)
 if (output == None or output == ""):
-    print "No lispers.net code running, release {} installed".format(version)
+    print("No lispers.net code running, release {} installed".format(version))
     exit(0)
 #endif
 if (rv == None): rv = ""
 
-print "--- lispers.net release {} installed{} ---".format(bold(version), rv)
+print("--- lispers.net release {} installed{} ---".format(bold(version), rv))
 
 lines = output.split("\n")
 
@@ -69,14 +73,14 @@ if (os.path.exists("/etc/alpine-release")):
     pid = "PID".ljust(8)
     cpu = "TIME".ljust(8)
     process = "Process"
-    print "{}{}{}".format(pid, cpu, process)
+    print("{}{}{}".format(pid, cpu, process))
     for line in lines:
         items = line.split()
         pid = items[0].ljust(8)
         cpu = items[2].ljust(8)
         process = items[3] if (items[3].find("lisp-ztr") != -1) else items[-1]
         if (process.isdigit()): process = items[-2] + " " + process
-        print "{}{}{}".format(pid, cpu, process)
+        print("{}{}{}".format(pid, cpu, process))
     #endfor
     exit(0)
 #endif
@@ -89,7 +93,7 @@ cpu = "%CPU".ljust(8)
 mem = "%MEM".ljust(8)
 mb = "MEM".ljust(8)
 process = "Process"
-print "{}{}{}{}{}".format(pid, cpu, mem, mb, process)
+print("{}{}{}{}{}".format(pid, cpu, mem, mb, process))
 
 for line in lines:
     items = line.split()
@@ -115,6 +119,6 @@ for line in lines:
         process = items[-1]
     #endif
 
-    print "{}{}{}{}{}".format(pid, cpu, mem, mb, process)
+    print("{}{}{}{}{}".format(pid, cpu, mem, mb, process))
 #endfor
 exit(0)

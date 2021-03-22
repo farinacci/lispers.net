@@ -22,24 +22,29 @@
 # 
 # -----------------------------------------------------------------------------
 
+from __future__ import print_function
 import os
-import commands
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#entry    
 
 #------------------------------------------------------------------------------
 
 command = "ls lisp-* | egrep -v 'py|log|pem|txt|config' | " + \
     "egrep -v lisp-xtr | egrep -v lisp-ztr"
 
-files = commands.getoutput(command)
+files = getoutput(command)
 
 ipc_dp = "lisp-ipc-data-plane"
 if (files != ""):
-    print "Removed LISP file descriptors:",
+    print("Removed LISP file descriptors:", end=" ")
     files = files.split("\n")
 
     if (ipc_dp in files): files.remove(ipc_dp)
     files.append("lispers.net-itr")
-    print files
+    print(files)
 #endif
 
 for f in files: 

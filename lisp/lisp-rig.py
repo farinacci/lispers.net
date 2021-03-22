@@ -26,11 +26,13 @@
 #
 #------------------------------------------------------------------------------
 
+from __future__ import print_function
 import lisp
 import sys
 import time
 import random
 import select
+from builtins import input
 
 #------------------------------------------------------------------------------
 
@@ -78,10 +80,10 @@ if (argc == 2):
 #endif
 if (argc <= 1):
     while (dest_eid == ""):
-        dest_eid = raw_input("Enter destination EID (or S->G): ")
+        dest_eid = input("Enter destination EID (or S->G): ")
     #endwhile
     while (ddt_node == ""):
-        ddt_node = raw_input("Enter ddt-node address: ")
+        ddt_node = input("Enter ddt-node address: ")
     #endwhile
 else:
     dest_eid = sys.argv[1]
@@ -90,7 +92,7 @@ else:
         if (index+1 < argc): ddt_node = sys.argv[index+1]
     #endif
     if (ddt_node == ""):
-        print "Usage: rig [<iid>]<dest-eid> to <ddt-node> [debug]"
+        print("Usage: rig [<iid>]<dest-eid> to <ddt-node> [debug]")
         exit(1)
     #endif        
 #endif
@@ -129,7 +131,7 @@ for g in geos:
 if (dist_name == False and geo_string == False):
     deid = lisp.lisp_gethostbyname(dest_eid)
     if (deid == ""):
-        print "Cannot resolve EID name '{}'".format(dest_eid)
+        print("Cannot resolve EID name '{}'".format(dest_eid))
         exit(1)
     #endtry
     dest_eid = deid
@@ -137,7 +139,7 @@ if (dist_name == False and geo_string == False):
 
 ddt_node_addr = lisp.lisp_gethostbyname(ddt_node)
 if (ddt_node_addr == ""):
-    print "Cannot resolve DDT-node name '{}'".format(ddt_node)
+    print("Cannot resolve DDT-node name '{}'".format(ddt_node))
     exit(1)
 #endif
 ddt_node = ddt_node_addr
@@ -290,7 +292,7 @@ while (True):
     if (retry_count == 0): break
 
     if (depth == 0):
-        print "Reached depth limit for LISP-DDT traversal"
+        print("Reached depth limit for LISP-DDT traversal")
         break
     #endif
 
@@ -298,8 +300,8 @@ while (True):
         if (pending[key][0] != None): continue
         ddt_node = pending[key][1]
 
-        print "Send rig map-request to {} for EID {} ...".format( \
-            ddt_node.print_address_no_iid(), target_eid_str)
+        print("Send rig map-request to {} for EID {} ...".format( \
+            ddt_node.print_address_no_iid(), target_eid_str))
 
         #
         # Send ECM based Map-Request to Map-Resolver..
@@ -352,7 +354,7 @@ while (True):
     # Did not get a packet, hmm.
     #
     if (opcode != "packet"): 
-        print "Internal fatal error"
+        print("Internal fatal error")
         continue
     #endif
 
@@ -360,7 +362,7 @@ while (True):
     # Did not get a Map-Referral, something is messed up in the network.
     #
     if (header.decode(packet) == None):
-        print "Could not decode header"
+        print("Could not decode header")
         continue
     #endif
 
@@ -373,8 +375,8 @@ while (True):
         if (lisp_listen_socket != None and header.type == lisp.LISP_ECM):
             time.sleep(2)
         else:
-            print "Map-Referral not returned, packet type {} returned". \
-                format(header.type)
+            print("Map-Referral not returned, packet type {} returned". \
+                format(header.type))
         #endif
         continue
     #endif
@@ -383,8 +385,8 @@ while (True):
     # Not in pending queue.
     #
     if (pending.has_key(source) == False):
-        print "Received Map-Referral from {} but no Map-Request was pending". \
-                format(source)
+        print("Received Map-Referral from {} but no Map-Request was pending". \
+                format(source))
         continue
     #endif
 
@@ -395,10 +397,10 @@ while (True):
     # Process Map-Referral.
     #
     rtt = round(time.time() - map_request_ts, 3)
-    print "Received map-referral from {} with rtt {} secs:".format(source, rtt)
+    print("Received map-referral from {} with rtt {} secs:".format(source, rtt))
     packet = map_referral.decode(packet)
     if (packet == None):
-        print "Could not decode Map-Referral packet"
+        print("Could not decode Map-Referral packet")
         continue
     #endif
     no_reply = False
@@ -412,15 +414,15 @@ while (True):
         action = lisp.lisp_map_referral_action_string[eid_record.action]
         action = lisp.bold(action, False)
 
-        print "EID-prefix: {}, ttl: {}, referral-type: {}". \
-            format(eid_record.print_prefix(), eid_record.print_ttl(), action)
+        print("EID-prefix: {}, ttl: {}, referral-type: {}". \
+            format(eid_record.print_prefix(), eid_record.print_ttl(), action))
 
         eid_record.print_record("", True)
 
         ref_select = 0
         if (eid_record.rloc_count != 0):
-            print "  Referrals:",
-            if (lisp.lisp_debug_logging): print "\n"
+            print("  Referrals:", end=" ")
+            if (lisp.lisp_debug_logging): print("\n")
             ref_select = random.randint(0, 255) % eid_record.rloc_count
         #endif
 
@@ -443,7 +445,7 @@ while (True):
             if (lisp.lisp_debug_logging == False):
                 string = rloc_record.rloc.print_address_no_iid()
                 if (j != eid_record.rloc_count-1): string += ","
-                print string,
+                print(string, end=" ")
             #endif
 
             if (follow_all):
@@ -459,7 +461,7 @@ while (True):
                 [None, rloc_record.rloc]
         #endfor
 
-        if (eid_record.rloc_count != 0): print "\n"
+        if (eid_record.rloc_count != 0): print("\n")
     #endfor
 
     #
@@ -479,7 +481,7 @@ while (True):
 #
 # Finish up with response to user.
 #
-if (no_reply): print "*** No map-referral received ***"
+if (no_reply): print("*** No map-referral received ***")
 
 #
 # Close down resources and exit.

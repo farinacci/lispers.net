@@ -29,7 +29,7 @@ import struct
 try:
     import psyco            # a specializing [runtime] compiler
     have_psyco = True       # for 32-bit architectures
-    print 'psyco enabled'
+    print('psyco enabled')
 except:
     have_psyco = False
     

@@ -30,11 +30,13 @@
 #
 #------------------------------------------------------------------------------
 
+from __future__ import print_function
 import lisp
 import sys
 import time
 import random
 import select
+from builtins import input
 
 #------------------------------------------------------------------------------
 
@@ -84,13 +86,13 @@ def process_eid_records(record_count, nonce, packet):
         eid_record = lisp.lisp_eid_record()
         packet = eid_record.decode(packet)
         if (packet == None): break
-        print "EID-prefix: {}, ttl: {}, rloc-set:".format( \
-            eid_record.print_prefix(), eid_record.print_ttl())
+        print("EID-prefix: {}, ttl: {}, rloc-set:".format( \
+            eid_record.print_prefix(), eid_record.print_ttl()))
 
         if (eid_record.rloc_count == 0):
             action = lisp.lisp_map_reply_action_string[eid_record.action]
             action = lisp.bold(action, False)
-            print "  Empty, map-reply action: {}".format(action)
+            print("  Empty, map-reply action: {}".format(action))
         #endif
         
         eid_record.print_record("", False)
@@ -100,31 +102,31 @@ def process_eid_records(record_count, nonce, packet):
             if (packet == None): break
             p = rloc_record.priority
             mp = rloc_record.mpriority
-            print "  RLOC: {}, up/uw/mp/mw: {}/{}/{}/{}, flags: {}{}{}". \
+            print("  RLOC: {}, up/uw/mp/mw: {}/{}/{}/{}, flags: {}{}{}". \
                 format(rloc_record.rloc.print_address_no_iid(), p, rloc_record.
                 weight, mp, rloc_record.mweight, rloc_record.print_flags(), 
                 "" if rloc_record.rloc_name == None else \
                 ", " + rloc_record.print_rloc_name(),
-                ", RTR" if p == 254 and mp == 255 else "")
+                ", RTR" if p == 254 and mp == 255 else ""))
 
             if (rloc_record.geo):
-                print "        geo: {}".format(rloc_record.geo.print_geo())
+                print("        geo: {}".format(rloc_record.geo.print_geo()))
             #endif
             if (rloc_record.elp):
                 elp = rloc_record.elp.print_elp(False)
-                print "        elp: {}".format(elp)
+                print("        elp: {}".format(elp))
             #endif
             if (rloc_record.rle):
                 rle = rloc_record.rle.print_rle(False, True)
-                print "        rle: {}".format(rle)
+                print("        rle: {}".format(rle))
             #endif
             if (rloc_record.json):
                 json = rloc_record.json.print_json(False)
-                print "        json: {}".format(json)
+                print("        json: {}".format(json))
             #endif
             rloc_record.print_record("  ")
         #endfor
-        print ""
+        print("")
     #endfor
     return
 #enddef
@@ -163,16 +165,16 @@ if (argc == 2):
 #endif
 if (argc <= 1):
     while (dest_eid == ""):
-        dest_eid = raw_input("Enter destination EID (or S->G): ")
+        dest_eid = input("Enter destination EID (or S->G): ")
     #endwhile
     while (mr == ""):
-        mr = raw_input("Enter map-resolver address: ")
+        mr = input("Enter map-resolver address: ")
     #endwhile
     while (count == ""):
-        count = raw_input("Enter map-request tries (1-5): ")
+        count = input("Enter map-request tries (1-5): ")
         if (count < 1 and count > 5): count = ""
     #endwhile
-    source_eid = raw_input("Enter optional source EID: ")
+    source_eid = input("Enter optional source EID: ")
 else:
     dest_eid = sys.argv[1]
     if ("source" in sys.argv):
@@ -191,8 +193,8 @@ else:
         #endif
     #endif
     if (mr == ""):
-        print "Usage: lig [<iid>]<dest-eid> to <mr-rloc> " + \
-            "[source <source-eid>] [count <1-5>] [debug] [no-info]"
+        print("Usage: lig [<iid>]<dest-eid> to <mr-rloc> " + \
+            "[source <source-eid>] [count <1-5>] [debug] [no-info]")
         exit(1)
     #endif        
 #endif
@@ -215,7 +217,7 @@ if (dest_eid.find("[") != -1):
     iid = dest_eid.split("]")
     dest_eid = iid[1]
     if (dest_eid == ""):
-        print "No destination EID specified"
+        print("No destination EID specified")
         exit(1)
     #endif
     iid = iid[0]
@@ -235,7 +237,7 @@ for g in geos:
 if (dist_name == False and geo_string == False):
     deid = lisp.lisp_gethostbyname(dest_eid)
     if (deid == ""):
-        print "Cannot resolve EID name '{}'".format(dest_eid)
+        print("Cannot resolve EID name '{}'".format(dest_eid))
         exit(1)
     #endtry
     dest_eid = deid
@@ -243,7 +245,7 @@ if (dist_name == False and geo_string == False):
 
 mr_addr = lisp.lisp_gethostbyname(mr)
 if (mr_addr == ""):
-    print "Cannot resolve Map-Resolver name '{}'".format(mr)
+    print("Cannot resolve Map-Resolver name '{}'".format(mr))
     exit(1)
 #endif
 mr = mr_addr
@@ -345,7 +347,7 @@ if (source_eid == ""):
 else:
     seid = lisp.lisp_gethostbyname(source_eid)
     if (seid == ""):
-        print "Cannot resolve source EID name '{}'".format(source_eid)
+        print("Cannot resolve source EID name '{}'".format(source_eid))
         exit(1)
     #endif
     source_eid = seid
@@ -400,7 +402,7 @@ source_port = lisp.LISP_CTRL_PORT
 
 if (local_address != None and local_address.is_private_address() and 
     "no-info" not in sys.argv):
-    print "Possible NAT in path, sending Info-Request ... "
+    print("Possible NAT in path, sending Info-Request ... ")
 
     dest = lisp.lisp_convert_4to6(mr.print_address_no_iid())
     lisp.lisp_send_info_request(lisp_sockets, dest, lisp.LISP_CTRL_PORT, None)
@@ -422,7 +424,7 @@ if (local_address != None and local_address.is_private_address() and
     # No Info-Reply received.
     #
     if (source == ""):
-        print "No Info-Reply received"
+        print("No Info-Reply received")
         lisp_lig_close_sockets(lisp_sockets)
         exit(1)
     #endif
@@ -436,8 +438,8 @@ if (local_address != None and local_address.is_private_address() and
         addr_str = global_address.print_address_no_iid()
         port_str = str(translated_port)    
     #endif
-    print "Info-Reply received, public address {}, translated port {}\n". \
-        format(addr_str, port_str)
+    print("Info-Reply received, public address {}, translated port {}\n". \
+        format(addr_str, port_str))
     
     source_port = lisp_ephem_port
 
@@ -477,7 +479,7 @@ map_request.itr_rlocs.append(itr_rloc)
 #
 packet = map_request.encode(None, 0)
 if (packet == None):
-    print "Could not sign Map-Request"
+    print("Could not sign Map-Request")
     lisp_lig_close_sockets(lisp_sockets)
     exit(1)
 #endif
@@ -501,8 +503,8 @@ count = int(count)
 for i in range(count):
     packet = copy
     pubsub_str = "subscribe " if pubsub else ""
-    print "Send lig {}map-request to {} for EID {} ...".format(pubsub_str,
-        mr.print_address_no_iid(), target_eid_str)
+    print("Send lig {}map-request to {} for EID {} ...".format(pubsub_str,
+        mr.print_address_no_iid(), target_eid_str))
 
     #
     # Send ECM based Map-Request to Map-Resolver..
@@ -533,7 +535,7 @@ for i in range(count):
     # Did not get a packet, hmm.
     #
     if (opcode != "packet"): 
-        print "Internal fatal error"
+        print("Internal fatal error")
         continue
     #endif
 
@@ -541,13 +543,13 @@ for i in range(count):
     # Did not get a Map-Reply, something is messed up in the network.
     #
     if (header.decode(packet) == None):
-        print "Could not decode header"
+        print("Could not decode header")
         continue
     #endif
 
     if (header.type not in [lisp.LISP_MAP_REPLY, lisp.LISP_MAP_NOTIFY]):
-        print "Expecting Map-Reply/Notify, packet type {} returned".format( \
-            header.type)
+        print("Expecting Map-Reply/Notify, packet type {} returned".format( \
+            header.type))
         continue
     #endif
 
@@ -558,11 +560,11 @@ for i in range(count):
     # Process Map-Reply
     #
     rtt = round(time.time() - map_request_ts, 3)
-    print "Received {} from {} with rtt {} secs:".format(mr_str, source, rtt)
+    print("Received {} from {} with rtt {} secs:".format(mr_str, source, rtt))
     if (mr_str == "map-reply"):
         packet = map_reply.decode(packet)
         if (packet == None):
-            print "Could not decode Map-Reply packet"
+            print("Could not decode Map-Reply packet")
             continue
         #endif
         no_reply = False
@@ -571,7 +573,7 @@ for i in range(count):
     else:
         packet = map_notify.decode(packet)
         if (packet == None):
-            print "Could not decode Map-Notify packet"
+            print("Could not decode Map-Notify packet")
             continue
         #endif
         no_reply = False
@@ -583,7 +585,7 @@ for i in range(count):
 #
 # Finish up with response to user.
 #
-if (no_reply): print "*** No reply received ***"
+if (no_reply): print("*** No reply received ***")
 
 #
 # If pubsub, let's loop waiting for a notification.
@@ -591,8 +593,8 @@ if (no_reply): print "*** No reply received ***"
 if (pubsub):
     map_notify = lisp.lisp_map_notify(None)
     while (True):
-        print "Waiting for map-notify EID {} RLOC-set changes ...".format( \
-            target_eid_str)
+        print("Waiting for map-notify EID {} RLOC-set changes ...".format( \
+            target_eid_str))
 
         try:
             while (True):
@@ -605,11 +607,11 @@ if (pubsub):
             break
         #endtry
 
-        print "Received map-notify from map-server {}".format(source)
+        print("Received map-notify from map-server {}".format(source))
 
         packet = map_notify.decode(packet)
         if (packet == None):
-            print "Could not decode Map-Reply packet"
+            print("Could not decode Map-Reply packet")
             continue
         #endif
 

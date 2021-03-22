@@ -26,7 +26,6 @@
 
 import lisp
 import os
-import commands
 import time
 import socket
 import bottle
@@ -36,6 +35,11 @@ import select
 import copy
 import math
 from json import dumps as json_dumps
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#entry    
 
 #------------------------------------------------------------------------------
 
@@ -130,7 +134,7 @@ def lisp_banner_top(no_hover):
     html_title = socket.gethostname()
     hostname = lisp.lisp_print_cour(html_title)
     if (no_hover == False):
-        hover = commands.getoutput("ifconfig")
+        hover = getoutput("ifconfig")
         hostname = lisp.lisp_span(hostname, hover)
     #endif
 
@@ -165,7 +169,7 @@ def lisp_banner_top(no_hover):
 #
 def lisp_banner_bottom():
     hostname = socket.gethostname()
-    date = commands.getoutput("date")
+    date = getoutput("date")
     uptime = lisp.lisp_print_elapsed(lisp.lisp_uptime)
 
     banner = '''<br><hr style="border: none; border-bottom: 1px solid gray;">
@@ -242,7 +246,7 @@ def lisp_table_footer():
 # Put timestamp in header line of file lisp.config.
 #
 def lisp_write_last_changed_date(new, line):
-    ts = commands.getoutput("date")
+    ts = getoutput("date")
     l = line.find(":")
     line = line[0:l+1] + " " + ts + "\n"
     new.write(line)
@@ -985,7 +989,7 @@ def lisp_is_user_superuser(username):
     #
     # Get all "lisp user-account" commands.
     #
-    users = commands.getoutput("egrep -A 4 user-account ./lisp.config")
+    users = getoutput("egrep -A 4 user-account ./lisp.config")
     
     username_str = "username = {}".format(username)
     index = users.find(username_str)
@@ -1006,7 +1010,7 @@ def lisp_find_user_account(username, password):
     #
     # Get all "lisp user-account" commands.
     #
-    users = commands.getoutput("egrep -A 4 user-account ./lisp.config")
+    users = getoutput("egrep -A 4 user-account ./lisp.config")
 
     #
     # Find this particular username. If we don't the username, the user is
@@ -1123,7 +1127,7 @@ def lisp_login_page():
 #
 def lisp_is_any_xtr_logging_on(log_type):
     command = "egrep '" + log_type + " = '" + " ./lisp.config"
-    command = commands.getoutput(command)
+    command = getoutput(command)
     if (command == ""): return(False)
 
     #
@@ -1215,7 +1219,7 @@ def lisp_landing_page():
     #
     # Set up "show logging" button.
     #
-    count = commands.getoutput("wc -l logs/lisp-core.log")
+    count = getoutput("wc -l logs/lisp-core.log")
     count = count.replace(" ", "")
     count = count.split("logs")[0]
     onoff = "on" if dc["core"] == "yes" else "off"
@@ -1228,7 +1232,7 @@ def lisp_landing_page():
         </option>'''.format(onoff, count)
 
     if (os.path.exists("./logs/lisp-itr.log")):
-        count = commands.getoutput("wc -l logs/lisp-itr.log")
+        count = getoutput("wc -l logs/lisp-itr.log")
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["itr"] == "yes" else "off"
@@ -1237,7 +1241,7 @@ def lisp_landing_page():
             </option>'''.format(onoff, count)
     #endif
     if (os.path.exists("./logs/lisp-rtr.log")):
-        count = commands.getoutput("wc -l logs/lisp-rtr.log")
+        count = getoutput("wc -l logs/lisp-rtr.log")
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["rtr"] == "yes" else "off"
@@ -1245,7 +1249,7 @@ def lisp_landing_page():
            log [{}]</option>'''.format(onoff, count)
     #endif
     if (os.path.exists("./logs/lisp-etr.log")):
-        count = commands.getoutput("wc -l logs/lisp-etr.log")
+        count = getoutput("wc -l logs/lisp-etr.log")
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["etr"] == "yes" else "off"
@@ -1253,7 +1257,7 @@ def lisp_landing_page():
             log [{}]</option>'''.format(onoff, count)
     #endif
     if (os.path.exists("./logs/lisp-xtr.log")):
-        count = commands.getoutput("wc -l logs/lisp-xtr.log")
+        count = getoutput("wc -l logs/lisp-xtr.log")
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["itr"] == "yes" or dc["etr"] == "yes" or \
@@ -1262,7 +1266,7 @@ def lisp_landing_page():
            log [{}]</option>'''.format(onoff, count)
     #endif
     if (os.path.exists("./logs/lisp-mr.log")):
-        count = commands.getoutput("wc -l logs/lisp-mr.log")
+        count = getoutput("wc -l logs/lisp-mr.log")
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["mr"] == "yes" else "off"
@@ -1270,7 +1274,7 @@ def lisp_landing_page():
             log [{}] </option>'''.format(onoff, count)
     #endif
     if (os.path.exists("./logs/lisp-ddt.log")):
-        count = commands.getoutput("wc -l logs/lisp-ddt.log")
+        count = getoutput("wc -l logs/lisp-ddt.log")
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["ddt"] == "yes" else "off"
@@ -1278,7 +1282,7 @@ def lisp_landing_page():
             log [{}]</option>'''.format(onoff, count)
     #endif
     if (os.path.exists("./logs/lisp-ms.log")):
-        count = commands.getoutput("wc -l logs/lisp-ms.log")
+        count = getoutput("wc -l logs/lisp-ms.log")
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["ms"] == "yes" else "off"
@@ -1287,7 +1291,7 @@ def lisp_landing_page():
     #endif
     flow_logging_on = lisp_is_any_xtr_logging_on("flow-logging")
     if (os.path.exists("./logs/lisp-flow.log")):
-        count = commands.getoutput("wc -l logs/lisp-flow.log")
+        count = getoutput("wc -l logs/lisp-flow.log")
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if flow_logging_on else "off"
@@ -1592,7 +1596,7 @@ def lisp_start_stop_process(process, startstop):
         program = "python -O " + filename + " >& " + logfile + " &"
     #endif
 
-    datestamp = commands.getoutput("date")
+    datestamp = getoutput("date")
     if (startstop and os.path.exists(filename)):
         lisp.lprint("Start process '{}' on {}".format(process, datestamp))
         os.system(program)
@@ -1602,7 +1606,7 @@ def lisp_start_stop_process(process, startstop):
 
     if (startstop == False and os.path.exists(filename)):
         lisp.lprint("Stop process '{}' on {}".format(process, datestamp))
-        pid = commands.getoutput("pgrep -f " + filename)
+        pid = getoutput("pgrep -f " + filename)
         pid = pid.split("\n")[0]
         os.system("kill " + pid)
         os.system("rm " + process)
@@ -1944,7 +1948,7 @@ def lisp_process_config_file(lisp_socket, file_name, startup):
     # in first two lines.
     #
     cmd = 'egrep "{}" {}'.format(config_header, file_name)
-    found = commands.getoutput(cmd)
+    found = getoutput(cmd)
     if (found == ""):
         lisp.lprint("*** lisp.config configuration file is corrupt ***")
         return
@@ -2484,14 +2488,14 @@ def lisp_show_myrlocs(output):
             lisp.lisp_myrlocs[0] != None else "not found"
         v4 = lisp.lisp_print_cour(v4)
         flag = "-f inet" if lisp.lisp_is_macos() else "-4"
-        routes = commands.getoutput("netstat -rn {}".format(flag))
+        routes = getoutput("netstat -rn {}".format(flag))
         v4 = lisp.lisp_span(v4, routes)
 
         v6 = lisp.lisp_myrlocs[1].print_address_no_iid() if \
             lisp.lisp_myrlocs[1] != None else "not found"
         v6 = lisp.lisp_print_cour(v6)
         flag = "-f inet6" if lisp.lisp_is_macos() else "-6"
-        routes = commands.getoutput("netstat -rn {}".format(flag))
+        routes = getoutput("netstat -rn {}".format(flag))
         v6 = lisp.lisp_span(v6, routes)
 
         line = "<i>Local RLOCs found on interface </i>{}<i>, " + \
@@ -3338,7 +3342,7 @@ def lisp_put_clause_for_api(data):
     append = False
     if (replace_only_command == False):
         append = True
-        out = commands.getoutput("egrep '{}' ./lisp.config".format(command))
+        out = getoutput("egrep '{}' ./lisp.config".format(command))
         out = out.split("\n")
         for line in out: 
             if (line[0:len(command)] == command): append = False
@@ -3506,7 +3510,7 @@ def lisp_remove_clause_for_api(data):
     # the superuser account to be removed.
     #
     if (command == "lisp user-account"):
-        clause = commands.getoutput("egrep -A4 '{}' ./lisp.config".format( \
+        clause = getoutput("egrep -A4 '{}' ./lisp.config".format( \
             subcommands[0]))
 
         if (clause.find("super-user = yes") != -1):
@@ -4227,7 +4231,7 @@ def lisp_interface_command(kv_pair):
     #endif
     if (lisp_nat):
         check = "sudo iptables -t nat -C POSTROUTING -o {} -j MASQUERADE"
-        check  = commands.getoutput(check.format(device_name))
+        check  = getoutput(check.format(device_name))
         if (check != ""):
             loopback = lisp.lisp_get_loopback_address()
             if (loopback):

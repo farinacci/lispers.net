@@ -101,15 +101,20 @@
 #
 #------------------------------------------------------------------------------
 
+from __future__ import print_function
 import sys
 import struct
 import random
 import socket
 import json
-import commands
 import time
 import os
 import binascii
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#entry    
 
 #------------------------------------------------------------------------------
 
@@ -127,7 +132,7 @@ if (port != None):
         port = port[1::]
     #endif
     if (port.isdigit() == False):
-        print "Invalid value for env variable LISP_LTR_PORT"
+        print("Invalid value for env variable LISP_LTR_PORT")
         exit(1)
     #endif
     http_port = int(port)
@@ -188,7 +193,7 @@ def parse_packet(nonce, packet):
     first_long, rloc = struct.unpack(packet_format, packet[:format_size])
     packet = packet[format_size::]
     if (socket.ntohl(first_long) != 0x90000000):
-        print "Invalid LISP-Trace message"
+        print("Invalid LISP-Trace message")
         return({})
     #endif
 
@@ -201,12 +206,12 @@ def parse_packet(nonce, packet):
     # Check compare nonce sent with one echo'ed in repsonse.
     #
     if (pnonce != nonce):
-        print "Invalid nonce, sent {}, received {}".format(nonce, pnonce)
+        print("Invalid nonce, sent {}, received {}".format(nonce, pnonce))
         return({})
     #endif
 
     if (len(packet) == 0):
-        print "No JSON data in payload"
+        print("No JSON data in payload")
         return({})
     #endif
 
@@ -216,7 +221,7 @@ def parse_packet(nonce, packet):
     try:
         json_data = json.loads(packet)
     except:
-        print "Invalid JSON data: '{}'".format(packet)
+        print("Invalid JSON data: '{}'".format(packet))
         return({})
     #endtry
     return(json_data)
@@ -229,13 +234,13 @@ def parse_packet(nonce, packet):
 #
 def display_packet(jd):
     for segment in jd:
-        print "Path from {} to {}:".format(segment["seid"], segment["deid"])
+        print("Path from {} to {}:".format(segment["seid"], segment["deid"]))
         for path in segment["paths"]:
-            if (path.has_key("encap-ts")):
+            if ("encap-ts" in path):
                 ts = path["encap-ts"]
                 ed = "encap"
             #endif
-            if (path.has_key("decap-ts")):
+            if ("decap-ts" in path):
                 ts = path["decap-ts"]
                 ed = "decap"
             #endif
@@ -243,22 +248,22 @@ def display_packet(jd):
             drloc = path["drloc"]
             if (drloc.find("?") != -1): drloc = red(drloc)
 
-            print "  {} {}: {} -> {}, ts {}, node {}".format( \
-                path["node"], ed, path["srloc"], drloc, ts, blue(hn))
+            print("  {} {}: {} -> {}, ts {}, node {}".format( \
+                path["node"], ed, path["srloc"], drloc, ts, blue(hn)))
 
-            if (path.has_key("rtts") and path.has_key("hops")):
+            if ("rtts" in path and "hops" in path):
                 rtts = json.dumps(path["rtts"])
                 rtts = rtts.replace("-1", "?")
                 hops = json.dumps(path["hops"])
                 hops = hops.replace("u", "")
                 hops = hops.replace("'", "")
                 hops = hops.replace('"', "")
-                print "            ",
-                print "recent-rtts {}, recent-hops {}".format(rtts, hops)
+                print("            ", end=' ')
+                print("recent-rtts {}, recent-hops {}".format(rtts, hops))
             #endif
                 
         #endfor
-        print ""
+        print("")
     #enfor
 #enddef
 
@@ -333,7 +338,7 @@ def do_longest_match(eid, eid_prefix, ml):
 def get_db(match_iid, match_eid, user, pw, http, port, v4v6):
     cmd = ("curl --silent --insecure -u {}:{} {}://localhost:{}/lisp/" + \
         "api/data/database-mapping").format(user, pw, http, port)
-    out = commands.getoutput(cmd)
+    out = getoutput(cmd)
 
     try:
         jd = json.loads(out)
@@ -342,7 +347,7 @@ def get_db(match_iid, match_eid, user, pw, http, port, v4v6):
     #endtry
 
     for entry in jd:
-        if (entry.has_key("eid-prefix") == False): continue
+        if (("eid-prefix" in entry) == False): continue
         eid = entry["eid-prefix"]
 
         #
@@ -358,7 +363,7 @@ def get_db(match_iid, match_eid, user, pw, http, port, v4v6):
         if (v4v6 == False and eid.find(":") == -1): continue
 
         rloc = entry["rlocs"][0]["rloc"]
-        nat = entry["rlocs"][0].has_key("translated-rloc")
+        nat = "translated-rloc" in entry["rlocs"][0]
 
         if (match_iid == None): return(iid, eid, rloc, nat)
 
@@ -378,7 +383,7 @@ def get_db(match_iid, match_eid, user, pw, http, port, v4v6):
 def get_rtrs(user, pw, http, port):
     cmd = ("curl --silent --insecure -u {}:{} {}://localhost:{}/lisp/" + \
         "api/data/map-cache").format(user, pw, http, port)
-    out = commands.getoutput(cmd)
+    out = getoutput(cmd)
 
     try:
         jd = json.loads(out)
@@ -388,14 +393,14 @@ def get_rtrs(user, pw, http, port):
 
     rtr_list = []
     for entry in jd:
-        if (entry.has_key("group-prefix")): continue
-        if (entry.has_key("eid-prefix") == False): continue
+        if ("group-prefix" in entry): continue
+        if (("eid-prefix" in entry) == False): continue
         if (entry["eid-prefix"] != "0.0.0.0/0"): continue
 
         for rloc in entry["rloc-set"]:
-            if (rloc.has_key("rloc-name") == False): continue
+            if (("rloc-name" in rloc) == False): continue
             if (rloc["rloc-name"] != "RTR"): continue
-            if (rloc.has_key("address") == False): continue
+            if (("address" in rloc) == False): continue
             rtr_list.append(rloc["address"])
         #endfor
     #endfor
@@ -442,7 +447,7 @@ def check_multicast(deid, v4v6):
     else:
         if (deid[0:2].lower() != "ff"): return
     #endif
-    print "Multicast EID not supported"
+    print("Multicast EID not supported")
     exit(1)
 #enddef
 
@@ -457,13 +462,13 @@ else:
     args_bad = len(sys.argv) != 2
 #endif
 if (args_bad):
-    print "Usage: python ltr.py [-s <source-eid>] <destination-EID | DNS-name>"
+    print("Usage: python ltr.py [-s <source-eid>] <destination-EID | DNS-name>")
     exit(1)
 #endif
 
 diid, deid, no_iid = parse_eid(sys.argv[-1])
 if (diid == None):
-    print "<destinaton-eid> parse error"
+    print("<destinaton-eid> parse error")
     exit(1)
 #endif
 v4v6 = deid.find(":") == -1
@@ -481,20 +486,20 @@ if ("-s" in sys.argv):
     index = sys.argv.index("-s") + 1
     siid, seid, no_iid = parse_eid(sys.argv[index])
     if (siid == None):
-        print "-s <source-eid> parse error"
+        print("-s <source-eid> parse error")
         exit(1)
     #endif
     if (no_iid): siid = None
     x, y, rloc, nat = get_db(siid, seid, user, pw, http, http_port, v4v6)
     if (rloc == None):
-        print "[{}]{} not a local EID, maybe lispers.net API pw/port wrong". \
-            format(siid, seid)
+        print("[{}]{} not a local EID, maybe lispers.net API pw/port wrong". \
+            format(siid, seid))
         exit(1)
     #endif
 else:
     siid, seid, rloc, nat = get_db(None, None, user, pw, http, http_port, v4v6)
     if (siid == None):
-        print "Could not find local EID, maybe lispers.net API pw/port wrong?"
+        print("Could not find local EID, maybe lispers.net API pw/port wrong?")
         exit(1)
     #endif
 #endif
@@ -504,7 +509,7 @@ else:
 #
 diid = siid if diid == "0" else diid
 if (diid != siid):
-    print "Instance-IDs must be the same for source and destination EIDs"
+    print("Instance-IDs must be the same for source and destination EIDs")
     exit(1)
 #endif
 
@@ -527,21 +532,21 @@ nonce, packet = build_packet(rloc, port)
 if (nat):
     rtr_list = get_rtrs(user, pw, http, http_port)
     for rtr in rtr_list:
-        print "Send NAT-traversal LISP-Trace to RTR {} ...".format(rtr)
+        print("Send NAT-traversal LISP-Trace to RTR {} ...".format(rtr))
         sock.sendto(packet, ("::ffff:" + rtr, LISP_TRACE_PORT))
     #endfor
 #endif
 
-print "Send round-trip LISP-Trace between EIDs [{}]{} and [{}]{} ...". \
-    format(siid, seid, diid, deid)
+print("Send round-trip LISP-Trace between EIDs [{}]{} and [{}]{} ...". \
+    format(siid, seid, diid, deid))
 
 ts = time.time()
 
 dest = deid if (deid.find(":") != -1) else "::ffff:" + deid
 try:
     sock.sendto(packet, (dest, LISP_TRACE_PORT))
-except socket.error, e:
-    print "socket.sendto() failed: {}".format(e)
+except socket.error as e:
+    print("socket.sendto() failed: {}".format(e))
     exit(1)
 #endtry
 
@@ -553,15 +558,15 @@ try:
     source = source[0].replace("::ffff:", "")
 except socket.timeout:
     exit(1)
-except socket.error, e:
-    print "recvfrom() failed, error: {}".format(e)
+except socket.error as e:
+    print("recvfrom() failed, error: {}".format(e))
     exit(1)
 #endtry
 
 rtt = round(time.time() - ts, 3)
 
-print "Received reply from {}, rtt {} secs".format(source, rtt)
-print ""
+print("Received reply from {}, rtt {} secs".format(source, rtt))
+print("")
 json_data = parse_packet(nonce, packet)
 if (json_data == {}): exit(1)
 

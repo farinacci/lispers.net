@@ -1582,8 +1582,9 @@ class api_init():
     #enddef
 
     def __api_debug(self, string):
-        if (self.api_debug): print "lispapi[{}@{}]: {}".format(self.user,
-            self.host, string)
+        if (self.api_debug):
+            print("lispapi[{}@{}]: {}".format(self.user, self.host, string))
+        #endif
     #enddef
 
     def __check_prefix_syntax(self, prefix):

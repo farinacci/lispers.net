@@ -51,7 +51,7 @@ force = True
 api_port = 8080
 for arg in sys.argv[1::]:
     if (arg == "help"):
-        print "Usage: log-packets [force] [<api-port>] [help]"
+        print("Usage: log-packets [force] [<api-port>] [help]")
         exit(0)
     #endif
     if (arg == "force"): force = True
@@ -87,7 +87,7 @@ rtr = lisp.is_rtr_debug_enabled()
 #
 xtr_parms = lisp.get_xtr_parameters()
 if (xtr_parms == None):
-    print "Could not get xtr-parameters from API"
+    print("Could not get xtr-parameters from API")
     exit(1)
 #endif
 
@@ -99,24 +99,24 @@ if (dp_logging):
     lisp.disable_itr_debug()
     lisp.disable_etr_debug()
     if (rtr_running): lisp.disable_rtr_debug()
-    print "Data-plane logging has been disabled"
+    print("Data-plane logging has been disabled")
 else:
     if (rtr_running):
         if (rtr and force == False):
-            print "Control-plane logging is enabled, no action taken"
+            print("Control-plane logging is enabled, no action taken")
             exit(0)
         #endif
         lisp.enable_rtr_debug()
     else:
         if ((itr or etr) and force == False):
-            print "Control-plane logging is enabled, no action taken"
+            print("Control-plane logging is enabled, no action taken")
             exit(0)
         #endif
         lisp.enable_itr_debug()
         lisp.enable_etr_debug()
     #endif
     lisp.enable_xtr_data_plane_logging()
-    print "Data-plane logging has been enabled"
+    print("Data-plane logging has been enabled")
 #endif
 
 exit(0)

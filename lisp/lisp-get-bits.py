@@ -24,14 +24,17 @@
 # 
 # -----------------------------------------------------------------------------
 
+from __future__ import print_function
 import sys
 import os
+from six.moves import input
 
 #
 # Get parameter step.
 #
 if (len(sys.argv) == 1):
-    print "Usage: python lisp-get-bits.pyo <url-for-lispers.net-image> [force]"
+    print(("Usage: python lisp-get-bits.pyo <url-for-lispers.net-image> " + \
+           "[force]"))
     exit(1)
 #endif
 
@@ -39,7 +42,7 @@ if (len(sys.argv) == 1):
 # Check to see if wget is installed on the system.
 #
 if (os.system("which wget > /dev/null") != 0):
-    print "wget not installed"
+    print("wget not installed")
     exit(1)
 #endif
 
@@ -55,17 +58,17 @@ image = image[0:index]
 #
 if (force == False and os.path.exists(image)):
     line = "{} already exists, remove it? (y/n): ".format(image)
-    if (raw_input(line) != "y"): exit(0)
+    if (input(line) != "y"): exit(0)
     os.system("rm -fr {}".format(image))
 #endif
 
 #
 # Download step.
 #
-print "Downloading {} ...".format(url)
+print("Downloading {} ...".format(url))
 
 if (os.system("wget -q {}".format(url)) != 0):
-    print "Could not download image"
+    print("Could not download image")
     exit(1)
 #endif
 os.system("mv file {}".format(image))
@@ -74,15 +77,15 @@ os.system("mv file {}".format(image))
 # Untar step.
 #
 if (force == False):
-    yesno = raw_input("Do you want to install image? (y/n): ")
+    yesno = input("Do you want to install image? (y/n): ")
     if (yesno != "y"): exit(0)
 #endif
 
-print "Untaring {} ...".format(image)
+print("Untaring {} ...".format(image))
 if (os.system("tar zxvf {}".format(image)) != 0):
-    print "Could not untar image"
+    print("Could not untar image")
     exit(1)
 #endif
 
-print "To restart the LISP subsystem, run './RESTART-LISP'"
+print("To restart the LISP subsystem, run './RESTART-LISP'")
 exit(0)
