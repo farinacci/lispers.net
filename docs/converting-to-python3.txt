@@ -7,20 +7,20 @@
 Also check https://python-future.org for good hints to make python2 code
 incrementally ready for python3. 
 
-(1) print "a" -> print("a")
+!(1) print "a" -> print("a")
 
-(2) print "a", to print("a", end=" ")
-
-    Consider using "from __future__ import print_function" so python2 can
-    use "end".
+!(2) print "a", to print("a", end=" ")
+!
+!    Consider using "from __future__ import print_function" so python2 can
+!    use "end".
 
 (3) array.has_key("a") -> ("a" in array)
 
-(4) Don't mix tabs and spaces in a line (spread throughout code).
+!(4) Don't mix tabs and spaces in a line (spread throughout code).
 
 (5) netifaces needs python3-netifaces installed.
 
-(6) except socket.error, e: -> except socket.error as e:
+!(6) except socket.error, e: -> except socket.error as e:
 
 (7) from Crypto.Cipher import AES broke, need to:
 
@@ -32,16 +32,16 @@ incrementally ready for python3.
 
     pip3 install ecdsa
 
-(9) Can't find commands.getoutput() -> subprocess.getoutput() and change:
-
-    from subprocess import getouptut
-    command.getoutput() calls -> getoutput()
-
-    try:
-        from commands import getoutput
-    except:
-        from subprocess import getoutput
-    #entry    
+!(9) Can't find commands.getoutput() -> subprocess.getoutput() and change:
+!
+!    from subprocess import getouptut
+!    commands.getoutput() calls -> getoutput()
+!
+!    try:
+!        from commands import getoutput
+!    except:
+!        from subprocess import getoutput
+!    #entry    
 
 (10) pip3 install geopy, and vincenty not found
 
@@ -49,20 +49,42 @@ incrementally ready for python3.
 
 (12) pip3 install bottle
 
-(13) Change occurences of long -> int.
+!(13) Change occurences of long -> int.
 
 (14) Check usage of unicode, a str type is now unicode.
 
 (15) Check bytes() usage inside of strings. May be able to remove hex() calls
      and binascii() calls. Crypto and packet usage needs careful analysis.
 
-(16) Change Queue to queue, around:
-
-    try: 
-       import queue
-    except ImportError:
-       import Queue as queue    
-    #entry    
+!(16) Change Queue to queue, around:
+!
+!    try: 
+!       import queue
+!    except ImportError:
+!       import Queue as queue    
+!    #entry
+!
+!    What was actually changed in lisp.py was  "import Queue" to "import
+!    queue".
 
 -------------------------------------------------------------------------------
+
+Files with changes to input(), print(), and getoutput() calls committed to
+master branch:
+
+!   chacha.py               print()
+!   is-lisp-running.py      print(), getoutput()
+!   lisp-get-bits.py        print(), input()
+!   lisp-lig.py             print(), input()
+!   lisp-rig.py             print(), input()
+!   lisp-save-logs.py       print(), getoutput()
+!   ltr.py                  print(), input(), getoutput()
+!   remove-lisp-iptables.py print(), getoutput()
+!   remove-lisp-locks.py    print(), getoutput()
+!   lisp.py                 print(), queue(), getoutput()
+!   lispapi.py              print()
+!   lispconfig.py           getoutput()
+    
+-------------------------------------------------------------------------------
+        
     
