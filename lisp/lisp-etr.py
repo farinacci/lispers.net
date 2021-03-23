@@ -1057,10 +1057,12 @@ def lisp_etr_data_plane(parms, not_used, packet):
     # not doing NAT-traversal. Otherwise, the kernel will do it when we 
     # receive the same packet on a raw socket (in lisp_etr_nat_data_plane()).
     #
-    sport = socket.ntohs(struct.unpack("H", packet[20:22])[0])
-    if (lisp.lisp_nat_traversal and sport == lisp.LISP_DATA_PORT): return
-    packet = lisp.lisp_reassemble(packet)
-    if (packet == None): return
+    if (struct.unpack("B", packet[0])[0] & 0xf0 == 0x40):
+        sport = socket.ntohs(struct.unpack("H", packet[20:22])[0])
+        if (lisp.lisp_nat_traversal and sport == lisp.LISP_DATA_PORT): return
+        packet = lisp.lisp_reassemble(packet)
+        if (packet == None): return
+    #endif
 
     packet = lisp.lisp_packet(packet)
     status = packet.decode(True, lisp_ipc_listen_socket, lisp.lisp_decap_stats)
