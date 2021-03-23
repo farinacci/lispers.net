@@ -1,4 +1,36 @@
 
+                lispers.net Beta Release Version 0.550
+                --------------------------------------
+
+o Release date: Tue Mar 23 15:07:10 PDT 2021
+
+o When a map-server is doing a force-nat proxy replying (or notifying in case
+  of pubsub), include IPv6 RLOCs.
+
+o When sending a Map-Notify as an acknowledgement to a Map-Register, make sure
+  the RLOC flags (probe, reach, and local bits) are copied fron the
+  registration entry. Do so for a multicast Map-Notify message too (that is
+  a Map-Notify for an (S,G) EID).
+        
+-------------------------------------------------------------------------------
+    
+                lispers.net Beta Release Version 0.549
+                --------------------------------------
+
+o Release date: Mon Mar 22 21:48:14 PDT 2021
+
+o An received encapsulated IPv6 packet is being mis-interpreted as a IPv4
+  fragmented packet.
+
+o Put "sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0" in RL-template to
+  remind users what they need to make decapsulated IPv6 packets accepted
+  by kernel.
+
+o Added documentation to RL-template to describe the parameter settings on
+  the RESTART-LISP command line.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.548
                 --------------------------------------
 
