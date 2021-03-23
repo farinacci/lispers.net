@@ -7573,8 +7573,11 @@ def lisp_get_partial_rloc_set(registered_rloc_set, mr_source, multicast):
     # to the RTR. The ITR will cache a subset of the RLOC-set in this entry
     # (so it can check the global RLOC first and not encap to itself).
     #
+    # This can also be true for IPv6 RLOCs. So include them.
+    #
     rloc_set = []
     for rloc_entry in registered_rloc_set:
+        if (rloc_entry.rloc.is_ipv6()): rloc_set.append(rloc_entry)
         if (rloc_entry.rloc.is_private_address()): rloc_set.append(rloc_entry)
     #endfor
     rloc_set += rtr_list
