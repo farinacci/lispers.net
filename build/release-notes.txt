@@ -1,4 +1,33 @@
 
+                lispers.net Beta Release Version 0.548
+                --------------------------------------
+
+o Release date: Mon Mar 22 17:20:26 PDT 2021
+
+o Put an error check for any command that is suppose to be in a command
+  sub-clause but is not. For example, if the command "eid-prefix" is not
+  in a sub-clause "prefix" for the "lisp map-cache" command clause, do not
+  accept the command. Same for command "address" for a sub-clause of "rloc".
+  Do this error check for similar commands that have sub-clauses, such as
+  "lisp database-mapping", "lisp referral-cache", "lisp delegation", "lisp
+  site", and "lisp map-server-peer" as well.
+
+o Initialize reference to local variable igmp before using it in lisp_itr_
+  data_plane().
+
+o Make the lispers.net code future-proof for python3. We have changed print()
+  to python3 format that can compile with python2. The same for raw_input()
+  to input(), and changes commands.getoutput() calls to getoutput() (with
+  a try/except for commands/subprocess imports). Changed geopy.distance.
+  vincenty() to geopy.distance.distance(). Changed Queue to queue. Compiled
+  changes for all *py files throuth python2 and python3.7 as well as pyflakes2
+  and pyflakes3. Only erorr are unicode calls in lispapi.py. Builds will NOT
+  change yet to python3.
+
+o Byte-swap outer UDP port numbers even when the outer IP header is IPv6.
+        
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.547
                 --------------------------------------
 
