@@ -9173,6 +9173,9 @@ def lisp_send_merged_map_notify(lisp_sockets, parent, map_register,
     for xtr in parent.registered_rlocs:
         rloc_record = lisp_rloc_record()
         rloc_record.store_rloc_entry(xtr)
+        rloc_record.local_bit = xtr.local_bit
+        rloc_record.probe_bit = xtr.probe_bit
+        rloc_record.reach_bit = xtr.reach_bit
         packet_record += rloc_record.encode()
         rloc_record.print_record("  ")
         del(rloc_record)
@@ -9404,6 +9407,9 @@ def lisp_send_multicast_map_notify(lisp_sockets, site_eid, eid_list, xtr):
         if (rtrs_exist ^ rloc_entry.is_rtr()): continue
         rloc_record = lisp_rloc_record()
         rloc_record.store_rloc_entry(rloc_entry)
+        rloc_record.local_bit = rloc_entry.local_bit
+        rloc_record.probe_bit = rloc_entry.probe_bit
+        rloc_record.reach_bit = rloc_entry.reach_bit
         packet += rloc_record.encode()
         rloc_record.print_record("    ")
     #endfor
@@ -9415,7 +9421,7 @@ def lisp_send_multicast_map_notify(lisp_sockets, site_eid, eid_list, xtr):
     if (packet == None): return
 
     #
-    # Send Map-Notify to xtR.
+    # Send Map-Notify to xTR.
     #
     lisp_send_map_notify(lisp_sockets, packet, xtr, LISP_CTRL_PORT)
 
