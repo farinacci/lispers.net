@@ -1892,21 +1892,12 @@ class lisp_packet():
         self.udp_length = len(self.packet) + 16
 
         #
-        # IPv6 raw sockets need to have the UDP ports not swapped.
+        # Swap UDP port numbers and length field since they are 16-bit values.
         #
-        if (self.outer_version == 4):
-            sport = socket.htons(self.udp_sport)
-            dport = socket.htons(self.udp_dport)
-        else:
-            sport = self.udp_sport
-            dport = self.udp_dport
-        #endif
-
-        dport = socket.htons(self.udp_dport) if self.outer_version == 4 else \
-            self.udp_dport
-
-        udp = struct.pack("HHHH", sport, dport, socket.htons(self.udp_length),
-            self.udp_checksum)
+        sport = socket.htons(self.udp_sport)
+        dport = socket.htons(self.udp_dport)
+        udp_len = socket.htons(self.udp_length)
+        udp = struct.pack("HHHH", sport, dport, udp_len, self.udp_checksum)
 
         #
         # Encode the LISP header.
