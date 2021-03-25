@@ -1,4 +1,22 @@
 
+                lispers.net Beta Release Version 0.551
+                --------------------------------------
+
+o Release date: Wed Mar 24 21:16:12 PDT 2021
+
+o Set RLOC flags to Local and Reachable in Map-Notify messages that are sent
+  in response to Map-Register messages (for Map-Register acks or for merge
+  RLOC-set notifications).
+
+o If a sender of an RLOC JSON string gets the length wrong, the receiver needs
+  to not crash. Found this with telemetry based RLOC-probing.
+
+o When decoding a Map-Request with telemetry in the ITR-RLOCs field, the
+  difference of the LCAF length and JSON length is 4 bytes. We were testing for
+  2 and hence not accepting the Map-Request RLOC-probe.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.550
                 --------------------------------------
 
