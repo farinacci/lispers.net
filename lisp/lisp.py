@@ -4509,7 +4509,7 @@ class lisp_map_request():
         json_len = socket.ntohs(json_len)
         packet = packet[format_size::]
         if (len(packet) < lcaf_len): return(None)
-        if (lcaf_len != json_len + 2): return(None)
+        if (lcaf_len != json_len + 4): return(None)
 
         #
         # Pull out JSON string from packet.
@@ -4653,6 +4653,7 @@ class lisp_map_request():
                 orig_packet = packet
                 json_packet = packet[format_size::]
                 packet = self.lcaf_decode_json(json_packet)
+                if (packet == None): return(None)
                 if (packet == json_packet): packet = orig_packet
             #endif
 
@@ -5175,6 +5176,7 @@ class lisp_ecm():
             green(self.source.print_address(), False),
             green(self.dest.print_address(), False), self.udp_sport, 
             self.udp_dport))
+    #enddef
 
     def encode(self, packet, inner_source, inner_dest):
         self.udp_length = len(packet) + 8
