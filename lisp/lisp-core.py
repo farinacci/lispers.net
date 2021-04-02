@@ -58,13 +58,21 @@ import commands
 import time
 import os
 import bottle
-from cherrypy import wsgiserver
-from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
-#from OpenSSL import SSL
 import json
 import sys
 import socket
 import thread
+
+#
+# Newer versions of CherryPy does not include WSGIServer. Has moved to cheroot.
+#
+try:
+    from cherrypy.wsgiserver import CherryPyWSGIServer as wsgi_server
+    from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter as ssl_adaptor
+except:
+    from cheroot.wsgi import Server as wsgi_server
+    from cheroot.ssl.builtin import BuiltinSSLAdapter as ssl_adaptor
+#endtry
 
 #------------------------------------------------------------------------------
 
@@ -2038,10 +2046,8 @@ class lisp_ssl_server(bottle.ServerAdapter):
                 "cert.pem.default").format(cert))
         #endif
 
-        server = wsgiserver.CherryPyWSGIServer((self.host, self.port), hand)
-        server.ssl_adapter = pyOpenSSLAdapter(cert, cert, None)
-#        context = SSL.Context(SSL.SSLv23_METHOD)
-#        server.ssl_adapter.context = context
+        server = wsgi_server((self.host, self.port), hand)
+        server.ssl_adapter = ssl_adaptor(cert, cert, None)
         try: 
             server.start()  
         finally: 
