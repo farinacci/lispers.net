@@ -1,0 +1,62 @@
+#!/bin/tcsh
+#
+# RL - Restart LISP Wrapper Script
+#
+# A RESTART-LISP script to be run a LISP xTR on a user host system.
+#
+# This RL script will provision a lisp.config file if it does not exist.
+# You can parametersize the provision-lisp.py script with env variables DEVICE,
+# IID, EID4, and EID6.
+#
+# For this script to work, you must have provision-lisp.py and
+# lisp.config.provision-xtr files in the lispers.net directory.
+#
+# The lispers.net code does not run natively on Windows. You must install
+# docker on the platform to run it.
+#
+#------------------------------------------------------------------------------
+
+#
+# Default to docker default device of eth0. If you are running natively, you
+# pick your interface where your default route points to. Run the following
+# to find out: "ip route | egrep default". MacOS is "e0".
+#
+set DEVICE = "eth0"
+#set DEVICE = "en0"
+
+#
+# Default IID to 0, unless "setenv IID <ipv4-iid>" set by caller.
+#
+if ($?IID == 0) then
+    set IID = "0"
+endif
+
+#
+#
+# If caller does a "setenv EID4 <ipv4-eid>" and "setenv EID6 <ipv6-eid>", the
+# EID values will be passed to provision-lisp.py to provision the lisp.config
+# file with the supplied EIDs. Otherwise, random values will be created.
+#
+if ($?EID4 == 0) then
+    set EID4 = ""
+endif
+if ($?EID6 == 0) then
+    set EID6 = ""
+endif
+
+#
+# Go into directory where RL resides.
+#
+cd `dirname $0`
+
+#
+# Provision lisp.config and/or reinstall kernel routes.
+#
+python ./provision-lisp.py $DEVICE $IID $EID4 $EID6
+
+#
+# Start the lispers.net LISP subsystem, quietly.
+#
+#/lispers.net/RESTART-LISP 8080 $DEVICE > /dev/null
+~/lispers.net/RESTART-LISP 8080 $DEVICE > /dev/null
+exit
