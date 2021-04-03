@@ -19,10 +19,16 @@
 #
 # Default to docker default device of eth0. If you are running natively, you
 # pick your interface where your default route points to. Run the following
-# to find out: "ip route | egrep default". MacOS is "e0".
+# to find out: "ip route | egrep default". MacOS is "e0". The defaults will
+# be computed dynamically.
 #
-set DEVICE = "eth0"
-#set DEVICE = "en0"
+set DEVICE = ""
+if (-f /.dockerenv) then
+    set DEVICE = "eth0"
+else if (`uname` == "Darwin") then
+    set DEVICE = "en0"
+endif
+echo "Using RLOC interface $DEVICE"
 
 #
 # Default IID to 0, unless "setenv IID <ipv4-iid>" set by caller.

@@ -59,7 +59,6 @@ else:
     version = raw_input("Enter version number (in format x.y): ")
     iid = raw_input("Enter LISP xTR instance-ID: ")
 #endif
-macos = raw_input("Is this release for MacOS? (y/n): ")
 
 release = "./releases/release-{}".format(version)
 if (os.path.exists(release) == False):
@@ -97,8 +96,7 @@ print("done")
 #
 # Create new "provisioned release" tarball.
 #
-md = "macos" if (macos) else "docker"
-ptgz = "lispers.net-x86-release-{}-iid-{}-{}.tgz".format(version, iid, md)
+ptgz = "lispers.net-x86-release-{}-iid-{}.tgz".format(version, iid)
 print("Creating provisoined tarball for release {}, instance-ID {} ...". \
       format(version, iid)),
 cmd = "cd {}; export COPYFILE_DISABLE=true; tar czf {} *".format(tmp, ptgz)
