@@ -1,4 +1,47 @@
 
+                lispers.net Beta Release Version 0.553
+                --------------------------------------
+
+o Release date:
+
+o Have RL.provision-xtr figure out for itself if its running on MacOS or
+  Docker.
+
+o Change provisioning file name to NOT include OS name.        
+
+-------------------------------------------------------------------------------
+    
+
+                lispers.net Beta Release Version 0.552
+                --------------------------------------
+
+o Release date: Fri Apr  2 19:07:28 PDT 2021
+
+o Use cheroot to be an alternative to CherryPy since later versions don't
+  have the WSGI-server and SSL-adaptor functions. This allows lispers.net
+  to run on MacOS. The functionality we are introducing is to have the LISP
+  xTR co-located with multicast applications that run on MacOS. As well as,
+  having support the telemetry-based RLOC-probing directly to the user.
+
+o Add files RL.provision-xtr and lisp.config.provision-xtr. When these are
+  packaged with a lispers.net tarball, the LISP subsystem will start up
+  and provision a lisp.config file with randomly created IPv4 and IPv6 EIDs
+  so there can be a plug-and-play installation on MacOS (or Docker). This is
+  supported by a python program called provision-lisp.py which we used for
+  blockchain applications. Now making it mainstream for host based LISP xTRs
+  (in Docker, MacOS and Linux hosts).
+
+o Add file docs/how-to-install-macos.txt for manual installs. All is needed
+  is a pip install.
+
+o Create make-provision-release.py that takes a tarball release and adds
+  customized xTR provisioned files and parameters to the tarball. So all the
+  users has to do is untar and RL. You cannot customize the map-server yet but
+  can customize the device used for Macos or Docker and the instance-ID.
+
+-------------------------------------------------------------------------------
+    
+
                 lispers.net Beta Release Version 0.551
                 --------------------------------------
 
