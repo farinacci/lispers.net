@@ -2,7 +2,7 @@
                 lispers.net Beta Release Version 0.553
                 --------------------------------------
 
-o Release date:
+o Release date: Sat Apr  3 13:16:53 PDT 2021
 
 o Have RL.provision-xtr figure out for itself if its running on MacOS or
   Docker.
