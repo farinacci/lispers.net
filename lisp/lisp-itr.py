@@ -489,6 +489,12 @@ def lisp_itr_get_capture_info():
             continue
         #endif
 
+        #
+        # MacOS uses one interface for the RLOC interface as well as the
+        # EID interface.
+        #
+        if (lisp.lisp_is_macos() and device != "en0"): continue
+
         args = [device, pfilter, lisp_pcap_lock]
         lisp.lprint("Capturing packets on {}interface {}".format(us, device))
         threading.Thread(target=lisp_itr_pcap_thread, args=args).start() 
