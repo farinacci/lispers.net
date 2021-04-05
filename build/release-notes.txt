@@ -1,4 +1,15 @@
 
+                lispers.net Beta Release Version 0.554
+                --------------------------------------
+
+o Release date: Mon Apr  5 11:51:37 PDT 2021
+
+o In some cases, lisp-itr wants to pcap capture all packets on all MacOS
+  interfaces. There is a descrepancy between what netifaces and ifconfig know
+  about interface en1. Have lisp-itr listen only to en0 on MacOS.    
+
+-------------------------------------------------------------------------------
+    
                 lispers.net Beta Release Version 0.553
                 --------------------------------------
 
@@ -10,7 +21,6 @@ o Have RL.provision-xtr figure out for itself if its running on MacOS or
 o Change provisioning file name to NOT include OS name.        
 
 -------------------------------------------------------------------------------
-    
 
                 lispers.net Beta Release Version 0.552
                 --------------------------------------
