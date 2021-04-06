@@ -63,6 +63,9 @@ python ./provision-lisp.py $DEVICE $IID $EID4 $EID6
 #
 # Start the lispers.net LISP subsystem, quietly.
 #
-#/lispers.net/RESTART-LISP 8080 $DEVICE > /dev/null
-~/lispers.net/RESTART-LISP 8080 $DEVICE > /dev/null
+if (-f /.dockerenv) then
+    /lispers.net/RESTART-LISP 8080 $DEVICE > /dev/null
+else if (`uname` == "Darwin") then
+    ~/lispers.net/RESTART-LISP 8080 $DEVICE > /dev/null
+endif
 exit

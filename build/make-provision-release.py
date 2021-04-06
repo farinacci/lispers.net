@@ -87,7 +87,6 @@ print("done")
 #
 print("Customize RL.provision-xtr file with provisioning parameters ..."),
 f = open("{}/RL".format(tmp), "r"); buf = f.read(); f.close()
-buf = buf.replace('set DEVICE = "eth0"', 'set DEVICE = "en0"')
 buf = buf.replace('set IID = "0"', 'set IID = "{}"'.format(iid))
 f = open("{}/RL".format(tmp), "w"); f.write(buf); f.close()
 os.system("rm {}/RL-template".format(tmp))
