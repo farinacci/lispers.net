@@ -2480,9 +2480,8 @@ class lisp_packet():
         # Get version number of outer header so we can decode outer addresses.
         #
         header_len = 0
-        iid = 0
+        iid = self.lisp_header.get_instance_id()
         if (is_lisp_packet):
-            iid = self.lisp_header.get_instance_id()
             version = struct.unpack("B", packet[0:1])[0]
             self.outer_version = version >> 4
             if (self.outer_version == 4): 
@@ -7218,6 +7217,10 @@ def lisp_build_map_reply(eid, group, rloc_set, nonce, action, ttl, map_request,
         rloc_record.local_bit = True
         rloc_record.probe_bit = True
         rloc_record.reach_bit = True
+        if (lisp_i_am_rtr):
+            rloc_record.priority = 254
+            rloc_record.rloc_name = "RTR"
+        #endif
         js = lisp_encode_telemetry(json_telemetry, eo=str(time.time()))
         rloc_record.json = lisp_json("telemetry", js)
         rloc_record.print_record("    ")
@@ -19677,8 +19680,11 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     #endif
 
     #
-    # If we are swampping addresses, do it here so the JSON append and IP
+    # If we are swapping addresses, do it here so the JSON append and IP
     # header fields changes are all reflected in new IPv4 header checksum.
+    #
+    # Clear the DF-bit because we may have to fragment as the packet is going
+    # to grow with trace data.
     #
     if (swap):
         if (packet.inner_version == 4):
@@ -19691,6 +19697,8 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
         d = packet.inner_dest
         packet.inner_dest = packet.inner_source
         packet.inner_source = d
+#       df_flags = struct.unpack("B", headers[6])[0] & 0xbf
+#       headers = headers[0:6] + struct.pack("B", df_flags) + headers[7::]
     #endif
 
     #
