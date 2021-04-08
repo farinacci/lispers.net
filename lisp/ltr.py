@@ -68,28 +68,28 @@
 # at each encapsulation hop. Note example below:
 # 
 # [ 
-#   { "seid" : "[<iid>]<orig-eid>", "deid" : "[<iid>]<dest-eid>", "paths" : a
+#   { "se" : "[<iid>]<orig-eid>", "de" : "[<iid>]<dest-eid>", "paths" : a
 #   [
-#     { "node" : "ITR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#       "encap-ts" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
-#     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#       "decap-ts" : "<ts>", "hn" : "<hn>" },
-#     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#       "encap-ts" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
-#     { "node" : "ETR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#       "encap-ts" : "<ts>", "hn" : "<hn>" }, ...
+#     { "n" : "ITR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
+#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
+#     { "n" : "RTR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
+#       "dts" : "<ts>", "hn" : "<hn>" },
+#     { "n" : "RTR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
+#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
+#     { "n" : "ETR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
+#       "ets" : "<ts>", "hn" : "<hn>" }, ...
 #   ] },
 # 
-#   { "seid" : "[<iid>]<dest-eid>", "deid" : "[<iid>]<orig-eid>", "paths" :
+#   { "se" : "[<iid>]<dest-eid>", "de" : "[<iid>]<orig-eid>", "paths" :
 #   [
-#     { "node" : "ITR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#       "encap-ts" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
-#     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#       "decap-ts" : "<ts>", "hn" : "<hn>" },
-#     { "node" : "RTR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#       "encap-ts" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
-#     { "node" : "ETR", "srloc" : "<source-rloc>",  "drloc" : "<dest_rloc>",
-#       "encap-ts" : "<ts>", "hn" : "<hn>" }, ...
+#     { "n" : "ITR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
+#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
+#     { "n" : "RTR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
+#       "dts" : "<ts>", "hn" : "<hn>" },
+#     { "n" : "RTR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
+#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
+#     { "n" : "ETR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
+#       "ets" : "<ts>", "hn" : "<hn>" }, ...
 #   ] }
 # ]
 #
@@ -113,7 +113,7 @@ try:
     from commands import getoutput
 except:
     from subprocess import getoutput
-#entry    
+#entry
 
 #------------------------------------------------------------------------------
 
@@ -233,32 +233,37 @@ def parse_packet(nonce, packet):
 #
 def display_packet(jd):
     for segment in jd:
-        print("Path from {} to {}:".format(segment["seid"], segment["deid"]))
+        print("Path from {} to {}:".format(segment["se"], segment["de"]))
         for path in segment["paths"]:
-            if ("encap-ts" in path):
-                ts = path["encap-ts"]
+            if ("ets" in path):
+                ts = path["ets"]
                 ed = "encap"
             #endif
-            if ("decap-ts" in path):
-                ts = path["decap-ts"]
+            if ("dts" in path):
+                ts = path["dts"]
                 ed = "decap"
             #endif
             hn = path["hn"]
-            drloc = path["drloc"]
+            drloc = path["dr"]
             if (drloc.find("?") != -1): drloc = red(drloc)
 
             print("  {} {}: {} -> {}, ts {}, node {}".format( \
-                path["node"], ed, path["srloc"], drloc, ts, blue(hn)))
+                path["n"], ed, path["sr"], drloc, ts, blue(hn)))
 
-            if ("rtts" in path and "hops" in path):
-                rtts = json.dumps(path["rtts"])
-                rtts = rtts.replace("-1", "?")
-                hops = json.dumps(path["hops"])
-                hops = hops.replace("u", "")
-                hops = hops.replace("'", "")
-                hops = hops.replace('"', "")
+            if ("rtts" in path and "hops" in path and "lats" in path):
+                r = json.dumps(path["rtts"])
+                r = r.replace("-1", "?")
+                h = json.dumps(path["hops"])
+                h = h.replace("u", "")
+                h = h.replace("'", "")
+                h = h.replace('"', "")
+                l = json.dumps(path["lats"])
+                l = l.replace("u", "")
+                l = l.replace("'", "")
+                l = l.replace('"', "")
                 print("            ", end=' ')
-                print("recent-rtts {}, recent-hops {}".format(rtts, hops))
+                print("recent-rtts {}, recent-hops {}".format(r, h))
+                print("             recent-latencies {}".format(l))
             #endif
                 
         #endfor
@@ -539,18 +544,21 @@ if (nat):
 print("Send round-trip LISP-Trace between EIDs [{}]{} and [{}]{} ...". \
     format(siid, seid, diid, deid))
 
+dest = deid if (deid.find(":") != -1) else "::ffff:" + deid
 ts = time.time()
 
-dest = deid if (deid.find(":") != -1) else "::ffff:" + deid
+#
+# Send Trace packet to EID.
+#
 try:
     sock.sendto(packet, (dest, LISP_TRACE_PORT))
 except socket.error as e:
-    print("socket.sendto() failed: {}".format(e))
+    print("sock.sendto() failed: {}".format(e))
     exit(1)
 #endtry
 
 #
-# Wait for reply, timeout after 3 seconds.
+# Wait for 3 seconds.
 #
 try:
     packet, source = sock.recvfrom(9000)
@@ -558,7 +566,7 @@ try:
 except socket.timeout:
     exit(1)
 except socket.error as e:
-    print("recvfrom() failed, error: {}".format(e))
+    print("sock.recvfrom() failed, error: {}".format(e))
     exit(1)
 #endtry
 

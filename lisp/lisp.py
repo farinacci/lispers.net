@@ -19549,22 +19549,22 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     # Add node entry data for the encapsulation or decapsulation.
     #
     entry = {}
-    entry["node"] = "ITR" if lisp_i_am_itr else "ETR" if lisp_i_am_etr else \
+    entry["n"] = "ITR" if lisp_i_am_itr else "ETR" if lisp_i_am_etr else \
         "RTR" if lisp_i_am_rtr else "?"
     srloc = packet.outer_source
     if (srloc.is_null()): srloc = lisp_myrlocs[0]
-    entry["srloc"] = srloc.print_address_no_iid()
+    entry["sr"] = srloc.print_address_no_iid()
 
     #
     # In the source RLOC include the ephemeral port number of the ltr client
     # so RTRs can return errors to the client behind a NAT.
     #
-    if (entry["node"] == "ITR" and packet.inner_sport != LISP_TRACE_PORT):
-        entry["srloc"] += ":{}".format(packet.inner_sport)
+    if (entry["n"] == "ITR" and packet.inner_sport != LISP_TRACE_PORT):
+        entry["sr"] += ":{}".format(packet.inner_sport)
     #endif
         
     entry["hn"] = lisp_hostname
-    key = ed + "-ts"
+    key = ed[0] + "ts"
     entry[key] = lisp_get_timestamp()
 
     #
@@ -19572,19 +19572,19 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     # lisp_etr_nat_data_plane() where the kernel strips the outer header. Get
     # the local/private RLOC from our database-mapping.
     #
-    if (next_rloc == "?" and entry["node"] == "ETR"):
+    if (next_rloc == "?" and entry["n"] == "ETR"):
         db = lisp_db_for_lookups.lookup_cache(packet.inner_dest, False)
         if (db != None and len(db.rloc_set) >= 1):
             next_rloc = db.rloc_set[0].rloc.print_address_no_iid()
         #endif
     #endif
-    entry["drloc"] = next_rloc
+    entry["dr"] = next_rloc
 
     #
     # If there is a reason there is no dest RLOC, include it.
     #
     if (next_rloc == "?" and reason != None):
-        entry["drloc"] += " ({})".format(reason)
+        entry["dr"] += " ({})".format(reason)
     #endif
 
     #
@@ -19593,7 +19593,7 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     if (rloc_entry != None):
         entry["rtts"] = rloc_entry.recent_rloc_probe_rtts
         entry["hops"] = rloc_entry.recent_rloc_probe_hops
-        entry["latencies"] = rloc_entry.recent_rloc_probe_latencies
+        entry["lats"] = rloc_entry.recent_rloc_probe_latencies
     #endif
 
     #
@@ -19604,8 +19604,8 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     deid = packet.inner_dest.print_address()
     if (trace.packet_json == []):
         rec = {}
-        rec["seid"] = seid
-        rec["deid"] = deid
+        rec["se"] = seid
+        rec["de"] = deid
         rec["paths"] = []
         trace.packet_json.append(rec)
     #endif
@@ -19615,7 +19615,7 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     # RLOC address in case we have to return-to-sender.
     #
     for rec in trace.packet_json:
-        if (rec["deid"] != deid): continue
+        if (rec["de"] != deid): continue
         rec["paths"].append(entry)
         break
     #endfor
@@ -19627,11 +19627,11 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     # encap node entry.
     #
     swap = False
-    if (len(trace.packet_json) == 1 and entry["node"] == "ETR" and
+    if (len(trace.packet_json) == 1 and entry["n"] == "ETR" and
         trace.myeid(packet.inner_dest)):
         rec = {}
-        rec["seid"] = deid
-        rec["deid"] = seid
+        rec["se"] = deid
+        rec["de"] = seid
         rec["paths"] = []
         trace.packet_json.append(rec)
         swap = True
@@ -19651,7 +19651,7 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     # are forwarding a packet that was just decapsulated with the addresses
     # swapped so we can turn it around.
     #
-    sender_rloc = trace.packet_json[0]["paths"][0]["srloc"]
+    sender_rloc = trace.packet_json[0]["paths"][0]["sr"]
     if (next_rloc == "?"):
         lprint("LISP-Trace return to sender RLOC {}".format(sender_rloc))
         trace.return_to_sender(lisp_socket, sender_rloc, trace_pkt)
@@ -19672,7 +19672,7 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
     headers = packet.packet[0:offset]
     p = struct.pack("HH", socket.htons(udplen), 0)
     headers = headers[0:offset-4] + p
-    if (packet.inner_version == 6 and entry["node"] == "ETR" and 
+    if (packet.inner_version == 6 and entry["n"] == "ETR" and 
         len(trace.packet_json) == 2):
         udp = headers[offset-8::] + trace_pkt
         udp = lisp_udp_checksum(seid, deid, udp)
