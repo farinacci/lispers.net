@@ -1,4 +1,43 @@
 
+                lispers.net Beta Release Version 0.555
+                --------------------------------------
+
+o Release date: Thu Apr  8 13:42:15 PDT 2021
+
+o Location of RESTART-LISP is different on MacOS then it is on Docker. Fix
+  in RL.provision-xtr file.
+
+o Don't do buf.replace() in make-provision-release.py now that we can determine
+  device dynamically in RL.provision-xtr file.
+
+o Make sure priority of 254 and rloc-name "RTR" is set for an RLOC-record that
+  has telemetry in it. Otherwise, ltr won't work (among other things).
+
+o In lisp_etr_nat_data_plane(), the LISP header is parsed differently since
+  the kernel strips the outer header. Make sure the instance-ID is inserted
+  in the inner source and destination lisp_address() fields so a map-cache
+  lookup can find the correct instance-ID/VPN.
+
+o Shorten the JSON-string keywords so we can fit a typical encapsulation path
+  in an MTU sized packet. We have to do this since we added one-way latency
+  measurements for telemetry based RLOC-probing.
+
+o Have ltr (lisp traceroute) work better on MacOS so we can trace the
+  encapsulation path to and from an EID. Show the one-way latencies that
+  each node has calculated and accumulated.
+
+o Have lisp-itr packet capture on lo0 so we can source packets to EIDs from
+  an EID. For example, so we can install "route add 240.0.0.0/8 <local-eid>".
+  We need this so ltr can use the same socket to punch holes in firewalls to
+  receive errors from any node in an encapsulation path as well as send packets
+  with EID addresses.
+
+o Have make-provision-release.py add a tag to the provisioned tgz filename so
+  it can be distinguished as possibly using differnet lisp.config.provision-
+  xtr contents (for different mapping systems).    
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.554
                 --------------------------------------
 
