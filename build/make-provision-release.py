@@ -22,7 +22,7 @@
 # provision.py and RL.provision-xtr files to it so the tgz can be provisioned
 # for a particular instance-ID and mapping system.
 #
-# Usage: python make-provision-release.py [<release> <iid>]
+# Usage: python make-provision-release.py [<release> <iid> <build-tag>]
 #
 # -----------------------------------------------------------------------------
 
@@ -34,6 +34,15 @@ import platform
 
 #------------------------------------------------------------------------------
 
+def bold(string):
+    return("\033[1m" + string + "\033[0m")
+#enddef
+
+def green(string):
+    return("\033[92m" + string + "\033[0m")
+#enddef
+
+#------------------------------------------------------------------------------
 
 #
 # First check that this is running in the build directory.
@@ -52,12 +61,15 @@ if (os.path.exists("./releases") == False):
 #
 # Get input parameters.
 #
-if (len(sys.argv) == 3): 
+if (len(sys.argv) == 4): 
     version = sys.argv[1]
     iid = sys.argv[2]
+    tag = sys.argv[3]
 else:
     version = raw_input("Enter version number (in format x.y): ")
     iid = raw_input("Enter LISP xTR instance-ID: ")
+    tag = raw_input("Enter tag to be part of tgz filename: ")
+    print("")
 #endif
 
 release = "./releases/release-{}".format(version)
@@ -72,8 +84,8 @@ tmp = "/tmp/{}".format(tgz)
 # Make /tmp directory to untar release so we can combine provision files
 # with a "provisioned release" tarball.
 #
-print("Copying provision files with tarball files for release {} ...". \
-      format(version)),
+print("Adding provision files to release {} tarball files ...". \
+      format(bold(version))),
 os.system("mkdir -p {}; cp {}/{} {}".format(tmp, release, tgz, tmp))
 os.system("chmod 755 {}/{}".format(tmp, tgz))
 os.system("cd {}; tar zxf {}; rm {}".format(tmp, tgz, tgz))
@@ -95,9 +107,9 @@ print("done")
 #
 # Create new "provisioned release" tarball.
 #
-ptgz = "lispers.net-x86-release-{}-iid-{}.tgz".format(version, iid)
-print("Creating provisoined tarball for release {}, instance-ID {} ...". \
-      format(version, iid)),
+ptgz = "lispers.net-x86-release-{}-iid-{}-{}.tgz".format(version, iid, tag)
+print("Creating provisioned tarball for release {}, instance-ID {} ...". \
+      format(bold(version), bold(iid))),
 cmd = "cd {}; export COPYFILE_DISABLE=true; tar czf {} *".format(tmp, ptgz)
 os.system(cmd)
 print("done")      
@@ -111,8 +123,8 @@ os.system("rm -fr {}".format(tmp))
 #
 # We are done. Tell user where it is.
 #
-print("New file {} written to releases/release-{} directory".format( \
-    ptgz, version))
+print("New file {} written to {} directory".format(green(ptgz),
+    bold("releases/release-{}".format(version))))
 exit(0)
 
 #------------------------------------------------------------------------------
