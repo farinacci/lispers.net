@@ -15,15 +15,17 @@ Step 2: Get pip to install python modules required:
     
 Step 3: Use pip to install python module dependencies:
     
-    sudo pip install netifaces
+    sudo python -m pip netifaces
    
   You must install xcode. You will be prompted. Then run:
 
-    sudo pip install CherryPy bottle netifaces pcappy pyOpenSSL pycrypto \
-         requests curve25519-donna geopy ecdsa pycryptodome python-pytun
+    sudo python -m pip install CherryPy bottle netifaces pcappy pyOpenSSL
+       pycrypto requests curve25519-donna geopy ecdsa pycryptodome python-pytun
 
-    sudo pip install cherrypy --ignore-installed six
-    sudo pip install ecdsa --ignore-installed six
+  If cherrypy and ecdsa don't install, try this:
+
+    sudo python -m pip install cherrypy --ignore-installed six
+    sudo python -m pip install ecdsa --ignore-installed six
 
   Run this to test if installation is complete:
 
