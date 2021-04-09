@@ -36,9 +36,9 @@ for module in modules:
 #endfor
 
 #
-# Check if pycrptodome is installed.
+# Check if pycrptodome is installed. If pip not found, use "python -m pip".
 #
-found = commands.getoutput("pip list | egrep pycryptodome")
+found = commands.getoutput("python -m pip list | egrep pycryptodome")
 if (found != ""): found = (found.find("pycryptodome") != -1)
 if (found == False): failed.append("pycryptodome")
 
