@@ -19,8 +19,9 @@ Step 3: Use pip to install python module dependencies:
    
   You must install xcode. You will be prompted. Then run:
 
-    sudo python -m pip install CherryPy bottle netifaces pcappy pyOpenSSL
-       pycrypto requests curve25519-donna geopy ecdsa pycryptodome python-pytun
+    sudo python -m pip install CherryPy bottle netifaces pcappy pyOpenSSL \
+       pycrypto requests curve25519-donna geopy ecdsa pycryptodome \
+       python-pytun future
 
   If cherrypy and ecdsa don't install, try this:
 
