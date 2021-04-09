@@ -224,7 +224,6 @@ os.system('cd ./{}; echo "{}" > lisp-version.txt'.format(dir, version))
 os.system('cd ./{}; echo "{}" > lisp-build-date.txt'.format(dir, build_date))
 os.system('cp ../docs/lisp.config.example ./{}/.'.format(dir))
 os.system('cp ../docs/how-to-install.txt ./{}/.'.format(dir))
-os.system('cp ./py-depend/get-pip.py ./{}/.'.format(dir))
 os.system('cp ./py-depend/pip-requirements.txt ./{}/.'.format(dir))
 
 #
@@ -234,7 +233,7 @@ os.system('cp ./py-depend/pip-requirements.txt ./{}/.'.format(dir))
 tar_file = "lispers.net-" + cpu + "-release-" + version + ".tgz"
 print "Build tgz file {} ... ".format(tar_file),
 files = "*.pyo *.txt lisp.config.example lisp-cert.pem.default *-LISP " + \
-    "RL-* get-pip.py pslisp log-packets lispers.net-geo.html {}".format( \
+    "RL-* pslisp log-packets lispers.net-geo.html {}".format( \
     lisp_xtr)
 command = "cd {}; export COPYFILE_DISABLE=true; tar czf {} {}".format(dir,
     tar_file, files)

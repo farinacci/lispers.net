@@ -160,6 +160,7 @@ if (is_macos()):
     os.system("sudo ifconfig lo0 {}/32 alias".format(eid4))
     os.system("sudo route add 240.0.0.0/8 {}".format(eid4))
     os.system("sudo ifconfig lo0 inet6 {}/128 alias".format(eid6))
+    os.system("sudo route add -inet6 fe00::/16 {}".format(eid6))
     os.system("sudo sysctl -w net.inet.ip.forwarding=1 > /dev/null")
     os.system("sudo sysctl -w net.inet6.ip6.forwarding=1 > /dev/null")
     exit(0)
