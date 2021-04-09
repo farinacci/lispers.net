@@ -27,7 +27,7 @@ import commands
 
 modules = [ "bottle", "requests", "cherrypy", "pcappy", "netifaces", 
     "setuptools", "Crypto.Cipher", "OpenSSL", "curve25519", "geopy", "pytun",
-    "ecdsa" ]
+    "ecdsa", "future", "builtins" ]
 
 failed = []
 for module in modules:
