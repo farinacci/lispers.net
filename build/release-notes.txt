@@ -1,4 +1,25 @@
 
+                lispers.net Beta Release Version 0.556
+                --------------------------------------
+
+o Release date: Fri Apr  9 10:00:25 PDT 2021
+
+o Use "python -m pip list" to test if pycryptodome is installed in script
+  lispers.net-test-install.py.
+
+o Fix instructions in how-to-install-macos.txt to not use pip directly to
+  install python dependencies on MacOS, Use "python -m pip list".
+
+o Add a static route fe00::/16 reachable through provisioned IPv6 EID so
+  source selection of an EID can be used when trying to reach destination
+  IPv6 EIDs.
+
+o Remove get-pip.py from release tarball. Not used anymore for Linux/Docker
+  installs. And for MacOS, we tell user to curl a new copy for a one-time
+  install. This will make the tarball smaller by ~1M.    
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.555
                 --------------------------------------
 
@@ -18,9 +39,9 @@ o In lisp_etr_nat_data_plane(), the LISP header is parsed differently since
   in the inner source and destination lisp_address() fields so a map-cache
   lookup can find the correct instance-ID/VPN.
 
-o Shorten the JSON-string keywords so we can fit a typical encapsulation path
-  in an MTU sized packet. We have to do this since we added one-way latency
-  measurements for telemetry based RLOC-probing.
+o Shorten the ltr JSON-string keywords so we can fit a typical encapsulation
+  path in an MTU sized packet. We have to do this since we added one-way
+  latency measurements for telemetry based RLOC-probing.
 
 o Have ltr (lisp traceroute) work better on MacOS so we can trace the
   encapsulation path to and from an EID. Show the one-way latencies that
