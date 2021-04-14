@@ -24,12 +24,12 @@
 # 
 # -----------------------------------------------------------------------------
 
-set EID = $1
+set EID = "$1"
 set ASK = 0
-if ($EID == "") then
+if ("$EID" == "") then
     set ASK = 1
     echo -n "Enter EID name or address: "
-    set EID = $<
+    set EID = "$<"
 endif
 set MR = $2
 if ($MR == "") then
@@ -73,13 +73,13 @@ if ($ASK == 1) then
     endif
 endif
 
-set PARMS = "$EID to $MR $PARMS"
-echo "lig command parameters are: $PARMS"
+set PARMS = "to $MR $PARMS"
+echo "lig command parameters are: $EID $PARMS"
 echo ""
 
 set FLAGS = "-W ignore -O -u"
 if (-f ./lisp-lig.py) then
-    sudo python $FLAGS ./lisp-lig.py $PARMS
+    sudo python $FLAGS ./lisp-lig.py "$EID" $PARMS
 else
-    sudo python $FLAGS ./lisp-lig.pyo $PARMS
+    sudo python $FLAGS ./lisp-lig.pyo "$EID" $PARMS
 endif
