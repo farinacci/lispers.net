@@ -2,7 +2,7 @@
                 lispers.net Beta Release Version 0.557
                 --------------------------------------
 
-o Release date:
+o Release date: Tue Apr 13 18:03:07 PDT 2021
 
 o Put "future" as a lispers.net python dependency in pip-requirements.txt.
 
