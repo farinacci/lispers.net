@@ -1,4 +1,23 @@
 
+                lispers.net Beta Release Version 0.557
+                --------------------------------------
+
+o Release date:
+
+o Put "future" as a lispers.net python dependency in pip-requirements.txt.
+
+o Have lispers.net-test-install.py import "future" and "builtins" since lig
+  and rig depend on it.
+
+o Add that future needs to be installed in how-to-install-macos.txt
+
+o Add wrapper scripts "ltr" for ltr.pyo, "lig" for lisp-lig.pyo, and
+  "rig" for lisp-rig.pyo. Each will prompt for full parameter options when
+  the EID is not specified on the command line. Updated lisp.config.example
+  documentation to describe what each do.
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.556
                 --------------------------------------
 

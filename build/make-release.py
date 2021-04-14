@@ -122,7 +122,7 @@ os.system("rm latest; ln -sf {} latest".format(dir))
 
 print "Copying files from ../lisp to " + dir + " build directory ...",
 command = '''
-cp ../lisp/lispapi.txt ../lisp/*py ../lisp/*-LISP ../lisp/RL-* ../lisp/*.pem.default ../build/release-notes.txt ../lisp/pslisp ../lisp/log-packets ../lisp/lispers.net-geo.html ./{}/.
+cp ../lisp/lispapi.txt ../lisp/*py ../lisp/*-LISP ../lisp/RL-* ../lisp/*.pem.default ../build/release-notes.txt ../lisp/pslisp ../lisp/log-packets ../lisp/lispers.net-geo.html ../lisp/lig ../lisp/rig ../lisp/ltr ./{}/.
 '''.format(dir)
 
 status = os.system(command)
@@ -233,7 +233,7 @@ os.system('cp ./py-depend/pip-requirements.txt ./{}/.'.format(dir))
 tar_file = "lispers.net-" + cpu + "-release-" + version + ".tgz"
 print "Build tgz file {} ... ".format(tar_file),
 files = "*.pyo *.txt lisp.config.example lisp-cert.pem.default *-LISP " + \
-    "RL-* pslisp log-packets lispers.net-geo.html {}".format( \
+    "RL-* pslisp lig rig ltr log-packets lispers.net-geo.html {}".format( \
     lisp_xtr)
 command = "cd {}; export COPYFILE_DISABLE=true; tar czf {} {}".format(dir,
     tar_file, files)
