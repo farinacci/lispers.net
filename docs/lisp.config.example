@@ -107,6 +107,21 @@ pslisp
     Displays each running lispers.net LISP process running as part of the
     LISP subsystem.
 
+lig
+    This command is a wrapper script that runs lisp-lig.pyo and prompts for
+    parameters. lig lookups an EID in the mapping system and returns the
+    EID-to-RLOC-set mapping.
+
+rig
+    This command is a wrapper script that runs lisp-rig.pyo and prompts for
+    parameters. rig lookkups an EID in a LISP-DDT mapping system and can
+    return the referral path to find out which map-server the EID is
+    registered to.
+
+ltr
+    Runs ltr.pyo  and prompts for parameters. ltr traces an entire
+    encapsulation path. Very useful tool. I suggest you always use it.
+
 log-packets [force]
     Toggles "itr = yes|no", "etr = yes|no", "rtr = yes|no" from the "lisp
     debug" command clause as well as toggle "data-plane-logging = yes|no"
