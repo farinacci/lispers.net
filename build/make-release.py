@@ -30,6 +30,11 @@ import platform
 
 #------------------------------------------------------------------------------
 
+#
+# To make tarball smaller default to not including the go binary lisp-xtr.
+#
+include_lisp_xtr = os.getenv("LISP_XTR_INCLUDE") != None
+
 obfuscate_on = True
 root = "./.."
 
@@ -122,7 +127,7 @@ os.system("rm latest; ln -sf {} latest".format(dir))
 
 print "Copying files from ../lisp to " + dir + " build directory ...",
 command = '''
-cp ../lisp/lispapi.txt ../lisp/*py ../lisp/*-LISP ../lisp/RL-* ../lisp/*.pem.default ../build/release-notes.txt ../lisp/pslisp ../lisp/log-packets ../lisp/lispers.net-geo.html ../lisp/lig ../lisp/rig ../lisp/ltr ./{}/.
+cp ../lisp/lispapi.txt ../lisp/*py ../lisp/*-LISP ../lisp/RL-* ../lisp/*.pem.default ../build/release-notes.txt ../build/provision-lisp.py ../lisp/pslisp ../lisp/log-packets ../lisp/lispers.net-geo.html ../lisp/lig ../lisp/rig ../lisp/ltr ./{}/.
 '''.format(dir)
 
 status = os.system(command)
@@ -200,21 +205,25 @@ os.system("mkdir {}/bin".format(dir))
 # ELF format, then move to bin directory and *.go files to src directory.
 #
 lisp_xtr = ""
-go_binary = "{}/lisp/lisp-xtr".format(root)
-if (os.path.exists("{}".format(go_binary)) == False):
-    print "Binary 'lisp-xtr' not found, not included in build"
-elif (commands.getoutput("file {} | egrep ELF".format(go_binary)) == ""):
-    print "Binary 'lisp-xtr' not in ELF format, not included in build"
-else:
-    print "Copying go files and go binary 'lisp-xtr*'  ... ", 
-    os.system("cp {}/lisp/*.go {}/src/.".format(root, dir))
-    os.system("cp {} {}/.".format(go_binary, dir))
-    lisp_xtr = "lisp-xtr"
-    if (os.path.exists("{}".format(go_binary + ".alpine"))):
-        os.system("cp {} {}/.".format(go_binary + ".alpine", dir))
-        lisp_xtr += " lisp-xtr.alpine"
+if (include_lisp_xtr):
+    go_binary = "{}/lisp/lisp-xtr".format(root)
+    if (os.path.exists("{}".format(go_binary)) == False):
+        print "Binary 'lisp-xtr' not found, not included in build"
+    elif (commands.getoutput("file {} | egrep ELF".format(go_binary)) == ""):
+        print "Binary 'lisp-xtr' not in ELF format, not included in build"
+    else:
+        print "Copying go files and go binary 'lisp-xtr*'  ... ", 
+        os.system("cp {}/lisp/*.go {}/src/.".format(root, dir))
+        os.system("cp {} {}/.".format(go_binary, dir))
+        lisp_xtr = "lisp-xtr"
+        if (os.path.exists("{}".format(go_binary + ".alpine"))):
+            os.system("cp {} {}/.".format(go_binary + ".alpine", dir))
+            lisp_xtr += " lisp-xtr.alpine"
+        #endif
+        print "done"
     #endif
-    print "done"
+else:
+    print "Configured to NOT include go binary 'lisp-xtr'"
 #endif
 
 #
@@ -223,7 +232,7 @@ else:
 os.system('cd ./{}; echo "{}" > lisp-version.txt'.format(dir, version))
 os.system('cd ./{}; echo "{}" > lisp-build-date.txt'.format(dir, build_date))
 os.system('cp ../docs/lisp.config.example ./{}/.'.format(dir))
-os.system('cp ../docs/how-to-install.txt ./{}/.'.format(dir))
+os.system('cp ../docs/how-to-install*.txt ./{}/.'.format(dir))
 os.system('cp ./py-depend/pip-requirements.txt ./{}/.'.format(dir))
 
 #

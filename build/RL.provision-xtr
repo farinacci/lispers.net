@@ -25,8 +25,10 @@
 set DEVICE = ""
 if (-f /.dockerenv) then
     set DEVICE = "eth0"
+    set DIR = "/lispers.net"
 else if (`uname` == "Darwin") then
     set DEVICE = "en0"
+    set DIR = "~/lispers.net"
 endif
 echo "Using RLOC interface $DEVICE"
 
@@ -51,21 +53,17 @@ if ($?EID6 == 0) then
 endif
 
 #
-# Go into directory where RL resides.
+# Keep context in lispers.net directory.
 #
-cd `dirname $0`
+cd $DIR
 
 #
 # Provision lisp.config and/or reinstall kernel routes.
 #
-python ./provision-lisp.py $DEVICE $IID $EID4 $EID6
+python ./provision-lisp.pyo $DEVICE $IID $EID4 $EID6
 
 #
 # Start the lispers.net LISP subsystem, quietly.
 #
-if (-f /.dockerenv) then
-    /lispers.net/RESTART-LISP 8080 $DEVICE > /dev/null
-else if (`uname` == "Darwin") then
-    ~/lispers.net/RESTART-LISP 8080 $DEVICE > /dev/null
-endif
+./RESTART-LISP 8080 $DEVICE > /dev/null
 exit
