@@ -15,24 +15,13 @@ Step 2: Get pip to install python modules required:
     
 Step 3: Use pip to install python module dependencies:
     
-    sudo python -m pip netifaces
-   
-  You must install xcode. You will be prompted. Then run:
+    sudo python -m pip install CherryPy bottle netifaces pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome pytun future
 
-    sudo python -m pip install CherryPy bottle netifaces pcappy pyOpenSSL \
-       pycrypto requests curve25519-donna geopy ecdsa pycryptodome \
-       python-pytun future
-
-  If cherrypy and ecdsa don't install, try this:
-
-    sudo python -m pip install cherrypy --ignore-installed six
-    sudo python -m pip install ecdsa --ignore-installed six
-
-  Run this to test if installation is complete:
+Step 4: Run this to test script to verify installation is complete:
 
     python lispers.net-test-install.pyo
 
-Step 4: Bring up lispers.net:
+Step 5: Bring up lispers.net:
 
     ./RL
 
