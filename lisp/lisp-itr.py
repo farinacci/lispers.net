@@ -491,7 +491,7 @@ def lisp_itr_get_capture_info():
 
         #
         # MacOS uses one interface for the RLOC interface as well as the
-        # EID interface.
+        # EID interface. We use lo0 for the IPv4 EID and en0 for the IPv6 EID.
         #
         if (lisp.lisp_is_macos()):
             if (device not in ["en0", "lo0"]): continue
