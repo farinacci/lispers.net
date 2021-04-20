@@ -154,15 +154,31 @@ else:
 #endif
 
 #
-# Configure MacOS. Otherwise fall through to configure Linux.
+# Configure MacOS. Otherwise fall through to configure Linux. It is critically
+# important to not assign an IPv6 EID on the lo0 loopback device. Using en0 is
+# better to not cause duplicates to be sent! But the app has to supply the
+# source address.
 #
 if (is_macos()):
+
+    #
+    # IPv4 EIDs and routes.
+    #
     os.system("sudo ifconfig lo0 {}/32 alias".format(eid4))
     os.system("sudo route delete 240.0.0.0/8 > /dev/null")
     os.system("sudo route add 240.0.0.0/8 {} > /dev/null".format(eid4))
-    os.system("sudo ifconfig lo0 inet6 {}/128 alias".format(eid6))
+
+    #
+    # IPv6 EIDs and routes.
+    #
+    os.system("sudo ifconfig en0 inet6 {}/128 alias".format(eid6))
+    os.system("sudo ndp -s fe80::1%en0 0:0:0:0:0:1")
     os.system("sudo route delete -inet6 fe00::/16 > /dev/null")
-    os.system("sudo route add -inet6 fe00::/16 {} > /dev/null".format(eid6))
+    os.system("sudo route add -inet6 fe00::/16 fe80::1%en0 > /dev/null")
+
+    #
+    # MacOS kernel settings required.
+    #
     os.system("sudo sysctl -w net.inet.ip.forwarding=1 > /dev/null")
     os.system("sudo sysctl -w net.inet6.ip6.forwarding=1 > /dev/null")
     exit(0)
