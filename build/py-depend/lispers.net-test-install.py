@@ -21,9 +21,13 @@
 # Usage: python lispers.net-test-install.py
 #
 # -----------------------------------------------------------------------------
-
+from __future__ import print_function
 import importlib
-import commands
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#endtry    
 
 modules = [ "bottle", "requests", "cherrypy", "pcappy", "netifaces", 
     "setuptools", "Crypto.Cipher", "OpenSSL", "curve25519", "geopy", "pytun",
@@ -38,14 +42,14 @@ for module in modules:
 #
 # Check if pycrptodome is installed. If pip not found, use "python -m pip".
 #
-found = commands.getoutput("python -m pip list | egrep pycryptodome")
+found = getoutput("python -m pip list | egrep pycryptodome")
 if (found != ""): found = (found.find("pycryptodome") != -1)
 if (found == False): failed.append("pycryptodome")
 
 if (len(failed) == 0):
-    print "Install complete"
+    print("Install complete")
 else:
-    print "Install NOT complete for {}".format(failed)
+    print("Install NOT complete for {}".format(failed))
 #endif
 
 exit(0)
