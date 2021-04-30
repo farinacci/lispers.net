@@ -24,7 +24,7 @@
 #
 # Usage: python lisp-news-sender.py <source> <group>
 #
-
+from __future__ import print_function
 import sys
 import socket
 import datetime
@@ -49,13 +49,13 @@ def bold(string):
 def send_messages(messages):
     ts = datetime.datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")
     for message in messages:
-        print "Send message at {}:\n{}".format(ts, message), 
-
+        print("Send message at {}:\n{}".format(ts, message), end=" ")
+        
         #
         # Send the message.
         # 
         try: msocket.sendto(message, (group, port))
-        except socket.error, e:
+        except socket.error as e:
             print("socket.sendto() failed: {}".format(e))
         #endtry
         time.sleep(.25)
@@ -131,7 +131,7 @@ def get_headlines():
 # Get command line parameters.
 # 
 if (len(sys.argv) < 3):
-    print usage
+    print(usage)
     exit(1)
 #endif
 
@@ -140,7 +140,7 @@ group = sys.argv[2]
 delay = int(sys.argv[3]) if (len(sys.argv) == 4) else 15
 
 if (source.find(".") == -1 or group.find(".") == -1):
-    print "Must supply IPv4 address in dotted decimal"
+    print("Must supply IPv4 address in dotted decimal")
     exit(1)
 #endif
 
@@ -150,15 +150,16 @@ port = 0x800 + int(port[-2]) + int(port[-1])
 #
 # Open send UDP socket.
 #
-print "Open send socket ({} -> {}:{}) ... ".format(source, group, port),
+print("Open send socket ({} -> {}:{}) ... ".format(source, group, port),
+    end=" ")
 
 try:
     msocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     msocket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
     msocket.bind((source, 0))
-    print "succeeded"
+    print("succeeded")
 except:
-    print "failed"
+    print("failed")
     exit(1)
 #endtry
 
@@ -169,18 +170,18 @@ while (True):
     messages = get_headlines()
     if (messages != None): send_messages(messages)
 
-    print "Delay {} seconds ... ".format(delay),
+    print("Delay {} seconds ... ".format(delay), end=" ")
     sys.stdout.flush()
     time.sleep(delay)
-    print ""
+    print("")
 
     messages = get_cool_message()
     send_messages(messages)
 
-    print "Delay {} seconds ... ".format(delay),
+    print("Delay {} seconds ... ".format(delay), end=" ")
     sys.stdout.flush()
     time.sleep(delay)
-    print ""
+    print("")
 #endwhile
 
 msocket.close()

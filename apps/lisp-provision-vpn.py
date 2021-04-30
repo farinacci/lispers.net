@@ -27,11 +27,12 @@
 #
 # Usage: python lisp-provision-vpn.py [<path-to-lispapi>]
 #
-
+from __future__ import print_function
 import sys
 import random
 import os
 import socket
+from builtins import input
 
 if (len(sys.argv) > 1): sys.path.append(sys.argv[1])
 
@@ -39,9 +40,9 @@ try:
     import lispapi
 except:
     if (os.path.exists("lispapi.pyo")):
-        print "Try command 'python -O lisp-provision-vpn.pyo'"
+        print("Try command 'python -O lisp-provision-vpn.pyo'")
     else:
-        print "Cannot find lispapi module"
+        print("Cannot find lispapi module")
     #endif
     exit(1)
 #endtry
@@ -52,47 +53,47 @@ except:
 port = os.getenv("LISPAPI_PORT")
 port = 8080 if (port == None) else int(port)
 
-print """
+print("""
 ---------- Welcome to the lispers.net VPN Provisioning System ----------
-"""
+""")
 
 #
 # First test if environment variable with password is setup.
 #
 if (os.getenv("LISPAPI_PW") == None):
-    print "LISPAPI_PW environment variable needs password setting"
+    print("LISPAPI_PW environment variable needs password setting")
     exit(0)
 #endif
 
-vpn_name = raw_input("Enter VPN name: ")
-vpn_iid = raw_input("Enter VPN Instance-ID: ")
+vpn_name = input("Enter VPN name: ")
+vpn_iid = input("Enter VPN Instance-ID: ")
 
 map_servers = []
 while (True):
-    ms = raw_input("Enter Map-Server address (enter return when done): ")
+    ms = input("Enter Map-Server address (enter return when done): ")
     if (ms == ""): break
     ms_input = ms
     ms = socket.gethostbyname(ms)
     api = lispapi.api_init(ms, "root", port=port)
     if (api.get_enable() == None):
-        print "Authentication failed to Map-Server {}".format(ms_input)
+        print("Authentication failed to Map-Server {}".format(ms_input))
         continue
     #endif                                
     map_servers.append({"addr": ms, "api": api})
 #endwhile
-print "Map-Servers will be used as Map-Resolvers"
+print("Map-Servers will be used as Map-Resolvers")
 
 xtrs = []
 while (True):
-    xtr = raw_input("\nEnter LISP xTR address (enter return when done): ")
+    xtr = input("\nEnter LISP xTR address (enter return when done): ")
     if (xtr == ""): break
     xtr_input = xtr
     xtr = socket.gethostbyname(xtr)
-    site_name = raw_input("Enter site name where xTR {} resides: ".format(xtr))
-    eid = raw_input("Enter EID-prefix for site {}: ".format(site_name))
+    site_name = input("Enter site name where xTR {} resides: ".format(xtr))
+    eid = input("Enter EID-prefix for site {}: ".format(site_name))
     api = lispapi.api_init(xtr, "root", port=port)
     if (api.get_enable() == None):
-        print "Authentication failed to xTR {}".format(xtr_input)
+        print("Authentication failed to xTR {}".format(xtr_input))
         continue
     #endif                            
     xtrs.append({"addr": xtr, "eid": eid, "site_name": site_name, "api": api,
@@ -102,22 +103,22 @@ while (True):
 #
 # Summarize input before verification.
 #
-print "\nCreating VPN '{}' with instance-ID {}:".format(vpn_name, vpn_iid)
+print("\nCreating VPN '{}' with instance-ID {}:".format(vpn_name, vpn_iid))
 
-print "  Map-Servers: ",
-for ms in map_servers: print "  {}".format(ms["addr"]), 
-print "\n  LISP Sites: "
+print("  Map-Servers: ", end=" ")
+for ms in map_servers: print("  {}".format(ms["addr"]), end=" ")
+print("\n  LISP Sites: ")
 for xtr in xtrs: 
-    print "    Site: {}, EID -> RLOC: {} -> {}".format(xtr["site_name"],
-        xtr["eid"], xtr["addr"])
+    print("    Site: {}, EID -> RLOC: {} -> {}".format(xtr["site_name"],
+        xtr["eid"], xtr["addr"]))
 #endfor
 
 #
 # Ask for verification.
 #
-go_or_stop = raw_input("\ngo/stop? ")
+go_or_stop = input("\ngo/stop? ")
 if (go_or_stop != "go"): 
-    print "Abort provisioning"
+    print("Abort provisioning")
     exit(0)
 #endif
 
@@ -125,13 +126,13 @@ if (go_or_stop != "go"):
 # Ready to start talking to devices. Right now, we assume the same password
 # for each device.
 #
-print "Provisioning VPN {} now ...".format(vpn_name)
+print("Provisioning VPN {} now ...".format(vpn_name))
 
 #
 # -------------------- Call APIs --------------------
 #
 vpn = "VPN " + vpn_name
-print "  Configure Map-Servers first ... ",
+print("  Configure Map-Servers first ... ", end=" ")
 for ms in map_servers:
     ms["api"].get_enable(True)
     ms["api"].enable_mr()
@@ -144,9 +145,9 @@ for ms in map_servers:
         add_site(xtr["site_name"], xtr["pw"], prefix_list, vpn)
     #endfor                                 
 #endfor
-print "complete"
+print("complete")
 
-print "  Configure xTRs next ...",
+print("  Configure xTRs next ...", end=" ")
 for xtr in xtrs:
     xtr["api"].get_enable(True)
     xtr["api"].enable_itr()
@@ -160,12 +161,12 @@ for xtr in xtrs:
     add_db = xtr["api"].add_etr_database_mapping
     add_db(vpn_iid, xtr["eid"], "", [xtr["addr"]])
 #endfor
-print "complete"
+print("complete")
 
 #
 # All API calls worked. We are done.
 #
-print "Provisioning complete!"
+print("Provisioning complete!")
 exit(0)
 
 #------------------------------------------------------------------------------

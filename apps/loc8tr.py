@@ -61,14 +61,17 @@
 # traceroute made it to the RLOC. You will find a red "X", the traceroute
 # fell short of finding the RLOC.
 #
-
-import commands
+from __future__ import print_function
 import json
 import sys
 import socket
 import os
 import datetime
 import string
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
 
 #
 # ---------- Constants and Data Structures ----------
@@ -83,7 +86,7 @@ if ("-up" in sys.argv):
     userpw = sys.argv[userpw+1]
     check = userpw.split(":")
     if (len(check) == 1):
-        print "Invalid syntax for username:password pair"
+        print("Invalid syntax for username:password pair")
         exit(1)
     #endif
 #endif    
@@ -95,7 +98,7 @@ if ("-hp" in sys.argv):
     hp = sys.argv[hp+1]
     check = hp.split(":")
     if (len(check) == 1):
-        print "Invalid syntax for host:port pair"
+        print("Invalid syntax for host:port pair")
         exit(1)
     #endif
     port = check[1]
@@ -104,7 +107,7 @@ if ("-hp" in sys.argv):
         port = port[1::]
     #endif
     if (port.isdigit() == False):
-        print "Invalid syntax for port"
+        print("Invalid syntax for port")
         exit(1)
     #endif
     hp = check[0] + ":" + port
@@ -193,9 +196,9 @@ def massage(tr, cisco):
 #
 def build_logfiles():
     os.system("mkdir {}".format(log_dir))
-    os.system("touch {}/".format(log_dir, log_file))
-    os.system("touch {}/".format(log_dir, json_file))
-    os.system("touch {}/".format(log_dir, mc_file))
+    os.system("touch {}/{}".format(log_dir, log_file))
+    os.system("touch {}/{}".format(log_dir, json_file))
+    os.system("touch {}/{}".format(log_dir, mc_file))
 #enddef
 
 #
@@ -204,7 +207,7 @@ def build_logfiles():
 # Print to both stdout and loc8tr.log.
 #
 def Print(string):
-    print string
+    print(string)
     sys.stdout.flush()
 
     f = open("./{}/{}".format(log_dir, log_file), "a")
@@ -276,7 +279,7 @@ build_logfiles()
 # Get map-cache data from lispers.net ITR or RTR.
 #
 if (debug): Print("Run '{}' ...".format(bold(curl_command)))
-map_cache = commands.getoutput(curl_command)
+map_cache = getoutput(curl_command)
 if (debug): Print("curl returned '{}'".format(map_cache))
     
 if (map_cache == ""):
@@ -396,7 +399,7 @@ for addr in rloc_cache:
 
     Print("Run {} ...".format(bold(cmd))) 
     
-    out = commands.getoutput(cmd)
+    out = getoutput(cmd)
 
     rloc = rloc_cache[addr]
     rloc[TR_OUTPUT] = out

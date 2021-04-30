@@ -33,34 +33,35 @@
 # Usage: python make-eid-hash.py
 #
 #------------------------------------------------------------------------------
-
+from __future__ import print_function
 import ecdsa
 import hashlib
 from binascii import b2a_base64 as b2a
+from builtins import input
 
 #
 # Get parameters.
 #
-eid_prefix = raw_input("Enter EID-prefix (zero-fill prefix bits): ")
+eid_prefix = input("Enter EID-prefix (zero-fill prefix bits): ")
 if (eid_prefix.find("/") == -1 or eid_prefix.count(":") == 0):
-    print "EID-prefix must be an IPv6 address in slash format"
+    print("EID-prefix must be an IPv6 address in slash format")
     exit(1)
 #endif
 eid_prefix, mask_len = eid_prefix.split("/")
 mask_len = int(mask_len)
 if ((mask_len % 4) != 0):
-    print "Mask-length must be a multiple of 4"
+    print("Mask-length must be a multiple of 4")
     exit(1)
 #endif
 
-iid = raw_input("Enter Instance-ID: ")
+iid = input("Enter Instance-ID: ")
 try:
     iid = 0 if (iid == "") else int(iid)
 except:
-    print "Invalid Instance-ID"
+    print("Invalid Instance-ID")
     exit(1)
 #endif
-print ""
+print("")
 
 #
 # Generate key-pair.
@@ -106,22 +107,22 @@ sig = key.sign(sig_data, hashfunc=hashlib.sha256)
 #
 # Return values in base64 format
 #
-print "----------------------------------------------------------------------"
-print ""
-print "Crypto-hashed EID: {}".format(sig_data)
-print ""
-print "Private-key for lisp-sig.pem/lisp-lig.pem file:\n{}".format( \
-    key.to_pem())
+print("----------------------------------------------------------------------")
+print("")
+print("Crypto-hashed EID: {}".format(sig_data))
+print("")
+print("Private-key for lisp-sig.pem/lisp-lig.pem file:\n{}".format( \
+    key.to_pem()))
 
 pubkey = b2a(key.get_verifying_key().to_pem())
-print "Public-key for lisp.config file:\n{}".format(pubkey)
+print("Public-key for lisp.config file:\n{}".format(pubkey))
 sig = b2a(sig)
-print "EID signature for lisp.config file:\n{}".format(sig)
+print("EID signature for lisp.config file:\n{}".format(sig))
 
-print "----------------------------------------------------------------------"
-print ""
+print("----------------------------------------------------------------------")
+print("")
 
-print "Add the following commands to the lisp.config file:"
+print("Add the following commands to the lisp.config file:")
 
 hvv = hv
 if ((len(hvv) % 4) == 0):
@@ -180,7 +181,7 @@ commands = commands.replace("<eid>", eid)
 commands = commands.replace("<pubkey>", pubkey)
 commands = commands.replace("<sig>", sig)
 
-print commands
-print "----------------------------------------------------------------------"
+print(commands)
+print("----------------------------------------------------------------------")
 
 exit(0)

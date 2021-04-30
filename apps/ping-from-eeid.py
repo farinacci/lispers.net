@@ -29,12 +29,15 @@
 #
 # Usage: python lisp-from-eeid.py [help] <destination-eid> [loop <num>]
 #
-
+from __future__ import print_function
 import sys
 import os
 import random
 import time
-import commands
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
 import platform
 
 usage = "Usage: python lisp-from-eeid.py [help] <destination-eid> [loop <num>]"
@@ -76,13 +79,13 @@ def allocate_ephem_eid():
 #
 dest_eid = sys.argv[1]
 if ("help" in sys.argv or len(sys.argv) <= 1 or dest_eid.find(":") == -1):
-    print usage
+    print(usage)
     exit(0)
 #endif
 if ("loop" in sys.argv):
     index = sys.argv.index("loop") + 1
     if (index >= len(sys.argv)):
-        print usage
+        print(usage)
         exit(10)
     #endif
     loop_count = int(sys.argv[index])
@@ -114,19 +117,19 @@ for i in range(loop_count):
     l = bold(local_eid)
     ifconfig = "ifconfig {} | egrep '{}|{}'".format(lb, lb_grep, local_eid)
 
-    print "Configure {} on interface {} ...".format(l, lb),
+    print("Configure {} on interface {} ...".format(l, lb), end=" ")
     os.system(config.format(local_eid))
-    if (debug): print commands.getoutput(ifconfig)
-    print "succeeded"
+    if (debug): print(getoutput(ifconfig))
+    print("succeeded")
 
-    print "Start ping6 from {} to {} ...".format(l, e)
+    print("Start ping6 from {} to {} ...".format(l, e))
     os.system(ping.format(local_eid, dest_eid))
     time.sleep(1)
 
-    print "Deconfigure {} on interface {} ...".format(l, lb),
+    print("Deconfigure {} on interface {} ...".format(l, lb), end=" ")
     if (debug): os.system(deconfig.format(local_eid))
-    print "succeeded"
-    print "------------------------------------------------------------"
+    print("succeeded")
+    print("------------------------------------------------------------")
 #endfor
 exit(0)
 

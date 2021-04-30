@@ -40,9 +40,24 @@
 # 3.3.3.3/32:  packet-rate: 641 pps,  bit-rate: 7.69 mbps
 # 3.3.3.3/32:  packet-rate: 635 pps,  bit-rate: 7.62 mbps
 # 3.3.3.3/32:  packet-rate: 642 pps,  bit-rate: 7.7 mbps
-#
-# Set parameters below to your liking:
+#------------------------------------------------------------------------------
+from __future__ import print_function
+import sys
+import time
+sys.path.append("./")
+try:
+    import lispapi
+except:
+    print("Try 'python -O lisp-watch-pps.py <eid>'")
+    exit(0)
+#endtry
+from builtins import input
 
+#------------------------------------------------------------------------------
+
+#
+# Set parameters below to your liking.
+#
 router = "localhost"
 username = "root"
 password = ""
@@ -51,31 +66,19 @@ sleeptime = .5
 
 #------------------------------------------------------------------------------
 
-import sys
-import time
-sys.path.append("./")
-try:
-    import lispapi
-except:
-    print "Try 'python -O lisp-watch-pps.py <eid>'"
-    exit(0)
-#endtry
-
-#------------------------------------------------------------------------------
-
 #
 # Get input parameter.
 #
 if (len(sys.argv) != 2):
-    find_eid = raw_input("Enter EID-prefix to watch: ")
+    find_eid = input("Enter EID-prefix to watch: ")
 else:
     find_eid = sys.argv[1]
 #endif
-password = raw_input("Enter xTR password: ")
+password = input("Enter xTR password: ")
 
 router = lispapi.api_init(router, username, password, port=port)
 if (router == None):
-    print "Cannot connect to API of router {}".format(router)
+    print("Cannot connect to API of router {}".format(router))
     exit(1)
 #endif
 
@@ -93,7 +96,7 @@ while (True):
 
         for rloc in mc["rloc-set"]:
             stats = rloc["stats"].split(",")
-            print "eid: {},{},{}".format(eid_str, stats[1], stats[-1])
+            print("eid: {},{},{}".format(eid_str, stats[1], stats[-1]))
         #endfor
     #endfor
     time.sleep(sleeptime)

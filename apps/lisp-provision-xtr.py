@@ -23,10 +23,11 @@
 #
 # Usage: python lisp-provision-xtr.py [<path-to-lispapi>]
 #
-
+from __future__ import print_function
 import sys
 import os
 import socket
+from builtins import input
 
 #------------------------------------------------------------------------------
 
@@ -38,7 +39,7 @@ class db():
         self.rloc_set = []
 
     def parse_prefix(self, string):
-        addr_str = raw_input(string)
+        addr_str = input(string)
         if (addr_str == ""): return
 
         self.instance_id = "0"
@@ -68,9 +69,9 @@ try:
     import lispapi
 except:
     if (os.path.exists("lispapi.pyo")):
-        print "Try command 'python -O lisp-provision-xtr.pyo'"
+        print("Try command 'python -O lisp-provision-xtr.pyo'")
     else:
-        print "Cannot find lispapi module"
+        print("Cannot find lispapi module")
     #endif
     exit(1)
 #endtry
@@ -81,29 +82,29 @@ except:
 port = os.getenv("LISPAPI_PORT")
 port = 8080 if (port == None) else int(port)
 
-print """
+print("""
 ---------- lispers.net xTR Provisioning Tool  ----------
-"""
+""")
 
 #
 # First test if environment variable with password is setup.
 #
 if (os.getenv("LISPAPI_PW") == None):
-    print "LISPAPI_PW environment variable needs password setting"
+    print("LISPAPI_PW environment variable needs password setting")
     exit(0)
 #endif
 
 #
 # Get IP address of xTR to send API requests to.
 #
-xtr_rloc = raw_input("Enter xTR RLOC address to provision: ")
+xtr_rloc = input("Enter xTR RLOC address to provision: ")
 
 #
 # Authenticate first before asking for more input parameters.
 #
 xtr = lispapi.api_init(xtr_rloc, "root", port=port)
 if (xtr.get_enable() == None):
-    print "Authentication failed to xTR {}".format(xtr_rloc)
+    print("Authentication failed to xTR {}".format(xtr_rloc))
     exit(0)
 #endif
 
@@ -111,7 +112,7 @@ if (xtr.get_enable() == None):
 # Ask if the user wants to configure Map-Servers.
 #
 while (True):
-    y_or_n = raw_input("Configure Map-Servers for this xTR (yes/no): ")
+    y_or_n = input("Configure Map-Servers for this xTR (yes/no): ")
     if (y_or_n in ("yes", "no")): break
 #endwhile
 
@@ -122,15 +123,15 @@ while (True):
 map_servers = []
 if (y_or_n == "yes"):
     while (True):
-        ms = raw_input("Enter Map-Server address (enter return when done): ")
+        ms = input("Enter Map-Server address (enter return when done): ")
         if (ms == ""): break
-        auth_key = raw_input("Enter authentication key for Map-Server: ")
+        auth_key = input("Enter authentication key for Map-Server: ")
         ms = socket.gethostbyname(ms)
         map_servers.append([ms, auth_key])
     #endwhile
-    print "Map-Servers will be used as Map-Resolvers"
+    print("Map-Servers will be used as Map-Resolvers")
 #endif
-print ""
+print("")
 #endif
 
 #
@@ -142,7 +143,7 @@ while (True):
     p.parse_prefix("Enter EID-prefix: (enter return when done): ")
     if (p.eid_prefix == ""): break
     while (True):
-        rloc = raw_input(("Enter RLOC (or local interface) for " + \
+        rloc = input(("Enter RLOC (or local interface) for " + \
             "EID-prefix {} (enter return when done): ").format( \
             p.print_prefix()))
         if (rloc == ""): break
@@ -155,55 +156,55 @@ while (True):
 # Summarize input before verification.
 #
 if (len(prefixes) != 0): 
-    print "\nConfigure database-mappings in xTR {}: ".format(xtr_rloc)
+    print("\nConfigure database-mappings in xTR {}: ".format(xtr_rloc))
     for p in prefixes:
-        print "  EID-prefix: {}, RLOC-set: ".format(p.print_prefix()), 
-        for rloc in p.rloc_set: print "{}  ".format(rloc),
-        print ""
+        print("  EID-prefix: {}, RLOC-set: ".format(p.print_prefix()), end=" ")
+        for rloc in p.rloc_set: print("{}  ".format(rloc), end=" ")
+        print("")
     #endfor
 #endif
 
 if (len(map_servers) != 0):
-    print "\nConfigure Map-Servers in xTR {}:".format(xtr_rloc)
-    print "  ",
-    for ms in map_servers: print "{}  ".format(ms[0]),
+    print("\nConfigure Map-Servers in xTR {}:".format(xtr_rloc))
+    print("  ", end=" ")
+    for ms in map_servers: print("{}  ".format(ms[0]), end=" ")
 #endif
 
 #
 # Ask for verification.
 #
-go_or_stop = raw_input("\ngo/stop? ")
+go_or_stop = input("\ngo/stop? ")
 if (go_or_stop != "go"): 
-    print "Abort provisioning"
+    print("Abort provisioning")
     exit(0)
 #endif
 
-print "Configuring ITR and ETR ... ", 
+print("Configuring ITR and ETR ... ", end=" ")
 xtr.enable_itr()
 xtr.enable_etr()
-print "complete"
+print("complete")
 
 if (len(map_servers) != 0):
-    print "Configuring Map-Servers ... ", 
+    print("Configuring Map-Servers ... ", end=" ")
     for ms in map_servers: xtr.add_etr_map_server(ms[0], ms[1])
-    print "complete"
-    print "Configuring Map-Resolvers ... ", 
+    print("complete")
+    print("Configuring Map-Resolvers ... ", end=" ")
     for ms in map_servers: xtr.add_itr_map_resolver(ms[0])
-    print "complete"
+    print("complete")
 #endif
 
-if (len(prefixes) != 0): print "Configuring Database-Mappings ... ", 
+if (len(prefixes) != 0): print("Configuring Database-Mappings ... ", end=" ")
 for p in prefixes:
     xtr.add_etr_database_mapping(p.instance_id, p.eid_prefix, p.group, 
         p.rloc_set)
 #endfor
-print "complete"
-print ""
+print("complete")
+print("")
 
 #
 # All API calls worked. We are done.
 #
-print "xTR provisioning complete!"
+print("xTR provisioning complete!")
 exit(0)
 
 #------------------------------------------------------------------------------

@@ -48,11 +48,14 @@
 #
 #   ip route add 239.1.1.1 dev eth0
 #
-
+from __future__ import print_function
 import socket
 import time
 import sys
-import commands
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
 import os
 import signal
 
@@ -67,14 +70,14 @@ def cleanup(signum, frame):
     global reset
     
     if (reset):
-        print "Returning value to icmp_echo_ignore_broadcasts ...",
+        print("Returning value to icmp_echo_ignore_broadcasts ...", end="' ")
         os.system(disable_icmp)
-        print "done"
+        print("done")
     #endif
 
-    print "Leaving group {} ...".format(group),
+    print("Leaving group {} ...".format(group), end=" ")
     msocket.close()
-    print "done"
+    print("done")
     exit(0)
 #enddef
 
@@ -85,9 +88,9 @@ def cleanup(signum, frame):
 # requires it.
 #
 def get_local_ip(intf):
-    out = commands.getoutput("ifconfig {} | egrep inet".format(intf))
+    out = getoutput("ifconfig {} | egrep inet".format(intf))
     if (out == ""):
-        print "Cannot find interface address for {}".format(intf)
+        print("Cannot find interface address for {}".format(intf))
         return(None)
     #endif
     intf_addr = out.split()[1]
@@ -131,7 +134,7 @@ def leave_socket(msocket, group, intf):
 # Get group and interface parameters from command line.
 #
 if (len(sys.argv) < 2):
-    print "Usage: python lisp-join.py <group> [<interface>] [interval=<secs>]"
+    print("Usage: python lisp-join.py <group> [<interface>] [interval=<secs>]")
     exit(1)
 #endif    
 group = sys.argv[1]
@@ -165,10 +168,10 @@ signal.signal(signal.SIGINT, cleanup)
 # to set it back to its original setting.
 #
 reset = False
-if (commands.getoutput(cat) == "1"):
-    print "Enabling ICMP to respond to multicast pings ...",
+if (getoutput(cat) == "1"):
+    print("Enabling ICMP to respond to multicast pings ...",)
     os.system(enable_icmp)
-    print "done"
+    print("done")
     reset = True
 #endif
 
@@ -176,11 +179,11 @@ if (commands.getoutput(cat) == "1"):
 # Open socket and join group.
 #
 msocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-print "Joining group {} on {}...".format(group, intf),
+print("Joining group {} on {}...".format(group, intf), end=" ")
 if (join_socket(msocket, group, intf)):
-    print "done"
+    print("done")
 else:
-    print "failed"
+    print("failed")
     exit(1)
 #endif
 
@@ -189,13 +192,14 @@ else:
 # is a IGMP querier on the LAN. Assume there isn't one in a virtual/container
 # environment.
 #
-print "Using rejoin interval of {} seconds".format(rejoin_interval)
+print("Using rejoin interval of {} seconds".format(rejoin_interval))
 
 while (True):
-    print "Rejoining group {} on {}, pid {} ...".format(group, intf, mypid),
+    print("Rejoining group {} on {}, pid {} ...".format(group, intf, mypid),
+        end=" ")
     leave_socket(msocket, group, intf)
     join_socket(msocket, group, intf)
-    print "done"
+    print("done")
     time.sleep(rejoin_interval)
 #endwhile
 exit(0)

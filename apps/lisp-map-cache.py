@@ -22,9 +22,10 @@
 #
 # Usage: python lisp-map-cache.py [<list-of-hosts>]
 #
-
+from __future__ import print_function
 import sys
 import os
+from builtins import input
 
 #
 # Require env variable LISPAPI_USER and LISPAPI_PW to be set. Otherwise,
@@ -45,7 +46,7 @@ require_input = False
 # For each xTR in list, print the map-cache retunred in tabluar format.
 #
 def print_map_cache(xtr, map_cache):
-    print "LISP Map-Cache for '{}', {} entries\n".format(xtr, len(map_cache))
+    print("LISP Map-Cache for '{}', {} entries\n".format(xtr, len(map_cache)))
     for mc in map_cache:
         i = mc["instance-id"]
         e = mc["eid-prefix"]
@@ -62,24 +63,24 @@ def print_map_cache(xtr, map_cache):
             r = "action: {}".format(mc["action"])
         #endif
 
-        print "[{}]{}, uptime: {}, {}".format(i, e, u, r)
+        print("[{}]{}, uptime: {}, {}".format(i, e, u, r))
         for rloc in rlocs:
             r = rloc["address"] if rloc.has_key("address") else "none"
             u = rloc["uptime"]
             s = rloc["stats"]
             p_and_w = rloc["upriority"] + "/" + rloc["uweight"] + "/" + \
                 rloc["mpriority"] + "/" + rloc["mweight"]
-            print "  {}, uptime: {}, {}".format(r, u, p_and_w)
+            print("  {}, uptime: {}, {}".format(r, u, p_and_w))
 
-            if (rloc.has_key("geo")): print "    geo: {}".format(rloc["geo"])
-            if (rloc.has_key("elp")): print "    elp: {}".format(rloc["elp"])
-            if (rloc.has_key("rle")): print "    rle: {}".format(rloc["rle"])
+            if (rloc.has_key("geo")): print("    geo: {}".format(rloc["geo"]))
+            if (rloc.has_key("elp")): print("    elp: {}".format(rloc["elp"]))
+            if (rloc.has_key("rle")): print("    rle: {}".format(rloc["rle"]))
 
             index = s.find("byte-count")
-            print "    {}".format(s[:index-2])
-            print "    {}".format(s[index:])
+            print("    {}".format(s[:index-2]))
+            print("    {}".format(s[index:]))
         #endfor
-        print ""
+        print("")
     #endfor
     return
 #enddef
@@ -97,9 +98,9 @@ try:
     import lispapi
 except:
     if (os.path.exists("lispapi.pyo")):
-        print "Try command 'python -O lisp-map-cache.py'"
+        print("Try command 'python -O lisp-map-cache.py'")
     else:
-        print "Cannot find lispapi module, use LISPAPI_PATH env variable"
+        print("Cannot find lispapi module, use LISPAPI_PATH env variable")
     #endif
     exit(1)
 #endtry
@@ -110,7 +111,7 @@ except:
 username = os.getenv("LISPAPI_USER")
 if (username == None):
     if (require_creds):
-        print "LISPAPI_USER environment variable needs username setting"
+        print("LISPAPI_USER environment variable needs username setting")
         exit(0)
     #endif
     username = "root"
@@ -118,7 +119,7 @@ if (username == None):
 password = os.getenv("LISPAPI_PW")
 if (password == None):
     if (require_creds):
-        print "LISPAPI_PW environment variable needs password setting"
+        print("LISPAPI_PW environment variable needs password setting")
         exit(0)
     #endif
     password = ""
@@ -138,7 +139,7 @@ if (len(sys.argv) > 1):
 else:
     if (require_input):
         while (True):
-            host = raw_input("Enter hostname (enter return when done): ")
+            host = input("Enter hostname (enter return when done): ")
             if (host == ""): break
             hosts.append([host, None, None])
         #endwhile
@@ -147,7 +148,7 @@ else:
     #endif
 #endif
 
-print "Connecting to APIs ...",
+print("Connecting to APIs ...", end=" ")
 sys.stdout.flush()
 
 #
@@ -156,21 +157,21 @@ sys.stdout.flush()
 for host in hosts:
     host[1] = lispapi.api_init(host[0], username, password, port=port)
 #endfor
-print ""
+print("")
 
 #
 # Call lispapi.get_system() and store contents in 3-element of array.
 #
 for host in hosts:
     if (host[1] == None):
-        print "Could not open API to {}".format(host[0])
+        print("Could not open API to {}".format(host[0]))
     else:
-        print "Querying {} ... ".format(host[0]), 
+        print("Querying {} ... ".format(host[0]), )
         host[2] = host[1].get_map_cache()
-        print "done"
+        print("done")
     #endif
 #endfor
-print ""
+print("")
 
 #
 # Print system info all at one time.
@@ -180,11 +181,11 @@ for host in hosts:
     if (map_cache == None): continue
     if (type(map_cache) == list):
         if (len(map_cache) == 0): 
-            print "Empty map-cache"
+            print("Empty map-cache")
             continue
         #endif
         if ("?" in map_cache[0].keys()): 
-            print "Not authenticated to access {}".format(host[0])
+            print("Not authenticated to access {}".format(host[0]))
             continue
         #endif
     #endif

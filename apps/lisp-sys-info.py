@@ -27,9 +27,10 @@
 # A host name can be an IPv4 address, DNS name and either can be appended with
 # ":<port>" so you can query through firewalls.
 #
-
+from __future__ import print_function
 import sys
 import os
+from builtins import input
 
 #------------------------------------------------------------------------------
 
@@ -51,9 +52,9 @@ try:
     import lispapi
 except:
     if (os.path.exists("lispapi.pyo")):
-        print "Try command 'python -O lisp-provision-xtr.pyo'"
+        print("Try command 'python -O lisp-provision-xtr.pyo'")
     else:
-        print "Cannot find lispapi module, use LISPAPI_PATH env variable"
+        print("Cannot find lispapi module, use LISPAPI_PATH env variable")
     #endif
     exit(1)
 #endtry
@@ -63,12 +64,12 @@ except:
 #
 username = os.getenv("LISPAPI_USER")
 if (username == None):
-    print "LISPAPI_USER environment variable needs username setting"
+    print("LISPAPI_USER environment variable needs username setting")
     exit(0)
 #endif
 password = os.getenv("LISPAPI_PW")
 if (password == None):
-    print "LISPAPI_PW environment variable needs password setting"
+    print("LISPAPI_PW environment variable needs password setting")
     exit(0)
 #endif
 
@@ -83,13 +84,13 @@ if (len(sys.argv) > 1):
     for host in args: hosts.append([host, None, None])
 else:
     while (True):
-        host = raw_input("Enter hostname (enter return when done): ")
+        host = input("Enter hostname (enter return when done): ")
         if (host == ""): break
         hosts.append([host, None, None])
     #endwhile
 #endif
 
-print "Connecting to APIs ...",
+print("Connecting to APIs ...", end=" ")
 sys.stdout.flush()
 
 #
@@ -104,21 +105,21 @@ for host in hosts:
         host[1] = lispapi.api_init(hp[0], username, password, port=hp[1])
     #endif
 #endfor
-print ""
+print("")
 
 #
 # Call lispapi.get_system() and store contents in 3-element of array.
 #
 for host in hosts:
     if (host[1] == None):
-        print "Could not open API to {}".format(host[0])
+        print("Could not open API to {}".format(host[0]))
     else:
-        print "Querying {} ... ".format(host[0]), 
+        print("Querying {} ... ".format(host[0]), end=" ")
         host[2] = host[1].get_system()
-        print "done"
+        print("done")
     #endif
 #endfor
-print ""
+print("")
 
 #
 # Print system info all at one time.
@@ -126,10 +127,10 @@ print ""
 for host in hosts:
     info = host[2]
     if (info == None or len(info) == 0): continue
-    print "System info for {}:".format(bold(host[0]))
+    print("System info for {}:".format(bold(host[0])))
 
     if (type(info) == list and "?" in info[0].keys()): 
-        print "Not authenticated"
+        print("Not authenticated")
         continue
     #endif
 
@@ -146,17 +147,17 @@ for host in hosts:
     index = load.find(":") + 2
     load = load[index::]
 
-    print "  Hostname: {}, uptime: {}, load: {}".format(info["hostname"], ut, 
-        load)
-    print "  LISP-version: {}, LISP-uptime: {}".format( \
-        info["lisp-version"], info["lisp-uptime"])
+    print("  Hostname: {}, uptime: {}, load: {}".format(info["hostname"], ut, 
+        load))
+    print("  LISP-version: {}, LISP-uptime: {}".format( \
+        info["lisp-version"], info["lisp-uptime"]))
 
     rlocs = ""
     for rloc in info["lisp-rlocs"]: rlocs += rloc + ", "
-    print "  LISP-RLOCs: {}".format(rlocs[:-2])
+    print("  LISP-RLOCs: {}".format(rlocs[:-2]))
 
     if (info["traceback-log"] == "yes"):
-        print "  *** Traceback exception occurred ***"
+        print("  *** Traceback exception occurred ***")
     #endif
 #endfor
 

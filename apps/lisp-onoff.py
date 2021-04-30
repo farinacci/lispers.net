@@ -27,9 +27,10 @@
 # Usage: python -O lisp-onoff.pyo [<command-name> [yes | no]]
 #
 #------------------------------------------------------------------------------
-
+from __future__ import print_function
 import sys
 import os
+from builtins import input
 
 #------------------------------------------------------------------------------
 
@@ -100,13 +101,13 @@ def set_command(lisp, command, yn):
 #
 def print_valid_commands(lisp):
     for command in lisp.enable_status:
-        print "  {}".format(command)
+        print("  {}".format(command))
     #endfor
     for command in lisp.debug_status:
-        print "  debug-{}".format(command)
+        print("  debug-{}".format(command))
     #endfor
     for command in lisp.xtr_parameters:
-        print "  {}".format(command)
+        print("  {}".format(command))
     #endfor
 #enddef
 
@@ -120,7 +121,7 @@ def print_pretty(data):
         yesno = data[item]
         if (yesno == "yes"): yesno = green(yesno)
         if (yesno == "no"): yesno = red(yesno)
-        print "  {} = {}".format(item, yesno)
+        print("  {} = {}".format(item, yesno))
     #endfor
 #enddef
 
@@ -160,9 +161,9 @@ try:
     import lispapi
 except:
     if (os.path.exists("lispapi.pyo")):
-        print "Try command 'python -O lisp-onoff.pyo'"
+        print("Try command 'python -O lisp-onoff.pyo'")
     else:
-        print "Cannot find lispapi module, use LISPAPI_PATH env variable"
+        print("Cannot find lispapi module, use LISPAPI_PATH env variable")
     #endif
     exit(1)
 #endtry
@@ -171,7 +172,7 @@ except:
 # Check for help string.
 #
 if ("help" in sys.argv):
-    print "Usage: python -O lisp-onoff.pyo [<command-name> [yes | no]]"
+    print("Usage: python -O lisp-onoff.pyo [<command-name> [yes | no]]")
     exit(0)
 #endif
 
@@ -198,27 +199,27 @@ if (system == None and os.path.exists("RESTART-LISP")):
 # If environment variables not selected, prompt.
 #
 while (system == None):
-    system = raw_input("Enter lispers.net system: ")
+    system = input("Enter lispers.net system: ")
     if (system == ""): system = None
 #endwhile
 while (username == None):
-    username = raw_input("Enter username for {}: ".format(system))
+    username = input("Enter username for {}: ".format(system))
     if (username == ""): username = None
 #endif
 while (password == None):
-    password = raw_input("Enter password for {}: ".format(system))
+    password = input("Enter password for {}: ".format(system))
     if (password == ""): password = None
 #endif
 
-print "Connecting to {} ...".format(bold(system)),
+print("Connecting to {} ...".format(bold(system)), end=" ")
 sys.stdout.flush()
 lisp = lispapi.api_init(system, username, password)
 if (lisp == None or lisp.enable_status == None): 
-    print "failed"
+    print("failed")
     exit(1)
 #endif
-print "connected"
-print ""
+print("connected")
+print("")
 
 #
 # Check if we setting a command value.
@@ -243,53 +244,53 @@ if (command):
     commands = lisp.enable_status.keys() + lisp.debug_status.keys() + \
         lisp.xtr_parameters.keys()
     if (test_command not in commands):
-        print "Invalid command '{}', valid commands are:".format(command)
+        print("Invalid command '{}', valid commands are:".format(command))
         print_valid_commands(lisp)
         exit(1)
     #endif
 
     while (yn == None):
         yn = "Enter 'y' to enable or 'n' to disable '{}': ".format(command)
-        yn = raw_input(yn)
+        yn = input(yn)
         yn = "yes" if yn == "y" else "no" if yn == "n" else None
     #endwhile
 
     command_string = bold("'{} = {}'".format(command, yn))
-    doit = raw_input("Confirm to set {}, y/n: ".format(command_string))
+    doit = input("Confirm to set {}, y/n: ".format(command_string))
     if (doit != "y"): exit(0)
 
-    print ""
-    print "Sending command '{} = {}' ...".format(command, yn),
+    print("")
+    print("Sending command '{} = {}' ...".format(command, yn),)
 
     #
     # Call the API.
     #
     good = set_command(lisp, command, yn)
-    if (good == False): print bold("failed")
-    print bold("done")
-    print ""
+    if (good == False): print(bold("failed"))
+    print(bold("done"))
+    print("")
 #endif
 
-print "lisp enable {",
+print("lisp enable {", end=" ")
 sys.stdout.flush()
 lisp.get_enable()
-print ""
+print("")
 print_pretty(lisp.enable_status)
-print "}"
+print("}")
 
-print "lisp debug {",
+print("lisp debug {", end=" ")
 sys.stdout.flush()
 lisp.get_debug()
-print ""
+print("")
 print_pretty(lisp.debug_status)
-print "}"
+print("}")
 
-print "lisp xtr-parameters {",
+print("lisp xtr-parameters {", end=" ")
 sys.stdout.flush()
 lisp.get_xtr_parameters()
-print ""
+print("")
 print_pretty(lisp.xtr_parameters)
-print "}"
+print("}")
 
 exit(0)
 

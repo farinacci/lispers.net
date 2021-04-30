@@ -10,8 +10,11 @@
 # formatting, then a restful post is issued to the command line servers.
 #
 #------------------------------------------------------------------------------
-
-import commands
+from __future__ import print_function
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
 import time
 import os
 import sys
@@ -48,20 +51,20 @@ def main():
         #
         # Check if there have been any new innovcations of loc8tr.py.
         #
-        date = commands.getoutput("date")
-        print "{} scanning loc8tr directories ...".format(bold(date)),
+        date = getoutput("date")
+        print("{} scanning loc8tr directories ...".format(bold(date)), end=" ")
 
         what_to_post = get_directories()
-        posted = commands.getoutput("ls -1d loc8tr-* | wc -l")
+        posted = getoutput("ls -1d loc8tr-* | wc -l")
         posted = int(posted) - len(what_to_post) if posted.isdigit() else 0
-        print "found posted {}, new {}".format(posted, len(what_to_post))
+        print("found posted {}, new {}".format(posted, len(what_to_post)))
 
         #
         # For each new loc8tr directory created, process the json file within.
         #
         for loc8tr_dir in what_to_post:
             loc8tr_json = "{}/loc8tr.json".format(loc8tr_dir)
-            print "Found {} to format and post".format(bold(loc8tr_dir))
+            print("Found {} to format and post".format(bold(loc8tr_dir)))
 
             #
             # Format for Selector.
@@ -102,19 +105,19 @@ def main():
 def get_command_line_servers():
 
     if (len(sys.argv) == 1):
-        print "Usage: python s2-poster.py <svr-1>:<port> ... <svr-n>:<port>"
+        print("Usage: python s2-poster.py <svr-1>:<port> ... <svr-n>:<port>")
         return([])
     #endif
     servers = sys.argv[1::]
 
     for server in servers:
         if (server.find(":") == -1):
-            print "Need :<port> for server {}".format(server)
+            print("Need :<port> for server {}".format(server))
             return([])
         #endif
         s = server.split(":")[1]
         if (s.isdigit() == False):
-            print ":<port> must be decimal"
+            print(":<port> must be decimal")
             return([])
         #endif
     #endfor
@@ -130,7 +133,7 @@ def get_command_line_servers():
 #
 def get_directories():
     cmd = "ls -1d loc8tr-*"
-    dirs = commands.getoutput(cmd)
+    dirs = getoutput(cmd)
     if (dirs.find("No such file or directory") != -1): return([])
     dirs = dirs.split("\n")
 
@@ -190,8 +193,8 @@ def format_json(loc8tr_json):
     try:
         f = open(loc8tr_json, "r"); buf = f.read(); f.close()
     except:
-        print "Cannot open file {}".format(loc8tr_json)
-        print ""
+        print("Cannot open file {}".format(loc8tr_json))
+        print("")
         return({})
     #endtry
 
@@ -209,7 +212,7 @@ def format_json(loc8tr_json):
     #
     version = "?"
     if (os.path.exists("./lisp-version.txt")):
-        version = commands.getoutput("cat ./lisp-version.txt")
+        version = getoutput("cat ./lisp-version.txt")
     #endif
     s2_data["Label"] = "lispers.net version {}".format(version)
 
@@ -226,8 +229,8 @@ def format_json(loc8tr_json):
     #endfor
 
     if (debug):
-        print "Selector JSON:"
-        print s2_data
+        print("Selector JSON:")
+        print(s2_data)
     #endif
     return(s2_data)
 #enddef
@@ -244,14 +247,14 @@ def post_json(server, selector_json):
     url = "http://{}/col/api/netmon/lisp".format(server)
     data = json.dumps(selector_json)
 
-    print "Post to {} ...".format(url),
+    print("Post to {} ...".format(url), end=" ")
 
     try:
         r = requests.post(url, data=data, timeout=5)
-        print "{}, return-code: {}".format(green("succeeded"), r.status_code)
+        print("{}, return-code: {}".format(green("succeeded"), r.status_code))
         return(1)
     except Exception as e:
-        print "{}, error response:\n{}\n".format(red("failed"), e.message)
+        print("{}, error response:\n{}\n".format(red("failed"), e.message))
     #endtry
     return(0)
 #enddef

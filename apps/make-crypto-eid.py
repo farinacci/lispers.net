@@ -48,7 +48,7 @@
 # lisp-ecdsa-auth-02.txt.
 #
 #------------------------------------------------------------------------------
-
+from __future__ import print_function
 import ecdsa
 import sys
 import hashlib
@@ -66,39 +66,39 @@ def bold(string):
 # Get parameters.
 #
 if (len(sys.argv) != 3):
-    print "Usage: python make-crypto-eid.py <iid> <hash-prefix>"
+    print("Usage: python make-crypto-eid.py <iid> <hash-prefix>")
     exit(1)
 #endif
 
 iid = sys.argv[1]
 if (iid.isdigit() == False):
-    print "Instance-ID must be between 0 and 0xffffffff"
+    print("Instance-ID must be between 0 and 0xffffffff")
     exit(1)
 #endif
 iid = int(iid)
     
 eid_prefix = sys.argv[2]
 if (eid_prefix.find("/") == -1 or eid_prefix.count(":") == 0):
-    print "EID-prefix must be an IPv6 address in slash format"
+    print("EID-prefix must be an IPv6 address in slash format")
     exit(1)
 #endif
 eid_prefix, mask_len = eid_prefix.split("/")
 mask_len = int(mask_len)
 if ((mask_len % 4) != 0):
-    print "Mask-length must be a multiple of 4"
+    print("Mask-length must be a multiple of 4")
     exit(1)
 #endif
 
 #
 # Generate key-pair.
 #
-print "Generating key-pair ...",
+print("Generating key-pair ...", end=" ")
 key = ecdsa.SigningKey.generate(curve=ecdsa.NIST256p)
 pubkey = key.get_verifying_key().to_der()
-print ""
+print("")
 
 f = open("./lisp-sig.pem", "w"); f.write(key.to_pem()); f.close()
-print "Private-key stored in file {}".format(bold("lisp-sig.pem"))
+print("Private-key stored in file {}".format(bold("lisp-sig.pem")))
 
 #
 # Build EID. The hash is <4-byte-iid><variable-length-prefix><pubkey>
@@ -138,10 +138,10 @@ sig = key.sign(sig_data, hashfunc=hashlib.sha256)
 #
 # Return values in base64 format
 #
-print "Generated crypto-EID {}\n".format(bold(sig_data))
+print("Generated crypto-EID {}\n".format(bold(sig_data)))
 
 pubkey = b2a(key.get_verifying_key().to_pem())
-print "Public-key {}".format(pubkey)
+print("Public-key {}".format(pubkey))
 sig = b2a(sig)
 
 hvv = hv
@@ -203,6 +203,6 @@ commands = commands.replace("<sig>", sig)
 
 f = open("./lisp.config.include", "w"); f.write(commands); f.close()
 
-print "lispers.net commands added to file {}".format(
-    bold("lisp.config.include"))
+print("lispers.net commands added to file {}".format(
+    bold("lisp.config.include")))
 exit(0)

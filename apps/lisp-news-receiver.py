@@ -22,7 +22,7 @@
 #
 # Usage: python lisp-news-receiver.py <source> <group>
 #
-
+from __future__ import print_function
 import sys
 import socket
 import datetime
@@ -55,7 +55,7 @@ def keep_joining(msocket, group):
 # Get command line parameters.
 # 
 if (len(sys.argv) < 3):
-    print usage
+    print(usage)
     exit(1)
 #endif
 
@@ -63,7 +63,7 @@ source = sys.argv[1]
 group = sys.argv[2]
 
 if (source.find(".") == -1 or group.find(".") == -1):
-    print "Must supply IPv4 address in dotted decimal"
+    print("Must supply IPv4 address in dotted decimal")
     exit(1)
 #endif
 
@@ -73,7 +73,8 @@ port = 0x800 + int(port[-2]) + int(port[-1])
 #
 # Open send UDP socket.
 #
-print "Open listen socket ({} -> {}:{}) ... ".format(source, group, port),
+print("Open listen socket ({} -> {}:{}) ... ".format(source, group, port),
+    end=" ")
 
 try:
     msocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -81,9 +82,9 @@ try:
     msocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     mreq = struct.pack("4sl", socket.inet_aton(group), socket.INADDR_ANY)
     msocket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-    print "succeeded"
+    print("succeeded")
 except:
-    print "failed"
+    print("failed")
     exit(1)
 #endtry
 
@@ -102,9 +103,9 @@ while (True):
     #endtry
 
     ts = datetime.datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")
-    print "Message received {}:\n{}\n".format(ts, message[0:-1]),
-    for i in range(40): print "-",
-    print ""
+    print("Message received {}:\n{}\n".format(ts, message[0:-1]),)
+    for i in range(40): print("-", end=" ")
+    print("")
 #endwhile
 
 timer.cancel()
