@@ -21,14 +21,31 @@
 # This python script will do a release of the lispers.net LISP code.
 # 
 # -----------------------------------------------------------------------------
-
+from __future__ import print_function
 import os
-import commands
 import sys
 import time
 import platform
+from builtins import input
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
 
-#------------------------------------------------------------------------------
+use_python3 = False
+
+# -----------------------------------------------------------------------------
+
+#
+# Decide which version of python to build with.
+#
+if (use_python3):
+    PYTHON = "python3"
+    PYFLAKES = "pyflakes3"
+else:
+    PYTHON = "python"
+    PYFLAKES = "pyflakes"
+#endif
 
 #
 # To make tarball smaller default to not including the go binary lisp-xtr.
@@ -41,15 +58,15 @@ root = "./.."
 #
 # Check that pyflakes and pyobfuscate are installed.
 #
-pyflakes = commands.getoutput("pyflakes -h")
+pyflakes = getoutput("{} -h".format(PYFLAKES))
 if (pyflakes.find("not found") != -1):
-    print "Need to 'apt-get install pyflakes'"
+    print("Need to 'apt-get install {}'".format(PYFLAKES))
     exit(1)
 #endif    
-pyobfuscate = commands.getoutput("pyobfuscate -h")
+pyobfuscate = getoutput("pyobfuscate -h")
 if (obfuscate_on and pyobfuscate.find("not found") != -1):
-    print "Need pyobfuscate, turn off or install via at " + \
-        "'https://github.com/astrand/pyobfuscate'"
+    print("Need pyobfuscate, turn off or install via at " + \
+        "'https://github.com/astrand/pyobfuscate'")
     exit(1)
 #endif    
 
@@ -57,18 +74,18 @@ if (obfuscate_on and pyobfuscate.find("not found") != -1):
 # First check that this is running in the build directory and that peer
 # directories "lisp" and "docs" exist.
 #
-curdir = commands.getoutput("pwd")
+curdir = getoutput("pwd")
 curdir = curdir.split("/")
 if (curdir[-1] != "build"):
-    print "Need to be in directory named 'build'"
+    print("Need to be in directory named 'build'")
     exit(1)
 #endif
 if (os.path.exists("../lisp") == False):
-    print "Directory '../lisp' needs to be a peer directory"
+    print("Directory '../lisp' needs to be a peer directory")
     exit(1)
 #endif
 if (os.path.exists("../docs") == False):
-    print "Directory '../docs' needs to be a peer directory"
+    print("Directory '../docs' needs to be a peer directory")
     exit(1)
 #endif
 
@@ -81,18 +98,18 @@ if (machine.find("x86") != -1):
 elif (machine.find("mips") != -1):
     cpu = "mips"
 else:
-    print "Build does not support cpu type {}".format(machine)
+    print("Build does not support cpu type {}".format(machine))
     exit(1)
 #endif
 
 start_time = time.time()
-build_date = commands.getoutput("date")
+build_date = getoutput("date")
 
 #
 # Run pyflakes. We don't want to build a release with python errors.
 #
-print "Checking for python errors with pyflakes ... ", 
-status = os.system("pyflakes {}/lisp/*py > /dev/null".format(root))
+print("Checking for python errors with {} ... ".format(PYFLAKES), end=" ")
+status = os.system("{} {}/lisp/*py > /dev/null".format(PYFLAKES, root))
 if (status != 0):
     print("found pyflakes errors")
     exit(1)
@@ -102,55 +119,55 @@ print("done")
 #
 # Check and ask if you want to build release with debug code in it.
 #
-print "Checking for any lisp.debug() calls ... ", 
+print("Checking for any lisp.debug() calls ... ", end=" ")
 command = ('egrep "debug\(" {}/lisp/*py | egrep -v "def|self|_debug" > ' + \
     '/dev/null').format(root)
 status = os.system(command)
 print("done")
 if (status == 0):
-    if (raw_input("Build release with debug code? (y/n): ") != "y"): exit(1)
+    if (input("Build release with debug code? (y/n): ") != "y"): exit(1)
 #endif
 
 if (len(sys.argv) > 1): 
     version = sys.argv[1]
 else:
-    version = raw_input("Enter version number (in format x.y): ")
+    version = input("Enter version number (in format x.y): ")
 #endif
 
 dir = "releases/release-{}".format(version)
 status = os.system("mkdir " + dir)
 if (status != 0):
-    print "Could not create directory {}".format(dir)
+    print("Could not create directory {}".format(dir))
     exit(1)
 #endif
 os.system("rm latest; ln -sf {} latest".format(dir)) 
 
-print "Copying files from ../lisp to " + dir + " build directory ...",
+print("Copying files from ../lisp to " + dir + " build directory ...", end=" ")
 command = '''
 cp ../lisp/lispapi.txt ../lisp/*py ../lisp/*-LISP ../lisp/RL-* ../lisp/*.pem.default ../build/release-notes.txt ../build/provision-lisp.py ../lisp/pslisp ../lisp/log-packets ../lisp/lispers.net-geo.html ../lisp/lig ../lisp/rig ../lisp/ltr ./{}/.
 '''.format(dir)
 
 status = os.system(command)
 if (status != 0):
-    print "failed"
+    print("failed")
     exit(1)
 #endif
-print "done"
+print("done")
 
-print "Copying install scripts to " + dir + " build directory ...",
+print("Copying install scripts to " + dir + " build directory ...", end=" ")
 command = "cp ./py-depend/lispers.net-test-install.py ./{}/.".format(dir)
 status = os.system(command)
 if (status != 0):
-    print "failed"
+    print("failed")
     exit(1)
 #endif
 command = "cp ./py-depend/lispers.net-install-ubuntu.py ./{}/.".format(dir)
 status = os.system(command)
 if (status != 0):
-    print "failed"
+    print("failed")
     exit(1)
 #endif
-print "done"
+print("done")
 
 #
 # Move *.py files to src directory. We will obfuscate the source files in
@@ -162,16 +179,16 @@ os.system("mkdir {}/src; mv {}/*py {}/src/.".format(dir, dir, dir))
 # Obfuscate the py files. They are put in directory ./ob.
 #
 if (obfuscate_on):
-    py_files = commands.getoutput("cd {}/src; ls *py".format(dir)).split("\n")
+    py_files = getoutput("cd {}/src; ls *py".format(dir)).split("\n")
     libraries = ["lisp.py", "lispconfig.py", "lispapi.py", "chacha.py",
         "poly1305.py"]
-    print "Obfuscating py files ...",
+    print("Obfuscating py files ...", end= " ")
     for py_file in py_files:
         dash_a = "-a" if py_file in libraries else ""
         os.system("pyobfuscate {} {}/src/{} > {}/{}".format(dash_a, dir, 
             py_file, dir, py_file))
     #endfor
-    print "done"
+    print("done")
 else:
     os.system("cp {}/src/*py {}/.".format(dir, dir))
 #endif
@@ -179,10 +196,10 @@ else:
 #
 # Do the compile.
 #
-print "Compiling for machine '{}'".format(machine)
-status = os.system("cd ./{}; python -O -m compileall *py".format(dir))
+print("{} compiling for machine '{}'".format(PYTHON, machine))
+status = os.system("cd ./{}; {} -O -m compileall *py".format(dir, PYTHON))
 if (status != 0):
-    print "Compilation failed"
+    print("Compilation failed")
     exit(1)
 #endif
 
@@ -208,11 +225,11 @@ lisp_xtr = ""
 if (include_lisp_xtr):
     go_binary = "{}/lisp/lisp-xtr".format(root)
     if (os.path.exists("{}".format(go_binary)) == False):
-        print "Binary 'lisp-xtr' not found, not included in build"
-    elif (commands.getoutput("file {} | egrep ELF".format(go_binary)) == ""):
-        print "Binary 'lisp-xtr' not in ELF format, not included in build"
+        print("Binary 'lisp-xtr' not found, not included in build")
+    elif (getoutput("file {} | egrep ELF".format(go_binary)) == ""):
+        print("Binary 'lisp-xtr' not in ELF format, not included in build")
     else:
-        print "Copying go files and go binary 'lisp-xtr*'  ... ", 
+        print("Copying go files and go binary 'lisp-xtr*'  ... ", end=" ")
         os.system("cp {}/lisp/*.go {}/src/.".format(root, dir))
         os.system("cp {} {}/.".format(go_binary, dir))
         lisp_xtr = "lisp-xtr"
@@ -220,10 +237,10 @@ if (include_lisp_xtr):
             os.system("cp {} {}/.".format(go_binary + ".alpine", dir))
             lisp_xtr += " lisp-xtr.alpine"
         #endif
-        print "done"
+        print("done")
     #endif
 else:
-    print "Configured to NOT include go binary 'lisp-xtr'"
+    print("Configured to NOT include go binary 'lisp-xtr'")
 #endif
 
 #
@@ -240,7 +257,7 @@ os.system('cp ./py-depend/pip-requirements.txt ./{}/.'.format(dir))
 # ._<foo> files.
 #
 tar_file = "lispers.net-" + cpu + "-release-" + version + ".tgz"
-print "Build tgz file {} ... ".format(tar_file),
+print("Build tgz file {} ... ".format(tar_file), end=" ")
 files = "*.pyo *.txt lisp.config.example lisp-cert.pem.default *-LISP " + \
     "RL-* pslisp lig rig ltr log-packets lispers.net-geo.html {}".format( \
     lisp_xtr)
@@ -248,10 +265,10 @@ command = "cd {}; export COPYFILE_DISABLE=true; tar czf {} {}".format(dir,
     tar_file, files)
 status = os.system(command)
 if (status != 0):
-    print "failed"
+    print("failed")
     exit(1)
 #endif
-print "done"
+print("done")
 
 #
 # Put go binary and pyo files in the bin/ directory.
@@ -261,7 +278,7 @@ if (lisp_xtr != ""):
     os.system("mv {}/lisp-xtr* {}/bin/".format(dir, dir))
 #endif
 
-print "Copying version information to ../lisp directory ... ", 
+print("Copying version information to ../lisp directory ... ", )
 command = '''
     cd ./{}; 
     cp lisp-version.txt ../../../lisp/.;
@@ -273,13 +290,13 @@ command = '''
 '''.format(dir)
 status = os.system(command)
 if (status != 0):
-    print "failed"
+    print("failed")
     exit(1)
 #endif
-print "done"
+print("done")
 
 elapsed = round(time.time() - start_time, 3)
-print "Script run time: {} seconds".format(elapsed)
+print("Script run time: {} seconds".format(elapsed))
 exit(0)
 
 #------------------------------------------------------------------------------

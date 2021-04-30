@@ -22,33 +22,39 @@
 # the LISPAPI module.
 # 
 # -----------------------------------------------------------------------------
-
+from __future__ import print_function
 import os
-import commands
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
 import sys
 import time
 import platform
+from builtins import input
 
 #------------------------------------------------------------------------------
 
 obfuscate_on = True
+PYTHON = "python"
+#PYTHON = "python3"
 
 #
 # First check that this is running in the build directory and that peer
 # directories "lisp" and "docs" exist.
 #
-curdir = commands.getoutput("pwd")
+curdir = getoutput("pwd")
 curdir = curdir.split("/")
 if (curdir[-1] != "build"):
-    print "Need to be in directory named 'build'"
+    print("Need to be in directory named 'build'")
     exit(1)
 #endif
 if (os.path.exists("../lisp") == False):
-    print "Directory '../lisp' needs to be a peer directory"
+    print("Directory '../lisp' needs to be a peer directory")
     exit(1)
 #endif
 if (os.path.exists("../docs") == False):
-    print "Directory '../docs' needs to be a peer directory"
+    print("Directory '../docs' needs to be a peer directory")
     exit(1)
 #endif
 
@@ -61,37 +67,37 @@ if (machine.find("x86") != -1):
 elif (machine.find("mips") != -1):
     cpu = "mips"
 else:
-    print "Build does not support cpu type {}".format(machine)
+    print("Build does not support cpu type {}".format(machine))
     exit(1)
 #endif
 
 start_time = time.time()
-build_date = commands.getoutput("date")
+build_date = getoutput("date")
 
 if (len(sys.argv) > 1): 
     version = sys.argv[1]
 else:
-    version = raw_input("Enter version number (in format x.y): ")
+    version = input("Enter version number (in format x.y): ")
 #endif
 
 dir = "releases/apps-release-{}".format(version)
 status = os.system("mkdir " + dir)
 if (status != 0):
-    print "Could not create directory {}".format(dir)
+    print("Could not create directory {}".format(dir))
     exit(1)
 #endif
 
-print "Copying files from ../apps to " + dir + " build directory ...",
+print("Copying files from ../apps to " + dir + " build directory ...", end=" ")
 command = '''
 cp ../lisp/lispapi.txt ../lisp/lispapi.py ../apps/*py ./{}/.
 '''.format(dir)
 
 status = os.system(command)
 if (status != 0):
-    print "failed"
+    print("failed")
     exit(1)
 #endif
-print "done"
+print("done")
 
 #
 # Move *.py files to src directory. We will obfuscate the source files in
@@ -103,9 +109,9 @@ os.system("mkdir {}/src; mv {}/*py {}/src/.".format(dir, dir, dir))
 # Obfuscate the py files. They are put in directory ./ob.
 #
 if (obfuscate_on):
-    py_files = commands.getoutput("cd {}/src; ls *py".format(dir)).split("\n")
+    py_files = getoutput("cd {}/src; ls *py".format(dir)).split("\n")
     for py_file in py_files:
-        print "Obfuscating {} ... ".format(py_file)
+        print("Obfuscating {} ... ".format(py_file))
         dash_a = "-a" if (py_file == "lispapi.py") else ""
         os.system("pyobfuscate {} {}/src/{} > {}/{}".format(dash_a, dir, 
             py_file, dir, py_file))
@@ -117,10 +123,10 @@ else:
 #
 # Do the compile.
 #
-print "Compiling for machine '{}'".format(machine)
-status = os.system("cd ./{}; python -O -m compileall *py".format(dir))
+print("{} ompiling for machine '{}'".format(PYTHON, machine))
+status = os.system("cd ./{}; {} -O -m compileall *py".format(dir, PYTHON))
 if (status != 0):
-    print "Compilation failed"
+    print("Compilation failed")
     exit(1)
 #endif
 
@@ -142,15 +148,15 @@ os.system('cp ../docs/how-to-use-apps.txt ./{}/.'.format(dir))
 # Now tar and gzip files for release.
 #
 tar_file = "lispers.net-" + cpu + "-apps-release-" + version + ".tgz"
-print "Build tgz file {} ... ".format(tar_file),
+print("Build tgz file {} ... ".format(tar_file), end=" ")
 files = '''*.pyo *.txt'''
 command = "cd {}; tar czf {} {}".format(dir, tar_file, files)
 status = os.system(command)
 if (status != 0):
-    print "failed"
+    print("failed")
     exit(1)
 #endif
-print "done"
+print("done")
 
 #
 # Put pyo files in the bin/ directory.
@@ -158,7 +164,7 @@ print "done"
 os.system("mkdir {}/bin; mv {}/*pyo {}/bin/".format(dir, dir, dir))
 
 elapsed = round(time.time() - start_time, 3)
-print "Script run time: {} seconds".format(elapsed)
+print("Script run time: {} seconds".format(elapsed))
 exit(0)
 
 #------------------------------------------------------------------------------

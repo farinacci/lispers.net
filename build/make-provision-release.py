@@ -25,12 +25,14 @@
 # Usage: python make-provision-release.py [<release> <iid> <build-tag>]
 #
 # -----------------------------------------------------------------------------
-
+from __future__ import print_function
 import os
-import commands
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
 import sys
-import time
-import platform
+from builtins import input
 
 #------------------------------------------------------------------------------
 
@@ -47,14 +49,14 @@ def green(string):
 #
 # First check that this is running in the build directory.
 #
-curdir = commands.getoutput("pwd")
+curdir = getoutput("pwd")
 curdir = curdir.split("/")
 if (curdir[-1] != "build"):
-    print "Need to be in directory named 'build'"
+    print("Need to be in directory named 'build'")
     exit(1)
 #endif
 if (os.path.exists("./releases") == False):
-    print "Directory './releases' needs to be in build directory"
+    print("Directory './releases' needs to be in build directory")
     exit(1)
 #endif
 
@@ -66,15 +68,15 @@ if (len(sys.argv) == 4):
     iid = sys.argv[2]
     tag = sys.argv[3]
 else:
-    version = raw_input("Enter version number (in format x.y): ")
-    iid = raw_input("Enter LISP xTR instance-ID: ")
-    tag = raw_input("Enter tag to be part of tgz filename: ")
+    version = input("Enter version number (in format x.y): ")
+    iid = input("Enter LISP xTR instance-ID: ")
+    tag = input("Enter tag to be part of tgz filename: ")
     print("")
 #endif
 
 release = "./releases/release-{}".format(version)
 if (os.path.exists(release) == False):
-    print "Could not find directory {}".format(release)
+    print("Could not find directory {}".format(release))
     exit(1)
 #endif
 tgz = "lispers.net-x86-release-{}.tgz".format(version)

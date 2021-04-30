@@ -9,13 +9,17 @@
 #
 # Usage: python provision-lisp.py <device> <iid> [<ipv4-eid>] [<ipv6-eid>]
 #
-
+from __future__ import print_function
 import sys
 import os
 import random
-import commands
 import time
 import platform
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#entry    
 
 #------------------------------------------------------------------------------
 
@@ -36,13 +40,13 @@ def allocate_eids():
 #
 # get_rloc
 #
-# Get IP address on interface. Various versions of ubumtu put gratitious
+# Get IP address on interface. Various versions of ubuntu put gratitious
 # whitespaces between keywords and hence the two types of greps below.
 #
 def get_rloc(device):
-    addr = commands.getoutput('ip route | egrep "link src "'.format(device))
+    addr = getoutput('ip route | egrep "link src " | egrep {}'.format(device))
     if (addr == ""): 
-        addr = commands.getoutput('ip route | egrep "link  src "'.format( \
+        addr = getoutput('ip route | egrep "link  src " | egrep {}'.format( \
             device))
         if (addr == ""): return(None)
     #endif
@@ -135,8 +139,8 @@ if (provision):
     if (eid4 == None): eid4, eid6 = allocate_eids()
     rloc = get_rloc(device)
 
-    print "Provisioning lisp.config file with EIDs [{}]{} & [{}]{}".format(iid,
-        eid4, iid, eid6)
+    print("Provisioning lisp.config file with EIDs [{}]{} & [{}]{}".format(iid,
+        eid4, iid, eid6))
     lisp_config = lisp_config.replace("<iid>", iid)
     lisp_config = lisp_config.replace("<v4-eid>", eid4)
     lisp_config = lisp_config.replace("<v6-eid>", eid6)
@@ -146,11 +150,11 @@ if (provision):
 else:
     iid, eid4, eid6 = get_eids(lisp_config)
     if (iid == None):
-        print "lisp.config file corrupt, remove it and rerun script"
+        print("lisp.config file corrupt, remove it and rerun script")
         exit(1)
     #endif
-    print "Using EIDs [{}]{} & [{}]{} found in lisp.config".format(iid, eid4,
-        iid, eid6)
+    print("Using EIDs [{}]{} & [{}]{} found in lisp.config".format(iid, eid4,
+        iid, eid6))
 #endif
 
 #
