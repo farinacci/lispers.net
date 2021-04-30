@@ -1,4 +1,26 @@
 
+                lispers.net Beta Release Version 0.560
+                --------------------------------------
+
+o Release date:
+
+o Remove aliases lig, rig, and ltr from .cshrc used inside of a docker
+  container. Since these utilities have wrappers in the lispers.net directory
+  the aliases are no longer needed.
+
+o Have make-release.py use python3 when boolean in header of file is set to
+  True. It will also use pyflakes3 instead of pyflakes.
+
+o Make make-release.py compile for both python2 and python3. Clean against
+  pyflakes and pyflakes3.
+
+o All py files in build and apps directories is python3-ized.
+
+o Change all py files in lisp directory to use getoutput() from a conditional
+  import from either library 'commands' or "subprocess'.    
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.559
                 --------------------------------------
 

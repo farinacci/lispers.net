@@ -19,7 +19,7 @@ try:
     from commands import getoutput
 except:
     from subprocess import getoutput
-#entry    
+#endtry    
 
 #------------------------------------------------------------------------------
 

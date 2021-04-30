@@ -31,6 +31,7 @@ try:
     from commands import getoutput
 except:
     from subprocess import getoutput
+#endtry    
 import sys
 from builtins import input
 

@@ -28,6 +28,7 @@ try:
     from commands import getoutput
 except:
     from subprocess import getoutput
+#endtry    
 import sys
 import time
 import platform

@@ -31,10 +31,11 @@ try:
     from commands import getoutput
 except:
     from subprocess import getoutput
+#endtry    
+
+#-----------------------------------------------------------------------------
 
 use_python3 = False
-
-# -----------------------------------------------------------------------------
 
 #
 # Decide which version of python to build with.
