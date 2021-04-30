@@ -38,6 +38,7 @@ try:
     from commands import getoutput
 except:
     from subprocess import getoutput
+#endtry    
 import platform
 
 usage = "Usage: python lisp-from-eeid.py [help] <destination-eid> [loop <num>]"

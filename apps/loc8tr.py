@@ -72,6 +72,7 @@ try:
     from commands import getoutput
 except:
     from subprocess import getoutput
+#endtry    
 
 #
 # ---------- Constants and Data Structures ----------

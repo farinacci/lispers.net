@@ -15,6 +15,7 @@ try:
     from commands import getoutput
 except:
     from subprocess import getoutput
+#endtry    
 import time
 import os
 import sys
