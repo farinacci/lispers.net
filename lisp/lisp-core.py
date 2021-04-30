@@ -54,7 +54,11 @@ import lisp
 import lispconfig
 import multiprocessing
 import threading
-import commands
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#endtry
 import time
 import os
 import bottle
@@ -163,7 +167,7 @@ def lisp_api_get(command = "", data_structure=""):
 def lisp_get_api_system():
     data = {}
     data["hostname"] = socket.gethostname()
-    data["system-uptime"] = commands.getoutput("uptime")
+    data["system-uptime"] = getoutput("uptime")
     data["lisp-uptime"] = lisp.lisp_print_elapsed(lisp.lisp_uptime)
     data["lisp-version"] = lisp.lisp_version
 
@@ -477,7 +481,7 @@ def lisp_core_traceback_page():
     # Check explicit lisp-traceback.log.
     #
     if (os.path.exists("./logs/lisp-traceback.log")):
-        output = commands.getoutput("cat ./logs/lisp-traceback.log")
+        output = getoutput("cat ./logs/lisp-traceback.log")
         if (output):
             output = output.replace("----------", "<b>----------</b>")
             output = output.replace("\n", "<br>")
@@ -491,7 +495,7 @@ def lisp_core_traceback_page():
     if (clean):
         output = ""
         cmd = "egrep --with-filename Traceback ./logs/*.log"
-        log_files = commands.getoutput(cmd)
+        log_files = getoutput(cmd)
         log_files = log_files.split("\n")
         for lf in log_files:
             if (lf.find(":") == -1): continue
@@ -553,8 +557,8 @@ def lisp_show_status_command():
             lf, ils, rs)
     #endif
 
-    sys_uptime = commands.getoutput("uptime")
-    uname = commands.getoutput("uname -pv")
+    sys_uptime = getoutput("uptime")
+    uname = getoutput("uname -pv")
     main_version = lisp.lisp_version.replace("+", "")
 
     #
@@ -573,7 +577,7 @@ def lisp_show_status_command():
     # Get LISP process status.
     #
     command = "ps auww" if lisp.lisp_is_macos() else "ps aux"
-    status = commands.getoutput( \
+    status = getoutput( \
         "{} | egrep 'PID|python lisp|python -O lisp' | egrep -v grep". \
         format(command))
     status = status.replace(" ", lisp.space(1))
@@ -584,7 +588,7 @@ def lisp_show_status_command():
     #
     if (uname.find("Darwin") != -1):
         cpu_count = cpu_count / 2
-        top = commands.getoutput("top -l 1 | head -50")
+        top = getoutput("top -l 1 | head -50")
         top = top.split("PID")
         top = top[0]
     
@@ -615,14 +619,14 @@ def lisp_show_status_command():
         #
         # top on Fedora Linux.
         #
-        lines = commands.getoutput("top -b -n 1 | head -50")
+        lines = getoutput("top -b -n 1 | head -50")
         lines = lines.split("PID")
         lines[1] = lines[1].replace(" ", lisp.space(1))
         lines = lines[0] + lines[1]
         top = lines.replace("\n", "<br>")
     #endif
 
-    release_notes = commands.getoutput("cat release-notes.txt")
+    release_notes = getoutput("cat release-notes.txt")
     release_notes = release_notes.replace("\n", "<br>")
 
     output += '''
@@ -777,7 +781,7 @@ def lisp_get_port_on_command_line():
 
     for p in ["443", "-8080", "8080"]:
         c = 'ps auxww | egrep "lisp-core.pyo {}" | egrep -v grep'.format(p)
-        output = commands.getoutput(c)
+        output = getoutput(c)
         if (output == ""): continue
 
         output = output.split("\n")[0]
@@ -803,7 +807,7 @@ def lisp_restart_command():
     # Check to see if requiretty is in effect. If so, we can't sudo, so tell
     # user.
     #
-    line = commands.getoutput("egrep requiretty /etc/sudoers").split(" ")
+    line = getoutput("egrep requiretty /etc/sudoers").split(" ")
     if (line[-1] == "requiretty" and line[0] == "Defaults"):
         output = "Need to remove 'requiretty' from /etc/sudoers"
         output = lisp.lisp_print_sans(output)
@@ -953,7 +957,7 @@ def lisp_search_log_command(name = "", num = "", keyword = ""):
 
     command = "tail -n {} logs/{}.log | egrep -B10 -A10 {}".format(num, name, 
         keyword)
-    output = commands.getoutput(command)
+    output = getoutput(command)
 
     if (output):
         occurences = output.count(keyword)
@@ -1017,7 +1021,7 @@ def lisp_show_log_name_command(name = "", num=""):
     '''.format(name, num)
 
     if (os.path.exists("logs/{}.log".format(name))):
-        output = commands.getoutput("tail -n {} logs/{}.log".format(num, name))
+        output = getoutput("tail -n {} logs/{}.log".format(num, name))
         output = lisp.convert_font(output)
         output = output.replace("\n", "<br>")
         output = header + lisp.lisp_print_cour(output)
@@ -1159,7 +1163,7 @@ def lisp_clear_command(name = "", itr_name = '', rtr_name = "", etr_name = "",
     #
     # Only touch lisp.config file if there are static map-cache entries.
     #
-    exist = commands.getoutput("egrep 'lisp map-cache' ./lisp.config")
+    exist = getoutput("egrep 'lisp map-cache' ./lisp.config")
     if (exist != ""):
         os.system("touch ./lisp.config")
     #endif
@@ -1505,7 +1509,7 @@ def lisp_lig_command():
 
     command = 'python {} "{}" to {} {} {}'.format(lig, eid, mr, count, no_nat)
 
-    output = commands.getoutput(command)
+    output = getoutput(command)
     output = output.replace("\n", "<br>")
     output = lisp.convert_font(output)
 
@@ -1565,7 +1569,7 @@ def lisp_rig_command():
 
     command = 'python {} "{}" to {} {}'.format(rig, eid, ddt, follow_all)
 
-    output = commands.getoutput(command)
+    output = getoutput(command)
     output = output.replace("\n", "<br>")
     output = lisp.convert_font(output)
 
@@ -1589,7 +1593,7 @@ def lisp_run_geo_lig(eid1, eid2):
     #
     # First get a map-resolver addresss.
     #
-    o = commands.getoutput("egrep -A 2 'lisp map-resolver {' ./lisp.config")
+    o = getoutput("egrep -A 2 'lisp map-resolver {' ./lisp.config")
     mr = None
     for keyword in ["address = ", "dns-name = "]:
         mr = None
@@ -1621,7 +1625,7 @@ def lisp_run_geo_lig(eid1, eid2):
 
         command = 'python {} "{}" to {} count 1'.format(lig, eid, mr)
         for cmd in [command, command + " no-info"]:
-            output = commands.getoutput(command)
+            output = getoutput(command)
             index = output.find("geo: ")
             if (index == -1):
                 if (cmd != command): geos.append(None)
@@ -2305,8 +2309,8 @@ def lisp_core_startup(bottle_port):
     lisp.lisp_set_exception()
     lisp.lisp_print_banner("core-process starting up")
     lisp.lisp_uptime = lisp.lisp_get_timestamp()
-    lisp.lisp_version = commands.getoutput("cat lisp-version.txt")
-    lisp_build_date = commands.getoutput("cat lisp-build-date.txt")
+    lisp.lisp_version = getoutput("cat lisp-version.txt")
+    lisp_build_date = getoutput("cat lisp-build-date.txt")
 
     #
     # Get local address for source RLOC for encapsulation.
@@ -2496,7 +2500,7 @@ def lisp_check_decent_xtr_multicast(lisp_socket):
     #
     # Find eth0 IP address.
     #
-    out = commands.getoutput('ifconfig eth0 | egrep "inet "')
+    out = getoutput('ifconfig eth0 | egrep "inet "')
     if (out == ""): return
     intf_addr = out.split()[1]
 

@@ -30,7 +30,11 @@ import threading
 import pcappy
 import time
 import os
-import commands
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#endtry    
 import struct
 
 #------------------------------------------------------------------------------
@@ -216,10 +220,10 @@ def lisp_get_active_interfaces():
     # Linux distributions have different ifconfig output format.
     #
     gs = "Link encap"
-    interfaces = commands.getoutput("ifconfig | egrep '{}'".format(gs))
+    interfaces = getoutput("ifconfig | egrep '{}'".format(gs))
     if (interfaces == ""):
         gs = ": flags="
-        interfaces = commands.getoutput("ifconfig | egrep '{}'".format(gs))
+        interfaces = getoutput("ifconfig | egrep '{}'".format(gs))
     #endif
         
     interfaces = interfaces.split("\n")
@@ -972,7 +976,7 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
                 if (s in dyn_eids): continue
                 if (s.find(".") != -1 and source.find(".") == -1): continue
                 if (s.find(":") != -1 and source.find(":") == -1): continue
-                if (commands.getoutput(check.format(six, source, s)) == ""):
+                if (getoutput(check.format(six, source, s)) == ""):
                     continue
                 #endif
                 os.system(add.format(six, source, s))
@@ -993,8 +997,8 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
     #
     # Print out rules we just configured.
     #
-    rules = commands.getoutput("sudo iptables -t raw -S lisp").split("\n")
-    rules += commands.getoutput("sudo ip6tables -t raw -S lisp").split("\n")
+    rules = getoutput("sudo iptables -t raw -S lisp").split("\n")
+    rules += getoutput("sudo ip6tables -t raw -S lisp").split("\n")
     lisp.lprint("Using kernel filters: {}".format(rules))
 
     #
@@ -1065,7 +1069,7 @@ def lisp_itr_build_pcap_filter(sources, dyn_eids, l2_overlay, pitr):
     # to accept packets for local EIDs (assigned to loopback interfaces).
     # So allow the first one to be accepted.
     #
-    lisp_nat = commands.getoutput("egrep 'lisp-nat = yes' ./lisp.config")
+    lisp_nat = getoutput("egrep 'lisp-nat = yes' ./lisp.config")
     lisp_nat = (lisp_nat != "" and lisp_nat[0] == " ")
     loopback = lisp.lisp_get_loopback_address() if (lisp_nat) else None
 

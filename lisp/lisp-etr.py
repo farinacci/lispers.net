@@ -30,7 +30,11 @@ import threading
 import time
 import pcappy
 import struct
-import commands
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#endtry    
 import os
 try:
     import pytun
@@ -1436,7 +1440,7 @@ def lisp_etr_join_leave_process():
     # an IGMPv2 report to ourselves.
     #
     while (True):
-        groups = commands.getoutput("ls join-*").replace("join-", "")
+        groups = getoutput("ls join-*").replace("join-", "")
         groups = groups.split("\n")
 
         for group in groups:

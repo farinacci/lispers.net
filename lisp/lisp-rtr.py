@@ -31,7 +31,11 @@ import threading
 import pcappy
 import os
 import copy
-import commands
+try:
+    from commands import getoutput
+except:
+    from subprocess import getoutput
+#endtry    
 import binascii
 
 #------------------------------------------------------------------------------
@@ -1036,7 +1040,7 @@ def lisp_rtr_pcap_thread(lisp_thread):
     # If "lisp-nat = yes" is configured, then a PETR is co-located with this
     # RTR functionality. We need to pcap *all* packets (0.0.0.0/0 and 0::/0).
     #
-    lisp_nat = commands.getoutput("egrep 'lisp-nat = yes' ./lisp.config")
+    lisp_nat = getoutput("egrep 'lisp-nat = yes' ./lisp.config")
     lisp_nat = (lisp_nat != "" and lisp_nat[0] == " ")
 
     pfilter = "(dst host "
