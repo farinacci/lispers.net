@@ -257,7 +257,7 @@ class ChaCha(object):
             output must be converted to bytestring before return.
         """
         x = self.state[:]           # makes a copy
-        for i in xrange(0, self.rounds, 2):
+        for i in range(0, self.rounds, 2):
             # two rounds per iteration
             self._quarterround(x, 0, 4, 8,12)
             self._quarterround(x, 1, 5, 9,13)
@@ -269,7 +269,7 @@ class ChaCha(object):
             self._quarterround(x, 2, 7, 8,13)
             self._quarterround(x, 3, 4, 9,14)
             
-        for i in xrange(16):
+        for i in range(16):
             x[i] = (x[i] + self.state[i]) & 0xffffffff
         output = struct.pack('<16I',
                             x[ 0], x[ 1], x[ 2], x[ 3],
@@ -327,7 +327,7 @@ class ChaCha(object):
     
     def _xor(self, stream, datain):
         dataout = []
-        for i in xrange(min(len(stream), len(datain))):
+        for i in range(min(len(stream), len(datain))):
             dataout.append(chr(ord(stream[i])^ord(datain[i])))
         return ''.join(dataout)
     
