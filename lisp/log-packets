@@ -26,6 +26,12 @@
 ls ./lisp-log-packets.pyo >& /dev/null
 if ($status == "0") then
     python -O ./lisp-log-packets.pyo $1
-else
-    python ./lisp-log-packets.py $1
+    exit
 endif
+ls ./lisp-log-packets.pyc >& /dev/null
+if ($status == "0") then
+    python3.8 -O ./lisp-log-packets.pyc $1
+    exit
+endif
+python ./lisp-log-packets.py $1
+
