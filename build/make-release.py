@@ -161,13 +161,7 @@ if (status != 0):
 print("done")
 
 print("Copying install scripts to " + dir + " build directory ...", end=" ")
-command = "cp ./py-depend/lispers.net-test-install.py ./{}/.".format(dir)
-status = os.system(command)
-if (status != 0):
-    print("failed")
-    exit(1)
-#endif
-command = "cp ./py-depend/lispers.net-install-ubuntu.py ./{}/.".format(dir)
+command = "cp ./lispers.net-test-install.py ./{}/.".format(dir)
 status = os.system(command)
 if (status != 0):
     print("failed")
@@ -279,7 +273,6 @@ os.system('cd ./{}; echo "{}" > lisp-version.txt'.format(dir, version))
 os.system('cd ./{}; echo "{}" > lisp-build-date.txt'.format(dir, build_date))
 os.system('cp ../docs/lisp.config.example ./{}/.'.format(dir))
 os.system('cp ../docs/how-to-install*.txt ./{}/.'.format(dir))
-os.system('cp ./py-depend/pip-requirements.txt ./{}/.'.format(dir))
 
 #
 # Now tar and gzip files for release. COPYFILE is so MacOs does not put in
