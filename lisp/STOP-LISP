@@ -84,7 +84,7 @@ endif
 # Remove iptables lispers.net created if we are an ITR.
 #
 if ($itr == 0) then
-    $PY remove-lisp-iptables.$SUFFIX
+    $PY ./remove-lisp-iptables.$SUFFIX
 else
     echo "Bypass removing LISP iptables, ITR process not running"
 endif
