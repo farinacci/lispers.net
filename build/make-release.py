@@ -18,7 +18,10 @@
 #
 # make-release.py
 #
-# This python script will do a release of the lispers.net LISP code.
+# This python script will do a release of the lispers.net LISP code. The build
+# defaults to creating pyo files with Python version 2.7.x. If env variable
+# in calling shell has LISPERS.NET_PYTHON3 defined, then Python version 3.8.x
+# will be used to create pyc files are used.
 # 
 # -----------------------------------------------------------------------------
 from __future__ import print_function
@@ -35,14 +38,16 @@ except:
 
 #-----------------------------------------------------------------------------
 
-use_python3 = False
+use_python3 = (os.getenv("LISPERS.NET_PYTHON3") != None)
+print("This build is using python{}".format("3.8" if use_python3 else "2.7"))
 
 #
-# Decide which version of python to build with.
+# Decide which version of python to build with. "python3" command call must
+# point to Python version 3.8. 
 #
 if (use_python3):
     PYTHON = "python3"
-    PYFLAKES = "pyflakes3"
+    PYFLAKES = "python3.7 -m pyflakes"
 else:
     PYTHON = "python"
     PYFLAKES = "pyflakes"
@@ -109,7 +114,7 @@ build_date = getoutput("date")
 #
 # Run pyflakes. We don't want to build a release with python errors.
 #
-print("Checking for python errors with {} ... ".format(PYFLAKES), end=" ")
+print("Checking for python errors with '{}' ... ".format(PYFLAKES), end=" ")
 status = os.system("{} {}/lisp/*py > /dev/null".format(PYFLAKES, root))
 if (status != 0):
     print("found pyflakes errors")
@@ -245,6 +250,29 @@ else:
 #endif
 
 #
+# For python3 builds, move all *38.opt-1.pyc files to just *.pyc. Just so
+# python2 and python3 releases use the same file structure.
+#
+pycache = "{}/__pycache__".format(dir)
+if (os.path.exists(pycache)):
+    trailer = ".cpython-38.opt-1.pyc"
+    files = getoutput("ls -1 {} | egrep {}".format(pycache, trailer))
+    if (files == ""):
+        print("python3 did not produce any opt-1 pyc files")
+        exit(1)
+    #endif
+    files = files.split("\n")
+    print("Converting pyc filenames")
+    for pyc in files:
+        f = pyc.split(trailer)[0]
+        os.system("mv {}/{} {}/{}.pyc".format(pycache, pyc, dir, f))
+    #endfor
+    os.system("rmdir {}".format(pycache))
+else:
+    pycache = None
+#endif    
+
+#
 # Put the version and date file in the directory.
 #
 os.system('cd ./{}; echo "{}" > lisp-version.txt'.format(dir, version))
@@ -259,7 +287,8 @@ os.system('cp ./py-depend/pip-requirements.txt ./{}/.'.format(dir))
 #
 tar_file = "lispers.net-" + cpu + "-release-" + version + ".tgz"
 print("Build tgz file {} ... ".format(tar_file), end=" ")
-files = "*.pyo *.txt lisp.config.example lisp-cert.pem.default *-LISP " + \
+files = "*.pyo " if pycache == None else "*.pyc "
+files += "*.txt lisp.config.example lisp-cert.pem.default *-LISP " + \
     "RL-* pslisp lig rig ltr log-packets lispers.net-geo.html {}".format( \
     lisp_xtr)
 command = "cd {}; export COPYFILE_DISABLE=true; tar czf {} {}".format(dir,
@@ -279,7 +308,7 @@ if (lisp_xtr != ""):
     os.system("mv {}/lisp-xtr* {}/bin/".format(dir, dir))
 #endif
 
-print("Copying version information to ../lisp directory ... ", )
+print("Copying version information to ../lisp directory ... ", end=" ")
 command = '''
     cd ./{}; 
     cp lisp-version.txt ../../../lisp/.;

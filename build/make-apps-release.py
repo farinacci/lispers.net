@@ -20,7 +20,12 @@
 #
 # This python script will do a release of the lispers.net application code and
 # the LISPAPI module.
-# 
+#
+# The build defaults to creating pyo files with Python version 2.7.x. If env
+# variable in calling shell has LISPERS.NET_PYTHON3 defined, then Python
+# version 3.8.x will be used to create pyc files that are renamed to pyo
+# files.
+#
 # -----------------------------------------------------------------------------
 from __future__ import print_function
 import os
@@ -37,8 +42,12 @@ from builtins import input
 #------------------------------------------------------------------------------
 
 obfuscate_on = True
-PYTHON = "python"
-#PYTHON = "python3"
+
+use_python3 = (os.getenv("LISPERS.NET_PYTHON3") != None)
+PYTHON = "python3" if use_python3 else "python"
+print("This build is using python {}".format("3.8" if use_python3 else "2.7"))
+
+#------------------------------------------------------------------------------
 
 #
 # First check that this is running in the build directory and that peer
