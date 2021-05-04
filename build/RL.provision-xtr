@@ -60,7 +60,11 @@ cd $DIR
 #
 # Provision lisp.config and/or reinstall kernel routes.
 #
-python ./provision-lisp.py $DEVICE $IID $EID4 $EID6
+if (-f ./provision-lisp.pyo) then
+    python ./provision-lisp.pyo $DEVICE $IID $EID4 $EID6
+else
+    python3.8 ./provision-lisp.pyc $DEVICE $IID $EID4 $EID6
+endif
 
 #
 # Start the lispers.net LISP subsystem, quietly.
