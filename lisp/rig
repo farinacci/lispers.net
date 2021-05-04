@@ -60,10 +60,10 @@ echo "rig command parameters are: $EID $PARMS"
 echo ""
 
 set FLAGS = "-W ignore -O -u"
-if (-f ./lisp-lig.py) then
-    sudo python $FLAGS ./lisp-rig.py "$EID" $PARMS
-else if (-f ./lisp-lig.pyc) then
-    sudo python3.8 $FLAGS ./lisp-rig.pyc "$EID" $PARMS
-else if (-f ./lisp-lig.py) then
+if (-f ./lisp-rig.pyo) then
     sudo python $FLAGS ./lisp-rig.pyo "$EID" $PARMS
+else if (-f ./lisp-rig.pyc) then
+    sudo python3.8 $FLAGS ./lisp-rig.pyc "$EID" $PARMS
+else if (-f ./lisp-rig.py) then
+    sudo python $FLAGS ./lisp-rig.py "$EID" $PARMS
 endif
