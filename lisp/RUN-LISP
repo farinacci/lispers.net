@@ -113,9 +113,10 @@ setenv LISP_GEO_ZOOM_LEVEL 10
 #setenv LISP_DECENT_HASH_WIDTH 32
 
 #
-# If we have pyc files in the release, then it was built with python3. Otherwise we have
-# pyo files built by python2. If we don't find either, return right here. Then check to see
-# if python2 and python3 are installed on this system.
+# If we have pyc files in the release, then it was built with python3.
+# Otherwise we have pyo files built by python2. If we don't find either,
+# return right here. Then check to see if python2 and python3 are installed
+# on this system.
 #
 if (-f ./lisp-core.pyo) then
     which python > /dev/null
@@ -125,6 +126,7 @@ if (-f ./lisp-core.pyo) then
     endif
     set PY = "python"
     set SUFFIX = "pyo"
+    set VER = "2"
 else if (-f ./lisp-core.pyc) then
     which python3.8 > /dev/null
     if ($status != "0") then
@@ -133,9 +135,10 @@ else if (-f ./lisp-core.pyc) then
     endif
     set PY = "python3.8"
     set SUFFIX = "pyc"
+    set VER = "3"
 endif
 
-echo "Running $SUFFIX files ..."
+echo "Running $SUFFIX files with python$VER..."
 
 #
 # Create logs directory if it does not exist.
