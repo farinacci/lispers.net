@@ -679,11 +679,11 @@ def lisp_is_python2():
 #
 # lisp_is_python3
 #
-# Return True if this code is running Python 3.7.x.
+# Return True if this code is running Python 3.x.x.
 #
 def lisp_is_python3():
     ver = sys.version.split()[0]
-    return(ver[0:3] == "3.7")
+    return(ver[0:2] == "3.")
 #enddef
 
 #

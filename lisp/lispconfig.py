@@ -1588,12 +1588,13 @@ def lisp_start_stop_process(process, startstop):
 
     filename = process + ".pyo"
     logfile = "./logs/" + process + ".log"
+    py = "python -O " if lisp.lisp_is_python2() else "python3.8 -O "
     
     if (lisp.lisp_is_ubuntu() or lisp.lisp_is_raspbian() or \
         lisp.lisp_is_debian() or lisp.lisp_is_debian_kali()):
-        program = "python -O " + filename + " 2>&1 > " + logfile + " &"
+        program = py + filename + " 2>&1 > " + logfile + " &"
     else:
-        program = "python -O " + filename + " >& " + logfile + " &"
+        program = py + filename + " >& " + logfile + " &"
     #endif
 
     datestamp = getoutput("date")

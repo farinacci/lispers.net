@@ -65,6 +65,7 @@ VZ has MS: True
 import requests
 import json
 import os
+from builtins import str as uc
 
 REQ_TIMEOUT = 3
 
@@ -1498,7 +1499,7 @@ class api_init():
         if (rtext.find("<html>") != -1): return(None)
 
         data = json.loads(rtext)[0]
-        key = unicode(command)
+        key = uc(command)
         if (data.has_key(key) == False): return(None)
 
         if (type(data) == dict):
@@ -1524,7 +1525,7 @@ class api_init():
 
     def __walk_dict_array(self, udata, u_dict):
         for key in u_dict: 
-            value = unicode(u_dict[key])
+            value = uc(u_dict[key])
 
             #
             # Value field can be another dictionary array. Don't
@@ -1533,14 +1534,14 @@ class api_init():
             if (type(u_dict[key]) == dict): 
                 vdata = {}
                 value = u_dict[key]
-                for k in value: vdata[unicode(k)] = unicode(value[k])
+                for k in value: vdata[uc(k)] = uc(value[k])
                 value = vdata
             #endif
 
             #
             # Store 
             #
-            udata[unicode(key)] = value
+            udata[uc(key)] = value
         #endfor
     #enddef
 
@@ -1564,14 +1565,14 @@ class api_init():
                 #endfor
                 udata = l_array
             else:
-                udata = { unicode(label.keys()[0]) : udata }
+                udata = { uc(label.keys()[0]) : udata }
             #endif
             u_array.append(udata)
         #endfor
         udata = u_array
 
         unicode_data = {}
-        unicode_data[unicode(command)] = udata[0] if was_dict else udata
+        unicode_data[uc(command)] = udata[0] if was_dict else udata
         return(json.dumps(unicode_data))
     #enddef
 
