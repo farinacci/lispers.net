@@ -52,9 +52,19 @@ echo "Clearing sockets ..."
 sleep 1
 
 #
+# Point to correct python version.
+#
+set PY = "python"
+set SUFFIX = "pyo"
+if (-f ./remove-lisp-locks.pyc) then
+    set PY = "python3.8"
+    set SUFFIX = "pyc"
+endif
+
+#
 # Remove LISP lock files.
 #
-python remove-lisp-locks.pyo
+$PY ./remove-lisp-locks.$SUFFIX
 
 #
 # Remove /tmp/lisp-lig if lisp-lig.py crashed and wasn't able to remove the
@@ -74,7 +84,7 @@ endif
 # Remove iptables lispers.net created if we are an ITR.
 #
 if ($itr == 0) then
-    python remove-lisp-iptables.pyo
+    $PY remove-lisp-iptables.$SUFFIX
 else
     echo "Bypass removing LISP iptables, ITR process not running"
 endif

@@ -113,13 +113,29 @@ setenv LISP_GEO_ZOOM_LEVEL 10
 #setenv LISP_DECENT_HASH_WIDTH 32
 
 #
-# Bail if "python" does not give us version 2.7.x.
+# If we have pyc files in the release, then it was built with python3. Otherwise we have
+# pyo files built by python2. If we don't find either, return right here. Then check to see
+# if python2 and python3 are installed on this system.
 #
-python -V |& egrep 2.7 > /dev/null
-if ($status != "0") then
-    echo "Requires python version 2.7.x"
-    exit(1)
+if (-f ./lisp-core.pyo) then
+    which python > /dev/null
+    if ($status != "0") then
+        echo "Requires python version 2.7.x to be installed"
+        exit(1)
+    endif
+    set PY = "python"
+    set SUFFIX = "pyo"
+else if (-f ./lisp-core.pyc) then
+    which python3.8 > /dev/null
+    if ($status != "0") then
+        echo "Requires python version 3.8.x to be installed"
+        exit(1)
+    endif
+    set PY = "python3.8"
+    set SUFFIX = "pyc"
 endif
+
+echo "Running $SUFFIX files ..."
 
 #
 # Create logs directory if it does not exist.
@@ -130,68 +146,23 @@ if ($status != "0") then
 endif
 
 #
-# Determine if we are running in binary mode or development mode off of py
-# and pyc files.
-#
-ls lisp-core.pyo >& /dev/null
-if ($status != "0") then
-
-    #
-    # If source is in the directory, run in development/manual mode.
-    #
-    ls lisp.py >& /dev/null
-    if ($status != "0") then
-        echo "File lisp-core.pyo not found, script requires binary files"
-        exit(1)
-    endif
-
-    if ($1 == "" || $1 == "core" || $1 == "dont-timeout") then
-        set component = "lisp-core"
-        rm -fr ./logs/lisp-traceback.log
-    else
-        set component = "lisp-$1"
-    endif
-
-    echo -n "Running $component.py manually, run in background (y/n): "
-    if ($< == "y") then
-        python $component.py >& ./logs/$component.log &
-        echo -n "Want to tail -f ./logs/$component.log (y/n): "
-        if ($< == "y") then
-            tail -f ./logs/$component.log &
-        endif
-    else
-        python $component.py | tee ./logs/$component.log
-    endif
-    exit(0)
-endif
-
-#
-# Check to see if lisp-save-logs script exists.
-#
-ls lisp-save-logs.pyo >& /dev/null
-if ($status != "0") then
-    echo "File lisp-save-logs.pyo not found, script requires binary files"
-    exit(1)
-endif
-
-#
 # Skip if no log files found. If found, save them.
 #
 ls ./logs/*.log >& /dev/null
 if ($status == "0") then
-    python -O lisp-save-logs.pyo
+    $PY -O ./lisp-save-logs.$SUFFIX
     rm -fr ./logs/lisp-traceback.log
 endif
 
 #
 # Remove file descriptors if last time we crashed.
 #
-python -O remove-lisp-locks.pyo
+$PY -O ./remove-lisp-locks.$SUFFIX
 
 #
 # Now run core process that starts the configured LISP components.
 #
-python -O lisp-core.pyo $1 >& ./logs/lisp-core.log &
+$PY -O ./lisp-core.$SUFFIX $1 >& ./logs/lisp-core.log &
 
 #
 # Run the lisp-xtr golang data-plane.
