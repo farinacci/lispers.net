@@ -303,7 +303,12 @@ print("done")
 #
 # Put go binary and pyo files in the bin/ directory.
 #
-os.system("mv {}/*pyo {}/bin/".format(dir, dir))
+if (pycache == None):
+    os.system("mv {}/*pyo {}/bin/".format(dir, dir))
+else:
+    os.system("mv {}/*pyc {}/bin/".format(dir, dir))
+#endif    
+
 if (lisp_xtr != ""):
     os.system("mv {}/lisp-xtr* {}/bin/".format(dir, dir))
 #endif
