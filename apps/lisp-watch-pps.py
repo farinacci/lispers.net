@@ -86,10 +86,10 @@ while (True):
     map_cache = router.get_map_cache()
     if (map_cache == None or len(map_cache) == 0): break
     for mc in map_cache:
-        if (mc.has_key("eid-prefix") == False): continue
+        if ("eid-prefix" not in mc): continue
 
         eid = mc["eid-prefix"]
-        group = mc["group-prefix"] if mc.has_key("group-prefix") else ""
+        group = mc["group-prefix"] if ("group-prefix" in mc) else ""
         if (eid.find(find_eid) == -1): continue
 
         eid_str = eid if (group == "") else "({}, {})".format(eid, group)

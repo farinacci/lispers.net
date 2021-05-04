@@ -50,7 +50,7 @@ def print_map_cache(xtr, map_cache):
     for mc in map_cache:
         i = mc["instance-id"]
         e = mc["eid-prefix"]
-        if (mc.has_key("group-prefix")):
+        if ("group-prefix" in mc):
             e = "({}, {})".format(e, mc["group-prefix"])
         #endif
         u = mc["uptime"]
@@ -65,16 +65,16 @@ def print_map_cache(xtr, map_cache):
 
         print("[{}]{}, uptime: {}, {}".format(i, e, u, r))
         for rloc in rlocs:
-            r = rloc["address"] if rloc.has_key("address") else "none"
+            r = rloc["address"] if ("address" in rloc) else "none"
             u = rloc["uptime"]
             s = rloc["stats"]
             p_and_w = rloc["upriority"] + "/" + rloc["uweight"] + "/" + \
                 rloc["mpriority"] + "/" + rloc["mweight"]
             print("  {}, uptime: {}, {}".format(r, u, p_and_w))
 
-            if (rloc.has_key("geo")): print("    geo: {}".format(rloc["geo"]))
-            if (rloc.has_key("elp")): print("    elp: {}".format(rloc["elp"]))
-            if (rloc.has_key("rle")): print("    rle: {}".format(rloc["rle"]))
+            if ("geo" in rloc): print("    geo: {}".format(rloc["geo"]))
+            if ("elp" in rloc): print("    elp: {}".format(rloc["elp"]))
+            if ("rle" in rloc): print("    rle: {}".format(rloc["rle"]))
 
             index = s.find("byte-count")
             print("    {}".format(s[:index-2]))

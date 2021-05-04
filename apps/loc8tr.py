@@ -297,7 +297,7 @@ if (map_cache == []):
     Print("No map-cache entries returned")
     exit(1)
 #endif    
-if (len(map_cache) == 1 and map_cache[0].has_key("?")):
+if (len(map_cache) == 1 and "?" in map_cache[0]):
     Print("Authentication failed while retrieving map-cache")
     exit(1)
 #endif
@@ -307,7 +307,7 @@ if (len(map_cache) == 1 and map_cache[0].has_key("?")):
 #
 for entry in map_cache:
     eid = "[{}]".format(entry["instance-id"])
-    if (entry.has_key("group-prefix")):
+    if ("group-prefix" in entry):
         eid += "({}, {})".format(entry["eid-prefix"], entry["group-prefix"])
     else:
         eid += "{}".format(entry["eid-prefix"])
@@ -319,7 +319,7 @@ for entry in map_cache:
         if (is_v4v6(address) == False): continue
 
         rloc_set[address] = rloc
-        if (rloc.has_key("multicast-rloc-set")):
+        if ("multicast-rloc-set" in rloc):
             for mrloc in rloc["multicast-rloc-set"]:
                 addr = mrloc["address"] + "%" + address
                 rloc_set[addr] = mrloc
@@ -331,7 +331,7 @@ for entry in map_cache:
         rloc = rloc_set[address]
         if (is_v4v6(rloc["address"]) == False): continue
 
-        if (rloc_cache.has_key(address) == False):
+        if (address not in rloc_cache):
             rtts = []
             for rtt in rloc["recent-rloc-probe-rtts"]: rtts.append(float(rtt))
             hops = []
