@@ -27,7 +27,6 @@
 # Usage: python -O lispers.net-install-ubuntu.pyo
 #
 #------------------------------------------------------------------------------
-
 from __future__ import print_function
 import os
 

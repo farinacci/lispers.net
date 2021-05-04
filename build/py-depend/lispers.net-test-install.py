@@ -30,7 +30,7 @@ except:
 #endtry    
 
 modules = [ "bottle", "requests", "cherrypy", "pcappy", "netifaces", 
-    "setuptools", "Crypto.Cipher", "OpenSSL", "curve25519", "geopy", "pytun",
+    "setuptools", "Crypto.Cipher", "curve25519", "geopy", "pytun",
     "ecdsa", "future", "builtins" ]
 
 failed = []
