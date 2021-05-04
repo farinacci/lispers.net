@@ -1,0 +1,180 @@
+#!/bin/tcsh
+# -----------------------------------------------------------------------------
+#             
+# Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.    
+# 
+# -----------------------------------------------------------------------------
+#
+# RUN-LISP
+#
+# This simple entry script runs the LISP subsystem.
+#
+#------------------------------------------------------------------------------
+
+setenv LISP_ADDR_SELECT     $2
+setenv LISP_PCAP_THREADS    1
+setenv LISP_WORKER_THREADS  0
+setenv LISP_RTR_BEHIND_NAT
+setenv LISP_VIRTIO_BUG
+#setenv LISP_NO_USER_TIMEOUT
+#setenv LISP_ANYCAST_MR
+#setenv LISP_ENFORCE_BINDTODEVICE
+#setenv LISP_LOAD_SPLIT_PINGS
+
+#
+# Be careful using ICMP/MTU settings here. Talk to Dino first. ;-)
+#
+#setenv LISP_SEND_ICMP_TOO_BIG
+#setenv LISP_IGNORE_DF_BIT
+
+#
+# Run go data-plane. Called lisp-xtr.
+#
+#setenv LISP_RUN_LISP_XTR
+#setenv LISP_USE_AF_PACKET
+
+#
+# Faster python data-plane.
+#
+#setenv LISP_RTR_FAST_DATA_PLANE
+#setenv LISP_RTR_LATENCY_DEBUG
+
+#
+# Cipher defaults to chacha20. Comment out CHACHA line below if you want AES.
+# When you use AES, choose either GCM or CBC. Default is CBC. If you want the
+# python data-plane to interrwork with the go data-plane, use GCM. ECDH 25519
+# works with both Chacha and AES ciphers.
+#
+#setenv LISP_NO_CRYPTO
+setenv LISP_ECDH_25519
+setenv LISP_USE_CHACHA
+setenv LISP_USE_POLY
+#setenv LISP_USE_AES_GCM
+
+#
+# Configure zoom level when a user clicks on a geo-coordinate URL.
+#
+setenv LISP_GEO_ZOOM_LEVEL 10
+
+#
+# If you do not want lispers.net to pcap on each interface, supply a list 
+# below. Make sure you supply a interface device already defined/configured
+# in the kernel. The member list is delimited with whitespace.
+#
+#setenv LISP_PCAP_LIST "eth0 eth1"
+
+#
+# When this environment variable is defined, the lispers.net code will not
+# do any iptables functionality.
+#
+#setenv LISP_NO_IPTABLES
+
+#
+# How long in seconds the lisp-itr process should poll to check if "lisp
+# database-mapping" commands have been totally processed.
+#
+#setenv LISP_ITR_WAIT_TIME 1
+
+#
+# Put ETR in test mode. Which allows it to be a batch EID loader of entries
+# to the mapping system. This is used for scaling testing. Note for this
+# to work as designed you need a "lisp database-mapping" command at the
+# end of the lisp.config file with an distingusihed-name eid-prefix of
+# 'eid-done'.
+#
+#setenv LISP_ETR_TEST_MODE 1
+
+#
+# This is used for scale testing on a Map-Server. It will inject <count>
+# contact-tracing entries into instance-ID 1300. This help size memory
+# in cloud provider VMs.
+#
+#setenv LISP_MS_INJECT <count>
+
+#
+# Configure what part of the LISP-Decent EID hash is used to perform the
+# modulus funciton on. It is in unit of bytes. The entire sha256() hash
+# output is 256 bits or 32 bytes. The default to use 6 bytes if the following
+# env variable is not set/defined. When the value is < 32, the high-order
+# bytes of the hash are used.
+#
+#setenv LISP_DECENT_HASH_WIDTH 32
+
+#
+# If we have pyc files in the release, then it was built with python3. Otherwise we have
+# pyo files built by python2. If we don't find either, return right here. Then check to see
+# if python2 and python3 are installed on this system.
+#
+if (-f ./lisp-core.pyo) then
+    which python > /dev/null
+    if ($status != "0") then
+        echo "Requires python version 2.7.x to be installed"
+        exit(1)
+    endif
+    set PY = "python"
+    set SUFFIX = "pyo"
+else if (-f ./lisp-core.pyc) then
+    which python3.8 > /dev/null
+    if ($status != "0") then
+        echo "Requires python version 3.8.x to be installed"
+        exit(1)
+    endif
+    set PY = "python3.8"
+    set SUFFIX = "pyc"
+endif
+
+echo "Running $SUFFIX files ..."
+
+#
+# Create logs directory if it does not exist.
+#
+ls ./logs >& /dev/null
+if ($status != "0") then
+    mkdir ./logs
+endif
+
+#
+# Skip if no log files found. If found, save them.
+#
+ls ./logs/*.log >& /dev/null
+if ($status == "0") then
+    $PY -O ./lisp-save-logs.$SUFFIX
+    rm -fr ./logs/lisp-traceback.log
+endif
+
+#
+# Remove file descriptors if last time we crashed.
+#
+$PY -O ./remove-lisp-locks.$SUFFIX
+
+#
+# Now run core process that starts the configured LISP components.
+#
+$PY -O ./lisp-core.$SUFFIX $1 >& ./logs/lisp-core.log &
+
+#
+# Run the lisp-xtr golang data-plane.
+#
+if ($?LISP_RUN_LISP_XTR) then
+    if ($?LISP_USE_AF_PACKET) then
+        sudo ./lisp-xtr afpacket >>& ./logs/lisp-xtr.log &
+     else
+        sudo ./lisp-xtr >>& ./logs/lisp-xtr.log &
+     endif
+endif
+
+exit(0)
+
+#------------------------------------------------------------------------------
