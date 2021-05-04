@@ -26,6 +26,12 @@
 ls ./is-lisp-running.pyo >& /dev/null
 if ($status == "0") then
     python -O ./is-lisp-running.pyo
-else
-    python ./is-lisp-running.py
+    exit
 endif
+ls ./is-lisp-running.pyc >& /dev/null
+if ($status == "0") then
+    python3.8 -O ./is-lisp-running.pyc
+    exit
+endif
+python ./is-lisp-running.py
+

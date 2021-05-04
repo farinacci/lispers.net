@@ -39,7 +39,9 @@ endif
 set FLAGS = "-W ignore -O -u"
 if (-f ./ltr.py) then
     set PY = "python $FLAGS ./ltr.py"
-else
+else if (-f ./ltr.pyc) then
+    set PY = "python3.8 $FLAGS ./ltr.pyc"
+else if (-f ./ltr.pyo) then
     set PY = "python $FLAGS ./ltr.pyo"
 endif
 

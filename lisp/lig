@@ -80,6 +80,8 @@ echo ""
 set FLAGS = "-W ignore -O -u"
 if (-f ./lisp-lig.py) then
     sudo python $FLAGS ./lisp-lig.py "$EID" $PARMS
-else
+else if (-f ./lisp-lig.pyc) then
+    sudo python3.8 $FLAGS ./lisp-lig.pyc "$EID" $PARMS
+else if (-f ./lisp-lig.pyo) then
     sudo python $FLAGS ./lisp-lig.pyo "$EID" $PARMS
 endif
