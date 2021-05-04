@@ -15,14 +15,6 @@ components ITR, ETR, and RTR and the control-plane components Map-Resolver,
 Map-Server, and DDT-Node for 10 different EID address types and 7 different 
 RLOC address types.
 
-If you do not want to do these steps by hand, you can use the script that 
-combines steps (2) through (5). Run:
-
-	 python -O lispers.net-install-ubuntu.pyo
-
-The above first-time/one-time install script may work on other distros but
-has been tested to work when installing on Ubuntu Linux.
-
 First time install
 ------------------
 
@@ -32,35 +24,18 @@ First time install
     cd lispers.net
     sudo tar zxvf <tgz-file>
 
-(2) Install gcc compiler:
+(2) Follow the apt-get and pip install steps from build/Dockerfile.
 
-    sudo apt-get install python2.7-dev
-
-(3) Install the tcsh shell if not already on system:
-
-    sudo apt-get install tcsh
-
-(4) You will need "pip" to install the lispers.net python module dependencies.
-    If you do not have pip on your system, enter the following command in the 
-    lispers.net directory:
-
-    sudo python get-pip.py
-
-(5) Now install the python module dependencies by typing:
-
-    sudo pip install -r pip-requirements.txt --allow-external pcappy \
-                                             --allow-unverified pcappy
-
-(6) Test the install by running this python program:
+(3) Test the install by running this python program:
 
      python lispers.net-test-install.pyo
 
-(7) From a tcsh shell, type in "./RESTART-LISP" when you want to start or 
+(4) From a tcsh shell, type in "./RESTART-LISP" when you want to start or 
     restart the LISP subsystem. You can use "sudo ./STOP-LISP" to take the 
     LISP subsystem down. These startup and shutdown scripts require tcsh. 
     You can also restart the LISP subsystem via the web interface.
 
-(8) Open file lisp.config in an editor and configure the LISP functionality you
+(5) Open file lisp.config in an editor and configure the LISP functionality you
     desire. You can modify this file anytime after the LISP subsystem is up 
     and running and the changes will be accepted. The header of the file
     will reflect when the file is processed by the LISP subsystem and a diff
@@ -158,11 +133,4 @@ Installation Problems?
     is not loaded are TCP checksum errors over IPv6.
 
 -------------------------------------------------------------------------------
-                 Last updated: Thu Dec 12 23:35:15 EST 2019
-
-
-
-
-
-
-
+                 Last updated: Tue May  4 15:40:28 PDT 2021
