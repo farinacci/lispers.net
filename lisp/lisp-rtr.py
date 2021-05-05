@@ -163,31 +163,29 @@ def lisp_rtr_glean_mapping_command(kv_pair):
     # Check if entry already exists. If so, just return.
     #
     for e in lisp.lisp_glean_mappings:
-        if (e.has_key("eid-prefix") ^ entry.has_key("eid-prefix")): continue
-        if (e.has_key("eid-prefix") and entry.has_key("eid-prefix")):
+        if (("eid-prefix" in e) ^ ("eid-prefix" in entry)): continue
+        if (("eid-prefix" in e) and ("eid-prefix" in entry)):
             old = e["eid-prefix"]
             new = entry["eid-prefix"]
             if (old.is_exact_match(new) == False): continue
         #endif
 
-        if (e.has_key("group-prefix") ^ entry.has_key("group-prefix")):
-            continue
-        #endif
-        if (e.has_key("group-prefix") and entry.has_key("group-prefix")):
+        if (("group-prefix" in e) ^ ("group-prefix" in entry)): continue
+        if (("group-prefix" in e) and ("group-prefix" in entry)):
             old = e["group-prefix"]
             new = entry["group-prefix"]
             if (old.is_exact_match(new) == False): continue
         #endif
 
-        if (e.has_key("rloc-prefix") ^ entry.has_key("rloc-prefix")): continue
-        if (e.has_key("rloc-prefix") and entry.has_key("rloc-prefix")):
+        if (("rloc-prefix" in e) ^ ("rloc-prefix" in entry)): continue
+        if (("rloc-prefix" in e) and ("rloc-prefix" in entry)):
             old = e["rloc-prefix"]
             new = entry["rloc-prefix"]
             if (old.is_exact_match(new) == False): continue
         #endif
 
-        if (e.has_key("instance-id") ^ entry.has_key("instance-id")): continue
-        if (e.has_key("instance-id") and entry.has_key("instance-id")):
+        if (("instance-id" in e) ^ ("instance-id" in entry)): continue
+        if (("instance-id" in e) and ("instance-id" in entry)):
             old = e["instance-id"]
             new = entry["instance-id"]
             if (old != new): continue
@@ -247,7 +245,7 @@ def lisp_fix_rloc_encap_state_entry(mc, parms):
         #
         old_addr = rloc_entry.rloc.print_address_no_iid() + ":" + \
             str(rloc_entry.translated_port)
-        if (lisp.lisp_crypto_keys_by_rloc_encap.has_key(old_addr)):
+        if (old_addr in lisp.lisp_crypto_keys_by_rloc_encap):
             keys = lisp.lisp_crypto_keys_by_rloc_encap[old_addr]
             lisp.lisp_crypto_keys_by_rloc_encap[addr] = keys
         #endif

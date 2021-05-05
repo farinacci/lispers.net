@@ -68,7 +68,7 @@ def lisp_site_command(kv_pairs):
     site = lisp.lisp_site()
 
     allowed_rloc_set = []
-    if (kv_pairs.has_key("address")):
+    if ("address" in kv_pairs):
         if (lispconfig.lisp_clause_syntax_error(kv_pairs, "address",
             "allowed-rloc")): return
         for addr in kv_pairs["address"]:
@@ -230,7 +230,7 @@ def lisp_site_command(kv_pairs):
     #
     # Do not modify existing entries. We can only support adding new sites.
     #
-    if (lisp_sites_by_name.has_key(site.site_name)): return
+    if (site.site_name in lisp_sites_by_name): return
 
     #
     # Store values in internal data structures. Inside of lisp_site() sort
@@ -271,9 +271,9 @@ def lisp_ms_auth_prefix_command(kv_pair):
             v = value.split("-")
             if (v[0] == ""): continue
 
-            no_eid = (kv_pair.has_key("eid-prefix") == False or
+            no_eid = ("eid-prefix" not in kv_pair or
                 kv_pair["eid-prefix"] == "")
-            no_group = (kv_pair.has_key("group-prefix") == False or
+            no_group = ("group-prefix" not in kv_pair or
                 kv_pair["group-prefix"] == "")
 
             if (no_eid and no_group):

@@ -49,9 +49,9 @@ def lisp_ddt_auth_prefix_command(kv_pair):
             v = value.split("-")
             if (v[0] == ""): continue
 
-            no_eid = (kv_pair.has_key("eid-prefix") == False or
+            no_eid = ("eid-prefix" not in kv_pair or
                 kv_pair["eid-prefix"] == "")
-            no_group = (kv_pair.has_key("group-prefix") == False or
+            no_group = ("group-prefix" not in kv_pair or
                 kv_pair["group-prefix"] == "")
 
             if (no_eid and no_group):

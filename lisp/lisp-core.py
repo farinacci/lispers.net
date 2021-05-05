@@ -65,7 +65,6 @@ import bottle
 import json
 import sys
 import socket
-import thread
 
 #
 # Newer versions of CherryPy does not include WSGIServer. Has moved to cheroot.
@@ -825,12 +824,21 @@ def lisp_restart_command():
     #
     # Build command and launch it in another process.
     #
-    c = "sleep 1; sudo ./RESTART-LISP {}".format(port)
-    thread.start_new_thread(os.system, (c, ))
+    command = "sleep 1; sudo ./RESTART-LISP {}".format(port)
+    threading.Thread(target=lisp_restart_lisp, args=[command]).start()
 
     output = lisp.lisp_print_sans("Restarting LISP subsystem ...")
     return(lispconfig.lisp_show_wrapper(output))
 #enddef
+
+#
+# lisp_restart_lisp
+#
+# Have system execute ./RESTART-LISP asynchronously.
+#
+def lisp_restart_lisp(command):
+    os.system(command)
+#enddef    
 
 #
 # lisp_restart_verify_command
@@ -1050,7 +1058,7 @@ def lisp_debug_menu_command(name = ""):
     #
     if (name == "disable%all"):
         data = lispconfig.lisp_get_clause_for_api("lisp debug")
-        if (data[0].has_key("lisp debug")):
+        if ("lisp debug" in data[0]):
             new = []
             for entry in data[0]["lisp debug"]:
                 key = entry.keys()[0]
@@ -1061,7 +1069,7 @@ def lisp_debug_menu_command(name = ""):
         #endif
 
         data = lispconfig.lisp_get_clause_for_api("lisp xtr-parameters")
-        if (data[0].has_key("lisp xtr-parameters")):
+        if ("lisp xtr-parameters" in data[0]):
             new = []
             for entry in data[0]["lisp xtr-parameters"]:
                 key = entry.keys()[0]
@@ -1092,11 +1100,11 @@ def lisp_debug_menu_command(name = ""):
 
     data = lispconfig.lisp_get_clause_for_api(clause_name)
 
-    if (data[0].has_key(clause_name)): 
+    if (clause_name in data[0]):
         new = {}
         for entry in data[0][clause_name]:
             new[entry.keys()[0]] = entry.values()[0]
-            if (new.has_key(component)): new[component] = yesno
+            if (component in new): new[component] = yesno
         #endfor
         new = { clause_name: new }
         lispconfig.lisp_put_clause_for_api(new)

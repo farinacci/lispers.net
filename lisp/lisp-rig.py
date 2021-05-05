@@ -383,7 +383,7 @@ while (True):
     #
     # Not in pending queue.
     #
-    if (pending.has_key(source) == False):
+    if (source not in pending):
         print("Received Map-Referral from {} but no Map-Request was pending". \
                 format(source))
         continue

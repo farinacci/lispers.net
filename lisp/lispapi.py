@@ -1500,7 +1500,7 @@ class api_init():
 
         data = json.loads(rtext)[0]
         key = uc(command)
-        if (data.has_key(key) == False): return(None)
+        if (key not in data): return(None)
 
         if (type(data) == dict):
             data = data[key]
@@ -1578,7 +1578,7 @@ class api_init():
 
     def __error(self, data):
         if (data == None): return(True)
-        if (data.has_key("!")): return(False)
+        if ("!" in data): return(False)
         return(True)
     #enddef
 
@@ -1608,7 +1608,7 @@ class api_init():
         if (type(prefix_list[0]) != dict):
             return("prefix_list must be array of type dict")
         #endif
-        if (prefix_list[0].has_key("allowed-prefix") == False): 
+        if ("allowed-prefix" not in prefix_list[0]):
             return("prefix_list is incorrectly formated")
         #endif
         return(True)
@@ -1619,8 +1619,8 @@ class api_init():
             if (type(addr) == str):
                 addr_str = addr
             else:
-                addr_str = addr["address"] if addr.has_key("address") else \
-                    addr["interface"] if addr.has_key("interface") else ""
+                addr_str = addr["address"] if ("address" in addr) else \
+                    addr["interface"] if ("interface" in addr) else ""
             #endif
             if (allow_interfaces and 
                 addr_str in ["en0", "en1", "eth0", "eth1"]): continue

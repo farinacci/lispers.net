@@ -1459,7 +1459,7 @@ def lisp_get_interface_address(device):
     # Check if there are no IPv4 addresses assigned to interface.
     #
     addresses = netifaces.ifaddresses(device)
-    if (addresses.has_key(netifaces.AF_INET) == False): return(None)
+    if (netifaces.AF_INET not in addresses): return(None)
 
     #
     # Find first private address.
@@ -1489,10 +1489,10 @@ def lisp_get_input_interface(packet):
     da = macs[0:12]
     sa = macs[12::]
     
-    try: my_sa = lisp_mymacs.has_key(sa)
+    try: my_sa = (sa in lisp_mymacs)
     except: my_sa = False
 
-    if (lisp_mymacs.has_key(da)): return(lisp_mymacs[da], sa, da, my_sa)
+    if (da in lisp_mymacs): return(lisp_mymacs[da], sa, da, my_sa)
     if (my_sa): return(lisp_mymacs[sa], sa, da, my_sa)
     return(["?"], sa, da, my_sa)
 #enddef
@@ -1562,7 +1562,7 @@ def lisp_get_local_macs():
         except:
             continue
         #endtry
-        if (parms.has_key(netifaces.AF_LINK) == False): continue
+        if (netifaces.AF_LINK not in parms): continue
         mac = parms[netifaces.AF_LINK][0]["addr"]
         mac = mac.replace(":", "")
 
@@ -1572,7 +1572,7 @@ def lisp_get_local_macs():
         #
         if (len(mac) < 12): continue
 
-        if (lisp_mymacs.has_key(mac) == False): lisp_mymacs[mac] = []
+        if (mac not in lisp_mymacs): lisp_mymacs[mac] = []
         lisp_mymacs[mac].append(device)
     #endfor
 
@@ -1684,7 +1684,7 @@ def lisp_get_local_addresses():
         #
         # Look for a non-link-local and non-loopback address.
         #
-        if (addresses.has_key(netifaces.AF_INET)):
+        if (netifaces.AF_INET in addresses):
             ipv4 = addresses[netifaces.AF_INET]
             count = 0
             for addr in ipv4:
@@ -1700,7 +1700,7 @@ def lisp_get_local_addresses():
                 if (count == index): break
             #endfor
         #endif
-        if (addresses.has_key(netifaces.AF_INET6)):
+        if (netifaces.AF_INET6 in addresses):
             ipv6 = addresses[netifaces.AF_INET6]
             count = 0
             for addr in ipv6:
@@ -1755,14 +1755,14 @@ def lisp_get_all_addresses():
         try: entry = netifaces.ifaddresses(interface)
         except: continue
 
-        if (entry.has_key(netifaces.AF_INET)):
+        if (netifaces.AF_INET in entry):
             for addr in entry[netifaces.AF_INET]:
                 a = addr["addr"]
                 if (a.find("127.0.0.1") != -1): continue
                 address_list.append(a)
             #endfor
         #endif
-        if (entry.has_key(netifaces.AF_INET6)):
+        if (netifaces.AF_INET6 in entry):
             for addr in entry[netifaces.AF_INET6]:
                 a = addr["addr"]
                 if (a == "::1"): continue
@@ -1860,7 +1860,7 @@ class lisp_packet():
         if (lisp_data_plane_security and control == False):
             addr_str = self.outer_dest.print_address_no_iid() + ":" + \
                 str(self.encap_port)
-            if (lisp_crypto_keys_by_rloc_encap.has_key(addr_str)):
+            if (addr_str in lisp_crypto_keys_by_rloc_encap):
                 keys = lisp_crypto_keys_by_rloc_encap[addr_str]
                 if (keys[1]):
                     keys[1].use_count += 1
@@ -2828,7 +2828,7 @@ class lisp_packet():
     def get_raw_socket(self):
         iid = str(self.lisp_header.get_instance_id())
         if (iid == "0"): return(None)
-        if (lisp_iid_to_interface.has_key(iid) == False): return(None)
+        if (iid not in lisp_iid_to_interface): return(None)
 
         interface = lisp_iid_to_interface[iid]
         s = interface.get_socket()
@@ -3491,14 +3491,14 @@ class lisp_keys():
     #enddef
 
     def add_key_by_nonce(self, nonce):
-        if (lisp_crypto_keys_by_nonce.has_key(nonce) == False):
+        if (nonce not in lisp_crypto_keys_by_nonce):
             lisp_crypto_keys_by_nonce[nonce] = [None, None, None, None]
         #endif
         lisp_crypto_keys_by_nonce[nonce][self.key_id] = self
     #enddef
         
     def delete_key_by_nonce(self, nonce):
-        if (lisp_crypto_keys_by_nonce.has_key(nonce) == False): return
+        if (nonce not in lisp_crypto_keys_by_nonce): return
         lisp_crypto_keys_by_nonce.pop(nonce)
     #enddef
 
@@ -3506,7 +3506,7 @@ class lisp_keys():
         by_rlocs = lisp_crypto_keys_by_rloc_encap if encap else \
             lisp_crypto_keys_by_rloc_decap
 
-        if (by_rlocs.has_key(addr_str) == False):
+        if (addr_str not in by_rlocs):
             by_rlocs[addr_str] = [None, None, None, None]
         #endif
         by_rlocs[addr_str][self.key_id] = self
@@ -4423,7 +4423,7 @@ class lisp_map_request():
             if (probe_port == 0): probe_port = LISP_DATA_PORT
             addr_str = probe_dest.print_address_no_iid() + ":" + \
                 str(probe_port)
-            if (lisp_crypto_keys_by_rloc_encap.has_key(addr_str)):
+            if (addr_str in lisp_crypto_keys_by_rloc_encap):
                 self.keys = lisp_crypto_keys_by_rloc_encap[addr_str]
             #endif
         #endif
@@ -4546,7 +4546,7 @@ class lisp_map_request():
         #
         # Store JSON data internally.
         #
-        if (json_string.has_key("source-eid") == False): return(packet)
+        if ("source-eid" not in json_string): return(packet)
         eid = json_string["source-eid"]
         afi = LISP_AFI_IPV4 if eid.count(".") == 3 else LISP_AFI_IPV6 if \
               eid.count(":") == 7 else None
@@ -4558,7 +4558,7 @@ class lisp_map_request():
         self.source_eid.afi = afi
         self.source_eid.store_address(eid)
 
-        if (json_string.has_key("signature-eid") == False): return(packet)
+        if ("signature-eid" not in json_string): return(packet)
         eid = json_string["signature-eid"]
         if (eid.count(":") != 7): 
             lprint("Bad JSON 'signature-eid' value: {}".format(eid))
@@ -4568,7 +4568,7 @@ class lisp_map_request():
         self.signature_eid.afi = LISP_AFI_IPV6
         self.signature_eid.store_address(eid)
 
-        if (json_string.has_key("signature") == False): return(packet)
+        if ("signature" not in json_string): return(packet)
         sig = binascii.a2b_base64(json_string["signature"])
         self.map_request_signature = sig
         return(packet)
@@ -4680,7 +4680,7 @@ class lisp_map_request():
                 if (lisp_nat_traversal and itr.is_private_address() and \
                     source): itr = source
                 rloc_keys = lisp_crypto_keys_by_rloc_decap
-                if (rloc_keys.has_key(addr_str)): rloc_keys.pop(addr_str)
+                if (addr_str in rloc_keys): rloc_keys.pop(addr_str)
 
                 #
                 # If "ipc-data-plane = yes" is configured, we need to tell the
@@ -4740,7 +4740,7 @@ class lisp_map_request():
                 if (lisp_nat_traversal and itr.is_private_address() and \
                     source): itr = source
 
-                if (lisp_crypto_keys_by_rloc_decap.has_key(addr_str)):
+                if (addr_str in lisp_crypto_keys_by_rloc_decap):
                     keys = lisp_crypto_keys_by_rloc_decap[addr_str]
                     stored_key = keys[1] if keys and keys[1] else None
                 #endif
@@ -4916,7 +4916,7 @@ class lisp_map_reply():
         self.record_count = first_long & 0xff
         self.nonce = nonce[0]
 
-        if (lisp_crypto_keys_by_nonce.has_key(self.nonce)):
+        if (self.nonce in lisp_crypto_keys_by_nonce):
             self.keys = lisp_crypto_keys_by_nonce[self.nonce]
             self.keys[1].delete_key_by_nonce(self.nonce)
         #endif
@@ -5528,7 +5528,7 @@ class lisp_rloc_record():
             self.geo = rloc_entry.geo
         else:
             name = rloc_entry.geo_name
-            if (name and lisp_geo_list.has_key(name)):
+            if (name and name in lisp_geo_list):
                 self.geo = lisp_geo_list[name]
             #endif
         #endif
@@ -5536,7 +5536,7 @@ class lisp_rloc_record():
             self.elp = rloc_entry.elp
         else:
             name = rloc_entry.elp_name
-            if (name and lisp_elp_list.has_key(name)):
+            if (name and name in lisp_elp_list):
                 self.elp = lisp_elp_list[name]
             #endif
         #endif
@@ -5544,7 +5544,7 @@ class lisp_rloc_record():
             self.rle = rloc_entry.rle
         else:
             name = rloc_entry.rle_name
-            if (name and lisp_rle_list.has_key(name)):
+            if (name and name in lisp_rle_list):
                 self.rle = lisp_rle_list[name]
             #endif
         #endif
@@ -5552,7 +5552,7 @@ class lisp_rloc_record():
             self.json = rloc_entry.json
         else:
             name = rloc_entry.json_name
-            if (name and lisp_json_list.has_key(name)):
+            if (name and name in lisp_json_list):
                 self.json = lisp_json_list[name]
             #endif
         #endif
@@ -6176,7 +6176,7 @@ class lisp_ddt_map_request():
 
     def dequeue_map_request(self):
         self.retransmit_timer.cancel()
-        if (lisp_ddt_map_requestQ.has_key(str(self.nonce))):
+        if (self.nonce in lisp_ddt_map_requestQ):
             lisp_ddt_map_requestQ.pop(str(self.nonce))
         #endif
     #enddef
@@ -7377,7 +7377,7 @@ def lisp_etr_process_map_request(lisp_sockets, map_request, source, sport,
     if (map_request.rloc_probe and len(lisp_sockets) == 4):
         public = (itr_rloc.is_private_address() == False)
         rtr = itr_rloc.print_address_no_iid()
-        if ((public and lisp_rtr_list.has_key(rtr)) or sport == 0):
+        if (public and rtr in lisp_rtr_list or sport == 0):
             lisp_encapsulate_rloc_probe(lisp_sockets, itr_rloc, None, packet)
             return
         #endif
@@ -7886,7 +7886,7 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
     #
     policy_drop = False
     policy = None
-    if (check_policy and lisp_policies.has_key(site_eid.policy)):
+    if (check_policy and site_eid.policy in lisp_policies):
         p = lisp_policies[site_eid.policy]
         if (p.match_policy_map_request(map_request, mr_source)): policy = p
 
@@ -8445,7 +8445,7 @@ def lisp_retransmit_ddt_map_request(mr):
         last_node = mr.last_request_sent_to.print_address()
         ref = lisp_referral_cache_lookup(mr.last_cached_prefix[0], 
             mr.last_cached_prefix[1], True)
-        if (ref and ref.referral_set.has_key(last_node)):
+        if (ref and last_node in ref.referral_set):
             ref.referral_set[last_node].no_responses += 1
         #endif
     #endif
@@ -9125,7 +9125,7 @@ def lisp_retransmit_map_notify(map_notify):
             format(map_notify.nonce_key, red(dest.print_address(), False)))
 
         key = map_notify.nonce_key
-        if (lisp_map_notify_queue.has_key(key)):
+        if (key in lisp_map_notify_queue):
             map_notify.retransmit_timer.cancel()
             lprint("Dequeue Map-Notify from retransmit queue, key is: {}". \
                 format(key))
@@ -9209,7 +9209,7 @@ def lisp_send_merged_map_notify(lisp_sockets, parent, map_register,
         # Put Map-Notify state on retransmission queue.
         #
         key = map_notify.nonce_key
-        if (lisp_map_notify_queue.has_key(key)): 
+        if (key in lisp_map_notify_queue):
             remove = lisp_map_notify_queue[key]
             remove.retransmit_timer.cancel()
             del(remove)
@@ -9251,7 +9251,7 @@ def lisp_build_map_notify(lisp_sockets, eid_records, eid_list, record_count,
     # the sending.
     #
     lisp_remove_eid_from_map_notify_queue(eid_list)
-    if (lisp_map_notify_queue.has_key(key)): 
+    if (key in lisp_map_notify_queue):
         map_notify = lisp_map_notify_queue[key]
         s = red(source.print_address_no_iid(), False)
         lprint("Map-Notify with nonce 0x{} pending for xTR {}".format( \
@@ -9365,7 +9365,7 @@ def lisp_send_multicast_map_notify(lisp_sockets, site_eid, eid_list, xtr):
     # the sending.
     #
     lisp_remove_eid_from_map_notify_queue(map_notify.eid_list)
-    if (lisp_map_notify_queue.has_key(key)): 
+    if (key in lisp_map_notify_queue):
         map_notify = lisp_map_notify_queue[key]
         lprint("Map-Notify with nonce 0x{} pending for ITR {}".format( \
             map_notify.nonce, red(xtr.print_address_no_iid(), False)))
@@ -9556,7 +9556,7 @@ def lisp_find_sig_in_rloc_set(packet, rloc_count):
             continue
         #endtry
 
-        if (json_sig.has_key("signature") == False): continue
+        if ("signature" not in json_sig): continue
         return(rloc_record)
     #endfor
     return(None)
@@ -9657,7 +9657,7 @@ def lisp_lookup_public_key(eid):
                 pubkey_hash))
             return([hash_eid, None, False])
         #endtry
-        if (json_pubkey.has_key("public-key") == False): continue
+        if ("public-key" not in json_pubkey): continue
         pubkey = json_pubkey["public-key"]
         break
     #endfor
@@ -9680,7 +9680,7 @@ def lisp_verify_cga_sig(eid, rloc_record):
 
     if (lisp_get_eid_hash(eid)):
         sig_eid = eid
-    elif (sig.has_key("signature-eid")):
+    elif ("signature-eid" in sig):
         sig_eid_str = sig["signature-eid"]
         sig_eid = lisp_address(LISP_AFI_IPV6, sig_eid_str, 0, 0)
     else:
@@ -9992,7 +9992,7 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
         # to use this to bypass the authentication check.
         #
         key_id = map_register.key_id
-        if (site.auth_key.has_key(key_id)):
+        if (key_id in site.auth_key):
             password = site.auth_key[key_id]
         else:
             password = ""
@@ -10063,7 +10063,7 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
             #endif
 
             key = map_register.xtr_id
-            if (site_eid.individual_registrations.has_key(key)):
+            if (key in site_eid.individual_registrations):
                 site_eid = site_eid.individual_registrations[key]
             else:
                 site_eid = lisp_site_eid(site)
@@ -10115,7 +10115,7 @@ def lisp_process_map_register(lisp_sockets, packet, source, sport):
             #
             if (len(site.allowed_rlocs) > 0):
                 addr_str = rloc_record.rloc.print_address()
-                if (site.allowed_rlocs.has_key(addr_str) == False):
+                if (addr_str not in site.allowed_rlocs):
                     lprint(("  Reject registration, RLOC {} not " + \
                         "configured in allowed RLOC-set").format( \
                         red(addr_str, False)))
@@ -10679,7 +10679,7 @@ def lisp_process_map_notify_ack(packet, source):
         site.map_notify_acks_received += 1
 
         key_id = map_notify.key_id
-        if (site.auth_key.has_key(key_id)):
+        if (key_id in site.auth_key):
             password = site.auth_key[key_id]
         else:
             password = ""
@@ -10704,7 +10704,7 @@ def lisp_process_map_notify_ack(packet, source):
     etr = source.print_address()
     key = map_notify.nonce_key
 
-    if (lisp_map_notify_queue.has_key(key)):
+    if (key in lisp_map_notify_queue):
         map_notify = lisp_map_notify_queue.pop(key)
         if (map_notify.retransmit_timer): map_notify.retransmit_timer.cancel()
         lprint("Dequeue Map-Notify from retransmit queue, key is: {}". \
@@ -10842,7 +10842,7 @@ def lisp_process_map_referral(lisp_sockets, packet, source):
         # Mark locator up if the Map-Referral source is in the referral-set.
         #
         negative = referral.is_referral_negative()
-        if (referral.referral_set.has_key(s)):
+        if (s in referral.referral_set):
             ref_node = referral.referral_set[s]
 
             if (ref_node.updown == False and negative == False):
@@ -10879,14 +10879,14 @@ def lisp_process_map_referral(lisp_sockets, packet, source):
             # Copy over existing referral-node
             #
             addr_str = rloc_record.rloc.print_address()
-            if (referral.referral_set.has_key(addr_str) == False):
+            if (addr_str not in referral.referral_set):
                 ref_node = lisp_referral_node()
                 ref_node.referral_address.copy_address(rloc_record.rloc)
                 referral.referral_set[addr_str] = ref_node
                 if (s == addr_str and negative): ref_node.updown = False
             else:
                 ref_node = referral.referral_set[addr_str]
-                if (dirty_set.has_key(addr_str)): dirty_set.pop(addr_str)
+                if (addr_str in dirty_set): dirty_set.pop(addr_str)
             #endif
             ref_node.priority = rloc_record.priority
             ref_node.weight = rloc_record.weight
@@ -10932,7 +10932,7 @@ def lisp_process_map_referral(lisp_sockets, packet, source):
         #endif            
         
         if (action == LISP_DDT_ACTION_MS_NOT_REG):
-            if (referral.referral_set.has_key(s)):
+            if (s in referral.referral_set):
                 ref_node = referral.referral_set[s]
                 ref_node.updown = False
             #endif
@@ -11278,11 +11278,11 @@ class lisp_cache():
     def add_cache(self, prefix, entry):
         if (prefix.is_binary()): prefix.zero_host_bits()
         ml, key = self.build_key(prefix)
-        if (self.cache.has_key(ml) == False):
+        if (ml not in self.cache):
             self.cache[ml] = lisp_cache_entries()
             self.cache_sorted = self.sort_in_entry(self.cache_sorted, ml)
         #endif
-        if (self.cache[ml].entries.has_key(key) == False): 
+        if (key not in self.cache[ml].entries):
             self.cache_count += 1
         #endif
         self.cache[ml].entries[key] = entry
@@ -11291,8 +11291,8 @@ class lisp_cache():
     def lookup_cache(self, prefix, exact):
         ml_key, key = self.build_key(prefix)
         if (exact):
-            if (self.cache.has_key(ml_key) == False): return(None)
-            if (self.cache[ml_key].entries.has_key(key) == False): return(None)
+            if (ml_key not in self.cache): return(None)
+            if (key not in self.cache[ml_key].entries): return(None)
             return(self.cache[ml_key].entries[key])
         #endif
 
@@ -11311,8 +11311,8 @@ class lisp_cache():
 
     def delete_cache(self, prefix):
         ml, key = self.build_key(prefix)
-        if (self.cache.has_key(ml) == False): return
-        if (self.cache[ml].entries.has_key(key) == False): return
+        if (ml not in self.cache): return
+        if (key not in self.cache[ml].entries): return
         self.cache[ml].entries.pop(key)
         self.cache_count -= 1
     #enddef
@@ -12934,7 +12934,7 @@ class lisp_json():
     #enddef
 
     def delete(self):
-        if (lisp_json_list.has_key(self.json_name)):
+        if (self.json_name in lisp_json_list):
             del(lisp_json_list[self.json_name])
             lisp_json_list[self.json_name] = None
         #endif
@@ -13524,7 +13524,7 @@ class lisp_rloc():
         port = self.translated_port
         if (port != 0): addr_str += ":" + str(port)
 
-        if (lisp_rloc_probe_list.has_key(addr_str) == False):
+        if (addr_str not in lisp_rloc_probe_list):
             lisp_rloc_probe_list[addr_str] = []
         #endif
 
@@ -13558,7 +13558,7 @@ class lisp_rloc():
         addr_str = self.rloc.print_address_no_iid()
         port = self.translated_port
         if (port != 0): addr_str += ":" + str(port)
-        if (lisp_rloc_probe_list.has_key(addr_str) == False): return
+        if (addr_str not in lisp_rloc_probe_list): return
 
         array = []
         for entry in lisp_rloc_probe_list[addr_str]:
@@ -13900,7 +13900,7 @@ class lisp_mapping():
         # Give RLE preference.
         #
         if (rloc.rle_name and rloc.rle == None): 
-            if (lisp_rle_list.has_key(rloc.rle_name)):
+            if (rloc.rle_name in lisp_rle_list):
                 rloc.rle = lisp_rle_list[rloc.rle_name]
             #endif
         #endif
@@ -14378,7 +14378,7 @@ class lisp_site_eid():
             rloc_name = site_eid.registered_rlocs[0].rloc_name
             for irle_node in irle.rle_nodes:
                 addr = irle_node.address.print_address_no_iid()
-                if (new_rle.has_key(addr)): break
+                if (addr in new_rle): break
 
                 rle_node = lisp_rle_node()
                 rle_node.address.copy_address(irle_node.address)
@@ -14613,7 +14613,7 @@ class lisp_mr():
                     
     def delete_mr(self):
         key = self.mr_name + self.map_resolver.print_address()
-        if (lisp_map_resolvers_list.has_key(key) == False): return
+        if (key not in lisp_map_resolvers_list): return
         lisp_map_resolvers_list.pop(key)
     #enddef
 #endclass
@@ -14855,7 +14855,7 @@ class lisp_ms():
                     
     def delete_ms(self):
         key = self.ms_name + self.map_server.print_address()
-        if (lisp_map_servers_list.has_key(key) == False): return
+        if (key not in lisp_map_servers_list): return
         lisp_map_servers_list.pop(key)
     #enddef
 #endclass
@@ -15066,28 +15066,28 @@ class lisp_policy():
         if (self.set_geo_name): 
             rloc.geo_name = self.set_geo_name
             name = rloc.geo_name
-            not_found = "" if lisp_geo_list.has_key(name) else \
+            not_found = "" if (name in lisp_geo_list) else \
                 "(not configured)"
             lprint("Policy set-geo-name '{}' {}".format(name, not_found))
         #endif
         if (self.set_elp_name): 
             rloc.elp_name = self.set_elp_name
             name = rloc.elp_name
-            not_found = "" if lisp_elp_list.has_key(name) else \
+            not_found = "" if (name in lisp_elp_list) else \
                 "(not configured)"
             lprint("Policy set-elp-name '{}' {}".format(name, not_found))
         #endif
         if (self.set_rle_name): 
             rloc.rle_name = self.set_rle_name
             name = rloc.rle_name
-            not_found = "" if lisp_rle_list.has_key(name) else \
+            not_found = "" if (name in lisp_rle_list) else \
                 "(not configured)"
             lprint("Policy set-rle-name '{}' {}".format(name, not_found))
         #endif
         if (self.set_json_name): 
             rloc.json_name = self.set_json_name
             name = rloc.json_name
-            not_found = "" if lisp_json_list.has_key(name) else \
+            not_found = "" if (name in lisp_json_list) else \
                 "(not configured)"
             lprint("Policy set-json-name '{}' {}".format(name, not_found))
         #endif
@@ -15115,13 +15115,13 @@ class lisp_pubsub():
         self.eid_prefix = eid_prefix
         ttl = self.ttl
         eid = eid_prefix.print_prefix()
-        if (lisp_pubsub_cache.has_key(eid) == False): 
+        if (eid not in lisp_pubsub_cache):
             lisp_pubsub_cache[eid] = {}
         #endif
         pubsub = lisp_pubsub_cache[eid]
 
         ar = "Add"
-        if (pubsub.has_key(self.xtr_id)):
+        if (self.xtr_id in pubsub):
             ar = "Replace"
             del(pubsub[self.xtr_id])
         #endif
@@ -15138,9 +15138,9 @@ class lisp_pubsub():
         eid = eid_prefix.print_prefix()
         itr = red(self.itr.print_address_no_iid(), False)
         xtr_id = "0x" + lisp_hex_string(self.xtr_id)
-        if (lisp_pubsub_cache.has_key(eid)):
+        if (eid in lisp_pubsub_cache):
             pubsub = lisp_pubsub_cache[eid]
-            if (pubsub.has_key(self.xtr_id)):
+            if (self.xtr_id in pubsub):
                 pubsub.pop(self.xtr_id)
                 lprint("Remove pubsub state {} for {}, xtr-id: {}".format(eid,
                      itr, xtr_id))
@@ -16045,7 +16045,7 @@ def lisp_process_info_reply(source, packet, store):
     new_rtr_set = False
     for rtr in info.rtr_list:
         addr_str = rtr.print_address_no_iid()
-        if (lisp_rtr_list.has_key(addr_str)):
+        if (addr_str in lisp_rtr_list):
             if (lisp_register_all_rtrs == False): continue
             if (lisp_rtr_list[addr_str] != None): continue
         #endif
@@ -16338,7 +16338,7 @@ def lisp_store_nat_info(hostname, rloc, port):
     
     new_nat_info = lisp_nat_info(addr_str, hostname, port)
 
-    if (lisp_nat_state_info.has_key(hostname) == False):
+    if (hostname not in lisp_nat_state_info):
         lisp_nat_state_info[hostname] = [new_nat_info]
         lprint(msg.format("Store initial"))
         return(True)
@@ -16387,7 +16387,7 @@ def lisp_store_nat_info(hostname, rloc, port):
 # port.
 #
 def lisp_get_nat_info(rloc, hostname):
-    if (lisp_nat_state_info.has_key(hostname) == False): return(None)
+    if (hostname not in lisp_nat_state_info): return(None)
 
     addr_str = rloc.print_address_no_iid()
     for nat_info in lisp_nat_state_info[hostname]:
@@ -16770,7 +16770,7 @@ def lisp_process_api_map_cache_entry(parms):
     # the source.
     #
     group = lisp_address(LISP_AFI_NONE, "", 0, iid)
-    if (parms.has_key("group-prefix")):
+    if ("group-prefix" in parms):
         group.store_prefix(parms["group-prefix"])
         dest = group
     #endif
@@ -16798,7 +16798,7 @@ def lisp_process_api_site_cache_summary(site_cache):
     for ml in site_cache.cache_sorted:
         for se in site_cache.cache[ml].entries.values():
             if (se.accept_more_specifics == False): continue
-            if (sites.has_key(se.site.site_name) == False):
+            if (se.site.site_name not in sites):
                 sites[se.site.site_name] = []
             #endif
             e = copy.deepcopy(entry)
@@ -16850,8 +16850,8 @@ def lisp_process_api_site_cache(se, data):
 #
 def lisp_process_api_ms_or_mr(ms_or_mr, data):
     address = lisp_address(LISP_AFI_NONE, "", 0, 0)
-    dns_name = data["dns-name"] if data.has_key("dns-name") else None
-    if (data.has_key("address")):
+    dns_name = data["dns-name"] if ("dns-name" in data) else None
+    if ("address" in data):
         address.store_address(data["address"])
     #endif
 
@@ -17005,7 +17005,7 @@ def lisp_process_api_site_cache_entry(parms):
     # the source.
     #
     group = lisp_address(LISP_AFI_NONE, "", 0, iid)
-    if (parms.has_key("group-prefix")):
+    if ("group-prefix" in parms):
         group.store_prefix(parms["group-prefix"])
     #endif
 
@@ -17022,7 +17022,7 @@ def lisp_process_api_site_cache_entry(parms):
 #
 def lisp_get_interface_instance_id(device, source_eid):
     interface = None
-    if (lisp_myinterfaces.has_key(device)):
+    if (device in lisp_myinterfaces):
         interface = lisp_myinterfaces[device]
     #endif
 
@@ -17069,7 +17069,7 @@ def lisp_get_interface_instance_id(device, source_eid):
 # Otherwise, returns None.
 #
 def lisp_allow_dynamic_eid(device, eid):
-    if (lisp_myinterfaces.has_key(device) == False): return(None)
+    if (device not in lisp_myinterfaces): return(None)
 
     interface = lisp_myinterfaces[device]
     return_interface = device if interface.dynamic_eid_device == None else \
@@ -17436,7 +17436,7 @@ def lisp_update_rtr_updown(rtr, updown):
     # Check if RTR address is in LISP the lisp-itr process learned from the
     # map-server.
     #
-    if (lisp_rtr_list.has_key(rtr_str) == False): return
+    if (rtr_str not in lisp_rtr_list): return
 
     updown = "up" if updown else "down"
     lprint("Send ETR IPC message, RTR {} has done {}".format(
@@ -17475,7 +17475,7 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
     #
     if (mrloc != None):
         multicast_rloc = mrloc.rloc.print_address_no_iid()
-        if (mrloc.multicast_rloc_probe_list.has_key(map_reply_addr) == False):
+        if (map_reply_addr not in mrloc.multicast_rloc_probe_list):
             nrloc = lisp_rloc()
             nrloc = copy.deepcopy(mrloc)
             nrloc.rloc.copy_address(rloc)
@@ -17497,11 +17497,11 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
     # that address in the probe-list.
     #
     addr = map_reply_addr
-    if (pl.has_key(addr) == False):
+    if (addr not in pl):
         addr += ":" + str(port)
-        if (pl.has_key(addr) == False):
+        if (addr not in pl):
             addr = source_addr
-            if (pl.has_key(addr) == False):
+            if (addr not in pl):
                 addr += ":" + str(port)
                 lprint("    Received unsolicited {} from {}/{}, port {}". \
                     format(probe, red(map_reply_addr, False), red(source_addr,
@@ -17577,7 +17577,7 @@ def lisp_get_echo_nonce(rloc, rloc_str):
 
     if (rloc): rloc_str = rloc.print_address_no_iid()
     echo_nonce = None
-    if (lisp_nonce_echo_list.has_key(rloc_str)):
+    if (rloc_str in lisp_nonce_echo_list):
         echo_nonce = lisp_nonce_echo_list[rloc_str]
     #endif
     return(echo_nonce)
@@ -18425,7 +18425,7 @@ def lisp_write_ipc_keys(rloc):
     addr_str = rloc.rloc.print_address_no_iid()
     port = rloc.translated_port
     if (port != 0): addr_str += ":" + str(port)
-    if (lisp_rloc_probe_list.has_key(addr_str) == False): return
+    if (addr_str not in lisp_rloc_probe_list): return
 
     for r, e, g in lisp_rloc_probe_list[addr_str]:
         mc = lisp_map_cache.lookup_cache(e, True)
@@ -18687,7 +18687,7 @@ def lisp_reassemble(packet):
     #
     # Initialized list if first fragment. Indexed by IPv4 Ident.
     #
-    if (lisp_reassembly_queue.has_key(ident) == False):
+    if (ident not in lisp_reassembly_queue):
         lisp_reassembly_queue[ident] = []
     #endif
 
@@ -18770,10 +18770,10 @@ def lisp_reassemble(packet):
 #
 def lisp_get_crypto_decap_lookup_key(addr, port):
     addr_str = addr.print_address_no_iid() + ":" + str(port)
-    if (lisp_crypto_keys_by_rloc_decap.has_key(addr_str)): return(addr_str)
+    if (addr_str in lisp_crypto_keys_by_rloc_decap): return(addr_str)
         
     addr_str = addr.print_address_no_iid()
-    if (lisp_crypto_keys_by_rloc_decap.has_key(addr_str)): return(addr_str)
+    if (addr_str in lisp_crypto_keys_by_rloc_decap): return(addr_str)
 
     #
     # We are at non-NAT based xTR. We need to get the keys from an RTR
@@ -18806,7 +18806,7 @@ def lisp_build_crypto_decap_lookup_key(addr, port):
     addr_and_port = addr + ":" + str(port)
   
     if (lisp_i_am_rtr):
-        if (lisp_rloc_probe_list.has_key(addr)): return(addr)
+        if (addr in lisp_rloc_probe_list): return(addr)
     
         #
         # Have to check NAT cache to see if RLOC is translated. If not, this
@@ -18998,7 +18998,7 @@ def lisp_process_data_plane_restart(do_clear=False):
 # }
 #
 def lisp_process_data_plane_stats(msg, lisp_sockets, lisp_port):
-    if (msg.has_key("entries") == False):
+    if ("entries" not in msg):
         lprint("No 'entries' in stats IPC message")
         return
     #endif
@@ -19008,13 +19008,13 @@ def lisp_process_data_plane_stats(msg, lisp_sockets, lisp_port):
     #endif
 
     for msg in msg["entries"]:
-        if (msg.has_key("eid-prefix") == False):
+        if ("eid-prefix" not in msg):
             lprint("No 'eid-prefix' in stats IPC message")
             continue
         #endif
         eid_str = msg["eid-prefix"]
 
-        if (msg.has_key("instance-id") == False):
+        if ("instance-id" not in msg):
             lprint("No 'instance-id' in stats IPC message")
             continue
         #endif
@@ -19032,7 +19032,7 @@ def lisp_process_data_plane_stats(msg, lisp_sockets, lisp_port):
             continue
         #endif
 
-        if (msg.has_key("rlocs") == False):
+        if ("rlocs" not in msg):
             lprint("No 'rlocs' in stats IPC message for {}".format( \
                 eid_str))
             continue
@@ -19047,7 +19047,7 @@ def lisp_process_data_plane_stats(msg, lisp_sockets, lisp_port):
         # Loop through RLOCs in IPC message.
         #
         for ipc_rloc in ipc_rlocs:
-            if (ipc_rloc.has_key("rloc") == False): continue
+            if ("rloc" not in ipc_rloc): continue
 
             rloc_str = ipc_rloc["rloc"]
             if (rloc_str == "no-address"): continue
@@ -19061,11 +19061,11 @@ def lisp_process_data_plane_stats(msg, lisp_sockets, lisp_port):
             #
             # Update stats.
             #
-            pc = 0 if ipc_rloc.has_key("packet-count") == False else \
+            pc = 0 if ("packet-count" not in ipc_rloc) else \
                 ipc_rloc["packet-count"]
-            bc = 0 if ipc_rloc.has_key("byte-count") == False else \
+            bc = 0 if ("byte-count" not in ipc_rloc) else \
                 ipc_rloc["byte-count"]
-            ts = 0 if ipc_rloc.has_key("seconds-last-packet") == False else \
+            ts = 0 if ("seconds-last-packet" not in ipc_rloc) else \
                 ipc_rloc["seconds-last-packet"]
         
             rloc_entry.stats.packet_count += pc
@@ -19139,15 +19139,13 @@ def lisp_process_data_plane_decap_stats(msg, lisp_ipc_socket):
         "outer-header-error"]
 
     for key_name in key_names:
-        pc = 0 if msg.has_key(key_name) == False else \
-            msg[key_name]["packet-count"]
+        pc = 0 if (key_name not in msg) else msg[key_name]["packet-count"]
         lisp_decap_stats[key_name].packet_count += pc
 
-        bc = 0 if msg.has_key(key_name) == False else \
-            msg[key_name]["byte-count"]
+        bc = 0 if (key_name not in msg) else msg[key_name]["byte-count"]
         lisp_decap_stats[key_name].byte_count += bc
 
-        ts = 0 if msg.has_key(key_name) == False else \
+        ts = 0 if (key_name not in msg) else \
             msg[key_name]["seconds-last-packet"]
         lisp_decap_stats[key_name].last_increment = lisp_get_timestamp() - ts
     #endfor
@@ -19181,7 +19179,7 @@ def lisp_process_punt(punt_socket, lisp_send_sockets, lisp_ephem_port):
     punt = bold("Punt", False)
     lprint("{} message from '{}': '{}'".format(punt, source, msg))
 
-    if (msg.has_key("type") == False):
+    if ("type" not in msg):
         lprint("Punt IPC message has no 'type' key")
         return
     #endif
@@ -19213,7 +19211,7 @@ def lisp_process_punt(punt_socket, lisp_send_sockets, lisp_ephem_port):
         lprint("Punt IPC message has wrong format")
         return
     #endif
-    if (msg.has_key("interface") == False):
+    if ("interface" not in msg):
         lprint("Invalid punt message from {}, required keys missing". \
             format(source))
         return
@@ -19234,7 +19232,7 @@ def lisp_process_punt(punt_socket, lisp_send_sockets, lisp_ephem_port):
     # Validate EID format.
     #
     seid = None
-    if (msg.has_key("source-eid")):
+    if ("source-eid" in msg):
         source_eid = msg["source-eid"]
         seid = lisp_address(LISP_AFI_NONE, source_eid, 0, iid)
         if (seid.is_null()):
@@ -19243,7 +19241,7 @@ def lisp_process_punt(punt_socket, lisp_send_sockets, lisp_ephem_port):
         #endif
     #endif
     deid = None
-    if (msg.has_key("dest-eid")):
+    if ("dest-eid" in msg):
         dest_eid = msg["dest-eid"]
         deid = lisp_address(LISP_AFI_NONE, dest_eid, 0, iid)
         if (deid.is_null()):
@@ -19346,7 +19344,7 @@ def lisp_ipc_walk_map_cache(mc, jdata):
 def lisp_itr_discover_eid(db, eid, input_interface, routed_interface,
     lisp_ipc_listen_socket):
     eid_str = eid.print_address()
-    if (db.dynamic_eids.has_key(eid_str)): 
+    if (eid_str in db.dynamic_eids):
         db.dynamic_eids[eid_str].last_packet = lisp_get_timestamp()
         return
     #endif
@@ -19738,23 +19736,23 @@ def lisp_allow_gleaning(eid, group, rloc):
     if (lisp_glean_mappings == []): return(False, False, False)
     
     for entry in lisp_glean_mappings:
-        if (entry.has_key("instance-id")):
+        if ("instance-id" in entry):
             iid = eid.instance_id
             low, high = entry["instance-id"]
             if (iid < low or iid > high): continue
         #endif
-        if (entry.has_key("eid-prefix")):
+        if ("eid-prefix" in entry):
             e = copy.deepcopy(entry["eid-prefix"])
             e.instance_id = eid.instance_id
             if (eid.is_more_specific(e) == False): continue
         #endif
-        if (entry.has_key("group-prefix")):
+        if ("group-prefix" in entry):
             if (group == None): continue
             g = copy.deepcopy(entry["group-prefix"])
             g.instance_id = group.instance_id
             if (group.is_more_specific(g) == False): continue
         #endif
-        if (entry.has_key("rloc-prefix")):
+        if ("rloc-prefix" in entry):
             if (rloc != None and rloc.is_more_specific(entry["rloc-prefix"])
                 == False): continue
         #endif
@@ -19845,7 +19843,7 @@ def lisp_build_gleaned_multicast(seid, geid, rloc, port, igmp):
     #
     if (igmp):
         seid_str = seid.print_address()
-        if (lisp_gleaned_groups.has_key(seid_str) == False):
+        if (seid_str not in lisp_gleaned_groups):
             lisp_gleaned_groups[seid_str] = {}
         #endif
         lisp_gleaned_groups[seid_str][group_str] = lisp_get_timestamp()
@@ -19893,8 +19891,8 @@ def lisp_remove_gleaned_multicast(seid, geid):
     #
     # Remove that EID has joined the group.
     #
-    if (lisp_gleaned_groups.has_key(seid_str)):
-        if (lisp_gleaned_groups[seid_str].has_key(group_str)):
+    if (seid_str in lisp_gleaned_groups):
+        if (group_str in lisp_gleaned_groups[seid_str]):
             lisp_gleaned_groups[seid_str].pop(group_str)
         #endif
     #endif
@@ -19915,7 +19913,7 @@ def lisp_remove_gleaned_multicast(seid, geid):
 #
 def lisp_change_gleaned_multicast(seid, rloc, port):
     seid_str = seid.print_address()
-    if (lisp_gleaned_groups.has_key(seid_str) == False): return
+    if (seid_str not in lisp_gleaned_groups): return
 
     for group in lisp_gleaned_groups[seid_str]:
         lisp_geid.store_address(group)
@@ -20056,7 +20054,7 @@ def lisp_process_igmp_packet(packet):
     reports_and_leaves_only = (igmp_type in (0x12, 0x16, 0x17, 0x22))
     if (reports_and_leaves_only == False):
         igmp_str = "{} ({})".format(igmp_type, igmp_types[igmp_type]) if \
-            igmp_types.has_key(igmp_type) else igmp_type
+            (igmp_type in igmp_types) else igmp_type
         lprint("IGMP type {} not supported".format(igmp_str))
         return([])
     #endif
@@ -20115,7 +20113,7 @@ def lisp_process_igmp_packet(packet):
 
         igmp = igmp[group_size::]
 
-        if (lisp_igmp_record_types.has_key(record_type) == False):
+        if (record_type not in lisp_igmp_record_types):
             lprint("Invalid record type {}".format(record_type))
             continue
         #endif
@@ -20294,8 +20292,8 @@ def lisp_is_json_telemetry(json_string):
         return(None)
     #endtry
 
-    if (tel.has_key("type") == False): return(None)
-    if (tel.has_key("sub-type") == False): return(None)
+    if ("type" not in tel): return(None)
+    if ("sub-type" not in tel): return(None)
     if (tel["type"] != "telemetry"): return(None)
     if (tel["sub-type"] != "timestamps"): return(None)
     return(tel)
@@ -20347,7 +20345,7 @@ def lisp_decode_telemetry(json_string):
 # "telemetry". If found, return the json string. Otherwise, return None.
 #
 def lisp_telemetry_configured():
-    if (lisp_json_list.has_key("telemetry") == False): return(None)
+    if ("telemetry" not in lisp_json_list): return(None)
 
     json_string = lisp_json_list["telemetry"].json_string
     if (lisp_is_json_telemetry(json_string) == None): return(None)

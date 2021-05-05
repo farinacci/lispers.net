@@ -688,7 +688,7 @@ def lisp_setup_kv_pairs(clause):
 # display a message to the log.
 #
 def lisp_clause_syntax_error(kv_pair, parm, clause):
-    is_array = (kv_pair.has_key(parm) and type(kv_pair[parm]) == list)
+    is_array = (parm in kv_pair and type(kv_pair[parm]) == list)
     if (is_array): return(False)
 
     err_str = lisp.bold("Syntax error", False)
@@ -792,7 +792,7 @@ def lisp_syntax_check(kv_pairs, clause):
         kw = kw.replace("\t", "")
         value = value.replace("\t", "")
 
-        if (not kv_pairs.has_key(kw)):
+        if (kw not in kv_pairs):
             new_clause += lisp_write_error(line, "invalid command keyword")
             error = True
             continue
@@ -850,7 +850,7 @@ def lisp_syntax_check(kv_pairs, clause):
         # while loop is for cases where a command can appear multiple times
         # not inside of sub-clause.
         #
-        if (kv_pairs[kw][0] and new_kv_pairs.has_key(kw)):
+        if (kv_pairs[kw][0] and kw in new_kv_pairs):
             if (new_kv_pairs[kw][index] != ""): index += 1
             new_kv_pairs[kw][index] = value
         else:
@@ -943,7 +943,7 @@ def lisp_process_command(lisp_socket, opcode, clause, process, command_set):
     command = command[0] + " " + command[1]
 
     for cmds in command_set:
-        if (cmds.has_key(command)): 
+        if (command in cmds):
             command_processor, kv_pairs = cmds[command]
             break
         #endif
@@ -1199,11 +1199,11 @@ def lisp_landing_page():
     '''
 
     dc = lisp_get_clause_for_api("lisp debug")[0]
-    dc = dc["lisp debug"] if dc.has_key("lisp debug") else None
+    dc = dc["lisp debug"] if ("lisp debug" in dc) else None
     key = "lisp xtr-parameters"
     xl = lisp_get_clause_for_api(key)[0]
     xtr_logging = False
-    if (xl.has_key(key)):
+    if (key in xl):
         d = { "data-plane-logging" : "yes" }
         f = { "flow-logging" : "yes" }
         xtr_logging = (d in xl[key] or f in xl[key])
@@ -1805,7 +1805,7 @@ def lisp_rtr_list_command(clause):
     if (error): return(new_clause)
 
     lisp.lisp_ms_rtr_list = []
-    if (kv_pairs.has_key("address")):
+    if ("address" in kv_pairs):
         for addr_str in kv_pairs["address"]:
             addr = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
             addr.store_address(addr_str)
@@ -1831,7 +1831,7 @@ def lisp_process_command_lines(lisp_socket, old, new, line):
     #
     # Found invalid command with no curly brackets delimiting it.
     #
-    if (lisp_commands.has_key(command) == False):
+    if (command not in lisp_commands):
         line = "#>>> " + line.replace("\n", " <<< invalid command\n")
         new.write(line)
         return
@@ -2042,7 +2042,7 @@ def lisp_send_commands(lisp_socket, process):
                 command = line.split("{")
                 command = command[0]
                 command = command[0:-1]
-                if (lisp_commands.has_key(command)):
+                if (command in lisp_commands):
                     capture = (process in lisp_commands[command]) or \
                         (command == "lisp debug")
                 #endif
@@ -2179,7 +2179,7 @@ def lisp_map_cache_command(kv_pair):
     #endfor
 
     rloc_set = []
-    if (kv_pair.has_key("address")):
+    if ("address" in kv_pair):
         if (lisp_clause_syntax_error(kv_pair, "address", "rloc")): return
         for i in range(len(kv_pair["address"])):
             rloc = lisp.lisp_rloc()
@@ -2232,7 +2232,7 @@ def lisp_map_cache_command(kv_pair):
                 v = value[i]
                 if (v != ""): 
                     rloc.rle_name = v
-                    if (lisp.lisp_rle_list.has_key(v)):
+                    if (v in lisp.lisp_rle_list):
                         rloc.rle = lisp.lisp_rle_list[v]
                     #endif
                 #endif
@@ -2244,7 +2244,7 @@ def lisp_map_cache_command(kv_pair):
                 v = value[i]
                 if (v != ""): 
                     rloc.elp_name = v
-                    if (lisp.lisp_elp_list.has_key(v)):
+                    if (v in lisp.lisp_elp_list):
                         rloc.elp = lisp.lisp_elp_list[v]
                         rloc.elp.select_elp_node()
                     #endif
@@ -2433,7 +2433,7 @@ def lisp_display_map_cache(mc, output):
             #endif
                 
             addr_str = rloc.rloc.print_address_no_iid() + ":" + str(port)
-            if (lisp.lisp_crypto_keys_by_rloc_encap.has_key(addr_str)):
+            if (addr_str in lisp.lisp_crypto_keys_by_rloc_encap):
                 key = lisp.lisp_crypto_keys_by_rloc_encap[addr_str][1]
                 if (key != None and key.shared_key != None): 
                     action = "encap-crypto-" + key.cipher_suite_string
@@ -2981,14 +2981,14 @@ def lisp_geo_command(kv_pair):
     #
     # Get geo name. If none supplied, return.
     #
-    if (kv_pair.has_key("geo-name") == False): return
+    if ("geo-name" not in kv_pair): return
     geo_name = kv_pair["geo-name"]
     geo = lisp.lisp_geo(geo_name)
 
     #
     # Get coordinates, if non supplied reutrn.
     #
-    if (kv_pair.has_key("geo-tag") == False): return
+    if ("geo-tag" not in kv_pair): return
 
     #
     # Remove leading space that the command will give us.
@@ -3012,7 +3012,7 @@ def lisp_elp_command(kv_pair):
 
     elp = None
     elp_nodes = []
-    if (kv_pair.has_key("address")):
+    if ("address" in kv_pair):
         for i in range(len(kv_pair["address"])):
             elp_node = lisp.lisp_elp_node()
             elp_nodes.append(elp_node)
@@ -3060,7 +3060,7 @@ def lisp_rle_command(kv_pair):
 
     rle = None
     rle_nodes = []
-    if (kv_pair.has_key("address")):
+    if ("address"in kv_pair):
         for i in range(len(kv_pair["address"])):
             rle_node = lisp.lisp_rle_node()
             rle_nodes.append(rle_node)
@@ -3778,10 +3778,10 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
     rloc_set = []
 
     num_rlocs = 1
-    if (kv_pair.has_key("address")):
+    if ("address" in kv_pair):
         if (lisp_clause_syntax_error(kv_pair, "address", "rloc")): return
         num_rlocs = len(kv_pair["address"])
-    elif (kv_pair.has_key("interface")):
+    elif ("interface" in kv_pair):
         if (lisp_clause_syntax_error(kv_pair, "interface", "rloc")): return
         num_rlocs = len(kv_pair["interface"])
     #endif
@@ -4200,7 +4200,7 @@ def lisp_interface_command(kv_pair):
     # arrive to the lisp-itr process as coming in on "eth0".
     #
 #   if (device_name != "eth0"): return
-    if (lisp.lisp_myinterfaces.has_key(device_name) and mt_eid == None):
+    if (device_name in lisp.lisp_myinterfaces and mt_eid == None):
         interface = lisp.lisp_myinterfaces[device_name]
     else:
         interface = lisp.lisp_interface(device_name)

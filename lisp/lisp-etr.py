@@ -533,7 +533,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         # Is db entry associated with a map-server name that is not
         # configured?
         #
-        if (ms_list.has_key(ms_dns_name) == False): continue
+        if (ms_dns_name not in ms_list): continue
 
         msl = ms_list[ms_dns_name]
         if (msl == []):
@@ -591,7 +591,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         if (ms_only != None and ms != ms_only): continue
 
         ms_dns_name = ms.dns_name if decent else ms.ms_name
-        if (ms_list.has_key(ms_dns_name) == False): continue
+        if (ms_dns_name not in ms_list): continue
         
         for msl in ms_list[ms_dns_name]:
 
@@ -868,7 +868,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         #
         # Is db entry associated with a map-server name that is not configured?
         #
-        if (ms_list.has_key(ms_dns_name) == False): continue
+        if (ms_dns_name not in ms_list): continue
 
         eid_record = lisp.lisp_eid_record()
         eid_record.rloc_count = 1 + rtr_count
@@ -971,7 +971,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         #
         # Get EID-records from correct map-server name set.
         #
-        if (ms_list.has_key(key) == False): continue
+        if (key not in ms_list): continue
 
         #
         # Build map-server specific fields.
@@ -1707,7 +1707,7 @@ def lisp_etr_discover_eid(ipc):
     # don't try to add an entry if it is already cached.
     #
     dyn_eid = None
-    if (db.dynamic_eids.has_key(eid_str)): dyn_eid = db.dynamic_eids[eid_str]
+    if (eid_str in db.dynamic_eids): dyn_eid = db.dynamic_eids[eid_str]
 
     if (dyn_eid == None and interface == None):
         lisp.lprint("ITR/ETR state mismatch for {}".format( \
@@ -1763,7 +1763,7 @@ def lisp_etr_discover_eid(ipc):
     #
     # Remove existig entry and deregister it.
     #
-    if (db.dynamic_eids.has_key(eid_str)):
+    if (eid_str in db.dynamic_eids):
         interface = db.dynamic_eids[eid_str].interface
         dereg = lisp.bold("Deregistering", False)
         lisp.lprint("{} dynamic-EID {}".format(dereg, 
@@ -1796,7 +1796,7 @@ def lisp_etr_process_rtr_updown(ipc):
     if (lisp.lisp_register_all_rtrs): return
 
     opcode, rtr_str, status = ipc.split("%")
-    if (lisp.lisp_rtr_list.has_key(rtr_str) == False): return
+    if (rtr_str not in lisp.lisp_rtr_list): return
 
     lisp.lprint("Process ITR IPC message, RTR {} has gone {}".format(
         lisp.red(rtr_str, False), lisp.bold(status, False)))
