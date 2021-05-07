@@ -88,7 +88,7 @@ tmp = "/tmp/{}".format(tgz)
 # with a "provisioned release" tarball.
 #
 print("Adding provision files to release {} tarball files ...". \
-      format(bold(version))),
+      format(bold(version)), end=" "),
 os.system("mkdir -p {}; cp {}/{} {}".format(tmp, release, tgz, tmp))
 os.system("chmod 755 {}/{}".format(tmp, tgz))
 os.system("cd {}; tar zxf {}; rm {}".format(tmp, tgz, tgz))
@@ -100,7 +100,8 @@ print("done")
 # Don't need RL-template in this release since we customize the RL file for
 # the instance-ID and MacOS device (or eth0 for docker).
 #
-print("Customize RL.provision-xtr file with provisioning parameters ..."),
+print("Customize RL.provision-xtr file with provisioning parameters ...",
+      end=" ")
 f = open("{}/RL".format(tmp), "r"); buf = f.read(); f.close()
 buf = buf.replace('set IID = "0"', 'set IID = "{}"'.format(iid))
 f = open("{}/RL".format(tmp), "w"); f.write(buf); f.close()
@@ -112,7 +113,7 @@ print("done")
 #
 ptgz = "lispers.net-x86-release-{}-iid-{}-{}.tgz".format(version, iid, tag)
 print("Creating provisioned tarball for release {}, instance-ID {} ...". \
-      format(bold(version), bold(iid))),
+      format(bold(version), bold(iid)), end= " ")
 cmd = "cd {}; export COPYFILE_DISABLE=true; tar czf {} *".format(tmp, ptgz)
 os.system(cmd)
 print("done")      
