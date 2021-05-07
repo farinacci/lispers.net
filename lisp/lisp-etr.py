@@ -1436,7 +1436,7 @@ def lisp_etr_join_leave_process():
     ipigmp = [swap(0x46000020), swap(0x9fe60000), swap(0x0102d7cc), 
               swap(0x0acfc15a), swap(0xe00000fb), swap(0x94040000)]
 
-    packet = b""
+    packet = ""
     for l in ipigmp: packet += struct.pack("I", l)
 
     #
