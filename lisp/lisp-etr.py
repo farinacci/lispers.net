@@ -1436,7 +1436,7 @@ def lisp_etr_join_leave_process():
     ipigmp = [swap(0x46000020), swap(0x9fe60000), swap(0x0102d7cc), 
               swap(0x0acfc15a), swap(0xe00000fb), swap(0x94040000)]
 
-    packet = ""
+    packet = b""
     for l in ipigmp: packet += struct.pack("I", l)
 
     #
@@ -1548,7 +1548,10 @@ def lisp_etr_process():
     if (lisp.lisp_is_python3()):
         pcap = pcapy.open_live(device, 1600, 0, 100)
         pcap.setfilter(pfilter)
-        pcap.loop(-1, lisp_etr_data_plane)
+        while(True):
+            header, packet = pcap.next()     
+            lisp_etr_data_plane([device, lisp_raw_socket], None, packet)
+        #endwhile
     #endif
     return
 #enddef
