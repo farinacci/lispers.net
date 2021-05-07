@@ -1084,7 +1084,10 @@ def lisp_rtr_pcap_thread(lisp_thread):
     if (lisp.lisp_is_python3()):
         pcap = pcapy.open_live(device, 9000, 0, 100)
         pcap.setfilter(pfilter)
-        pcap.loop(-1, lisp_rtr_pcap_process_packet)
+        while(True):
+            header, packet = pcap.next()     
+            lisp_rtr_pcap_process_packet([device, lisp_thread], None, packet)
+        #endwhile
     #endif
     return
 #enddef
