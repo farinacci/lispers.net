@@ -1,0 +1,51 @@
+
+                How to Install a lispers.net on MacOS
+                -------------------------------------
+
+Step 1: In user home directory, create lispers.net directory:
+
+    mkdir ~/lispers.net
+    cd ~/lispers.net
+    sudo tar zxvf <lispers.net-tgz-file>
+
+Step 2: Get pip to install python modules required:
+
+    curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+    sudo python get-pip.py
+    
+Step 3: Use pip to install python2 module dependencies:
+    
+    sudo python -m pip install CherryPy bottle netifaces pcappy pcapy \
+         pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa \
+         pycryptodome pytun future distro
+
+Step 4: Use pip3 to install python3 module dependencies:
+
+    sudo python3.8 -m pip install CherryPy bottle netifaces pcappy pcapy \
+         pyOpenSSL pycrypto requests curve25519-donna geopy \
+         ecdsa pycryptodome pytun future distro
+
+Step 5: Run this to test script to verify installation is complete:
+
+    If you have a python2 release (you see *.pyo files), run:
+    
+        python lispers.net-test-install.pyo
+
+    If you have a python3 release (you see *.pyc files), run:
+
+        python3 lispers.net-test-install.pyc
+
+Step 6: Bring up lispers.net:
+
+    ./RL
+
+You can go to https://localhost:8080/lisp to see the LISP xTR running locally.
+
+-------------------------------------------------------------------------------
+
+
+
+
+
+
+
