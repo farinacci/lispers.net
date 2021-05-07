@@ -57,14 +57,14 @@ RUN cd /lispers.net; cat `basename $LISP_TGZ` | gzip -dc | tar -xf -
 #
 RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py && \
     python get-pip.py
-RUN python -m pip install CherryPy bottle netifaces pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome pytun future distro
+RUN python -m pip install CherryPy bottle netifaces pcapy pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome pytun future distro
     
 #
 # Install python3 modules the lispers.net directory depends on.
 #
 RUN apt-get install -y python3-pip
-RUN pip3 install CherryPy bottle netifaces pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome python-pytun future distro           
-
+RUN pip3 install CherryPy bottle netifaces pcapy pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome python-pytun future distro
+    
 #
 # Make prompt hostname/container name, allow web interface to work, and put us
 # in the /lispers.net directory when you attach to container.
