@@ -101,6 +101,9 @@
 #
 #------------------------------------------------------------------------------
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import hex
 import sys
 import struct
 import random
@@ -109,11 +112,7 @@ import json
 import time
 import os
 import binascii
-try:
-    from commands import getoutput
-except:
-    from subprocess import getoutput
-#entry
+from subprocess import getoutput
 
 #------------------------------------------------------------------------------
 

@@ -22,15 +22,12 @@
 # current directory to a date/timestamped sub-directory.
 # 
 # -----------------------------------------------------------------------------
-
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
 import os
 import datetime
-try:
-    from commands import getoutput
-except:
-    from subprocess import getoutput
-#entry    
-
+from subprocess import getoutput
 
 #------------------------------------------------------------------------------
 

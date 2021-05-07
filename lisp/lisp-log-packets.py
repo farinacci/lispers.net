@@ -32,14 +32,14 @@
 # variable LISP_PW is set, the value is the password that is used to connect.
 # to the LISP API.
 #
-# Usage: python -O lisp-log-packets.py [force] [<api-port>] [help]
+# Usage: python lisp-log-packets.py [force] [<api-port>] [help]
 #
 # Note when <api-port> is negative, it is passed into the lispapi to tell it
 # to use http versus https. This port number should be the same value as
 # passed on the ./RESTART-LISP command.
 #
 #------------------------------------------------------------------------------
-
+from __future__ import print_function
 import lispapi
 import sys
 import os
@@ -51,7 +51,7 @@ force = True
 api_port = 8080
 for arg in sys.argv[1::]:
     if (arg == "help"):
-        print("Usage: log-packets [force] [<api-port>] [help]")
+        print("Usage: python log-packets.py [force] [<api-port>] [help]")
         exit(0)
     #endif
     if (arg == "force"): force = True

@@ -23,6 +23,15 @@
 #
 #------------------------------------------------------------------------------
 from __future__ import print_function
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import chr
+from builtins import hex
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import socket
 import time
 import struct
@@ -46,16 +55,9 @@ import chacha
 import poly1305
 import geopy
 import curve25519
-try:
-    from commands import getoutput
-except:
-    from subprocess import getoutput
-#entry
-try:
-    import queue
-except:
-    import Queue as queue
-#endtry
+from subprocess import getoutput
+import queue
+import distro
 
 #
 # For printing the lisp_rloc_probe_list{}.
@@ -580,7 +582,7 @@ def lisp_set_exception():
 # Return True if this system is running Raspbian on a Raspberry Pi machine.
 #
 def lisp_is_raspbian():
-    if (platform.dist()[0] != "debian"): return(False)
+    if (distro.linux_distribution()[0] != "debian"): return(False)
     return(platform.machine() in ["armv6l", "armv7l"])
 #enddef
 
@@ -590,7 +592,7 @@ def lisp_is_raspbian():
 # Return True if this system is running Ubuntu Linux.
 #
 def lisp_is_ubuntu():
-    return(platform.dist()[0] == "Ubuntu")
+    return(distro.linux_distribution()[0] == "Ubuntu")
 #enddef
 
 #
@@ -599,7 +601,7 @@ def lisp_is_ubuntu():
 # Return True if this system is running Fedora Linux.
 #
 def lisp_is_fedora():
-    return(platform.dist()[0] == "fedora")
+    return(distro.linux_distribution()[0] == "fedora")
 #enddef
 
 #
@@ -608,7 +610,7 @@ def lisp_is_fedora():
 # Return True if this system is running CentOS Linux.
 #
 def lisp_is_centos():
-    return(platform.dist()[0] == "centos")
+    return(distro.linux_distribution()[0] == "centos")
 #enddef
 
 #
@@ -617,7 +619,7 @@ def lisp_is_centos():
 # Return True if this system is running Debian Jessie.
 #
 def lisp_is_debian():
-    return(platform.dist()[0] == "debian")
+    return(distro.linux_distribution()[0] == "debian")
 #enddef
 
 #
@@ -626,7 +628,7 @@ def lisp_is_debian():
 # Return True if this system is running Debian Jessie.
 #
 def lisp_is_debian_kali():
-    return(platform.dist()[0] == "Kali")
+    return(distro.linux_distribution()[0] == "Kali")
 #enddef
 
 #
@@ -1801,7 +1803,7 @@ def lisp_get_all_multicast_rles():
 # LISP packet contents. This keeps state for a LISP encapsulated packet that
 # is processed by an RTR and ETR.
 #
-class lisp_packet():
+class lisp_packet(object):
     def __init__(self, packet):
         self.outer_source = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.outer_dest = lisp_address(LISP_AFI_NONE, "", 0, 0)
@@ -1936,7 +1938,7 @@ class lisp_packet():
     def cipher_pad(self, packet):
         length = len(packet)
         if ((length % 16) != 0):
-            pad = ((length/16) + 1) * 16
+            pad = (old_div(length, 16) + 1) * 16
             packet = packet.ljust(pad)
         #endif
         return(packet)
@@ -2329,7 +2331,7 @@ class lisp_packet():
             #
             # Set fragment-offset and MF bit if not last fragment.
             #
-            ff = frag_field / 8
+            ff = old_div(frag_field, 8)
             if (mf):
                 ff |= 0x2000
             elif (frag != frags[-1]):
@@ -2961,7 +2963,7 @@ LISP_I_BIT  = 0x08000000
 LISP_P_BIT  = 0x04000000
 LISP_K_BITS = 0x03000000
 
-class lisp_data_header():
+class lisp_data_header(object):
     def __init__(self):
         self.first_long = 0
         self.second_long = 0
@@ -3061,7 +3063,7 @@ class lisp_data_header():
     #enddef
 #endclass
 
-class lisp_echo_nonce():
+class lisp_echo_nonce(object):
     def __init__(self, rloc_str):
         self.rloc_str = rloc_str
         self.rloc = lisp_address(LISP_AFI_NONE, rloc_str, 0, 0)
@@ -3289,7 +3291,7 @@ class lisp_echo_nonce():
 # Class to hold Diffie-Hellman keys. For ECDH use RFC5114 gx value of 
 # "192-bit Random ECP Group".
 #
-class lisp_keys():
+class lisp_keys(object):
     def __init__(self, key_id, do_curve=True, do_chacha=use_chacha,
         do_poly=use_poly):
         self.uptime = lisp_get_timestamp()
@@ -3356,7 +3358,7 @@ class lisp_keys():
 
     def key_length(self, key):
         if (type(key) != str): key = self.normalize_pub_key(key)
-        return(len(key) / 2)
+        return(old_div(len(key), 2))
     #enddef
 
     def print_key(self, key):
@@ -3647,7 +3649,7 @@ class lisp_keys():
 #
 # Used to multi-thread the data-plane.
 #
-class lisp_thread():
+class lisp_thread(object):
     def __init__(self, name):
         self.thread_name = name
         self.thread_number = -1
@@ -3674,7 +3676,7 @@ class lisp_thread():
 #       |                         . . . Nonce                           |
 #       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
-class lisp_control_header():
+class lisp_control_header(object):
     def __init__(self):
         self.type = 0
         self.record_count = 0
@@ -3792,7 +3794,7 @@ class lisp_control_header():
 # entire message not including the first 4 bytes are chacha20 encrypted. The
 # e-bit must be set by the ETR to indicate that the Map-Register was encrypted.
 #
-class lisp_map_register():
+class lisp_map_register(object):
     def __init__(self):
         self.proxy_reply_requested = False
         self.lisp_sec_present = False
@@ -4044,7 +4046,7 @@ class lisp_map_register():
 #   |  \|                             Locator                           |
 #   +-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
-class lisp_map_notify():
+class lisp_map_notify(object):
     def __init__(self, lisp_sockets):
         self.etr = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.etr_port = 0
@@ -4222,7 +4224,7 @@ class lisp_map_notify():
 # xTR-ID is appended to the end of a Map-Request when a subscription request
 # is piggybacked (when self.subscribe_bit is True).
 #
-class lisp_map_request():
+class lisp_map_request(object):
     def __init__(self):
         self.auth_bit = False
         self.map_data_present = False
@@ -4859,7 +4861,7 @@ class lisp_map_request():
 #       |                     Mapping Protocol Data                     |
 #       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
-class lisp_map_reply():
+class lisp_map_reply(object):
     def __init__(self):
         self.rloc_probe = False
         self.echo_nonce_capable = False
@@ -4953,7 +4955,7 @@ class lisp_map_reply():
 #  |                          EID-prefix ...                       |
 #  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
-class lisp_eid_record():
+class lisp_eid_record(object):
     def __init__(self):
         self.record_ttl = 0
         self.rloc_count = 0
@@ -4979,7 +4981,7 @@ class lisp_eid_record():
         if (self.record_ttl & 0x80000000):
             ttl = str(self.record_ttl & 0x7fffffff) + " secs"
         elif ((ttl % 60) == 0):
-            ttl = str(ttl/60) + " hours"
+            ttl = str(old_div(ttl, 60)) + " hours"
         else:
             ttl = str(ttl) + " mins"
         #endif
@@ -5147,7 +5149,7 @@ class lisp_eid_record():
 LISP_UDP_PROTOCOL    = 17
 LISP_DEFAULT_ECM_TTL = 128
 
-class lisp_ecm():
+class lisp_ecm(object):
     def __init__(self, sport):
         self.security = False
         self.ddt = False
@@ -5441,7 +5443,7 @@ class lisp_ecm():
 #    value fields in JSON string are encrypted with the encryption key
 #    associated with key-id 'kid'.
 #
-class lisp_rloc_record():
+class lisp_rloc_record(object):
     def __init__(self):
         self.priority = 0
         self.weight = 0
@@ -5998,7 +6000,7 @@ class lisp_rloc_record():
 #   |  \|                             Locator ...                       |
 #   +-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
-class lisp_map_referral():
+class lisp_map_referral(object):
     def __init__(self):
         self.record_count = 0
         self.nonce = 0
@@ -6042,7 +6044,7 @@ class lisp_map_referral():
 # in the "lisp ddt-authoritative-prefix" and "lisp delegate" commands. The
 # self.delegatione_set[] is a list of lisp_ddt_node()s.
 #
-class lisp_ddt_entry():
+class lisp_ddt_entry(object):
     def __init__(self):
         self.eid = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.group = lisp_address(LISP_AFI_NONE, "", 0, 0)
@@ -6105,7 +6107,7 @@ class lisp_ddt_entry():
     #enddef
 #endclass
 
-class lisp_ddt_node():
+class lisp_ddt_node(object):
     def __init__(self):
         self.delegate_address = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.public_key = ""
@@ -6140,7 +6142,7 @@ class lisp_ddt_node():
 # This is a Map-Request queue used on a Map-Resolver when waiting for a
 # Map-Referral to be retunred by a DDT-node or a Map-Server.
 #
-class lisp_ddt_map_request():
+class lisp_ddt_map_request(object):
     def __init__(self, lisp_sockets, packet, eid, group, nonce):
         self.uptime = lisp_get_timestamp()
         self.lisp_sockets = lisp_sockets
@@ -6275,7 +6277,7 @@ lisp_map_referral_action_string = [
 # This encoding will not use authentication so we respond to anyone who
 # sends an Info-Request. And the EID-prefix will have AFI=0.
 #
-class lisp_info():
+class lisp_info(object):
     def __init__(self):
         self.info_reply = False
         self.nonce = 0
@@ -6509,7 +6511,7 @@ class lisp_info():
     #enddef
 #endclass
 
-class lisp_nat_info():
+class lisp_nat_info(object):
     def __init__(self, addr_str, hostname, port):
         self.address = addr_str
         self.hostname = hostname
@@ -6523,7 +6525,7 @@ class lisp_nat_info():
     #enddef
 #endclass
 
-class lisp_info_source():
+class lisp_info_source(object):
     def __init__(self, hostname, addr_str, port):
         self.address = lisp_address(LISP_AFI_IPV4, addr_str, 32, 0)
         self.port = port
@@ -7650,7 +7652,7 @@ def lisp_notify_subscribers(lisp_sockets, eid_record, rloc_records,
     registered_eid, site):
 
     for peid in lisp_pubsub_cache:
-        for pubsub in lisp_pubsub_cache[peid].values():
+        for pubsub in list(lisp_pubsub_cache[peid].values()):
             e = pubsub.eid_prefix
             if (e.is_more_specific(registered_eid) == False): continue
 
@@ -8496,7 +8498,7 @@ def lisp_get_referral_node(referral, source_eid, dest_eid):
     # Build list of high-priority up referral-nodes.
     #
     ref_set = []
-    for ref_node in referral.referral_set.values():
+    for ref_node in list(referral.referral_set.values()):
         if (ref_node.updown == False): continue
         if (len(ref_set) == 0 or ref_set[0].priority == ref_node.priority): 
             ref_set.append(ref_node)
@@ -9460,13 +9462,13 @@ def lisp_queue_multicast_map_notify(lisp_sockets, rle_list):
         sg_rloc_set = sg_site_eid.registered_rlocs
         if (len(sg_rloc_set) == 0):
             temp_set = {}
-            for se in sg_site_eid.individual_registrations.values():
+            for se in list(sg_site_eid.individual_registrations.values()):
                 for rloc_entry in se.registered_rlocs:
                     if (rloc_entry.is_rtr() == False): continue
                     temp_set[rloc_entry.rloc.print_address()] = rloc_entry
                 #endfor
             #endfor
-            sg_rloc_set = temp_set.values()
+            sg_rloc_set = list(temp_set.values())
         #endif
             
         #
@@ -9600,7 +9602,7 @@ def lisp_get_eid_hash(eid):
 
     address = eid.address
     eid_hash = ""
-    for i in range(0, hash_mask_len / 16):
+    for i in range(0, old_div(hash_mask_len, 16)):
         addr = address & 0xffff
         addr = hex(addr)[2:-1]
         eid_hash = addr.zfill(4) + ":" + eid_hash
@@ -11226,14 +11228,14 @@ def byte_swap_64(address):
 #      self.cache{}.entries{}
 #      self.cache{}.entries_sorted[]
 #
-class lisp_cache_entries():
+class lisp_cache_entries(object):
     def __init__(self):
         self.entries = {}
         self.entries_sorted = []
     #enddef
 #endclass
 
-class lisp_cache():
+class lisp_cache(object):
     def __init__(self):
         self.cache = {}
         self.cache_sorted = []
@@ -11299,7 +11301,7 @@ class lisp_cache():
         found = None
         for ml in self.cache_sorted:
             if (ml_key < ml): return(found)
-            for entry in self.cache[ml].entries.values():
+            for entry in list(self.cache[ml].entries.values()):
                 if (prefix.is_more_specific(entry.eid)):
                     if (found == None or
                         entry.eid.is_more_specific(found.eid)): found = entry
@@ -11319,7 +11321,7 @@ class lisp_cache():
 
     def walk_cache(self, function, parms):
         for ml in self.cache_sorted:
-            for entry in self.cache[ml].entries.values():
+            for entry in list(self.cache[ml].entries.values()):
                 status, parms = function(entry, parms)
                 if (status == False): return(parms)
             #endfor
@@ -11342,7 +11344,7 @@ class lisp_cache():
                     return(table[0:index+1] + [value] + table[index+1::])
                 #endif
             #endif
-            index = len(t) / 2
+            index = old_div(len(t), 2)
             t = t[0:index] if (value < t[index]) else t[index::]
         #endwhile
 
@@ -11566,7 +11568,7 @@ def lisp_site_eid_lookup(eid, group, exact):
 # This causes IPv6 addresses to lose their high-order byte. So note the check
 # for shift >= 120 below.
 #
-class lisp_address():
+class lisp_address(object):
     def __init__(self, afi, addr_str, mask_len, iid):
         self.afi = afi
         self.mask_len = mask_len
@@ -12469,7 +12471,7 @@ class lisp_address():
 #
 # Data structure for storing learned or configured ELPs.
 #
-class lisp_elp_node():
+class lisp_elp_node(object):
     def __init__(self):
         self.address = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.probe = False
@@ -12489,7 +12491,7 @@ class lisp_elp_node():
     #enddef
 #endclass
 
-class lisp_elp():
+class lisp_elp(object):
     def __init__(self, name):
         self.elp_name = name
         self.elp_nodes = []
@@ -12569,7 +12571,7 @@ class lisp_elp():
     #enddef
 #endclass
 
-class lisp_geo():
+class lisp_geo(object):
     def __init__(self, name):
         self.geo_name = name
         self.latitude = 0xffffffff       # Negative when North, otherwise South
@@ -12757,14 +12759,14 @@ class lisp_geo():
 
         if (flags & 0x40): lat = -lat
         self.latitude = lat
-        lat_secs = ((lat_hi << 16) | socket.ntohs(lat_ms)) / 1000
-        self.lat_mins = lat_secs / 60
+        lat_secs = old_div(((lat_hi << 16) | socket.ntohs(lat_ms)), 1000)
+        self.lat_mins = old_div(lat_secs, 60)
         self.lat_secs = lat_secs % 60
         
         if (flags & 0x20): lon = -lon
         self.longitude = lon
-        lon_secs = ((lon_hi << 16) | socket.ntohs(lon_ms)) / 1000
-        self.long_mins = lon_secs / 60
+        lon_secs = old_div(((lon_hi << 16) | socket.ntohs(lon_ms)), 1000)
+        self.long_mins = old_div(lon_secs, 60)
         self.long_secs = lon_secs % 60
 
         self.altitude = socket.ntohl(alt) if (flags & 0x10) else -1
@@ -12786,7 +12788,7 @@ class lisp_geo():
 #
 # Structure for Replication List Entries. 
 #
-class lisp_rle_node():
+class lisp_rle_node(object):
     def __init__(self):
         self.address = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.level = 0
@@ -12823,7 +12825,7 @@ class lisp_rle_node():
     #enddef
 #endclass
 
-class lisp_rle():
+class lisp_rle(object):
     def __init__(self, name):
         self.rle_name = name
         self.rle_nodes = []
@@ -12885,7 +12887,7 @@ class lisp_rle():
     #enddef
 #endclass
 
-class lisp_json():
+class lisp_json(object):
     def __init__(self, name, string, encrypted=False, ms_encrypt=False):
         self.json_name = name
         self.json_encrypted = False
@@ -12908,7 +12910,7 @@ class lisp_json():
         #
         if (len(lisp_ms_json_keys) != 0):
             if (ms_encrypt == False): return
-            self.json_key_id = lisp_ms_json_keys.keys()[0]
+            self.json_key_id = list(lisp_ms_json_keys.keys())[0]
             self.json_key = lisp_ms_json_keys[self.json_key_id]
             self.encrypt_json()
         #endif
@@ -12994,7 +12996,7 @@ class lisp_json():
 #
 # LISP forwarding stats info.
 #
-class lisp_stats():
+class lisp_stats(object):
     def __init__(self):
         self.packet_count = 0
         self.byte_count = 0
@@ -13063,9 +13065,10 @@ class lisp_stats():
             packet_rate = 0
             bit_rate = 0
         else:
-            packet_rate = int((self.packet_count - last_packets) / rate_diff)
-            bit_rate = (self.byte_count - last_bytes) / rate_diff
-            bit_rate = (bit_rate * 8) / 1000000
+            packet_rate = int(old_div((self.packet_count - last_packets),
+                rate_diff))
+            bit_rate = old_div((self.byte_count - last_bytes), rate_diff)
+            bit_rate = old_div((bit_rate * 8), 1000000)
             bit_rate = round(bit_rate, 2)
         #endif
 
@@ -13120,7 +13123,7 @@ lisp_decap_stats = {
 #
 # This a locator record definition as defined in RFCs.
 #
-class lisp_rloc():
+class lisp_rloc(object):
     def __init__(self, recurse=True):
         self.rloc = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.rloc_name = None
@@ -13399,12 +13402,12 @@ class lisp_rloc():
     def store_rloc_probe_hops(self, to_hops, from_ttl):
         if (to_hops == 0): 
             to_hops = "?"
-        elif (to_hops < LISP_RLOC_PROBE_TTL/2):
+        elif (to_hops < old_div(LISP_RLOC_PROBE_TTL, 2)):
             to_hops = "!"
         else: 
             to_hops = str(LISP_RLOC_PROBE_TTL - to_hops)
         #endif
-        if (from_ttl < LISP_RLOC_PROBE_TTL/2):
+        if (from_ttl < old_div(LISP_RLOC_PROBE_TTL, 2)):
             from_hops = "!"
         else:
             from_hops = str(LISP_RLOC_PROBE_TTL - from_ttl)
@@ -13641,7 +13644,7 @@ class lisp_rloc():
     #enddef
 #endclass        
 
-class lisp_mapping():
+class lisp_mapping(object):
     def __init__(self, eid, group, rloc_set):
         self.eid = eid
         if (eid == ""): self.eid = lisp_address(LISP_AFI_NONE, "", 0, 0)
@@ -13693,13 +13696,13 @@ class lisp_mapping():
 
         if (ttl >= 3600): 
             if ((ttl % 3600) == 0): 
-                ttl = str(ttl/3600) + " hours"
+                ttl = str(old_div(ttl, 3600)) + " hours"
             else:
                 ttl = str(ttl * 60) + " mins"
             #endif
         elif (ttl >= 60):
             if ((ttl % 60) == 0): 
-                ttl = str(ttl/60) + " mins"
+                ttl = str(old_div(ttl, 60)) + " mins"
             else:
                 ttl = str(ttl) + " secs"
             #endif
@@ -13748,7 +13751,7 @@ class lisp_mapping():
         # TTL is about to elapse. We need to refresh entry if we are 90%
         # close to expiring.
         #
-        almost_ttl = self.map_cache_ttl - (self.map_cache_ttl / 10)
+        almost_ttl = self.map_cache_ttl - (old_div(self.map_cache_ttl, 10))
         if (elapsed >= almost_ttl): return(True)
         return(False)
     #enddef
@@ -14073,7 +14076,7 @@ class lisp_mapping():
     #enddef
 #endclass
 
-class lisp_dynamic_eid():
+class lisp_dynamic_eid(object):
     def __init__(self):
         self.dynamic_eid = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.uptime = lisp_get_timestamp()
@@ -14092,7 +14095,7 @@ class lisp_dynamic_eid():
     #enddef
 #endclass
 
-class lisp_group_mapping():
+class lisp_group_mapping(object):
     def __init__(self, group_name, ms_name, group_prefix, sources, rle_addr):
         self.group_name = group_name
         self.group_prefix = group_prefix
@@ -14128,7 +14131,7 @@ def lisp_is_group_more_specific(group_str, group_mapping):
 #
 def lisp_lookup_group(group):
     best = None
-    for gm in lisp_group_mapping_list.values():
+    for gm in list(lisp_group_mapping_list.values()):
         mask_len = lisp_is_group_more_specific(group, gm)
         if (mask_len == -1): continue
         if (best == None or mask_len > best.group_prefix.mask_len): best = gm
@@ -14146,7 +14149,7 @@ lisp_site_flags = {
     "N": "ETR is {}requesting Map-Notify messages from Map-Server"
 }
 
-class lisp_site():
+class lisp_site(object):
     def __init__(self):
         self.site_name = ""
         self.description = ""
@@ -14162,7 +14165,7 @@ class lisp_site():
     #enddef
 #endclass
 
-class lisp_site_eid():
+class lisp_site_eid(object):
     def __init__(self, site):
         self.site = site
         self.eid = lisp_address(LISP_AFI_NONE, "", 0, 0)
@@ -14293,7 +14296,7 @@ class lisp_site_eid():
 
     def merge_rlocs_in_site_eid(self):
         self.registered_rlocs = []
-        for site_eid in self.individual_registrations.values():
+        for site_eid in list(self.individual_registrations.values()):
             if (self.site_id != site_eid.site_id): continue
             if (site_eid.registered == False): continue
             self.registered_rlocs += site_eid.copy_rloc_records()
@@ -14370,7 +14373,7 @@ class lisp_site_eid():
         rle = lisp_rle("")
         new_rle = {}
         rloc_name = None
-        for site_eid in self.individual_registrations.values():
+        for site_eid in list(self.individual_registrations.values()):
             if (site_eid.registered == False): continue
             irle = site_eid.registered_rlocs[0].rle
             if (irle == None): continue
@@ -14401,11 +14404,11 @@ class lisp_site_eid():
         #
         # Check for changes.
         #
-        if (old_rle.keys() == new_rle.keys()): return(False)
+        if (list(old_rle.keys()) == list(new_rle.keys())): return(False)
 
         lprint("{} {} from {} to {}".format( \
             green(self.print_eid_tuple(), False), bold("RLE change", False), 
-            old_rle.keys(), new_rle.keys()))
+            list(old_rle.keys()), list(new_rle.keys())))
 
         return(True)
     #enddef
@@ -14524,7 +14527,7 @@ class lisp_site_eid():
     #enddef
 #endclass
 
-class lisp_mr():
+class lisp_mr(object):
     def __init__(self, addr_str, dns_name, mr_name):
         self.mr_name = mr_name if (mr_name != None) else "all"
         self.dns_name = dns_name
@@ -14597,7 +14600,7 @@ class lisp_mr():
         # Check for deletes.
         #
         delete_list = []
-        for mr in lisp_map_resolvers_list.values():
+        for mr in list(lisp_map_resolvers_list.values()):
             if (self.dns_name != mr.dns_name): continue
             a = mr.map_resolver.print_address_no_iid()
             if (a in a_records): continue
@@ -14618,7 +14621,7 @@ class lisp_mr():
     #enddef
 #endclass
 
-class lisp_ddt_root():
+class lisp_ddt_root(object):
     def __init__(self):
         self.root_address = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.public_key = ""
@@ -14627,7 +14630,7 @@ class lisp_ddt_root():
     #enddef
 #endclass        
 
-class lisp_referral():
+class lisp_referral(object):
     def __init__(self):
         self.eid = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.group = lisp_address(LISP_AFI_NONE, "", 0, 0)
@@ -14647,7 +14650,7 @@ class lisp_referral():
             format(eid_indent, green(self.eid.print_prefix(), False), uts, 
             ets, len(self.referral_set)))
 
-        for ref_node in self.referral_set.values(): 
+        for ref_node in list(self.referral_set.values()):
             ref_node.print_ref_node(referral_indent)
         #endfor
     #enddef
@@ -14675,7 +14678,7 @@ class lisp_referral():
         if (ttl < 60): return(str(ttl) + " secs")
 
         if ((ttl % 60) == 0): 
-            ttl = str(ttl/60) + " mins"
+            ttl = str(old_div(ttl, 60)) + " mins"
         else:
             ttl = str(ttl) + " secs"
         #endif
@@ -14732,7 +14735,7 @@ class lisp_referral():
     #enddef
 #endclass
 
-class lisp_referral_node():
+class lisp_referral_node(object):
     def __init__(self):
         self.referral_address = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.priority = 0
@@ -14751,7 +14754,7 @@ class lisp_referral_node():
     #enddef
 #endclass
 
-class lisp_ms():
+class lisp_ms(object):
     def __init__(self, addr_str, dns_name, ms_name, alg_id, key_id, pw, pr, 
         mr, rr, wmn, site_id, ekey_id, ekey):
         self.ms_name = ms_name if (ms_name != None) else "all"
@@ -14762,7 +14765,7 @@ class lisp_ms():
         if (lisp_map_servers_list == {}):
             self.xtr_id = lisp_get_control_nonce()
         else:
-            self.xtr_id = lisp_map_servers_list.values()[0].xtr_id
+            self.xtr_id = list(lisp_map_servers_list.values())[0].xtr_id
         #endif
         self.alg_id = alg_id
         self.key_id = key_id
@@ -14839,7 +14842,7 @@ class lisp_ms():
         # Check for deletes.
         #
         delete_list = []
-        for ms in lisp_map_servers_list.values():
+        for ms in list(lisp_map_servers_list.values()):
             if (self.dns_name != ms.dns_name): continue
             a = ms.map_server.print_address_no_iid()
             if (a in a_records): continue
@@ -14860,7 +14863,7 @@ class lisp_ms():
     #enddef
 #endclass
 
-class lisp_interface():
+class lisp_interface(object):
     def __init__(self, device):
         self.interface_name = ""
         self.device = device
@@ -14917,7 +14920,7 @@ class lisp_interface():
     #enddef
 #endclass
 
-class lisp_datetime():
+class lisp_datetime(object):
     def __init__(self, datetime_str):
         self.datetime_name = datetime_str
         self.datetime = None
@@ -14994,7 +14997,7 @@ class lisp_datetime():
 #
 # Policy data structures.
 #
-class lisp_policy_match():
+class lisp_policy_match(object):
     def __init__(self):
         self.source_eid = None
         self.dest_eid = None
@@ -15009,7 +15012,7 @@ class lisp_policy_match():
         self.datetime_upper = None
 #endclass
 
-class lisp_policy():
+class lisp_policy(object):
     def __init__(self, policy_name):
         self.policy_name = policy_name
         self.match_clauses = []
@@ -15099,7 +15102,7 @@ class lisp_policy():
     #enddef
 #endclass
 
-class lisp_pubsub():
+class lisp_pubsub(object):
     def __init__(self, itr, port, nonce, ttl, xtr_id):
         self.itr = itr
         self.port = port
@@ -15166,7 +15169,7 @@ class lisp_pubsub():
 # |                         . . . Nonce                           |
 # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #
-class lisp_trace():
+class lisp_trace(object):
     def __init__(self):
         self.nonce = lisp_get_control_nonce()
         self.packet_json = []
@@ -15278,7 +15281,7 @@ class lisp_trace():
 # class instance.
 #
 def lisp_get_map_server(address):
-    for ms in lisp_map_servers_list.values():
+    for ms in list(lisp_map_servers_list.values()):
         if (ms.map_server.is_exact_match(address)): return(ms)
     #endfor
     return(None)
@@ -15290,7 +15293,7 @@ def lisp_get_map_server(address):
 # Return the first lisp_ms() class instance.
 #
 def lisp_get_any_map_server():
-    for ms in lisp_map_servers_list.values(): return(ms)
+    for ms in list(lisp_map_servers_list.values()): return(ms)
     return(None)
 #enddef
 
@@ -15328,7 +15331,7 @@ def lisp_get_map_resolver(address, eid):
     #endif
 
     older = None
-    for mr in lisp_map_resolvers_list.values():
+    for mr in list(lisp_map_resolvers_list.values()):
         if (mr_name == ""): return(mr)
         if (mr.mr_name != mr_name): continue
         if (older == None or mr.last_used < older.last_used): older = mr
@@ -15350,7 +15353,7 @@ def lisp_get_decent_map_resolver(eid):
         bold(dns_name, False), eid.print_prefix()))
 
     older = None
-    for mr in lisp_map_resolvers_list.values():
+    for mr in list(lisp_map_resolvers_list.values()):
         if (dns_name != mr.dns_name): continue
         if (older == None or mr.last_used < older.last_used): older = mr
     #endfor
@@ -15973,7 +15976,7 @@ def lisp_update_default_routes(map_resolver, iid, rtr_list):
             if (mc.checkpoint_entry):
                 lprint("Updating checkpoint entry for {}".format( \
                         green(mc.print_eid_tuple(), False)))
-            elif (mc.do_rloc_sets_match(rtr_list.values())): 
+            elif (mc.do_rloc_sets_match(list(rtr_list.values()))): 
                 continue
             #endif
             mc.delete_cache()
@@ -16014,7 +16017,7 @@ def lisp_update_default_routes(map_resolver, iid, rtr_list):
         mc.map_cache_ttl = LISP_MR_TTL * 60
         mc.add_cache()
         lprint("Add {} to map-cache with RTR RLOC-set: {}".format( \
-            green(mc.print_eid_tuple(), False), rtr_list.keys()))
+            green(mc.print_eid_tuple(), False), list(rtr_list.keys())))
         rloc_set = copy.deepcopy(rloc_set)
     #endfor
     return
@@ -16060,7 +16063,7 @@ def lisp_process_info_reply(source, packet, store):
         if (lisp_iid_to_interface == {}):
             lisp_update_default_routes(source, lisp_default_iid, lisp_rtr_list)
         else:
-            for iid in lisp_iid_to_interface.keys():
+            for iid in list(lisp_iid_to_interface.keys()):
                 lisp_update_default_routes(source, int(iid), lisp_rtr_list)
             #endfor
         #endif
@@ -16425,12 +16428,12 @@ def lisp_build_info_requests(lisp_sockets, dest, port):
     dest_list = []
     mr_list = []
     if (dest == None):
-        for mr in lisp_map_resolvers_list.values():
+        for mr in list(lisp_map_resolvers_list.values()):
             mr_list.append(mr.map_resolver)
         #endif
         dest_list = mr_list
         if (dest_list == []):
-            for ms in lisp_map_servers_list.values():
+            for ms in list(lisp_map_servers_list.values()):
                 dest_list.append(ms.map_server)
             #endfor
         #endif
@@ -16479,7 +16482,7 @@ def lisp_build_info_requests(lisp_sockets, dest, port):
     # Do DNS lookup for Map-Resolver if "dns-name" configured.
     #
     if (mr_list != []):
-        for mr in lisp_map_resolvers_list.values():
+        for mr in list(lisp_map_resolvers_list.values()):
             mr.resolve_dns_name()
         #endfor
     #endif
@@ -16689,7 +16692,7 @@ def lisp_gather_map_cache_data(mc, data):
         #
         if (rloc.rloc.is_multicast_address()):
             r["multicast-rloc-set"] = []
-            for mrloc in rloc.multicast_rloc_probe_list.values():
+            for mrloc in list(rloc.multicast_rloc_probe_list.values()):
                 mr = lisp_fill_rloc_in_json(mrloc)
                 r["multicast-rloc-set"].append(mr)
             #endfor
@@ -16796,7 +16799,7 @@ def lisp_process_api_site_cache_summary(site_cache):
 
     sites = {}
     for ml in site_cache.cache_sorted:
-        for se in site_cache.cache[ml].entries.values():
+        for se in list(site_cache.cache[ml].entries.values()):
             if (se.accept_more_specifics == False): continue
             if (se.site.site_name not in sites):
                 sites[se.site.site_name] = []
@@ -16857,7 +16860,7 @@ def lisp_process_api_ms_or_mr(ms_or_mr, data):
 
     value = {}
     if (ms_or_mr):
-        for ms in lisp_map_servers_list.values():
+        for ms in list(lisp_map_servers_list.values()):
             if (dns_name):
                 if (dns_name != ms.dns_name): continue
             else:
@@ -16870,7 +16873,7 @@ def lisp_process_api_ms_or_mr(ms_or_mr, data):
             return([value])
         #endfor
     else:
-        for mr in lisp_map_resolvers_list.values():
+        for mr in list(lisp_map_resolvers_list.values()):
             if (dns_name):
                 if (dns_name != mr.dns_name): continue
             else:
@@ -17187,7 +17190,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
     #
     count = 0
     probe = bold("RLOC-probe", False)
-    for values in lisp_rloc_probe_list.values():
+    for values in list(lisp_rloc_probe_list.values()):
 
         #
         # Just do one RLOC-probe for the RLOC even if it is used for 
@@ -17642,7 +17645,7 @@ def lisp_policy_command(kv_pair):
         match_set.append(lisp_policy_match())
     #endfor
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
 
         #
@@ -18593,7 +18596,7 @@ def lisp_write_ipc_interfaces():
     #
     entry = { "type" : "interfaces", "interfaces" : [] }
 
-    for interface in lisp_myinterfaces.values():
+    for interface in list(lisp_myinterfaces.values()):
         if (interface.instance_id == None): continue
         record = { "interface" : interface.device, 
             "instance-id" : str(interface.instance_id) }
@@ -18813,7 +18816,7 @@ def lisp_build_crypto_decap_lookup_key(addr, port):
         # is an xTR in public space. We'll have to change this in the future
         # so we don't do a full table traversal. But this only happensu
         #
-        for nat_info in lisp_nat_state_info.values():
+        for nat_info in list(lisp_nat_state_info.values()):
             for nat in nat_info:
                 if (addr == nat.address): return(addr_and_port)
             #endfor
@@ -19486,7 +19489,7 @@ def lisp_get_decent_index(eid):
     index = int(mod_value, 16) % lisp_decent_modulus
 
     lprint("LISP-Decent modulus {}, hash-width {}, mod-value {}, index {}". \
-        format(lisp_decent_modulus, hash_width/2 , mod_value, index))
+        format(lisp_decent_modulus, old_div(hash_width, 2) , mod_value, index))
 
     return(index)
 #enddef

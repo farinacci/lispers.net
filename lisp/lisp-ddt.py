@@ -22,6 +22,8 @@
 #
 # -----------------------------------------------------------------------------
 
+from builtins import str
+from builtins import range
 import lisp
 import lispconfig
 
@@ -42,7 +44,7 @@ lisp_ipc_listen_socket = None
 def lisp_ddt_auth_prefix_command(kv_pair):
     ddt_entry = lisp.lisp_ddt_entry()
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
 
         if (kw == "instance-id"):
@@ -108,7 +110,7 @@ def lisp_ddt_delegation_command(kv_pair):
         child_set.append(child)
     #endfor
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
         if (kw == "instance-id"):
             for index in range(len(prefix_set)):

@@ -32,6 +32,10 @@
 # repo.
 #
 # -----------------------------------------------------------------------------
+from __future__ import print_function
+from builtins import str
+from builtins import range
+from builtins import object
 
 """
 
@@ -71,7 +75,7 @@ REQ_TIMEOUT = 3
 
 #------------------------------------------------------------------------------
 
-class api_init():
+class api_init(object):
     def __init__(self, host, user, pw=None, port=8080, api_debug=False, 
         do_get=True):
         """ Required to be first call by API user. Returns instance that must
@@ -1514,9 +1518,9 @@ class api_init():
             ascii_data = []
             for label in data:
                 adata = {}
-                a_dict = label.values()[0]
+                a_dict = list(label.values())[0]
                 for key in a_dict: adata[key.encode()] = a_dict[key].encode()
-                adata = { label.keys()[0].encode() : adata }
+                adata = { list(label.keys())[0].encode() : adata }
                 ascii_data.append(adata)
             #endfor
         #endif
@@ -1565,7 +1569,7 @@ class api_init():
                 #endfor
                 udata = l_array
             else:
-                udata = { uc(label.keys()[0]) : udata }
+                udata = { uc(list(label.keys())[0]) : udata }
             #endif
             u_array.append(udata)
         #endfor

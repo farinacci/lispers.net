@@ -23,7 +23,12 @@
 # bottle module.
 # 
 # -----------------------------------------------------------------------------
-
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import lisp
 import os
 import time
@@ -35,11 +40,7 @@ import select
 import copy
 import math
 from json import dumps as json_dumps
-try:
-    from commands import getoutput
-except:
-    from subprocess import getoutput
-#entry    
+from subprocess import getoutput
 
 #------------------------------------------------------------------------------
 
@@ -1210,7 +1211,7 @@ def lisp_landing_page():
     #endif
 
     dc_dict = {}
-    for entry in dc: dc_dict[entry.keys()[0]] = entry.values()[0]
+    for entry in dc: dc_dict[list(entry.keys())[0]] = list(entry.values())[0]
     dc = dc_dict
     dc["ddt"] = dc["ddt-node"]
     dc["mr"] = dc["map-resolver"]
@@ -1316,7 +1317,7 @@ def lisp_landing_page():
         # Put a "disable all" line in if any debug is turned on. Allows user
         # to turn off all debug logging with one menu click.
         #
-        if ("yes" in dc.values() or xtr_logging):
+        if ("yes" in list(dc.values()) or xtr_logging):
             output += '''<option value="/lisp/debug/{}%{}">disable all logging
                 </option>'''.format("disable", "all")
         #endif
@@ -1586,9 +1587,18 @@ def lisp_start_stop_process(process, startstop):
     if (startstop and lisp.lisp_is_running(process)): return
     if (startstop == False and lisp.lisp_is_running(process) == False): return
 
-    filename = process + ".pyo"
     logfile = "./logs/" + process + ".log"
-    py = "python -O " if lisp.lisp_is_python2() else "python3.8 -O "
+
+    if (lisp.lisp_is_python2()):
+        py = "python -O "
+        filename = process + ".pyo"
+    elif (lisp.lisp_is_python3()):
+        py = "python3.8 -O "
+        filename = process + ".pyc"
+    else:
+        lisp.lprint("Cannot manage process '{}', unsupported python version". \
+            format(process))
+    #endif
     
     if (lisp.lisp_is_ubuntu() or lisp.lisp_is_raspbian() or \
         lisp.lisp_is_debian() or lisp.lisp_is_debian_kali()):
@@ -1658,7 +1668,7 @@ def lisp_enable_command(clause):
     # 
     # Process command.
     #
-    for parameter in components.keys():
+    for parameter in list(components.keys()):
         startstop = True if kv_pairs[parameter] == "yes" else False
         lisp_start_stop_process(components[parameter], startstop)
     #endfor
@@ -2147,7 +2157,7 @@ def lisp_config_process(lisp_socket):
 def lisp_map_resolver_command(kv_pair):
     mr_name = None
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         if (kw == "mr-name"):
             mr_name = kv_pair[kw][0]
             continue
@@ -2187,7 +2197,7 @@ def lisp_map_cache_command(kv_pair):
         #endfor
     #endif
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
         if (kw == "instance-id"):
             for i in range(len(prefix_set)):
@@ -2529,7 +2539,7 @@ def lisp_display_nat_info(output, dc, dodns):
             "Last<br>Info-Request")
     #endif
 
-    for xtr_array in lisp.lisp_nat_state_info.values():
+    for xtr_array in list(lisp.lisp_nat_state_info.values()):
         for nat_info in xtr_array:
             addr = nat_info.address
             uptime = nat_info.uptime
@@ -2627,7 +2637,7 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
         "Map-Requests<br>Sent", "Negative Map-Replies<br>Received", 
         "Last Negative<br>Map-Reply", "Average RTT")
 
-    for mr in lisp.lisp_map_resolvers_list.values():
+    for mr in list(lisp.lisp_map_resolvers_list.values()):
         mr.resolve_dns_name()
         mr_name = "" if mr.mr_name == "all" else mr.mr_name + "<br>"
         addr_str = mr_name + mr.map_resolver.print_address_no_iid()
@@ -2636,7 +2646,7 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
         ts = lisp.lisp_print_elapsed(mr.last_used)
         lnmr = lisp.lisp_print_elapsed(mr.last_reply)
         avg_rtt = 0 if mr.neg_map_replies_received == 0 else \
-            float(mr.total_rtt / mr.neg_map_replies_received)
+            float(old_div(mr.total_rtt / mr.neg_map_replies_received))
         avg_rtt = str(round(avg_rtt, 3)) + " ms"
 
         output += lisp_table_row(addr_str, ts, mr.map_requests_sent,
@@ -2740,8 +2750,7 @@ def lisp_itr_rtr_show_rloc_probe_command(itr_or_rtr):
     title = "LISP-{} RLOC-Probe Information:".format(itr_or_rtr)
     output = lisp_table_header(title, "RLOC Key State", "RLOC-Probe State")
 
-    for rlocs in lisp.lisp_rloc_probe_list.values():
-
+    for rlocs in list(lisp.lisp_rloc_probe_list.values()):
         eid_str = ""
         for r, e, g in rlocs:
             ee = lisp.green(lisp.lisp_print_eid_tuple(e, g), True)
@@ -2778,7 +2787,7 @@ def lisp_itr_rtr_show_rloc_probe_command(itr_or_rtr):
         #
         probe_list = [r]
         if (r.multicast_rloc_probe_list != {}):
-            probe_list += r.multicast_rloc_probe_list.values()
+            probe_list += list(r.multicast_rloc_probe_list.values())
         #endif
 
         #
@@ -2845,7 +2854,7 @@ def lisp_xtr_command(kv_pair):
         kv_pair["ipc-data-plane"] = ["yes"]
     #endif
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw][0]
         if (kw == "rloc-probing"):
             lisp.lisp_rloc_probing = (value == "yes")
@@ -3019,7 +3028,7 @@ def lisp_elp_command(kv_pair):
         #endfor
     #endif
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
 
         if (kw == "elp-name"):
@@ -3067,7 +3076,7 @@ def lisp_rle_command(kv_pair):
         #endfor
     #endif
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
 
         if (kw == "rle-name"):
@@ -3327,8 +3336,8 @@ def lisp_put_clause_for_api(data):
     #
     # Validate command by looking at lisp_commands[].
     #
-    command = data.keys()[0]
-    if (command not in lisp_commands.keys()): 
+    command = list(data.keys())[0]
+    if (command not in list(lisp_commands.keys())): 
         return([{ command : [{"?" : "add/replace"}] }])
     #endif
 
@@ -3378,8 +3387,8 @@ def lisp_put_clause_for_api(data):
                 value = parm[key]
             #endif
             if (type(parm) == list):
-                keyword = key.keys()[0]
-                value = key.values()[0]
+                keyword = list(key.keys())[0]
+                value = list(key.values())[0]
             #endif
 
             if (type(value) != dict):
@@ -3479,8 +3488,8 @@ def lisp_remove_clause_for_api(data):
     #
     # Validate command by looking at lisp_commands[].
     #
-    command = data.keys()[0]
-    if (command not in lisp_commands.keys()): 
+    command = list(data.keys())[0]
+    if (command not in list(lisp_commands.keys())): 
         return([{ command : [{"?" : "delete"}] }])
     #endif
 
@@ -3494,11 +3503,11 @@ def lisp_remove_clause_for_api(data):
     # Setup subcommand to match on so we know what clause to remove.
     #
     subcommands = []
-    key = parms.keys()[0]
+    key = list(parms.keys())[0]
     value = parms[key]
 
     if (type(value) == dict):
-        for key in value.keys():
+        for key in list(value.keys()):
             command_value = value[key]
             subcommands.append(key + " = " + command_value)
         #endfor
@@ -3636,7 +3645,7 @@ def lisp_unicode_to_ascii(udata):
             #endfor
             adata = l_array
         else:
-            adata = { label.keys()[0].encode() : adata }
+            adata = { list(label.keys())[0].encode() : adata }
         #endif
         ascii_data.append(adata)
     #endfor
@@ -3703,7 +3712,7 @@ def lisp_map_server_command(kv_pairs):
     ekey_id = 0
     ekey = None
 
-    for kw in kv_pairs.keys():
+    for kw in list(kv_pairs.keys()):
         value = kv_pairs[kw]
         if (kw == "ms-name"): 
             ms_name = value[0]
@@ -3725,7 +3734,7 @@ def lisp_map_server_command(kv_pairs):
         if (kw == "authentication-key"):
             if (alg_id == 0): alg_id = lisp.LISP_SHA_256_128_ALG_ID
             auth_key = lisp.lisp_parse_auth_key(value)
-            key_id = auth_key.keys()[0]
+            key_id = list(auth_key.keys())[0]
             password = auth_key[key_id]
         #endif
         if (kw == "proxy-reply"):
@@ -3745,7 +3754,7 @@ def lisp_map_server_command(kv_pairs):
         #endif
         if (kw == "encryption-key"):
             ekey = lisp.lisp_parse_auth_key(value)
-            ekey_id = ekey.keys()[0]
+            ekey_id = list(ekey.keys())[0]
             ekey = ekey[ekey_id]
         #Endif
     #endfor
@@ -3796,7 +3805,7 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
         prefix_set.append(db)
     #endfor
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
         if (kw == "mr-name"):
             for i in range(len(prefix_set)):
@@ -4179,7 +4188,7 @@ def lisp_interface_command(kv_pair):
     mt_eid = None
     lisp_nat = None
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
         if (kw == "interface-name"): interface_name = value
         if (kw == "device"): device_name = value
@@ -4395,7 +4404,7 @@ def lisp_show_dynamic_eid_command(parm):
             "Inactivity Timeout")
     #endif
 
-    for dyn_eid in db.dynamic_eids.values():
+    for dyn_eid in list(db.dynamic_eids.values()):
         eid = dyn_eid.dynamic_eid.print_address()
         uts = lisp.lisp_print_elapsed(dyn_eid.uptime)
         to = str(dyn_eid.timeout) + " secs"
@@ -4439,7 +4448,7 @@ def lisp_show_decap_stats(output, etr_or_rtr):
     output += lisp_table_header(header, *s)
 
     s = []
-    for stat in lisp.lisp_decap_stats.values():
+    for stat in list(lisp.lisp_decap_stats.values()):
         s.append(stat.get_stats(False, True))
     #endfor
     output += lisp_table_row(*s)

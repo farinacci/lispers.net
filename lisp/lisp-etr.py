@@ -22,25 +22,29 @@
 # 
 # -----------------------------------------------------------------------------
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import lisp
 import lispconfig
 import socket
 import select
 import threading
 import time
-import pcappy
 import struct
-try:
-    from commands import getoutput
-except:
-    from subprocess import getoutput
-#endtry    
+from subprocess import getoutput
 import os
 try:
     import pytun
 except:
     pytun = None
 #endtry
+try:
+    import pcappy
+except:
+    pass
+#endtry
+import pcapy
 
 #------------------------------------------------------------------------------
 
@@ -88,7 +92,7 @@ def lisp_etr_map_server_command(kv_pair):
     #
     first_ms = (len(lisp.lisp_map_servers_list) == 1)
     if (first_ms):
-        ms = lisp.lisp_map_servers_list.values()[0]
+        ms = list(lisp.lisp_map_servers_list.values())[0]
         lisp_etr_info_timer = threading.Timer(2, lisp_etr_process_info_timer, 
             [ms.map_server])
         lisp_etr_info_timer.start()
@@ -226,7 +230,7 @@ def lisp_etr_show_command(clause):
         "xTR-ID", "Site-ID", reg_title, "Map-Registers<br>Sent", 
         "Map-Notifies<br>Received")
 
-    for ms in lisp.lisp_map_servers_list.values():
+    for ms in list(lisp.lisp_map_servers_list.values()):
         ms.resolve_dns_name()
         ms_name = "" if ms.ms_name == "all" else ms.ms_name + "<br>"
         addr_str = ms_name + ms.map_server.print_address_no_iid()
@@ -281,7 +285,7 @@ def lisp_etr_show_command(clause):
         title = "Configured Group Mappings:"
         output += lispconfig.lisp_table_header(title, "Name", "Group Prefix", 
             "Sources", "Use MS")
-        for gm in lisp.lisp_group_mapping_list.values():
+        for gm in list(lisp.lisp_group_mapping_list.values()):
             sources = ""
             for s in gm.sources: sources += s + ", "
             if (sources == ""):
@@ -317,7 +321,7 @@ def lisp_group_mapping_command(kv_pairs):
     rle_address = None
     ms_name = "all"
 
-    for kw in kv_pairs.keys():
+    for kw in list(kv_pairs.keys()):
         value = kv_pairs[kw]
         if (kw == "group-name"): 
             group_name = value
@@ -426,7 +430,7 @@ def lisp_build_map_register_records(quiet, db, eid, group, ttl):
         # If we are doing NAT-traversal, include a set or RTR RLOCs with
         # priority 1. And set the global RLOCs to priority 254.
         #
-        for rtr in rtr_list.values():
+        for rtr in list(rtr_list.values()):
             rloc_record = lisp.lisp_rloc_record()
             rloc_record.rloc.copy_address(rtr)
             rloc_record.priority = 254
@@ -502,7 +506,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         # Set up each map-server names so we can decide which EID-prefixes go
         # to which map-servers. [0] is eid_records and [1] is count.
         #
-        for ms in lisp.lisp_map_servers_list.values():
+        for ms in list(lisp.lisp_map_servers_list.values()):
             if (ms_only != None and ms != ms_only): continue
             ms_list[ms.ms_name] = []
         #endfor
@@ -553,7 +557,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         #
         eid_records = ""
         if (db.dynamic_eid_configured()):
-            for dyn_eid in db.dynamic_eids.values():
+            for dyn_eid in list(db.dynamic_eids.values()):
                 eid = dyn_eid.dynamic_eid
                 if (eid_only == None or eid_only.is_exact_match(eid)):
                     records, count = lisp_build_map_register_records(quiet, db,
@@ -587,7 +591,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
     #
     sleep_time = .500 if (lisp_etr_test_mode) else .001
     count = 0
-    for ms in lisp.lisp_map_servers_list.values():
+    for ms in list(lisp.lisp_map_servers_list.values()):
         if (ms_only != None and ms != ms_only): continue
 
         ms_dns_name = ms.dns_name if decent else ms.ms_name
@@ -680,7 +684,7 @@ def lisp_etr_process_info_timer(ms):
     # can encapsulate to us when ETR is behind NAT.
     #
     allow_private = (os.getenv("LISP_RTR_BEHIND_NAT") == None)
-    for rtr in lisp.lisp_rtr_list.values():
+    for rtr in list(lisp.lisp_rtr_list.values()):
         if (rtr == None): continue
         if (rtr.is_private_address() and allow_private == False):
             r = lisp.red(rtr.print_address_no_iid(), False)
@@ -842,7 +846,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     # is already setup for when pull-based decent is used.
     #
     if (decent == False):
-        for ms in lisp.lisp_map_servers_list.values():
+        for ms in list(lisp.lisp_map_servers_list.values()):
             ms_list[ms.ms_name] = ["", 0]
         #endfor
     #endif
@@ -854,7 +858,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     # Count number of RTRs reachable so we know allocation count.
     #
     rtr_count = 0
-    for rtr in lisp.lisp_rtr_list.values():
+    for rtr in list(lisp.lisp_rtr_list.values()):
         if (rtr == None): continue
         rtr_count += 1
     #endfor
@@ -931,7 +935,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         # If we are doing NAT-traversal, include a set or RTR RLOCs with
         # priority 1. And set the global RLOCs to priority 254.
         #
-        for rtr in lisp.lisp_rtr_list.values():
+        for rtr in list(lisp.lisp_rtr_list.values()):
             if (rtr == None): continue
             rloc_record = lisp.lisp_rloc_record()
             rloc_record.rloc.copy_address(rtr)
@@ -965,7 +969,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     #
     # Send Map-Register to each configured map-server.
     #
-    for ms in lisp.lisp_map_servers_list.values():
+    for ms in list(lisp.lisp_map_servers_list.values()):
         key = ms.dns_name if decent else ms.ms_name
 
         #
@@ -1517,8 +1521,6 @@ def lisp_etr_process():
 #   device = "en0" if lisp.lisp_is_macos() else "any"
 #   device = "lo0" if lisp.lisp_is_macos() else "any"
 
-    pcap = pcappy.open_live(device, 1600, 0, 100)
-
     pfilter = "(proto 2) or "
 
     pfilter += "((dst host "
@@ -1534,12 +1536,20 @@ def lisp_etr_process():
 
     lisp.lprint("Capturing packets for: '{}' on device {}".format(pfilter,
         device))
-    pcap.filter = pfilter
 
     #
     # Enter receive loop.
     #
-    pcap.loop(-1, lisp_etr_data_plane, [device, lisp_raw_socket])
+    if (lisp.lisp_is_python2()):
+        pcap = pcappy.open_live(device, 1600, 0, 100)
+        pcap.filter = pfilter
+        pcap.loop(-1, lisp_etr_data_plane, [device, lisp_raw_socket])
+    #endif
+    if (lisp.lisp_is_python3()):
+        pcap = pcapy.open_live(device, 1600, 0, 100)
+        pcap.setfilter(pfilter)
+        pcap.loop(-1, lisp_etr_data_plane)
+    #endif
     return
 #enddef
 
@@ -1571,7 +1581,7 @@ def lisp_etr_startup():
     # Prebuild MAC header for lisp_l2_socket sending. Disabled code in favor
     # of using pytun. See below.
     #
-#   m = lisp.lisp_mymacs.keys()[0]
+#   m = list(lisp.lisp_mymacs.keys())[0]
 #   mac = ""
 #   for i in range(0, 12, 2): mac += chr(int(m[i:i+2], 16))
 #   lisp_mac_header = mac + mac + "\x86\xdd"

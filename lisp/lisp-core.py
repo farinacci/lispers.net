@@ -49,16 +49,16 @@
 #                                  via network
 #
 # -----------------------------------------------------------------------------
-
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from past.utils import old_div
 import lisp
 import lispconfig
 import multiprocessing
 import threading
-try:
-    from commands import getoutput
-except:
-    from subprocess import getoutput
-#endtry
+from subprocess import getoutput
 import time
 import os
 import bottle
@@ -127,11 +127,11 @@ def lisp_api_get(command = "", data_structure=""):
     if (command == "data" and data_structure != ""):
         jdata = bottle.request.body.readline()
         data = json.loads(jdata) if jdata != "" else ""
-        if (data != ""): data = data.values()[0]
+        if (data != ""): data = list(data.values())[0]
         if (data == []): data = ""
 
-        if (type(data) == dict and type(data.values()[0]) == dict):
-            data = data.values()[0]
+        if (type(data) == dict and type(list(data.values())[0]) == dict):
+            data = list(data.values())[0]
         #endif
 
         data = lisp_get_api_data(data_structure, data)
@@ -151,7 +151,7 @@ def lisp_api_get(command = "", data_structure=""):
         #endif
 
         data = json.loads(jdata)
-        command = data.keys()[0]
+        command = list(data.keys())[0]
     #endif
 
     data = lispconfig.lisp_get_clause_for_api(command)
@@ -305,7 +305,7 @@ def lisp_api_put_delete(command = ""):
     if (command != ""):
         command = "lisp " + command
     else:
-        command = data[0].keys()[0]
+        command = list(data[0].keys())[0]
     #endif
 
     #
@@ -575,10 +575,10 @@ def lisp_show_status_command():
     #
     # Get LISP process status.
     #
-    command = "ps auww" if lisp.lisp_is_macos() else "ps aux"
-    status = getoutput( \
-        "{} | egrep 'PID|python lisp|python -O lisp' | egrep -v grep". \
-        format(command))
+    ps = "ps auww" if lisp.lisp_is_macos() else "ps aux"
+    grep = "egrep 'PID|python lisp|python -O lisp|python3.8 -O lisp'"
+    grep += "| egrep -v grep"
+    status = getoutput("{} | {}".format(ps, grep))
     status = status.replace(" ", lisp.space(1))
     status = status.replace("\n", "<br>")
 
@@ -586,7 +586,7 @@ def lisp_show_status_command():
     # top on MacOS.
     #
     if (uname.find("Darwin") != -1):
-        cpu_count = cpu_count / 2
+        cpu_count = old_div(cpu_count, 2)
         top = getoutput("top -l 1 | head -50")
         top = top.split("PID")
         top = top[0]
@@ -879,11 +879,25 @@ def lisp_install_command():
         return(lispconfig.lisp_show_wrapper(output))
     #endif
 
-    if (lisp.lisp_is_ubuntu()):
-        c = "python lisp-get-bits.pyo {} force 2>&1 > /dev/null".format(image)
-    else:
-        c = "python lisp-get-bits.pyo {} force >& /dev/null".format(image)
+    if (lisp.lisp_is_python2()):
+        py = "python -O "
+        suffix = "pyo"
     #endif
+    if (lisp.lisp_is_python3()):
+        py = "python3.8 -O "
+        suffix = "pyc"
+    #endif
+    if (lisp.lisp_is_ubuntu()):
+        c = "{} lisp-get-bits.{} {} force 2>&1 > /dev/null". \
+            format(py, suffix, image)
+    else:
+        c = "{} lisp-get-bits.{} {} force >& /dev/null". \
+            format(py, suffix, image)
+    #endif
+
+    #
+    # Issue command.
+    #
     status = os.system(c)
 
     image_file = image.split("/")[-1]
@@ -1061,7 +1075,7 @@ def lisp_debug_menu_command(name = ""):
         if ("lisp debug" in data[0]):
             new = []
             for entry in data[0]["lisp debug"]:
-                key = entry.keys()[0]
+                key = list(entry.keys())[0]
                 new.append({ key : "no" })
             #endfor
             new = { "lisp debug" : new }
@@ -1072,7 +1086,7 @@ def lisp_debug_menu_command(name = ""):
         if ("lisp xtr-parameters" in data[0]):
             new = []
             for entry in data[0]["lisp xtr-parameters"]:
-                key = entry.keys()[0]
+                key = list(entry.keys())[0]
                 if (key in ["data-plane-logging", "flow-logging"]): 
                     new.append({ key : "no" })
                 else:
@@ -1103,7 +1117,7 @@ def lisp_debug_menu_command(name = ""):
     if (clause_name in data[0]):
         new = {}
         for entry in data[0][clause_name]:
-            new[entry.keys()[0]] = entry.values()[0]
+            new[list(entry.keys())[0]] = list(entry.values())[0]
             if (component in new): new[component] = yesno
         #endfor
         new = { clause_name: new }
@@ -1502,8 +1516,9 @@ def lisp_lig_command():
     #endif
 
     lig = ""
-    if os.path.exists("lisp-lig.pyo"): lig = "-O lisp-lig.pyo"
-    if os.path.exists("lisp-lig.py"): lig = "lisp-lig.py"
+    if os.path.exists("lisp-lig.pyo"): lig = "python -O lisp-lig.pyo"
+    if os.path.exists("lisp-lig.pyc"): lig = "python3.8 -O lisp-lig.pyc"
+    if os.path.exists("lisp-lig.py"): lig = "python lisp-lig.py"
 
     #
     # Something went wrong with the install.
@@ -1515,7 +1530,7 @@ def lisp_lig_command():
 
     if (count != ""): count = "count {}".format(count)
 
-    command = 'python {} "{}" to {} {} {}'.format(lig, eid, mr, count, no_nat)
+    command = '{} "{}" to {} {} {}'.format(lig, eid, mr, count, no_nat)
 
     output = getoutput(command)
     output = output.replace("\n", "<br>")
@@ -1564,8 +1579,9 @@ def lisp_rig_command():
     #endif
 
     rig = ""
-    if os.path.exists("lisp-rig.pyo"): rig = "-O lisp-rig.pyo"
-    if os.path.exists("lisp-rig.py"): rig = "lisp-rig.py"
+    if os.path.exists("lisp-rig.pyo"): rig = "python -O lisp-rig.pyo"
+    if os.path.exists("lisp-rig.pyc"): rig = "python3.8 -O lisp-rig.pyo"
+    if os.path.exists("lisp-rig.py"): rig = "python lisp-rig.py"
 
     #
     # Something went wrong with the install.
@@ -1575,7 +1591,7 @@ def lisp_rig_command():
         return(lispconfig.lisp_show_wrapper(lisp.lisp_print_cour(output)))
     #endif
 
-    command = 'python {} "{}" to {} {}'.format(rig, eid, ddt, follow_all)
+    command = '{} "{}" to {} {}'.format(rig, eid, ddt, follow_all)
 
     output = getoutput(command)
     output = output.replace("\n", "<br>")
@@ -1594,8 +1610,9 @@ def lisp_rig_command():
 #
 def lisp_run_geo_lig(eid1, eid2):
     lig = None
-    if os.path.exists("lisp-lig.pyo"): lig = "-O lisp-lig.pyo"
-    if os.path.exists("lisp-lig.py"): lig = "lisp-lig.py"
+    if os.path.exists("lisp-lig.pyo"): lig = "python -O lisp-lig.pyo"
+    if os.path.exists("lisp-lig.pyc"): lig = "python3.8 -O lisp-lig.pyc"
+    if os.path.exists("lisp-lig.py"): lig = "python lisp-lig.py"
     if (lig == None): return([None, None])
 
     #
@@ -1631,7 +1648,7 @@ def lisp_run_geo_lig(eid1, eid2):
             continue
         #endif
 
-        command = 'python {} "{}" to {} count 1'.format(lig, eid, mr)
+        command = '{} "{}" to {} count 1'.format(lig, eid, mr)
         for cmd in [command, command + " no-info"]:
             output = getoutput(command)
             index = output.find("geo: ")
@@ -1750,7 +1767,7 @@ def lisp_geo_command():
 #
 def lisp_get_info_source(addr_str, port, nonce):
     if (addr_str != None):
-        for info_source in lisp.lisp_info_sources_by_address.values():
+        for info_source in list(lisp.lisp_info_sources_by_address.values()):
             info_source_str = info_source.address.print_address_no_iid()
             if (info_source_str == addr_str and info_source.port == port): 
                 return(info_source)

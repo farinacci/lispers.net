@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # -*- encoding: utf-8 -*-
+from __future__ import division
 
 """
 Poly1305-AES in python.
@@ -16,6 +17,12 @@ from http://cr.yp.to/mac/poly1305aes.py.
 ##  # Written 2005-01-18 by Ken Raeburn, and placed in the public domain.
 ##  # Apologies for the clunkiness, I'm still learning Python
 
+from builtins import zip
+from builtins import map
+from builtins import chr
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import binascii
 import sys
 import warnings
@@ -108,7 +115,7 @@ def new(*args, **kwargs):
     See the Poly1305-class for details.
     """
 
-class Poly1305:
+class Poly1305(object):
     """
     The main class.
 
@@ -162,7 +169,7 @@ class Poly1305:
                         self.__nonce, self.__string)
         mod1305 = (1 << 130) - 5
         rval = str2num_littleend(r)
-        q = (len(msg) + 15) / 16
+        q = old_div((len(msg) + 15), 16)
         tot = 0
         for i in range(int(q)):
             sub = msg[i*16 : i*16+16] + b"\x01"
@@ -174,7 +181,7 @@ class Poly1305:
         enc = str2num_littleend(enc)
         result = (tot + enc) % (1 << 128)
         # Convert to a 16-byte string, little-endian order.
-        result = ''.join(map(lambda i: chr(0xff & (result >> 8*i)), range(16)))
+        result = ''.join([chr(0xff & (result >> 8*i)) for i in range(16)])
         if PY3K:
             result = result.encode("latin-1")
         

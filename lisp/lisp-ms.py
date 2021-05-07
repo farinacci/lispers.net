@@ -21,7 +21,10 @@
 # This file performs LISP Map-Server functionality.
 #
 # -----------------------------------------------------------------------------
-
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import lisp
 import lispconfig
 import threading
@@ -85,7 +88,7 @@ def lisp_site_command(kv_pairs):
         allowed_eid_set.append(site_eid)
     #endfor
 
-    for kw in kv_pairs.keys():
+    for kw in list(kv_pairs.keys()):
         value = kv_pairs[kw]
         if (kw == "site-name"): site.site_name = value
         if (kw == "description"): site.description = value
@@ -264,7 +267,7 @@ def lisp_site_command(kv_pairs):
 def lisp_ms_auth_prefix_command(kv_pair):
     ddt_entry = lisp.lisp_ddt_entry()
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
 
         if (kw == "instance-id"):
@@ -322,7 +325,7 @@ def lisp_ms_map_server_peer_command(kv_pair):
         peer_set.append(peer)
     #endfor
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
         if (kw == "instance-id"):
             for index in range(len(prefix_set)):
@@ -404,7 +407,7 @@ def lisp_ms_map_server_peer_command(kv_pair):
 def lisp_ms_eid_crypto_hash_command(kv_pair):
     address = lisp.lisp_address(lisp.LISP_AFI_IPV6, "", 0, 0)
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
         if (kw == "instance-id"): 
             if (value == "*"): value = "-1"
@@ -430,7 +433,7 @@ def lisp_ms_eid_crypto_hash_command(kv_pair):
 # Process the "lisp encryption-keys" command.
 #
 def lisp_ms_encryption_keys_command(kv_pair):
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
         if (kw == "map-register-key"): 
             lisp.lisp_ms_encryption_keys = lisp.lisp_parse_auth_key(value)
@@ -488,7 +491,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     fr = lisp.lisp_print_elapsed(site_eid.first_registered)
     lr = lisp.lisp_print_elapsed(site_eid.last_registered)
     if (time.time() - site_eid.last_registered >= 
-        (site_eid.register_ttl / 2) and lr != "never"):
+        (old_div(site_eid.register_ttl, 2)) and lr != "never"):
         lr = lisp.red(lr, True)
     #endif
     if (site_eid.last_registerer.afi == lisp.LISP_AFI_NONE): 
@@ -582,7 +585,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     if (any_rloc != ""): any_rloc = lisp.lisp_print_cour(any_rloc)
     output += "{}Allowed RLOC-set: {}<br>".format(indent4, any_rloc)
     if (any_rloc == ""):                                      
-        for rloc in site_eid.site.allowed_rlocs.values():
+        for rloc in list(site_eid.site.allowed_rlocs.values()):
             a = lisp.lisp_print_cour(rloc.rloc.print_address())
             s = lisp.lisp_print_cour(rloc.print_state())
             up = lisp.lisp_print_cour(str(rloc.priority))
@@ -648,18 +651,18 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     # first, then ones that are timing out, and then finally not registered.
     #
     ir = []
-    for se in site_eid.individual_registrations.values():
+    for se in list(site_eid.individual_registrations.values()):
         if (se.registered == False): continue
-        ttl = se.register_ttl / 2
+        ttl = old_div(se.register_ttl, 2)
         if (time.time() - se.last_registered >= ttl): continue
         ir.append(se)
     #endfor
-    for se in site_eid.individual_registrations.values():
+    for se in list(site_eid.individual_registrations.values()):
         if (se.registered == False): continue
-        ttl = se.register_ttl / 2
+        ttl = old_div(se.register_ttl, 2)
         if (time.time() - se.last_registered >= ttl): ir.append(se)
     #endfor
-    for se in site_eid.individual_registrations.values():
+    for se in list(site_eid.individual_registrations.values()):
         if (se.registered == False): ir.append(se)
     #endfor
 
@@ -668,7 +671,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
             lisp.red("no", True)
         auth_type = "sha1" if (site_eid.auth_sha1_or_sha2) else "sha2"
         auth_type = lisp.lisp_print_cour(auth_type)
-        ttl = str(site_eid.register_ttl / 60) + " mins"
+        ttl = str(old_div(site_eid.register_ttl, 60)) + " mins"
         ttl = lisp.lisp_print_cour(ttl)
         flags = site_eid.print_flags(False)
         flags = lisp.lisp_print_cour(flags)
@@ -678,7 +681,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
         fr = lisp.lisp_print_cour(fr)
         lr = lisp.lisp_print_elapsed(site_eid.last_registered)
         if (time.time() - site_eid.last_registered >= 
-            (site_eid.register_ttl / 2) and lr != "never"):
+            (old_div(site_eid.register_ttl, 2)) and lr != "never"):
             lr = lisp.red(lr, True)
         #endif
         lr = lisp.lisp_print_cour(lr)
@@ -945,7 +948,7 @@ def lisp_display_site_eid_entry(site_eid, site, first, output):
             
     lts = lisp.lisp_print_elapsed(site_eid.last_registered)
     if (time.time() - site_eid.last_registered >= 
-        (site_eid.register_ttl / 2) and lts != "never"):
+        (old_div(site_eid.register_ttl, 2)) and lts != "never"):
         lts = lisp.red(lts, True)
     #endif
     fts = lisp.lisp_print_elapsed(site_eid.first_registered)
@@ -1051,7 +1054,7 @@ def lisp_ms_show_site_command(parameter):
 
     for e in lisp.lisp_pubsub_cache:
         eid = e
-        for pubsub in lisp.lisp_pubsub_cache[e].values():
+        for pubsub in list(lisp.lisp_pubsub_cache[e].values()):
             rloc_str = pubsub.itr.print_address_no_iid() + ":" + \
                 str(pubsub.port)
             ut = lisp.lisp_print_elapsed(pubsub.uptime) + "<br>" + \
@@ -1196,7 +1199,7 @@ def lisp_timeout_site_eid(site_eid, delete_list):
 #
 def lisp_timeout_individuals(parent, rle_list):
     delete_list = []
-    for child in parent.individual_registrations.values():
+    for child in list(parent.individual_registrations.values()):
         delete_list = lisp_timeout_site_eid(child, delete_list)
     #endfor
 
@@ -1218,8 +1221,8 @@ def lisp_timeout_sites():
     lisp.lisp_set_exception()
 
     rle_list = []
-    for site in lisp_sites_by_name.values():
-        for site_eid in site.allowed_prefixes.values():
+    for site in list(lisp_sites_by_name.values()):
+        for site_eid in list(site.allowed_prefixes.values()):
             if (site_eid.merge_register_requested == False):
                 lisp_timeout_site_eid(site_eid, None)
             #endif
@@ -1363,7 +1366,7 @@ def lisp_ms_scale_inject():
     if (ts < 60):
         lisp.fprint("Finished in {} secs, memory {}".format(round(ts, 3), mem))
     else:
-        ts = ts / 60
+        ts = old_div(ts, 60)
         lisp.fprint("Finished in {} mins, memory {}".format(round(ts, 1), mem))
     #endif
     lisp_inject_mode_count = 0
@@ -1386,7 +1389,7 @@ def lisp_timeout_pubsub():
 
     delete_list = []
     for e in lisp.lisp_pubsub_cache:
-        for pubsub in lisp.lisp_pubsub_cache[e].values():
+        for pubsub in list(lisp.lisp_pubsub_cache[e].values()):
             ttl = pubsub.ttl * 60
             if (pubsub.uptime + ttl > now): continue
             delete_list.append([e, pubsub.xtr_id])

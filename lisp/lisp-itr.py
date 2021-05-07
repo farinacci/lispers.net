@@ -22,20 +22,25 @@
 #
 # -----------------------------------------------------------------------------
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
 import lisp
 import lispconfig
 import socket
 import select
 import threading
-import pcappy
 import time
 import os
-try:
-    from commands import getoutput
-except:
-    from subprocess import getoutput
-#endtry    
+from subprocess import getoutput
 import struct
+try:
+    import pcappy
+except:
+    pass
+#endtry
+import pcapy
 
 #------------------------------------------------------------------------------
 
@@ -110,7 +115,7 @@ def lisp_itr_process_timer(lisp_sockets, lisp_ephem_port):
     #
     # Remove nonce entries from crypto-list.
     #
-    for keys in lisp.lisp_crypto_keys_by_nonce.values():
+    for keys in list(lisp.lisp_crypto_keys_by_nonce.values()):
         for key in keys: del(key)
     #endfor
     lisp.lisp_crypto_keys_by_nonce = {}
@@ -156,7 +161,7 @@ def lisp_itr_timeout_dynamic_eids(lisp_socket):
         if (db.dynamic_eid_configured() == False): continue
 
         delete_list = []
-        for dyn_eid in db.dynamic_eids.values():
+        for dyn_eid in list(db.dynamic_eids.values()):
             ts = dyn_eid.last_packet
             if (ts == None): continue
             if (ts + dyn_eid.timeout > now): continue
@@ -1121,12 +1126,20 @@ def lisp_itr_build_pcap_filter(sources, dyn_eids, l2_overlay, pitr):
 def lisp_itr_pcap_thread(device, pfilter, pcap_lock):
     lisp.lisp_set_exception()
 
-    pcap_lock.acquire()
-    pcap = pcappy.open_live(device, 9000, 0, 100)
-    pcap_lock.release()
-
-    pcap.filter = pfilter
-    pcap.loop(-1, lisp_itr_pcap_process_packet, device)
+    if (lisp.lisp_is_python2()):
+        pcap_lock.acquire()
+        pcap = pcappy.open_live(device, 9000, 0, 100)
+        pcap_lock.release()
+        pcap.filter = pfilter
+        pcap.loop(-1, lisp_itr_pcap_process_packet, device)
+    #endif
+    if (lisp.lisp_is_python3()):
+        pcap_lock.acquire()
+        pcap = pcapy.open_live(device, 9000, 0, 100)
+        pcap_lock.release()
+        pcap.setfilter(pfilter)
+        pcap.loop(-1, lisp_itr_pcap_process_packet)
+    #endif
     return
 #enddef
 

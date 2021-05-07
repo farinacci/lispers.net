@@ -1,4 +1,3 @@
-
 """
     chacha.py
     
@@ -24,7 +23,10 @@
     rev June 2010
     rev March 2011  - tweaked _quarterround() to get 20-30% speed gain
 """
-
+from __future__ import print_function
+from builtins import chr
+from builtins import range
+from builtins import object
 import struct
 try:
     import psyco            # a specializing [runtime] compiler

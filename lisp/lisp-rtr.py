@@ -22,21 +22,27 @@
 #
 # -----------------------------------------------------------------------------
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import chr
+from builtins import str
+from builtins import range
 import lisp
 import lispconfig
 import socket
 import time
 import select
 import threading
-import pcappy
 import os
 import copy
-try:
-    from commands import getoutput
-except:
-    from subprocess import getoutput
-#endtry    
+from subprocess import getoutput
 import binascii
+try:
+    import pcappy
+except:
+    pass
+#endtry
+import pcapy
 
 #------------------------------------------------------------------------------
 
@@ -122,7 +128,7 @@ def lisp_rtr_database_mapping_command(kv_pair):
 def lisp_rtr_glean_mapping_command(kv_pair):
     entry = { "rloc-probe" : False, "igmp-query" : False }
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
 
         if (kw == "instance-id"):
@@ -1032,7 +1038,6 @@ def lisp_rtr_pcap_thread(lisp_thread):
     if (lisp.lisp_myrlocs[0] == None): return
 
     device = "lo0" if lisp.lisp_is_macos() else "any"
-    pcap = pcappy.open_live(device, 9000, 0, 100)
 
     #
     # If "lisp-nat = yes" is configured, then a PETR is co-located with this
@@ -1067,12 +1072,20 @@ def lisp_rtr_pcap_thread(lisp_thread):
     #endif
 
     lisp.lprint("Capturing packets for: '{}'".format(pfilter))
-    pcap.filter = pfilter
 
     #
     # Enter receive loop.
     #
-    pcap.loop(-1, lisp_rtr_pcap_process_packet, [device, lisp_thread])
+    if (lisp.lisp_is_python2()):
+        pcap = pcappy.open_live(device, 9000, 0, 100)
+        pcap.filter = pfilter
+        pcap.loop(-1, lisp_rtr_pcap_process_packet, [device, lisp_thread])
+    #endif
+    if (lisp.lisp_is_python3()):
+        pcap = pcapy.open_live(device, 9000, 0, 100)
+        pcap.setfilter(pfilter)
+        pcap.loop(-1, lisp_rtr_pcap_process_packet)
+    #endif
     return
 #enddef
 
@@ -1243,7 +1256,7 @@ def lisp_rtr_process_timer(lisp_raw_socket):
     #
     # Remove nonce entries from crypto-list.
     #
-    for keys in lisp.lisp_crypto_keys_by_nonce.values():
+    for keys in list(lisp.lisp_crypto_keys_by_nonce.values()):
         for key in keys: del(key)
     #endfor
     lisp.lisp_crypto_keys_by_nonce.clear()

@@ -26,6 +26,8 @@
 #
 #------------------------------------------------------------------------------
 from __future__ import print_function
+from builtins import str
+from builtins import range
 import lisp
 import sys
 import time
@@ -295,7 +297,7 @@ while (True):
         break
     #endif
 
-    for key in pending.keys():
+    for key in list(pending.keys()):
         if (pending[key][0] != None): continue
         ddt_node = pending[key][1]
 

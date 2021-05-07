@@ -25,13 +25,13 @@
 # Usage: python -O is-lisp-running.pyo
 #
 #------------------------------------------------------------------------------
-
+from __future__ import print_function
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from past.utils import old_div
+from subprocess import getoutput
 import os
-try:
-    from commands import getoutput
-except:
-    from subprocess import getoutput
-#entry    
 
 def bold(string):
     return("\033[1m" + string + "\033[0m")
@@ -101,7 +101,7 @@ for line in lines:
     cpu = items[2].ljust(8)
     mem = items[3].ljust(8)
 
-    mb = int(items[4]) / 1000
+    mb = old_div(int(items[4]), 1000)
     gm = "M"
     if (mb >= 1000):
         mb = round(float(mb) / 1000, 1)

@@ -21,7 +21,9 @@
 # This file performs LISP Map-Resolver functionality.
 # 
 # -----------------------------------------------------------------------------
-
+from __future__ import division
+from builtins import str
+from builtins import range
 import lisp
 import lispconfig
 import threading
@@ -74,7 +76,7 @@ def lisp_ddt_root_command(kv_pair):
     #
     # Get command input.
     #
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         if (kw == "address"):
             addr_str = kv_pair[kw]
             ddt_root.root_address.store_address(addr_str)
@@ -103,7 +105,7 @@ def lisp_ddt_root_command(kv_pair):
     # EID-prefix [*]. Store new referral instance in the referral-cache.
     # Prepend (and not sort) since we want the [*] entry to be first.
     #
-    for ddt_root in lisp_ddt_roots.values():
+    for ddt_root in list(lisp_ddt_roots.values()):
         referral_node = lisp.lisp_referral_node()
         referral_node.referral_address = ddt_root.root_address
         referral_node.priority = ddt_root.priority
@@ -143,7 +145,7 @@ def lisp_referral_cache_command(kv_pair):
         referral_set.append(ref_node)
     #endfor
 
-    for kw in kv_pair.keys():
+    for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
         if (kw == "instance-id"):
             for i in range(len(prefix_set)):
@@ -239,7 +241,7 @@ def lisp_display_referral_cache(ref, output):
             ref_type, ref_source, "--", "--", "--")
     #endif
 
-    for ref_node in ref.referral_set.values(): 
+    for ref_node in list(ref.referral_set.values()): 
         addr = ref_node.referral_address.print_address_no_iid()
         addr += "<br>up" if ref_node.updown else "<br>down"
 

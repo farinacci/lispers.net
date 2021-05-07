@@ -18,21 +18,21 @@
 #
 # lisp-get-bits
 #
-# Usage: python lisp-get-bits.pyo <url-for-lispers.net-image> [force]
+# Usage: python lisp-get-bits.py <url-for-lispers.net-image> [force]
 #
 # Do a wget on supplied URL and install in current directory.
 # 
 # -----------------------------------------------------------------------------
 from __future__ import print_function
+from builtins import input
 import sys
 import os
-from six.moves import input
 
 #
 # Get parameter step.
 #
 if (len(sys.argv) == 1):
-    print(("Usage: python lisp-get-bits.pyo <url-for-lispers.net-image> " + \
+    print(("Usage: python lisp-get-bits.py <url-for-lispers.net-image> " + \
            "[force]"))
     exit(1)
 #endif
