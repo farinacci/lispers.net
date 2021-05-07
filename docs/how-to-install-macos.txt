@@ -15,11 +15,15 @@ Step 2: Get pip to install python modules required:
     
 Step 3: Use pip to install python2 module dependencies:
     
-    sudo python -m pip install CherryPy bottle netifaces pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome pytun future distro
+    sudo python -m pip install CherryPy bottle netifaces pcappy pcapy \
+         pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa \
+         pycryptodome pytun future distro
 
 Step 4: Use pip3 to install python3 module dependencies:
 
-    sudo python3.8 -m pip install CherryPy bottle netifaces pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome pytun future distro
+    sudo python3.8 -m pip install CherryPy bottle netifaces pcappy pcapy \
+         pyOpenSSL pycrypto requests curve25519-donna geopy \
+         ecdsa pycryptodome pytun future distro
 
 Step 5: Run this to test script to verify installation is complete:
 
