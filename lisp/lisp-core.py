@@ -67,15 +67,10 @@ import sys
 import socket
 
 #
-# Newer versions of CherryPy does not include WSGIServer. Has moved to cheroot.
+# Moving from CherryPy to cheroot. Happened during py2 -> py3 conversion.
 #
-try:
-    from cherrypy.wsgiserver import CherryPyWSGIServer as wsgi_server
-    from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter as ssl_adaptor
-except:
-    from cheroot.wsgi import Server as wsgi_server
-    from cheroot.ssl.builtin import BuiltinSSLAdapter as ssl_adaptor
-#endtry
+from cheroot.wsgi import Server as wsgi_server
+from cheroot.ssl.builtin import BuiltinSSLAdapter as ssl_adaptor
 
 #------------------------------------------------------------------------------
 
@@ -126,6 +121,7 @@ def lisp_api_get(command = "", data_structure=""):
     #
     if (command == "data" and data_structure != ""):
         jdata = bottle.request.body.readline()
+        if (type(jdata) == bytes): jdata = jdata.decode()
         data = json.loads(jdata) if jdata != "" else ""
         if (data != ""): data = list(data.values())[0]
         if (data == []): data = ""
@@ -145,6 +141,7 @@ def lisp_api_get(command = "", data_structure=""):
         command = "lisp " + command
     else:
         jdata = bottle.request.body.readline()
+        if (type(jdata) == bytes): jdata = jdata.decode()
         if (jdata == ""): 
             data = [{ "?" : [{"?" : "no-body"}] }]
             return(json.dumps(data))
@@ -296,6 +293,7 @@ def lisp_api_put_delete(command = ""):
     # A valid user can access data now.
     #        
     jdata = bottle.request.body.readline()
+    if (type(jdata) == bytes): jdata = jdata.decode()
     if (jdata == ""): 
         data = [{ "?" : [{"?" : "no-body"}] }]
         return(json.dumps(data))
