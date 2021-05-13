@@ -1496,7 +1496,7 @@ while (True):
             False)
         if (source == ""): break
 
-        if (lisp.lisp_is_rloc_probe_reply(packet[0])):
+        if (lisp.lisp_is_rloc_probe_reply(packet[0:1])):
             lisp.lprint("ITR ignoring RLOC-probe reply, using pcap")
             continue
         #endif
@@ -1511,7 +1511,7 @@ while (True):
             False)
         if (source == ""): break
 
-        if (lisp.lisp_is_rloc_probe_reply(packet[0])):
+        if (lisp.lisp_is_rloc_probe_reply(packet[0:1])):
             lisp.lprint("ITR ignoring RLOC-probe reply, using pcap")
             continue
         #endif
@@ -1552,7 +1552,7 @@ while (True):
         elif (opcode == "data-packet"):
             lisp_itr_data_plane(packet, "ipc")
         else:
-            if (lisp.lisp_is_rloc_probe_reply(packet[0])):
+            if (lisp.lisp_is_rloc_probe_reply(packet[0:1])):
                 lisp.lprint("ITR ignoring RLOC-probe request, using pcap")
                 continue
             #endif
