@@ -28,7 +28,8 @@ First time install
 
 (3) Test the install by running this python program:
 
-     python lispers.net-test-install.pyo
+     python    lispers.net-test-install.pyo   (when running python2)
+     python3.8 lispers.net-test-install.pyc   (when running python3)
 
 (4) From a tcsh shell, type in "./RESTART-LISP" when you want to start or 
     restart the LISP subsystem. You can use "sudo ./STOP-LISP" to take the 
@@ -133,4 +134,5 @@ Installation Problems?
     is not loaded are TCP checksum errors over IPv6.
 
 -------------------------------------------------------------------------------
-                 Last updated: Tue May  4 15:40:28 PDT 2021
+                 Last updated: Thu May 13 16:47:37 PDT 2021
+
