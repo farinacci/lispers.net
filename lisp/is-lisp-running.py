@@ -42,6 +42,7 @@ def bold(string):
 #
 version = getoutput("cat lisp-version.txt")
 rv = getoutput("head -1 logs/lisp-core.log")
+py = "(py2)" if os.path.exists("./is-lisp-running.pyo") else "(py3)"
 if (rv.find("version") != -1):
     rv = rv.split("version ")[1]
     rv = rv.split(",")[0]
@@ -62,7 +63,8 @@ if (output == None or output == ""):
 #endif
 if (rv == None): rv = ""
 
-print("--- lispers.net release {} installed{} ---".format(bold(version), rv))
+print("--- lispers.net release {} installed {}{} ---".format \
+      (bold(version), py, rv))
 
 lines = output.split("\n")
 
