@@ -24,7 +24,6 @@
 
 from future import standard_library
 standard_library.install_aliases()
-from builtins import chr
 from builtins import str
 from builtins import range
 import lisp
@@ -413,11 +412,11 @@ def lisp_rtr_fast_data_plane(packet):
     #
     iid = 0
     srloc = None
-    if (packet[9] == '\x11'):
-        if (packet[20:22] == '\x10\xf6'): return(False)
-        if (packet[22:24] == '\x10\xf6'): return(False)
+    if (packet[9:10] == b'\x11'):
+        if (packet[20:22] == b'\x10\xf6'): return(False)
+        if (packet[22:24] == b'\x10\xf6'): return(False)
 
-        if (packet[20:22] == '\x10\xf5' or packet[22:24] == '\x10\xf5'):
+        if (packet[20:22] == b'\x10\xf5' or packet[22:24] == b'\x10\xf5'):
             srloc = packet[12:16]
             iid = packet[32:35]
             iid = ord(iid[0]) << 16 | ord(iid[1]) << 8 | ord(iid[2])
@@ -504,33 +503,26 @@ def lisp_rtr_fast_data_plane(packet):
         #
         # Build outer IPv4 header.
         #
-        outer = '\x45\x00'
+        outer = b'\x45\x00'
         length = len(packet) + 20 + 8 + 8
-        outer += chr((length >> 8) & 0xff) + chr(length & 0xff)
-        outer += '\xff\xff\x40\x00\x10\x11\x00\x00'
-        outer += chr((srloc >> 24) & 0xff)
-        outer += chr((srloc >> 16) & 0xff)
-        outer += chr((srloc >> 8) & 0xff)
-        outer += chr(srloc & 0xff)
-        outer += chr((drloc >> 24) & 0xff)
-        outer += chr((drloc >> 16) & 0xff)
-        outer += chr((drloc >> 8) & 0xff)
-        outer += chr(drloc & 0xff)
+        outer += bytes([(length >> 8) & 0xff, length & 0xff])
+        outer += b'\xff\xff\x40\x00\x10\x11\x00\x00'
+        outer += bytes([(srloc >> 24) & 0xff, (srloc >> 16) & 0xff,
+                        (srloc >> 8) & 0xff, srloc & 0xff])
+        outer += bytes([(drloc >> 24) & 0xff, (drloc >> 16) & 0xff,
+                        (drloc >> 8) & 0xff, drloc & 0xff])
         outer = lisp.lisp_ip_checksum(outer)
 
         #
         # Build UDP and LISP headers.
         #
         udplen = length - 20
-        udplisp = '\xff\x00' if (port == 4341) else '\x10\xf5'
-        udplisp += chr((port >> 8) & 0xff) + chr(port & 0xff)
-        udplisp += chr((udplen >> 8) & 0xff) + chr(udplen & 0xff) + '\x00\x00'
-
-        udplisp += '\x08\xdf\xdf\xdf'
-        udplisp += chr((iid >> 16) & 0xff)
-        udplisp += chr((iid >> 8) & 0xff)
-        udplisp += chr(iid & 0xff)
-        udplisp += '\x00'
+        udplisp = b'\xff\x00' if (port == 4341) else b'\x10\xf5'
+        udplisp += bytes([(port >> 8) & 0xff, port & 0xff])
+        udplisp += bytes([(udplen >> 8) & 0xff, udplen & 0xff]) + b'\x00\x00'
+        udplisp += b'\x08\xdf\xdf\xdf'
+        udplisp += bytes([(iid >> 16) & 0xff, (iid >> 8) & 0xff, iid & 0xff])
+        udplisp += b'\x00'
 
         #
         # Append all outer headers.
@@ -659,8 +651,10 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             source = packet.outer_source.print_address_no_iid()
             ttl = packet.outer_ttl
             packet = packet.packet
-            if (lisp.lisp_is_rloc_probe_request(packet[28]) == False and
-                lisp.lisp_is_rloc_probe_reply(packet[28]) == False): ttl = -1
+            if (lisp.lisp_is_rloc_probe_request(packet[28:29]) == False and
+                lisp.lisp_is_rloc_probe_reply(packet[28:29]) == False):
+                ttl = -1
+            #endif
             packet = packet[28::]
             lisp.lisp_parse_packet(lisp_send_sockets, packet, source, 0, ttl)
         #endif
@@ -1177,22 +1171,20 @@ def lisp_send_igmp_queries(lisp_raw_socket):
     # Build an IP header and checksum it. Put Router-Alert option after
     # destination address.
     #
-    ip = "\x46\xc0\x00\x24\x00\x00\x40\x00\x01\x02\x00\x00"
+    ip = b"\x46\xc0\x00\x24\x00\x00\x40\x00\x01\x02\x00\x00"
     myrloc = lisp.lisp_myrlocs[0]
     rloc = myrloc.address
-    ip += chr((rloc >> 24) & 0xff)
-    ip += chr((rloc >> 16) & 0xff)
-    ip += chr((rloc >> 8) & 0xff)
-    ip += chr(rloc & 0xff)
-    ip += "\xe0\x00\x00\x01"
-    ip += "\x94\x04\x00\x00"
+    ip += bytes([(rloc >> 24) & 0xff, (rloc >> 16) & 0xff, (rloc >> 8) & 0xff,
+                 rloc & 0xff])
+    ip += b"\xe0\x00\x00\x01"
+    ip += b"\x94\x04\x00\x00"
     ip = lisp.lisp_ip_checksum(ip, 24)
 
     #
     # Build an IGMP query and checksum it. The mrc is 100 (10 secs), qrv is 2,
     # and qqic is 60. Just like cisco would send.
     #
-    igmp = "\x11\x64\x00\x00" + "\x00\x00\x00\x00" + "\x02\x3c\x00\x00"
+    igmp = b"\x11\x64\x00\x00" + b"\x00\x00\x00\x00" + b"\x02\x3c\x00\x00"
     igmp = lisp.lisp_igmp_checksum(igmp)
 
     #
@@ -1685,11 +1677,11 @@ while (True):
         opcode, source, port, packet = lisp.lisp_receive(ephem_sockets[0],
             False)
         if (source == ""): break
-        if (lisp.lisp_is_rloc_probe_request(packet[0])):
+        if (lisp.lisp_is_rloc_probe_request(packet[0:1])):
             lisp.lprint("RTR ignoring RLOC-probe request, using pcap")
             continue
         #endif
-        if (lisp.lisp_is_rloc_probe_reply(packet[0])):
+        if (lisp.lisp_is_rloc_probe_reply(packet[0:1])):
             lisp.lprint("RTR ignoring RLOC-probe reply, using pcap")
             continue
         #endif
@@ -1721,11 +1713,11 @@ while (True):
         elif (opcode == "data-packet"):
             lisp_rtr_data_plane(packet, "")
         else:
-            if (lisp.lisp_is_rloc_probe_request(packet[0])):
+            if (lisp.lisp_is_rloc_probe_request(packet[0:1])):
                 lisp.lprint("RTR ignoring RLOC-probe request, using pcap")
                 continue
             #endif
-            if (lisp.lisp_is_rloc_probe_reply(packet[0])):
+            if (lisp.lisp_is_rloc_probe_reply(packet[0:1])):
                 lisp.lprint("RTR ignoring RLOC-probe reply, using pcap")
                 continue
             #endif
