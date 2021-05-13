@@ -2233,10 +2233,13 @@ def lisp_core_control_packet_process(lisp_ipc_control_socket, lisp_sockets):
         port = int(data[2])
         packet = data[3::]
 
+        #
+        # For py3, decode from byte string array to string. Noop for py2.
+        #
         if (len(packet) > 1): 
-            packet = lisp.lisp_bit_stuff(packet)
+            packet = lisp.lisp_bit_stuff(packet.decode())
         else:
-            packet = packet[0]
+            packet = packet[0].decode()
         #endif
 
         if (opcode != "control-packet"):
