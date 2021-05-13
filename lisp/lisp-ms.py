@@ -1321,7 +1321,7 @@ def lisp_ms_scale_inject():
     for i in range(1, count + 1):
         site_eid = lisp.lisp_site_eid(parent_site.site)
         site_eid.eid = copy.deepcopy(eid)
-        site_eid.eid.address = hmac.new("ct", str(phone),
+        site_eid.eid.address = hmac.new(b"ct", str(phone),
             hashlib.sha256).hexdigest()
 
         site_eid.dynamic = True
