@@ -172,6 +172,7 @@ def lisp_banner_bottom():
     hostname = socket.gethostname()
     date = getoutput("date")
     uptime = lisp.lisp_print_elapsed(lisp.lisp_uptime)
+    py = " (py2)" if lisp.lisp_is_python2() else " (py3)"
 
     banner = '''<br><hr style="border: none; border-bottom: 1px solid gray;">
         <i><font size="2">{} - Uptime 
@@ -180,8 +181,8 @@ def lisp_banner_bottom():
         Features/Bugs go to <a href=
 "mailto:support@lispers.net?subject=lispers.net v{} bug-report from '{}'">
         support@lispers.net</a></i></font><br><br>
-    '''.format(date, uptime, lisp.bold(lisp.lisp_version, True),
-        lisp.lisp_version, hostname)
+    '''.format(date, uptime, lisp.bold(lisp.lisp_version + py, True),
+        lisp.lisp_version + py, hostname)
 
     return(banner)
 #enddef
@@ -328,7 +329,8 @@ def lisp_not_supported():
 # it to be written out to the file. So we don't store plaintext passwords.
 #
 def lisp_hash_password(plaintext):
-    ciphertext = hmac.new("lispers.net", plaintext, hashlib.sha1).hexdigest()
+    p = plaintext.encode()
+    ciphertext = hmac.new(b"lispers.net", p, hashlib.sha1).hexdigest()
     return(ciphertext)
 #enddef
 
