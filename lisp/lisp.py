@@ -1487,7 +1487,8 @@ def lisp_get_interface_address(device):
 # situation testing application and xTR in the same system.
 #
 def lisp_get_input_interface(packet):
-    macs = lisp_format_packet(packet[0:12]).replace(" ", "")
+    p = lisp_format_packet(packet[0:12]).decode()
+    macs = p.replace(" ", "")
     da = macs[0:12]
     sa = macs[12::]
     
@@ -1919,7 +1920,7 @@ class lisp_packet(object):
             outer += self.outer_dest.pack_address()
             outer = lisp_ip_checksum(outer)
         elif (self.outer_version == 6):
-            outer = ""
+            outer = b""
 #           short = 6 << 12
 #           short |= self.outer_tos << 4
 #           short = socket.htons(short)
@@ -2391,10 +2392,10 @@ class lisp_packet(object):
         #
         if (self.outer_version == 4 or self.inner_version == 4):
             if (lisp_is_macos()):
-                packet = packet[0:2] + packet[3] + packet[2] + packet[4:6] + \
-                    packet[7] + packet[6] + packet[8::]
+                packet = packet[0:2] + packet[3:4] + packet[2:3] + \
+                    packet[4:6] + packet[7:8] + packet[6:7] + packet[8::]
             else:
-                packet = packet[0:2] + packet[3] + packet[2] + packet[4::]
+                packet = packet[0:2] + packet[3:4] + packet[2:3] + packet[4::]
             #endif
         #endif
         return(packet)
@@ -2462,7 +2463,7 @@ class lisp_packet(object):
     #enddef
 
     def is_lisp_packet(self, packet):
-        udp = (struct.unpack("B", packet[9])[0] == LISP_UDP_PROTOCOL)
+        udp = (struct.unpack("B", packet[9:10])[0] == LISP_UDP_PROTOCOL)
         if (udp == False): return(False)
 
         port = struct.unpack("H", packet[22:24])[0]
@@ -2733,7 +2734,7 @@ class lisp_packet(object):
         version = self.inner_version
         hashval = 0
         if (version == 4):
-            protocol = struct.unpack("B", packet[9])[0]
+            protocol = struct.unpack("B", packet[9:10])[0]
             if (self.inner_is_fragment): return(protocol)
             if (protocol in [6, 17]):
                 hashval = protocol
@@ -2742,7 +2743,7 @@ class lisp_packet(object):
             #endif
         #endif
         if (version == 6):
-            protocol = struct.unpack("B", packet[6])[0]
+            protocol = struct.unpack("B", packet[6:7])[0]
             if (protocol in [6, 17]):
                 hashval = protocol
                 hashval += struct.unpack("I", packet[40:44])[0]
@@ -2905,7 +2906,7 @@ class lisp_packet(object):
             packet = packet[36::] if self.outer_version == 4 else packet[56::]
         #endif
 
-        protocol = packet[9] if self.inner_version == 4 else packet[6]
+        protocol = packet[9:10] if self.inner_version == 4 else packet[6:7]
         protocol = struct.unpack("B", protocol)[0]
 
         flow += " {} -> {}, len/tos/ttl/prot {}/{}/{}/{}"
@@ -3463,7 +3464,7 @@ class lisp_keys(object):
         if (type(r) != int): r = int(binascii.hexlify(r), 16)
         context = "0001" + "lisp-crypto" + lisp_hex_string(l ^ r) + "0100"
 
-        key_material = hmac.new(context, data, alg).hexdigest()
+        key_material = hmac.new(context.encode(), data, alg).hexdigest()
         key_material = int(key_material, 16)
 
         #
@@ -3880,7 +3881,7 @@ class lisp_map_register(object):
 
     def zero_auth(self, packet):
         offset = struct.calcsize("I") + struct.calcsize("QHH")
-        auth_data = ""
+        auth_data = b""
         auth_len = 0
         if (self.alg_id == LISP_NONE_ALG_ID): return(packet)
         if (self.alg_id == LISP_SHA_1_96_ALG_ID):
@@ -3970,7 +3971,7 @@ class lisp_map_register(object):
                     return([None, None])
                 #endif
                 auth1, auth2, auth3 = struct.unpack("QQI", packet[:auth_len])
-                auth4 = ""
+                auth4 = b""
             elif (self.alg_id == LISP_SHA_256_128_ALG_ID):
                 format_size = struct.calcsize("QQQQ")
                 if (auth_len < format_size):
@@ -4355,7 +4356,7 @@ class lisp_map_request(object):
         json_len = socket.htons(len(json_string))
         packet = struct.pack("HBBBBHH", lcaf_afi, 0, 0, lcaf_type, 0, lcaf_len,
             json_len)
-        packet += json_string
+        packet += json_string.encode()
         packet += struct.pack("H", 0)
         return(packet)
     #enddef
@@ -5596,12 +5597,12 @@ class lisp_rloc_record(object):
 
     def encode_lcaf(self):
         lcaf_afi = socket.htons(LISP_AFI_LCAF)
-        gpkt = "" 
+        gpkt = b"" 
         if (self.geo):
             gpkt = self.geo.encode_geo()
         #endif
 
-        epkt = ""
+        epkt = b""
         if (self.elp):
             elp_recs = ""
             for elp_node in self.elp.elp_nodes:
@@ -5621,7 +5622,7 @@ class lisp_rloc_record(object):
             epkt += elp_recs
         #endif
             
-        rpkt = ""
+        rpkt = b""
         if (self.rle):
             rle_recs = ""
             for rle_node in self.rle.rle_nodes:
@@ -5630,7 +5631,7 @@ class lisp_rloc_record(object):
                 rle_recs += rle_node.address.pack_address()
                 if (rle_node.rloc_name):
                     rle_recs += struct.pack("H", socket.htons(LISP_AFI_NAME))
-                    rle_recs += rle_node.rloc_name + "\0"
+                    rle_recs += (rle_node.rloc_name + "\0").encode()
                 #endif
             #endfor
 
@@ -5640,20 +5641,20 @@ class lisp_rloc_record(object):
             rpkt += rle_recs
         #endif
 
-        jpkt = ""
+        jpkt = b""
         if (self.json):
             jpkt = self.encode_json(self.json)
         #endif
 
-        spkt = ""
+        spkt = b""
         if (self.rloc.is_null() == False and self.keys and self.keys[1]): 
             spkt = self.keys[1].encode_lcaf(self.rloc)
         #endif
 
-        npkt = ""
+        npkt = b""
         if (self.rloc_name):
             npkt += struct.pack("H", socket.htons(LISP_AFI_NAME))
-            npkt += self.rloc_name + "\0"
+            npkt += (self.rloc_name + "\0").encode()
         #endif
 
         apkt_len = len(gpkt) + len(epkt) + len(rpkt) + len(spkt) + 2 + \
@@ -6335,7 +6336,7 @@ class lisp_info(object):
                 packet += struct.pack("H", 0)
             else:
                 packet += struct.pack("H", socket.htons(LISP_AFI_NAME))
-                packet += self.hostname + "\0"
+                packet += (self.hostname + "\0").encode()
             #endif
             return(packet)
         #endif
@@ -6743,7 +6744,7 @@ def lisp_ipc(packet, send_socket, node):
         segment = packet[offset:segment_len+offset]
 
         try:
-            send_socket.sendto(segment, node)
+            send_socket.sendto(segment.encode(), node)
             lprint("Send IPC {}-out-of-{} byte to {} succeeded".format( \
                 len(segment), len(packet), node))
             retry_count = 0
@@ -6780,10 +6781,10 @@ def lisp_ipc(packet, send_socket, node):
 def lisp_format_packet(packet):
     packet = binascii.hexlify(packet)
     offset = 0
-    new = ""
+    new = b""
     length = len(packet) * 2
     while (offset < length):
-        new += packet[offset:offset+8] + " "
+        new += packet[offset:offset+8] + b" "
         offset += 8
         length -= 4
     #endfor
@@ -6827,7 +6828,7 @@ def lisp_send(lisp_sockets, dest, port, packet):
     #
     set_ttl = (LISP_RLOC_PROBE_TTL == 128)
     if (set_ttl):
-        lisp_type = struct.unpack("B", packet[0])[0]
+        lisp_type = struct.unpack("B", packet[0:1])[0]
         set_ttl = (lisp_type in [0x12, 0x28])
         if (set_ttl): lisp_set_ttl(lisp_socket, LISP_RLOC_PROBE_TTL)
     #endif
@@ -6871,7 +6872,7 @@ def lisp_receive_segments(lisp_socket, packet, source, total_length):
         try: segment = lisp_socket.recvfrom(9000)
         except: return([False, None])
         
-        segment = segment[0]
+        segment = segment[0].decode()
 
         #
         # The sender gave up and sent a new message that made it to us, last
@@ -6898,7 +6899,8 @@ def lisp_receive_segments(lisp_socket, packet, source, total_length):
 # lisp_bit_stuff
 #
 # For every element in the array, insert a 0x40 ("@"). This is a bit-stuffing
-# procedure. Only look array elemsnts with index 2 and above.
+# procedure. Only look at array elements with index 2 and above. Caller
+# passes a string (and not a py3 byte string array).
 #
 def lisp_bit_stuff(payload):
     lprint("Bit-stuffing, found {} segments".format(len(payload)))
@@ -6946,7 +6948,7 @@ def lisp_receive(lisp_socket, internal):
 
             if (port == LISP_DATA_PORT):
                 do_log = lisp_data_plane_logging
-                packet_str = lisp_format_packet(packet[0:60]) + " ..."
+                packet_str = lisp_format_packet(packet[0:60]) + b" ..."
             else:
                 do_log = True
                 packet_str = lisp_format_packet(packet)
@@ -6965,7 +6967,7 @@ def lisp_receive(lisp_socket, internal):
         # sending socket interface.
         #
         assembled = False
-        data = packet_data[0]
+        data = packet_data[0].decode()
         loop = False
 
         while (assembled == False):
@@ -9080,9 +9082,9 @@ def lisp_hash_me(packet, alg_id, password, do_hex):
     #endif
 
     if (do_hex):
-        hashval = hmac.new(password, packet, hashalg).hexdigest()
+        hashval = hmac.new(password.encode(), packet, hashalg).hexdigest()
     else:
-        hashval = hmac.new(password, packet, hashalg).digest()
+        hashval = hmac.new(password.encode(), packet, hashalg).digest()
     #endif
     return(hashval)
 #enddef
@@ -11688,7 +11690,7 @@ class lisp_address(object):
 
     def pack_address(self):
         packet_format = self.packet_format()
-        packet = ""
+        packet = b""
         if (self.is_ipv4()): 
             packet = struct.pack(packet_format, socket.htonl(self.address))
         elif (self.is_ipv6()):
@@ -12889,6 +12891,12 @@ class lisp_rle(object):
 
 class lisp_json(object):
     def __init__(self, name, string, encrypted=False, ms_encrypt=False):
+
+        #
+        # Deal with py3.
+        #
+        if (type(string) == bytes): string = string.decode()
+
         self.json_name = name
         self.json_encrypted = False
         try:
@@ -13836,7 +13844,7 @@ class lisp_mapping(object):
         hashval = lisp_packet.hash_ports()
         if (inner_version == 4):
             for i in range(8+ls): 
-                hashval = hashval ^ struct.unpack("B", packet[i+12])[0]
+                hashval = hashval ^ struct.unpack("B", packet[i+12:i+13])[0]
             #endfor
         elif (inner_version == 6):
             for i in range(0, 32+ls, 4): 
@@ -15370,7 +15378,7 @@ def lisp_ipv4_input(packet):
     #
     # Check IGMP packet first. And don't do IP checksum and don't test TTL.
     #
-    if (ord(packet[9]) == 2): return([True, packet])
+    if (ord(packet[9:10]) == 2): return([True, packet])
 
     #
     # Now calculate checksum for verification.
@@ -17594,9 +17602,9 @@ def lisp_get_echo_nonce(rloc, rloc_str):
 #
 def lisp_decode_dist_name(packet):
     count = 0
-    dist_name = ""
+    dist_name = b""
 
-    while(packet[0:1] != "\0"):
+    while(packet[0:1] != b"\x00"):
         if (count == 255): return([None, None])
         dist_name += packet[0:1]
         packet = packet[1::]
@@ -17604,7 +17612,7 @@ def lisp_decode_dist_name(packet):
     #endwhile
 
     packet = packet[1::]
-    return(packet, dist_name)
+    return(packet, dist_name.decode())
 #enddef
 
 #
@@ -18880,7 +18888,7 @@ def lisp_is_rloc_probe_reply(lisp_type):
 # request or reply from ourselves, return packet pointer None and source None.
 #
 def lisp_is_rloc_probe(packet, rr):
-    udp = (struct.unpack("B", packet[9])[0] == 17)
+    udp = (struct.unpack("B", packet[9:10])[0] == 17)
     if (udp == False): return([packet, None, None, None])
 
     sport = struct.unpack("H", packet[20:22])[0]
@@ -18889,15 +18897,15 @@ def lisp_is_rloc_probe(packet, rr):
     if (is_lisp == False): return([packet, None, None, None])
 
     if (rr == 0):
-        probe = lisp_is_rloc_probe_request(packet[28])
+        probe = lisp_is_rloc_probe_request(packet[28:29])
         if (probe == False): return([packet, None, None, None])
     elif (rr == 1):
-        probe = lisp_is_rloc_probe_reply(packet[28])
+        probe = lisp_is_rloc_probe_reply(packet[28:29])
         if (probe == False): return([packet, None, None, None])
     elif (rr == -1):
-        probe = lisp_is_rloc_probe_request(packet[28])
+        probe = lisp_is_rloc_probe_request(packet[28:29])
         if (probe == False): 
-            probe = lisp_is_rloc_probe_reply(packet[28])
+            probe = lisp_is_rloc_probe_reply(packet[28:29])
             if (probe == False): return([packet, None, None, None])
         #endif
     #endif
@@ -18918,7 +18926,7 @@ def lisp_is_rloc_probe(packet, rr):
     #
     source = source.print_address_no_iid()
     port = socket.ntohs(struct.unpack("H", packet[20:22])[0])
-    ttl = struct.unpack("B", packet[8])[0] - 1
+    ttl = struct.unpack("B", packet[8:9])[0] - 1
     packet = packet[28::]
 
     r = bold("Receive(pcap)", False)
@@ -19468,7 +19476,7 @@ def lisp_is_decent_dns_suffix(dns_name):
 #
 def lisp_get_decent_index(eid):
     eid_str = eid.print_prefix()
-    hash_value = hmac.new("lisp-decent", eid_str, hashlib.sha256).hexdigest()
+    hash_value = hmac.new(b"lisp-decent", eid_str, hashlib.sha256).hexdigest()
 
     #
     # Get hash-length to modulate from LISP_DECENT_HASH_WIDTH in bytes.
@@ -19698,7 +19706,7 @@ def lisp_trace_append(packet, reason=None, ed="encap", lisp_socket=None,
         d = packet.inner_dest
         packet.inner_dest = packet.inner_source
         packet.inner_source = d
-#       df_flags = struct.unpack("B", headers[6])[0] & 0xbf
+#       df_flags = struct.unpack("B", headers[6:7])[0] & 0xbf
 #       headers = headers[0:6] + struct.pack("B", df_flags) + headers[7::]
     #endif
 
@@ -20033,13 +20041,13 @@ def lisp_process_igmp_packet(packet):
     #
     # Jump over IP header.
     #
-    header_offset = (struct.unpack("B", packet[0])[0] & 0x0f) * 4
+    header_offset = (struct.unpack("B", packet[0:1])[0] & 0x0f) * 4
 
     #
     # Check for IGMPv3 type value 0x22. Or process an IGMPv2 report.
     #
     igmp = packet[header_offset::]
-    igmp_type = struct.unpack("B", igmp[0])[0]
+    igmp_type = struct.unpack("B", igmp[0:1])[0]
 
     #
     # Maybe this is an IGMPv1 or IGMPv2 message so get group address. If 

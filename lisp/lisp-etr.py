@@ -391,7 +391,7 @@ def lisp_build_map_register_records(quiet, db, eid, group, ttl):
     #endfor
 
     count = 0
-    eid_records = ""
+    eid_records = b""
     for iid in [eid.instance_id] + eid.iid_list:
         eid_record = lisp.lisp_eid_record()
 
@@ -541,7 +541,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
 
         msl = ms_list[ms_dns_name]
         if (msl == []):
-            msl = ["", 0]
+            msl = [b"", 0]
             ms_list[ms_dns_name].append(msl)
         else:
             msl = ms_list[ms_dns_name][-1]
@@ -555,7 +555,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         # Otherwise, add static EID-prefixes into EID-records, unless a single
         # one is triggered.
         #
-        eid_records = ""
+        eid_records = b""
         if (db.dynamic_eid_configured()):
             for dyn_eid in list(db.dynamic_eids.values()):
                 eid = dyn_eid.dynamic_eid
@@ -581,7 +581,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         msl[0] += eid_records
 
         if (msl[1] == 20 or len(msl[0]) > mtu):
-            msl = ["", 0]
+            msl = [b"", 0]
             ms_list[ms_dns_name].append(msl)
         #endif
     #endfor
@@ -625,7 +625,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
             # Append EID-records and encode xtr-ID and site-ID at end of 
             # Map-Register.
             #
-            trailer = map_register.encode_xtr_id("")
+            trailer = map_register.encode_xtr_id(b"")
             eid_records = msl[0]
             packet = packet + eid_records + trailer
 
@@ -811,7 +811,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         key = ms_name
         if (decent):
             key = lisp.lisp_get_decent_dns_name_from_str(iid, group)
-            ms_list[key] = ["", 0]
+            ms_list[key] = [b"", 0]
         #endif
 
         if (len(ms_gm.sources) == 0): 
@@ -819,7 +819,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
             continue
         #endif
         for s in ms_gm.sources: 
-            ms_list[key] = ["", 0]
+            ms_list[key] = [b"", 0]
             entries.append([s, group, iid, key, rle, joinleave])
         #endfor
     #endfor
@@ -847,7 +847,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     #
     if (decent == False):
         for ms in list(lisp.lisp_map_servers_list.values()):
-            ms_list[ms.ms_name] = ["", 0]
+            ms_list[ms.ms_name] = [b"", 0]
         #endfor
     #endif
 
@@ -866,7 +866,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     #
     # Run through multicast entry array.
     #
-    eid_records = ""
+    eid_records = b""
     for source, group, iid, ms_dns_name, rle_addr, joinleave in entries:
 
         #
@@ -996,7 +996,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         # Append EID-records and encode xtr-ID and site-ID at end of 
         # Map-Register.
         #
-        trailer = map_register.encode_xtr_id("")
+        trailer = map_register.encode_xtr_id(b"")
         packet = packet + eid_records + trailer
 
         ms.map_registers_multicast_sent += 1
@@ -1040,7 +1040,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
     #
     # Check IGMP packet.
     #
-    protocol = struct.unpack("B", packet[9])[0]
+    protocol = struct.unpack("B", packet[9:10])[0]
     if (protocol == 2):
         entries = lisp.lisp_process_igmp_packet(packet)
         if (type(entries) != bool):
@@ -1065,7 +1065,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
     # not doing NAT-traversal. Otherwise, the kernel will do it when we 
     # receive the same packet on a raw socket (in lisp_etr_nat_data_plane()).
     #
-    if (struct.unpack("B", packet[0])[0] & 0xf0 == 0x40):
+    if (struct.unpack("B", packet[0:1])[0] & 0xf0 == 0x40):
         sport = socket.ntohs(struct.unpack("H", packet[20:22])[0])
         if (lisp.lisp_nat_traversal and sport == lisp.LISP_DATA_PORT): return
         packet = lisp.lisp_reassemble(packet)
@@ -1111,8 +1111,8 @@ def lisp_etr_data_plane(parms, not_used, packet):
         inner_ip = packet.packet[36::]
         inner_lisp = inner_ip[28::]
         ttl = -1
-        if (lisp.lisp_is_rloc_probe_request(inner_lisp[0])):
-            ttl = struct.unpack("B", inner_ip[8])[0] - 1
+        if (lisp.lisp_is_rloc_probe_request(inner_lisp[0:1])):
+            ttl = struct.unpack("B", inner_ip[8:9])[0] - 1
         #endif
         source = packet.outer_source.print_address_no_iid()
         lisp.lisp_parse_packet(lisp_send_sockets, inner_lisp, source, 0, ttl)
@@ -1311,8 +1311,8 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
         inner_ip = packet.packet
         inner_lisp = inner_ip[28::]
         ttl = -1
-        if (lisp.lisp_is_rloc_probe_request(inner_lisp[0])):
-            ttl = struct.unpack("B", inner_ip[8])[0] - 1
+        if (lisp.lisp_is_rloc_probe_request(inner_lisp[0:1])):
+            ttl = struct.unpack("B", inner_ip[8:9])[0] - 1
         #endif
         lisp.lisp_parse_packet(lisp_send_sockets, inner_lisp, source, 0, ttl)
         return
@@ -1436,7 +1436,7 @@ def lisp_etr_join_leave_process():
     ipigmp = [swap(0x46000020), swap(0x9fe60000), swap(0x0102d7cc), 
               swap(0x0acfc15a), swap(0xe00000fb), swap(0x94040000)]
 
-    packet = ""
+    packet = b""
     for l in ipigmp: packet += struct.pack("I", l)
 
     #
@@ -1642,7 +1642,7 @@ def lisp_etr_startup():
     # send to kernel to route them.
     #
     if (pytun != None):
-        lisp_mac_header = '\x00\x00\x86\xdd'
+        lisp_mac_header = b'\x00\x00\x86\xdd'
         device = "lispers.net"
         try:
             lisp_l2_socket = pytun.TunTapDevice(flags=pytun.IFF_TUN, 
@@ -1978,7 +1978,7 @@ while (True):
         if (port == lisp.LISP_DATA_PORT):
             lisp_etr_nat_data_plane(lisp_raw_socket, packet, source)
         else:
-            if (lisp.lisp_is_rloc_probe_request(packet[0])):
+            if (lisp.lisp_is_rloc_probe_request(packet[0:1])):
                 lisp.lprint("ETR ignoring RLOC-probe request, using pcap")
                 continue
             #endif
@@ -2028,7 +2028,7 @@ while (True):
         elif (opcode == "api"):
             lisp.lisp_process_api("lisp-etr", lisp_ipc_listen_socket, packet)
         else:
-            if (lisp.lisp_is_rloc_probe_request(packet[0])):
+            if (lisp.lisp_is_rloc_probe_request(packet[0:1])):
                 lisp.lprint("ETR ignoring RLOC-probe request, using pcap")
                 continue
             #endif
