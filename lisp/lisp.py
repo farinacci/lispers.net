@@ -6788,7 +6788,7 @@ def lisp_format_packet(packet):
         offset += 8
         length -= 4
     #endfor
-    return(new)
+    return(new.decode())
 #enddef
 
 #
