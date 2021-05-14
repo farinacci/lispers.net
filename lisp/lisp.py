@@ -1487,7 +1487,7 @@ def lisp_get_interface_address(device):
 # situation testing application and xTR in the same system.
 #
 def lisp_get_input_interface(packet):
-    p = lisp_format_packet(packet[0:12]).decode()
+    p = lisp_format_packet(packet[0:12])
     macs = p.replace(" ", "")
     da = macs[0:12]
     sa = macs[12::]
@@ -6776,7 +6776,8 @@ def lisp_ipc(packet, send_socket, node):
 #
 # lisp_format_packet
 #
-# Put a whitespace between every 4 bytes of a packet dump.
+# Put a whitespace between every 4 bytes of a packet dump. Returns string
+# and not byte string like supplied "packet" type.
 #
 def lisp_format_packet(packet):
     packet = binascii.hexlify(packet)
@@ -6948,7 +6949,7 @@ def lisp_receive(lisp_socket, internal):
 
             if (port == LISP_DATA_PORT):
                 do_log = lisp_data_plane_logging
-                packet_str = lisp_format_packet(packet[0:60]) + b" ..."
+                packet_str = lisp_format_packet(packet[0:60]) + " ..."
             else:
                 do_log = True
                 packet_str = lisp_format_packet(packet)
