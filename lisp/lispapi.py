@@ -69,7 +69,12 @@ VZ has MS: True
 import requests
 import json
 import os
-from builtins import str as uc
+
+#
+# Supress cert verfication warnings from requests library.
+#
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 REQ_TIMEOUT = 3
 
@@ -1455,7 +1460,7 @@ class api_init(object):
         #
         if (r.text.find("<html>") != -1): return(None)
 
-        data = r.text.encode()
+        data = str(r.text)
         return(json.loads(data))
     #enddef
 
@@ -1501,9 +1506,8 @@ class api_init(object):
         # Check for server error. That means the data is in html.
         #
         if (rtext.find("<html>") != -1): return(None)
-
-        data = json.loads(rtext)[0]
-        key = uc(command)
+        data = json.loads(str(rtext))[0]
+        key = str(command)
         if (key not in data): return(None)
 
         if (type(data) == dict):
@@ -1511,7 +1515,7 @@ class api_init(object):
             ascii_data = {}
             for array in data:
                 for key in array:
-                    ascii_data[key.encode()] = array[key].encode()
+                    ascii_data[str(key)] = str(array[key])
                 #endfor
             #endfor
         else:
@@ -1519,8 +1523,8 @@ class api_init(object):
             for label in data:
                 adata = {}
                 a_dict = list(label.values())[0]
-                for key in a_dict: adata[key.encode()] = a_dict[key].encode()
-                adata = { list(label.keys())[0].encode() : adata }
+                for key in a_dict: adata[str(key)] = str(a_dict[key])
+                adata = { str(list(label.keys())[0]) : adata }
                 ascii_data.append(adata)
             #endfor
         #endif
@@ -1529,7 +1533,7 @@ class api_init(object):
 
     def __walk_dict_array(self, udata, u_dict):
         for key in u_dict: 
-            value = uc(u_dict[key])
+            value = str(u_dict[key])
 
             #
             # Value field can be another dictionary array. Don't
@@ -1538,14 +1542,14 @@ class api_init(object):
             if (type(u_dict[key]) == dict): 
                 vdata = {}
                 value = u_dict[key]
-                for k in value: vdata[uc(k)] = uc(value[k])
+                for k in value: vdata[str(k)] = str(value[k])
                 value = vdata
             #endif
 
             #
             # Store 
             #
-            udata[uc(key)] = value
+            udata[str(key)] = value
         #endfor
     #enddef
 
@@ -1569,14 +1573,15 @@ class api_init(object):
                 #endfor
                 udata = l_array
             else:
-                udata = { uc(list(label.keys())[0]) : udata }
+                udata = { str(list(label.keys())[0]) : udata }
             #endif
             u_array.append(udata)
         #endfor
         udata = u_array
 
         unicode_data = {}
-        unicode_data[uc(command)] = udata[0] if was_dict else udata
+        unicode_data[str(command)] = udata[0] if was_dict else udata
+
         return(json.dumps(unicode_data))
     #enddef
 

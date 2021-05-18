@@ -3615,10 +3615,10 @@ def lisp_u2a_walk_dict_array(adata, a_dict):
         if (type(a_dict[key]) == dict):
             vdata = {}
             value = a_dict[key]
-            for k in value: vdata[k.encode()] = value[k].encode()
-            adata[key.encode()] = vdata
+            for k in value: vdata[str(k)] = str(value[k])
+            adata[str(key)] = vdata
         else:
-            adata[key.encode()] = a_dict[key].encode()
+            adata[str(key)] = str(a_dict[key])
         #endif
     #endfor
     return
@@ -3648,7 +3648,7 @@ def lisp_unicode_to_ascii(udata):
             #endfor
             adata = l_array
         else:
-            adata = { list(label.keys())[0].encode() : adata }
+            adata = { str(list(label.keys())[0]) : adata }
         #endif
         ascii_data.append(adata)
     #endfor
