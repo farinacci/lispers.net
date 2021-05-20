@@ -36,12 +36,6 @@ import os
 import copy
 from subprocess import getoutput
 import binascii
-try:
-    import pcappy
-except:
-    pass
-#endtry
-import pcapy
 
 #------------------------------------------------------------------------------
 
@@ -1071,11 +1065,13 @@ def lisp_rtr_pcap_thread(lisp_thread):
     # Enter receive loop.
     #
     if (lisp.lisp_is_python2()):
+        import pcappy
         pcap = pcappy.open_live(device, 9000, 0, 100)
         pcap.filter = pfilter
         pcap.loop(-1, lisp_rtr_pcap_process_packet, [device, lisp_thread])
     #endif
     if (lisp.lisp_is_python3()):
+        import pcapy
         pcap = pcapy.open_live(device, 9000, 0, 100)
         pcap.setfilter(pfilter)
         while(True):

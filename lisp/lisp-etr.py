@@ -39,12 +39,6 @@ try:
 except:
     pytun = None
 #endtry
-try:
-    import pcappy
-except:
-    pass
-#endtry
-import pcapy
 
 #------------------------------------------------------------------------------
 
@@ -1541,11 +1535,13 @@ def lisp_etr_process():
     # Enter receive loop.
     #
     if (lisp.lisp_is_python2()):
+        import pcappy
         pcap = pcappy.open_live(device, 1600, 0, 100)
         pcap.filter = pfilter
         pcap.loop(-1, lisp_etr_data_plane, [device, lisp_raw_socket])
     #endif
     if (lisp.lisp_is_python3()):
+        import pcapy
         pcap = pcapy.open_live(device, 1600, 0, 100)
         pcap.setfilter(pfilter)
         while(True):

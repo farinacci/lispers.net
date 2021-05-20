@@ -35,12 +35,6 @@ import time
 import os
 from subprocess import getoutput
 import struct
-try:
-    import pcappy
-except:
-    pass
-#endtry
-import pcapy
 
 #------------------------------------------------------------------------------
 
@@ -1127,6 +1121,7 @@ def lisp_itr_pcap_thread(device, pfilter, pcap_lock):
     lisp.lisp_set_exception()
 
     if (lisp.lisp_is_python2()):
+        import pcappy
         pcap_lock.acquire()
         pcap = pcappy.open_live(device, 9000, 0, 100)
         pcap_lock.release()
@@ -1134,6 +1129,7 @@ def lisp_itr_pcap_thread(device, pfilter, pcap_lock):
         pcap.loop(-1, lisp_itr_pcap_process_packet, device)
     #endif
     if (lisp.lisp_is_python3()):
+        import pcapy
         pcap_lock.acquire()
         pcap = pcapy.open_live(device, 9000, 0, 100)
         pcap_lock.release()
