@@ -862,11 +862,13 @@ def lisp_syntax_check(kv_pairs, clause):
 
         #
         # Check value in range, if value type are integers, otherwise match
-        # keyword type value.
+        # keyword type value. If value is a range, remove "-" and mask-len
+        # to see if lower range value is allowable in range.
         #
         if (len(kv_pairs[kw]) > 1):
             value_type = kv_pairs[kw][1]
             if (type(value_type) == int):
+                if (type(value) == str): value = value.split("-")[0]
                 value = int(value)
                 if (value < kv_pairs[kw][1] and value > kv_pairs[kw][2]):
                     new_clause += lisp_write_error(line, "invalid range value")
