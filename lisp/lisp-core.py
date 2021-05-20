@@ -2116,7 +2116,8 @@ def lisp_bottle_ipv4_process(bottle_port):
         bottle.run(host="0.0.0.0", port=bottle_port, server="lisp-ssl-server",
             fast=True)
     except:
-        bottle.run(host="0.0.0.0", port=bottle_port, fast=True)
+        lisp.lprint("Could not startup lisp-ssl-server, running insecurely")
+        bottle.run(host="0.0.0.0", port=bottle_port)
     #endtry
     return
 #enddef
@@ -2235,9 +2236,9 @@ def lisp_core_control_packet_process(lisp_ipc_control_socket, lisp_sockets):
         # For py3, decode from byte string array to string. Noop for py2.
         #
         if (len(packet) > 1): 
-            packet = lisp.lisp_bit_stuff(packet.decode())
+            packet = lisp.lisp_bit_stuff(packet)
         else:
-            packet = packet[0].decode()
+            packet = packet[0]
         #endif
 
         if (opcode != "control-packet"):

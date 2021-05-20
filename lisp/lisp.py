@@ -5581,7 +5581,7 @@ class lisp_rloc_record(object):
         json_len = socket.htons(len(json_string))
         packet = struct.pack("HBBBBHH", lcaf_afi, 0, 0, lcaf_type, kid,
             lcaf_len, json_len)
-        packet += json_string
+        packet += json_string.encode()
 
         #
         # If telemetry, store RLOC address in LCAF.
@@ -5604,7 +5604,7 @@ class lisp_rloc_record(object):
 
         epkt = b""
         if (self.elp):
-            elp_recs = ""
+            elp_recs = b""
             for elp_node in self.elp.elp_nodes:
                 afi = socket.htons(elp_node.address.afi)
                 flags = 0
@@ -5624,7 +5624,7 @@ class lisp_rloc_record(object):
             
         rpkt = b""
         if (self.rle):
-            rle_recs = ""
+            rle_recs = b""
             for rle_node in self.rle.rle_nodes:
                 afi = socket.htons(rle_node.address.afi)
                 rle_recs += struct.pack("HBBH", 0, 0, rle_node.level, afi)
@@ -5678,7 +5678,10 @@ class lisp_rloc_record(object):
         
         if (self.geo or self.elp or self.rle or self.keys or self.rloc_name \
             or self.json):
-            packet = packet[0:-2] + self.encode_lcaf()
+            try:
+                packet = packet[0:-2] + self.encode_lcaf()
+            except:
+                debug(lisp_format_packet(packet), lisp_format_packet(self.encode_lcaf()))
         else:
             packet += self.rloc.pack_address()
         #endif
@@ -6670,9 +6673,11 @@ def lisp_is_running(node):
 # packet goes to the lisp-core process and then it IPCs it to the appropriate
 # LISP component process.
 #
+# Returns a byte string.
+#
 def lisp_packet_ipc(packet, source, sport):
-    return(("packet@" + str(len(packet)) + "@" + source + "@" + str(sport) + \
-        "@" + packet))
+    header = "packet@{}@{}@{}@".format(str(len(packet)), source, str(sport))
+    return(header.encode() + packet)
 #enddef
 
 #
@@ -6681,8 +6686,11 @@ def lisp_packet_ipc(packet, source, sport):
 # Build IPC message for a packet that needs to be source from UDP port 4342.
 # Always sent by a LISP component process to the lisp-core process.
 #
+# Returns a byte string.
+#
 def lisp_control_packet_ipc(packet, source, dest, dport):
-    return("control-packet@" + dest + "@" + str(dport) + "@" + packet)
+    header = "control-packet@{}@{}@".format(dest, str(dport))
+    return(header.encode() + packet)
 #enddef
 
 #
@@ -6690,8 +6698,11 @@ def lisp_control_packet_ipc(packet, source, dest, dport):
 #
 # Build IPC message for a MAC, IPv4, or IPv6 data packet.
 #
+# Returns a byte string.
+#
 def lisp_data_packet_ipc(packet, source):
-    return("data-packet@" + str(len(packet)) + "@" + source + "@@" + packet)
+    header = "data-packet@{}@{}@@".format(str(len(packet)), source)
+    return(header.encode() + packet)
 #enddef
 
 #
@@ -6701,8 +6712,11 @@ def lisp_data_packet_ipc(packet, source):
 # have same number of parameters as the "packet@" IPC. So an intentional
 # double @ is put in after the source to indicate a null port.
 #
+# Returns a byte string.
+#
 def lisp_command_ipc(packet, source):
-    return("command@" + str(len(packet)) + "@" + source + "@@" + packet)
+    header = "command@{}@{}@@".format(str(len(packet)), source)
+    return(header.encode() + packet)
 #enddef
 
 #
@@ -6711,6 +6725,8 @@ def lisp_command_ipc(packet, source):
 # Build IPC message for a command message. Note this command IPC message must
 # have same number of parameters as the "packet@" IPC. So an intentional
 # double @ is put in after the source to indicate a null port.
+#
+# Returns a string (and not a byte-string).
 #
 def lisp_api_ipc(source, data):
     return("api@" + str(len(data)) + "@" + source + "@@" + data)
@@ -6744,7 +6760,8 @@ def lisp_ipc(packet, send_socket, node):
         segment = packet[offset:segment_len+offset]
 
         try:
-            send_socket.sendto(segment.encode(), node)
+            if (type(segment) == str): segment = segment.encode()
+            send_socket.sendto(segment, node)
             lprint("Send IPC {}-out-of-{} byte to {} succeeded".format( \
                 len(segment), len(packet), node))
             retry_count = 0
@@ -6901,12 +6918,12 @@ def lisp_receive_segments(lisp_socket, packet, source, total_length):
 #
 # For every element in the array, insert a 0x40 ("@"). This is a bit-stuffing
 # procedure. Only look at array elements with index 2 and above. Caller
-# passes a string (and not a py3 byte string array).
+# passes a byte string.
 #
 def lisp_bit_stuff(payload):
     lprint("Bit-stuffing, found {} segments".format(len(payload)))
-    packet = ""
-    for segment in payload: packet += segment + "\x40"
+    packet = b""
+    for segment in payload: packet += segment + b"\x40"
     return(packet[:-1])
 #enddef
 
@@ -6968,7 +6985,8 @@ def lisp_receive(lisp_socket, internal):
         # sending socket interface.
         #
         assembled = False
-        data = packet_data[0].decode()
+        data = packet_data[0]
+        if (type(data) == str): data = data.encode()
         loop = False
 
         while (assembled == False):
@@ -11710,7 +11728,7 @@ class lisp_address(object):
             addr2 = (addr & 0xffffffff)
             packet = struct.pack(packet_format, addr1, addr2)
         elif (self.is_dist_name()):
-            packet += self.address + "\0"
+            packet += (self.address + "\0").encode()
         #endif
         return(packet)
     #enddef
