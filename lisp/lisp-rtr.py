@@ -448,6 +448,15 @@ def lisp_rtr_fast_data_plane(packet):
     # Don't switch multicast for now.
     #
     if ((dest & 0xf0000000) == 0xe0000000): return(False)
+
+    #
+    # Check if LISP trace packet, have slow path process packet. Inner
+    # packet must be UDP and either source or destination port is 2434.
+    #
+    if (packet[9:10] == b'\x11'):
+        if (packet[20:22] == b'\x09\x82'): return(False)
+        if (packet[22:24] == b'\x09\x82'): return(False)
+    #endif
     
     #
     # Do map-cache lookup.
