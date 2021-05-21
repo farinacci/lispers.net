@@ -232,7 +232,10 @@ def parse_packet(nonce, packet):
 #
 def display_packet(jd):
     for segment in jd:
-        print("Path from {} to {}:".format(segment["se"], segment["de"]))
+        se = segment["se"] if (jd.index(segment) == 0) else bold(segment["se"])
+        de = bold(segment["de"]) if (jd.index(segment) == 0) else segment["de"]
+
+        print("Path from {} to {}:".format(se, de))
         for path in segment["paths"]:
             if ("ets" in path):
                 ts = path["ets"]
@@ -264,7 +267,6 @@ def display_packet(jd):
                 print("recent-rtts {}, recent-hops {}".format(r, h))
                 print("             recent-latencies {}".format(l))
             #endif
-                
         #endfor
         print("")
     #enfor
