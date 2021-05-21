@@ -68,6 +68,7 @@ lisp_rtr_source_rloc = None
 #
 lisp_rtr_fast_mode = (os.getenv("LISP_RTR_FAST_DATA_PLANE") != None)
 lisp_rtr_latency_debug = (os.getenv("LISP_RTR_LATENCY_DEBUG") != None)
+fb = None
 
 #------------------------------------------------------------------------------
 
@@ -371,8 +372,22 @@ def lisp_latency_debug(ts, msg):
 # lisp_address.address for other support functions to be used.
 #
 def lisp_fast_address_to_binary(a):
-    binary = ord(a[0]) << 24 | ord(a[1]) << 16 | ord(a[2]) << 8 | ord(a[3])
+    binary = ord(a[0:1]) << 24 | ord(a[1:2]) << 16 | ord(a[2:3]) << 8 | \
+        ord(a[3:4])
     return(binary)
+#enddef
+
+#
+# fb
+#
+# Stand for "fast bytes" so we can have code use the same syntax for py2 and
+# py3. At initialization time, we set fb to either fb_py2 or fb_py3.
+#
+def fb_py2(byte):
+    return(chr(byte))
+#enddef
+def fb_py3(byte):
+    return(bytes([byte]))
 #enddef
 
 #
@@ -413,7 +428,7 @@ def lisp_rtr_fast_data_plane(packet):
         if (packet[20:22] == b'\x10\xf5' or packet[22:24] == b'\x10\xf5'):
             srloc = packet[12:16]
             iid = packet[32:35]
-            iid = ord(iid[0]) << 16 | ord(iid[1]) << 8 | ord(iid[2])
+            iid = ord(iid[0:1]) << 16 | ord(iid[1:2]) << 8 | ord(iid[2:3])
             if (iid == 0xffffff): return(False)
             lisp_fast_debug("Decap", packet)
             packet = packet[36::]
@@ -432,7 +447,7 @@ def lisp_rtr_fast_data_plane(packet):
     #
     # Don't switch multicast for now.
     #
-    if ((dest & 0xe0000000) == 0xe0000000): return(False)
+    if ((dest & 0xf0000000) == 0xe0000000): return(False)
     
     #
     # Do map-cache lookup.
@@ -499,12 +514,17 @@ def lisp_rtr_fast_data_plane(packet):
         #
         outer = b'\x45\x00'
         length = len(packet) + 20 + 8 + 8
-        outer += bytes([(length >> 8) & 0xff, length & 0xff])
+        outer += fb((length >> 8) & 0xff)
+        outer += fb(length & 0xff)
         outer += b'\xff\xff\x40\x00\x10\x11\x00\x00'
-        outer += bytes([(srloc >> 24) & 0xff, (srloc >> 16) & 0xff,
-                        (srloc >> 8) & 0xff, srloc & 0xff])
-        outer += bytes([(drloc >> 24) & 0xff, (drloc >> 16) & 0xff,
-                        (drloc >> 8) & 0xff, drloc & 0xff])
+        outer += fb((srloc >> 24) & 0xff)
+        outer += fb((srloc >> 16) & 0xff)
+        outer += fb((srloc >> 8) & 0xff)
+        outer += fb(srloc & 0xff)
+        outer += fb((drloc >> 24) & 0xff)
+        outer += fb((drloc >> 16) & 0xff)
+        outer += fb((drloc >> 8) & 0xff)
+        outer += fb(drloc & 0xff)
         outer = lisp.lisp_ip_checksum(outer)
 
         #
@@ -512,10 +532,17 @@ def lisp_rtr_fast_data_plane(packet):
         #
         udplen = length - 20
         udplisp = b'\xff\x00' if (port == 4341) else b'\x10\xf5'
-        udplisp += bytes([(port >> 8) & 0xff, port & 0xff])
-        udplisp += bytes([(udplen >> 8) & 0xff, udplen & 0xff]) + b'\x00\x00'
+        udplisp += fb((port >> 8) & 0xff)
+        udplisp += fb(port & 0xff)
+        udplisp += fb((udplen >> 8) & 0xff)
+        udplisp += fb(udplen & 0xff)
+        udplisp += b'\x00'
+        udplisp += b'\x00'
+
         udplisp += b'\x08\xdf\xdf\xdf'
-        udplisp += bytes([(iid >> 16) & 0xff, (iid >> 8) & 0xff, iid & 0xff])
+        udplisp += fb((iid >> 16) & 0xff)
+        udplisp += fb((iid >> 8) & 0xff)
+        udplisp += fb(iid & 0xff)
         udplisp += b'\x00'
 
         #
@@ -1170,8 +1197,10 @@ def lisp_send_igmp_queries(lisp_raw_socket):
     ip = b"\x46\xc0\x00\x24\x00\x00\x40\x00\x01\x02\x00\x00"
     myrloc = lisp.lisp_myrlocs[0]
     rloc = myrloc.address
-    ip += bytes([(rloc >> 24) & 0xff, (rloc >> 16) & 0xff, (rloc >> 8) & 0xff,
-                 rloc & 0xff])
+    ip += fb((rloc >> 24) & 0xff)
+    ip += fb((rloc >> 16) & 0xff)
+    ip += fb((rloc >> 8) & 0xff)
+    ip += fb(rloc & 0xff)
     ip += b"\xe0\x00\x00\x01"
     ip += b"\x94\x04\x00\x00"
     ip = lisp.lisp_ip_checksum(ip, 24)
@@ -1294,7 +1323,7 @@ def lisp_rtr_startup():
     global lisp_ipc_listen_socket, lisp_send_sockets, lisp_ephem_listen_socket
     global lisp_raw_socket, lisp_raw_v6_socket, lisp_threads
     global lisp_ipc_punt_socket, lisp_trace_listen_socket
-    global lisp_rtr_source_rloc
+    global lisp_rtr_source_rloc, fb
 
     lisp.lisp_i_am("rtr")
     lisp.lisp_set_exception()
@@ -1358,6 +1387,11 @@ def lisp_rtr_startup():
         socket.IPPROTO_RAW)
     lisp_raw_socket.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
     lisp_send_sockets.append(lisp_raw_socket)
+
+    #
+    # For using chr() versus bytes([]) for py2/py3 differences.
+    #
+    if (lisp_rtr_fast_mode): fb = fb_py2 if lisp.lisp_is_python2() else fb_py3
 
     #
     # Open up a listen socket on the LISP-Trace port so the RTR can cache
