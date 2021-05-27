@@ -5681,7 +5681,8 @@ class lisp_rloc_record(object):
             try:
                 packet = packet[0:-2] + self.encode_lcaf()
             except:
-                debug(lisp_format_packet(packet), lisp_format_packet(self.encode_lcaf()))
+                lprint("Could not encode LCAF for RLOC-record")
+            #endtry
         else:
             packet += self.rloc.pack_address()
         #endif
