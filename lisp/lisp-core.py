@@ -246,6 +246,7 @@ def lisp_get_api_data(data_structure, data):
     
     opcode, source, port, output = lisp.lisp_receive(lisp_ipc_socket, True)
     lisp.lisp_ipc_lock.release()
+    output = output.decode()
     return(output)
 #enddef
 
@@ -2224,11 +2225,11 @@ def lisp_core_control_packet_process(lisp_ipc_control_socket, lisp_sockets):
     while (True):
         try: packet_data = lisp_ipc_control_socket.recvfrom(9000)
         except: return(["", "", "", ""])
-        data = packet_data[0].split("@")
+        data = packet_data[0].split(b"@")
         source = packet_data[1]
 
-        opcode = data[0]
-        dest = data[1]
+        opcode = data[0].decode()
+        dest = data[1].decode()
         port = int(data[2])
         packet = data[3::]
 
@@ -2242,7 +2243,7 @@ def lisp_core_control_packet_process(lisp_ipc_control_socket, lisp_sockets):
         #endif
 
         if (opcode != "control-packet"):
-            lisp.lprint(("lisp_core_control_packet_process() received" + \
+            lisp.lprint(("lisp_core_control_packet_process() received " + \
                 "unexpected control-packet, message ignored"))
             continue
         #endif

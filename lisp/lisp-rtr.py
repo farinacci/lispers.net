@@ -318,11 +318,11 @@ def lisp_fast_debug(sred, packet):
     if (lisp.lisp_data_plane_logging == False): return
 
     if (sred in ["Send", "Receive"]):
-        p = binascii.hexlify(packet[0:20])
+        p = binascii.hexlify(packet[0:20]).decode()
         lisp.lprint("Fast-{}: ip {} {} {} {} {}".format(sred, p[0:8], p[8:16],
             p[16:24], p[24:32], p[32:40]))
     elif (sred in ["Encap", "Decap"]):
-        p = binascii.hexlify(packet[0:36])
+        p = binascii.hexlify(packet[0:36]).decode()
         lisp.lprint("Fast-{}: ip {} {} {} {} {}, udp {} {}, lisp {} {}". \
             format(sred, p[0:8], p[8:16], p[16:24], p[24:32], p[32:40],
             p[40:48], p[48:56], p[56:64], p[64:72]))
@@ -1111,7 +1111,8 @@ def lisp_rtr_pcap_thread(lisp_thread):
         pcap = pcapy.open_live(device, 9000, 0, 100)
         pcap.setfilter(pfilter)
         while(True):
-            header, packet = pcap.next()     
+            header, packet = pcap.next()
+            if (len(packet) == 0): continue
             lisp_rtr_pcap_process_packet([device, lisp_thread], None, packet)
         #endwhile
     #endif
@@ -1737,6 +1738,7 @@ while (True):
         if (source == ""): break
 
         if (opcode == "command"): 
+            packet = packet.decode()
             if (packet == "clear"): 
                 lisp.lisp_clear_map_cache()
                 continue
@@ -1748,6 +1750,7 @@ while (True):
             lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode, 
                 packet, "lisp-rtr", [lisp_rtr_commands])
         elif (opcode == "api"):
+            packet = packet.decode()
             lisp.lisp_process_api("lisp-rtr", lisp_ipc_listen_socket, packet)
         elif (opcode == "data-packet"):
             lisp_rtr_data_plane(packet, "")

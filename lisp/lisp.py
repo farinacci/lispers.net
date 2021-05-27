@@ -6712,11 +6712,11 @@ def lisp_data_packet_ipc(packet, source):
 # have same number of parameters as the "packet@" IPC. So an intentional
 # double @ is put in after the source to indicate a null port.
 #
-# Returns a byte string.
+# Returns a byte string. Variable "ipc" is a string.
 #
-def lisp_command_ipc(packet, source):
-    header = "command@{}@{}@@".format(str(len(packet)), source)
-    return(header.encode() + packet)
+def lisp_command_ipc(ipc, source):
+    packet = "command@{}@{}@@".format(len(ipc), source) + ipc
+    return(packet.encode())
 #enddef
 
 #
@@ -6726,10 +6726,11 @@ def lisp_command_ipc(packet, source):
 # have same number of parameters as the "packet@" IPC. So an intentional
 # double @ is put in after the source to indicate a null port.
 #
-# Returns a string (and not a byte-string).
+# Returns a byte string. Variable "data" is a string.
 #
 def lisp_api_ipc(source, data):
-    return("api@" + str(len(data)) + "@" + source + "@@" + data)
+    packet = "api@" + str(len(data)) + "@" + source + "@@" + data
+    return(packet.encode())
 #enddef
 
 #
@@ -6738,6 +6739,9 @@ def lisp_api_ipc(source, data):
 # Send IPC message to internal AF_UNIX socket if LISP component is running. We
 # need to send in 15000 byte segments since the socket interface will not allow
 # to support more. And socket.setsockopt() won't alow to increase SO_SNDBUF.
+#
+# Variable "packet" is of type byte string. Caller must adhere. Since packet
+# is going out a socket interface (even if internal).
 #
 def lisp_ipc(packet, send_socket, node):
 
@@ -6749,7 +6753,7 @@ def lisp_ipc(packet, send_socket, node):
         return
     #endif
 
-    ipc_len = 1500 if (packet.find("control-packet") == -1) else 9000
+    ipc_len = 1500 if (packet.find(b"control-packet") == -1) else 9000
 
     offset = 0
     length = len(packet)
@@ -6890,14 +6894,15 @@ def lisp_receive_segments(lisp_socket, packet, source, total_length):
         try: segment = lisp_socket.recvfrom(9000)
         except: return([False, None])
         
-        segment = segment[0].decode()
+        segment = segment[0]
 
         #
         # The sender gave up and sent a new message that made it to us, last
         # partial packet must be dropped.
         #
-        if (segment.find("packet@") == 0):
-            seg = segment.split("@")
+        seg = segment.decode()
+        if (seg.find("packet@") == 0):
+            seg = seg.split("@")
             lprint("Received new message ({}-out-of-{}) while receiving " + \
                 "fragments, old message discarded", len(segment), 
                 seg[1] if len(seg) > 2 else "?")
@@ -6990,7 +6995,7 @@ def lisp_receive(lisp_socket, internal):
         loop = False
 
         while (assembled == False):
-            data = data.split("@")
+            data = data.split(b"@")
 
             if (len(data) < 4):
                 lprint("Possible fragment (length {}), from old message, " + \
@@ -6999,7 +7004,7 @@ def lisp_receive(lisp_socket, internal):
                 break
             #endif
 
-            opcode = data[0]
+            opcode = data[0].decode()
             try:
                 total_length = int(data[1])
             except:
@@ -7008,8 +7013,8 @@ def lisp_receive(lisp_socket, internal):
                 loop = True
                 break
             #endtry
-            source = data[2]
-            port = data[3]
+            source = data[2].decode()
+            port = data[3].decode()
 
             #
             # If any of the data payload has a 0x40 byte (which is "@" in
@@ -7043,9 +7048,9 @@ def lisp_receive(lisp_socket, internal):
 
             if (port == ""): port = "no-port"
             if (opcode == "command" and lisp_i_am_core == False):
-                index = packet.find(" {")
+                index = packet.find(b" {")
                 command = packet if index == -1 else packet[:index]
-                command = ": '" + command + "'"
+                command = ": '" + command.decode() + "'"
             else:
                 command = ""
             #endif
@@ -16620,6 +16625,8 @@ def lisp_valid_address_format(kw, value):
 #
 #     "<data-structure-name>%{<dictionary-array-of-parameters>}"
 #
+# Variable "data_structure" is a string and not a byte string. Caller converts.
+#
 def lisp_process_api(process, lisp_socket, data_structure):
     api_name, parms = data_structure.split("%")
 
@@ -19138,6 +19145,8 @@ def lisp_process_data_plane_stats(msg, lisp_sockets, lisp_port):
 #
 # If are an RTR, we can process the stats directly. If are an ITR we need
 # to send an IPC message the the lisp-etr process.
+#
+# Variable "msg" is a string and not a byte string. Caller converts.
 #
 def lisp_process_data_plane_decap_stats(msg, lisp_ipc_socket):
 

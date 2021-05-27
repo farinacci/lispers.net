@@ -441,6 +441,7 @@ while (True):
     if (source == ""): break
 
     if (opcode == "command"): 
+        packet = packet.decode()
         lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode, 
             packet, "lisp-ddt", [lisp_ddt_commands])
     else:

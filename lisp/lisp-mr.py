@@ -657,6 +657,7 @@ while (True):
     if (source == ""): break
 
     if (opcode == "command"): 
+        packet = packet.decode()
         if (packet == "clear"): 
             lisp_clear_referral_cache()
             continue

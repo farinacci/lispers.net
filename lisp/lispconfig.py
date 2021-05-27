@@ -903,6 +903,8 @@ def lisp_syntax_check(kv_pairs, clause):
 # Process commands in components (not the lisp-core process except for debug
 # commands).
 #
+# Variable "clause" is a string and not a byte string. Caller converts.
+#
 def lisp_process_command(lisp_socket, opcode, clause, process, command_set):
 
     #
@@ -979,8 +981,8 @@ def lisp_process_command(lisp_socket, opcode, clause, process, command_set):
         new_clause = command_processor(kv_pairs)
     #endif
 
-    packet = lisp.lisp_command_ipc(new_clause, process)
-    lisp.lisp_ipc(packet, lisp_socket, "lisp-core")
+    ipc = lisp.lisp_command_ipc(new_clause, process)
+    lisp.lisp_ipc(ipc, lisp_socket, "lisp-core")
     return
 #enddef
 
@@ -1554,17 +1556,18 @@ def lisp_process_show_command(lisp_socket, command):
         return(lisp_show_wrapper(output))
     #endif
 
-    command = lisp.lisp_command_ipc(command, "lisp-core")
+    ipc = lisp.lisp_command_ipc(command, "lisp-core")
 
     #
     # Critical section.
     #
     lisp.lisp_ipc_lock.acquire()
 
-    lisp.lisp_ipc(command, lisp_socket, process)
+    lisp.lisp_ipc(ipc, lisp_socket, process)
     lisp.lprint("Waiting for response to show command '{}'".format(command))
 
     opcode, source, port, output = lisp.lisp_receive(lisp_socket, True)
+    output = output.decode()
 
     lisp.lisp_ipc_lock.release()
 
@@ -1923,6 +1926,7 @@ def lisp_process_command_lines(lisp_socket, old, new, line):
                 lisp.lprint("Fatal IPC error to {}, source {}".format(process,
                     source))
             #endif
+            new_clause = new_clause.decode()
         #endif
 
         #
@@ -4428,6 +4432,8 @@ def lisp_show_dynamic_eid_command(parm):
 # lisp_clear_decap_stats
 #
 # Process user clear of ETR or RTR's decapsulation statistics.
+#
+# Variable "command" is a string and not a byte string. Caller converts.
 #
 def lisp_clear_decap_stats(command):
     stat_name = command.split("%")[1]

@@ -1513,9 +1513,11 @@ while (True):
     if (source == ""): break
 
     if (opcode == "command"): 
+        packet = packet.decode()
         lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode, 
             packet, "lisp-ms", [lisp_ms_commands, lisp.lisp_policy_commands])
     elif (opcode == "api"):
+        packet = packet.decode()
         lisp.lisp_process_api("lisp-ms", lisp_ipc_listen_socket, packet)
     else:
         lisp.lisp_parse_packet(lisp_send_sockets, packet, source, port)

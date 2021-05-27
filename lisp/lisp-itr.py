@@ -1277,6 +1277,8 @@ def lisp_itr_xtr_command(kv_pair):
 # request-nonce was received and we need to echo it or when this ITR requested
 # a nonce to be echoed, the ETR is telling us it has been echoed.
 #
+# Variable "ipc" is a string and not a byte string. Caller converts.
+#
 def lisp_itr_process_nonce_ipc(ipc):
     x, opcode, rloc_str, nonce = ipc.split("%")
     nonce = int(nonce, 16)
@@ -1533,6 +1535,7 @@ while (True):
         if (source == ""): break
 
         if (opcode == "command"): 
+            packet = packet.decode()
             if (packet == "clear"): 
                 lisp.lisp_clear_map_cache()
                 continue
@@ -1544,6 +1547,7 @@ while (True):
             lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode, 
                 packet, "lisp-itr", [lisp_itr_commands])
         elif (opcode == "api"):
+            packet = packet.decode()
             lisp.lisp_process_api("lisp-itr", lisp_ipc_listen_socket, packet)
         elif (opcode == "data-packet"):
             lisp_itr_data_plane(packet, "ipc")

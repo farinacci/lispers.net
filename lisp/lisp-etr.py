@@ -1690,7 +1690,9 @@ def lisp_etr_shutdown():
 #
 # Process IPC message from the lisp-itr process. It will be in the form of:
 #
-#      "learn%<eid-string>%<interface-name>"    
+#      "learn%<eid-string>%<interface-name>"
+#
+# Variable "ipc" is a string and not a byte string. Caller converts.
 #
 def lisp_etr_discover_eid(ipc):
     ipc = ipc.split("%")
@@ -1801,6 +1803,8 @@ def lisp_etr_discover_eid(ipc):
 # RLOC-probing has determined if the RTR has gone up or down. And therefore
 # if it should be registered to the mapping system.
 #
+# Variable "ipc" is a string and not a byte string. Caller converts.
+#
 def lisp_etr_process_rtr_updown(ipc):
     if (lisp.lisp_register_all_rtrs): return
 
@@ -1826,6 +1830,8 @@ def lisp_etr_process_rtr_updown(ipc):
 #
 # Process an nonce IPC message from the ITR. It wants to know when a nonce
 # is echoed from a remote ITR.
+#
+# Variable "ipc" is a string and not a byte string. Caller converts.
 #
 def lisp_etr_process_nonce_ipc(ipc):
     x, opcode, rloc_str, nonce = ipc.split("%")
@@ -2006,6 +2012,7 @@ while (True):
         if (source == ""): break
 
         if (opcode == "command"): 
+            packet = packet.decode()
             if (packet.find("learn%") != -1):
                 lisp_etr_discover_eid(packet)
             elif (packet.find("nonce%") != -1):
@@ -2022,6 +2029,7 @@ while (True):
                     opcode, packet, "lisp-etr", [lisp_etr_commands])
             #endif
         elif (opcode == "api"):
+            packet = packet.decode()
             lisp.lisp_process_api("lisp-etr", lisp_ipc_listen_socket, packet)
         else:
             if (lisp.lisp_is_rloc_probe_request(packet[0:1])):
