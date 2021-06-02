@@ -58,6 +58,7 @@ import curve25519
 from subprocess import getoutput
 import queue
 import distro
+import pprint
 
 #
 # For printing the lisp_rloc_probe_list{}.
@@ -816,6 +817,16 @@ def fprint(*args):
 def dprint(*args):
     if (lisp_data_plane_logging): lprint(*args)
     return
+#enddef
+
+#
+# cprint
+#
+# Print the class instance.
+#
+def cprint(instance):
+    print("{}:".format(instance))
+    pprint.pprint(instance.__dict__)
 #enddef
 
 #
