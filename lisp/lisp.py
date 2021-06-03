@@ -26,7 +26,6 @@ from __future__ import print_function
 from __future__ import division
 from future import standard_library
 standard_library.install_aliases()
-from builtins import chr
 from builtins import hex
 from builtins import str
 from builtins import range
@@ -1992,6 +1991,13 @@ class lisp_packet(object):
         ts = int(str(time.time() - ts).split(".")[1][0:6])
 
         #
+        # Chacha produced ciphertext in unicode for py2. Convert to raw-
+        # unicode-escape before proceeding, or else you can append to strings
+        # generated from different sources. Do this in do_icv() too.
+        #
+        ciphertext = ciphertext.encode("raw_unicode_escape")
+
+        #
         # GCM requires 16 bytes of an AEAD MAC tag at the end of the
         # ciphertext. Needed to interoperate with the Go implemenation of
         # AES-GCM. The MAC digest was computed above.
@@ -2623,13 +2629,18 @@ class lisp_packet(object):
             # Decrypt and continue processing inner header.
             #
             key.use_count += 1
-            packet, decrypted = self.decrypt(packet, header_len, key,
-                addr_str)
+            packet, decrypted = self.decrypt(packet, header_len, key, addr_str)
             if (decrypted == False): 
                 if (stats): stats[self.packet_error].increment(orig_len)
                 if (lisp_flow_logging): self.log_flow(False)
                 return(None)
             #endif
+
+            #
+            # Chacha produced plaintext in unicode for py2. Convert to raw-
+            # unicode-escape before proceedingl Do this in do_icv() too.
+            #
+            packet = packet.encode("raw_unicode_escape")
         #endif
 
         #
@@ -3369,7 +3380,7 @@ class lisp_keys(object):
     #enddef
 
     def key_length(self, key):
-        if (type(key) != str): key = self.normalize_pub_key(key)
+        if (type(key) == long): key = self.normalize_pub_key(key)
         return(old_div(len(key), 2))
     #enddef
 
@@ -3379,11 +3390,11 @@ class lisp_keys(object):
     #enddef
  
     def normalize_pub_key(self, key):
-        if (type(key) == str):
-            if (self.curve25519): return(binascii.hexlify(key))
+        if (type(key) == long):
+            key = lisp_hex_string(key).zfill(256)
             return(key)
         #endif
-        key = lisp_hex_string(key).zfill(256)
+        if (self.curve25519): return(binascii.hexlify(key))
         return(key)
     #enddef
 
@@ -3495,7 +3506,7 @@ class lisp_keys(object):
             hexlify = self.icv.binascii.hexlify
             nonce = hexlify(nonce)
             hash_output = poly(self.encrypt_key, self.icv_key, nonce, packet)
-            hash_output = hexlify(hash_output)
+            hash_output = hexlify(hash_output.encode("raw_unicode_escape"))
         else:
             key = binascii.unhexlify(self.icv_key)
             hash_output = hmac.new(key, packet, self.icv).hexdigest()
@@ -5857,7 +5868,7 @@ class lisp_rloc_record(object):
             #
             orig_packet = packet
             decode_key = lisp_keys(1)
-            packet = decode_key.decode_lcaf(orig_packet, lcaf_len, False)
+            packet = decode_key.decode_lcaf(orig_packet, lcaf_len)
             if (packet == None): return(None)
 
             #
@@ -5874,7 +5885,7 @@ class lisp_rloc_record(object):
             else:
                 key = lisp_keys(1, do_poly=False, do_chacha=False)
             #endif
-            packet = key.decode_lcaf(orig_packet, lcaf_len, False)
+            packet = key.decode_lcaf(orig_packet, lcaf_len)
             if (packet == None): return(None)
 
             if (len(packet) < 2): return(None)
