@@ -1131,7 +1131,11 @@ lisp database-mapping {
 # inserted for the "?" when an ITR sends an RLOC-probe request, when the ETR
 # receives the RLOC-probe request, when the ETR sends the RLOC-probe reply,
 # and when the ITR receives the RLOC-probe reply. Timestamps inserted are
-# in UTC Linux format and assumes a synchronized clock between xTRs.    
+# in UTC Linux format and assumes a synchronized clock between xTRs.
+#
+# Note, that telemetry is not supported on an RTR. Meaning that the RTR
+# does not capture telemetry state from itself to an ETR. However, in the
+# direction from ITR to RTR, telemetry is supported in the ITR.    
 #            
 lisp json {
     json-name = telemetry
