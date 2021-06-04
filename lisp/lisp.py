@@ -9653,13 +9653,13 @@ def lisp_get_eid_hash(eid):
     eid_hash = ""
     for i in range(0, old_div(hash_mask_len, 16)):
         addr = address & 0xffff
-        addr = hex(addr)[2:-1]
+        addr = hex(addr)[2::]
         eid_hash = addr.zfill(4) + ":" + eid_hash
         address >>= 16
     #endfor
     if (hash_mask_len % 16 != 0): 
         addr = address & 0xff
-        addr = hex(addr)[2:-1]
+        addr = hex(addr)[2::]
         eid_hash = addr.zfill(2) + ":" + eid_hash
     #endif
     return(eid_hash[0:-1])
