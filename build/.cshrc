@@ -22,7 +22,6 @@ alias tr     'traceroute'
 #
 alias ver    'curl --silent --insecure -u root: https://localhost:8080/lisp/api/data/system | jq .'
 alias db     'curl --silent --insecure -u root: https://localhost:8080/lisp/api/data/database-mapping | jq .'
-alias mc     'curl --silent --insecure -u root: https://localhost:8080/lisp/api/data/map-cache | jq .'
 
 #
 # Shortcut to command-line utilities.
@@ -34,6 +33,7 @@ alias pslisp      './pslisp'
 alias log-packets './log-packets'
 alias rl          './RL'
 alias sl          './STOP-LISP'
+alias mc          './mc'
 
 #------------------------------------------------------------------------------
 
