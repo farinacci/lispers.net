@@ -126,6 +126,11 @@ hostname = blue(ver["hostname"])
 print("\nLISP Map-Cache for {}, hostname {}, release {}\n".format(host,
     hostname, ver["lisp-version"]))
 
+if (len(map_cache) == 0):
+    print("Map-Cache is empty")
+    exit(0)
+#endif    
+
 for mc in map_cache:
     eid = green("[{}]{}".format(mc["instance-id"], mc["eid-prefix"]))
     eid = "EID {},".format(eid)
@@ -150,7 +155,6 @@ for mc in map_cache:
     #endfor
     print()
 #endfor
-
 exit(0)
 
 #------------------------------------------------------------------------------
