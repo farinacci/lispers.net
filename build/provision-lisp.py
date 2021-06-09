@@ -63,7 +63,13 @@ def get_eids(lisp_config):
     lines = lisp_config.split("\n")
 
     iid = eid4 = eid6 = None
+    found_db = False
     for line in lines:
+        if (found_db == False):
+            found_db = (line.find("database-mapping") != -1)
+            continue
+        #endif
+
         if (iid == None and line.find("instance-id = ") != -1):
             iid = line.split(" = ")[-1]
         #endif
