@@ -137,6 +137,8 @@ for mc in map_cache:
     ttl = mc["ttl"]
     ttl = "never" if (ttl == "--") else ttl.split(".")[0] + "m"
     uptime = "uptime {}, ttl {}".format(mc["uptime"], ttl)
+    a = mc["action"]
+    uptime += ", action {}".format(bold(a)) if a != "no-action" else ""
     print(eid, uptime)
 
     for r in mc["rloc-set"]:
