@@ -21,6 +21,7 @@ alias tr     'traceroute'
 # Handy restful calls to lispers.net.
 #
 alias ver    'curl --silent --insecure -u root: https://localhost:8080/lisp/api/data/system | jq .'
+alias mcache  'curl --silent --insecure -u root: https://localhost:8080/lisp/api/data/map-cache | jq .'
 alias db     'curl --silent --insecure -u root: https://localhost:8080/lisp/api/data/database-mapping | jq .'
 
 #
@@ -29,11 +30,11 @@ alias db     'curl --silent --insecure -u root: https://localhost:8080/lisp/api/
 alias lig         './lig'
 alias rig         './rig'
 alias ltr         './ltr'
+alias mc          './mc'
 alias pslisp      './pslisp'
 alias log-packets './log-packets'
 alias rl          './RL'
 alias sl          './STOP-LISP'
-alias mc          './mc'
 
 #------------------------------------------------------------------------------
 

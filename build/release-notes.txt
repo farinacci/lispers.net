@@ -1,4 +1,14 @@
 
+                lispers.net Beta Release Version 0.570
+                --------------------------------------
+
+o Release date:
+
+o When a map-cache entry has an action other than no-action, boldface print it
+  in utility "mc".    
+
+-------------------------------------------------------------------------------
+
                 lispers.net Beta Release Version 0.569
                 --------------------------------------
 
