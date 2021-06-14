@@ -119,8 +119,16 @@ rig
     registered to.
 
 ltr
-    Runs ltr.pyo  and prompts for parameters. ltr traces an entire
+    Runs ltr.pyo and prompts for parameters. ltr traces an entire
     encapsulation path. Very useful tool. I suggest you always use it.
+
+mc
+    Runs lisp-mc.pyo to display the map-cache for the system the command
+    is sent to. The single parameter comes in multiple forms of supplying
+    username/password and host/port <user>:<pw>@<host>:<port>. <user> defaults
+    to "root", <pw> defaults to no password, <host> is required input and
+    <port> defaults to 8080. All innovations use https to curl the system
+    using the lispers.net API.
 
 log-packets [force]
     Toggles "itr = yes|no", "etr = yes|no", "rtr = yes|no" from the "lisp
