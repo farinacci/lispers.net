@@ -132,7 +132,9 @@ if (len(map_cache) == 0):
 #endif    
 
 for mc in map_cache:
-    eid = green("[{}]{}".format(mc["instance-id"], mc["eid-prefix"]))
+    eid = mc["eid-prefix"]
+    if ("group-prefix" in mc): eid = "({}, {})".format(eid, mc["group-prefix"])
+    eid = green("[{}]{}".format(mc["instance-id"], eid))
     eid = "EID {},".format(eid)
     ttl = mc["ttl"]
     ttl = "never" if (ttl == "--") else ttl.split(".")[0] + "m"
