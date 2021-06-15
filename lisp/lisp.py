@@ -28,6 +28,7 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import hex
 from builtins import str
+from builtins import int
 from builtins import range
 from builtins import object
 from past.utils import old_div
@@ -3380,7 +3381,7 @@ class lisp_keys(object):
     #enddef
 
     def key_length(self, key):
-        if (type(key) == long): key = self.normalize_pub_key(key)
+        if (isinstance(key, int)): key = self.normalize_pub_key(key)
         return(old_div(len(key), 2))
     #enddef
 
@@ -3390,7 +3391,7 @@ class lisp_keys(object):
     #enddef
  
     def normalize_pub_key(self, key):
-        if (type(key) == long):
+        if (isinstance(key, int)):
             key = lisp_hex_string(key).zfill(256)
             return(key)
         #endif
@@ -16771,13 +16772,24 @@ def lisp_gather_map_cache_data(mc, data):
 #
 def lisp_fill_rloc_in_json(rloc):
     r = {}
+    addr_str = None
     if (rloc.rloc_exists()): 
         r["address"] = rloc.rloc.print_address_no_iid()
+        addr_str = r["address"]
     #endif
 
     if (rloc.translated_port != 0):
         r["encap-port"] = str(rloc.translated_port)
+        addr_str +=  ":" + r["encap-port"] 
     #endif
+
+    if (addr_str and addr_str in lisp_crypto_keys_by_rloc_encap):
+        key = lisp_crypto_keys_by_rloc_encap[addr_str][1]
+        if (key != None and key.shared_key != None): 
+            r["encap-crypto"] = "crypto-" + key.cipher_suite_string
+        #endif
+    #endif
+        
     r["state"] = rloc.print_state()
     if (rloc.geo): r["geo"] = rloc.geo.print_geo()
     if (rloc.elp): r["elp"] = rloc.elp.print_elp(False)

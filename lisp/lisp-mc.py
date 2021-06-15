@@ -147,13 +147,16 @@ for mc in map_cache:
         uptime = "{} since {}".format(r["state"], r["uptime"])
         state = r["state"]
         state = green(state) if state == "up-state" else red(state)
-        rloc = "  RLOC {}, state {} since {}".format(red(r["address"]), state,
+        rloc = r["address"]
+        if ("encap-port" in r): rloc += ":{}".format(r["encap-port"])
+
+        rloc = "  RLOC {}, state {} since {}".format(red(rloc), state,
             r["uptime"])
-        if ("rloc-name" in r):rloc += ", {}".format(blue(r["rloc-name"]))
-        stats = "    {}".format(r["stats"])
+        if ("encap-crypto" in r): rloc += ", {}".format(r["encap-crypto"])
+        if ("rloc-name" in r): rloc += ", {}".format(blue(r["rloc-name"]))
 
         print(rloc)
-        print(stats)
+        print("    {}".format(r["stats"]))
         r, h, l = format_telemetry(r)
         print("    rtts {}, hops {}, latencies {}".format(r, h, l))
     #endfor
