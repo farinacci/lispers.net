@@ -1546,6 +1546,7 @@ def lisp_etr_process():
         pcap.setfilter(pfilter)
         while(True):
             header, packet = pcap.next()     
+            if (len(packet) == 0): continue
             lisp_etr_data_plane([device, lisp_raw_socket], None, packet)
         #endwhile
     #endif

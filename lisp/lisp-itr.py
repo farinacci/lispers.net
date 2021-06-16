@@ -1136,6 +1136,7 @@ def lisp_itr_pcap_thread(device, pfilter, pcap_lock):
         pcap.setfilter(pfilter)
         while(True):
             header, packet = pcap.next()     
+            if (len(packet) == 0): continue
             lisp_itr_pcap_process_packet(device, None, packet)
         #endwhile
     #endif
