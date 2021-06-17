@@ -330,7 +330,7 @@ class ChaCha(object):
     def _xor(self, stream, datain):
         dataout = []
         for i in range(min(len(stream), len(datain))):
-            dataout.append(chr(ord(stream[i])^ord(datain[i])))
+            dataout.append(chr(ord(stream[i:i+1])^ord(datain[i:i+1])))
         return ''.join(dataout)
     
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
