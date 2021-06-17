@@ -3341,7 +3341,7 @@ class lisp_keys(object):
             #endif
             self.local_private_key = random.randint(0, 2**128-1)
             key = lisp_hex_string(self.local_private_key).zfill(32)
-            self.curve25519 = curve25519.Private(key)
+            self.curve25519 = curve25519.Private(key.encode())
         else:
             self.local_private_key = random.randint(0, 0x1fff)
         #endif
@@ -3387,7 +3387,9 @@ class lisp_keys(object):
 
     def print_key(self, key):
         k = self.normalize_pub_key(key)
-        return("0x{}...{}({})".format(k[0:4], k[-4::], self.key_length(k)))
+        top = k[0:4].decode()
+        bot = k[-4::].decode()
+        return("0x{}...{}({})".format(top, bot, self.key_length(k)))
     #enddef
  
     def normalize_pub_key(self, key):
@@ -3495,9 +3497,11 @@ class lisp_keys(object):
         #
         ek = (key_material >> 128) & LISP_16_128_MASK
         ik = key_material & LISP_16_128_MASK
-        self.encrypt_key = lisp_hex_string(ek).zfill(32)
+        ek = lisp_hex_string(ek).zfill(32)
+        self.encrypt_key = ek.encode()
         fill = 32 if self.do_poly else 40
-        self.icv_key = lisp_hex_string(ik).zfill(fill)
+        ik = lisp_hex_string(ik).zfill(fill)
+        self.icv_key = ik.encode()
     #enddef
 
     def do_icv(self, packet, nonce):
@@ -3507,7 +3511,11 @@ class lisp_keys(object):
             hexlify = self.icv.binascii.hexlify
             nonce = hexlify(nonce)
             hash_output = poly(self.encrypt_key, self.icv_key, nonce, packet)
-            hash_output = hexlify(hash_output.encode("raw_unicode_escape"))
+            if (lisp_is_python2()):
+                hash_output = hexlify(hash_output.encode("raw_unicode_escape"))
+            else:
+                hash_output = hexlify(hash_output).decode()
+            #endif
         else:
             key = binascii.unhexlify(self.icv_key)
             hash_output = hmac.new(key, packet, self.icv).hexdigest()
@@ -3656,9 +3664,10 @@ class lisp_keys(object):
         if (self.curve25519):
             key = lisp_hex_string(self.remote_public_key)
             key = key.zfill(64)
-            new_key = ""
-            for i in range(0, len(key), 2): 
-                new_key += chr(int(key[i:i+2], 16))
+            new_key = b""
+            for i in range(0, len(key), 2):
+                byte = int(key[i:i+2], 16)
+                new_key += lisp_store_byte(byte)
             #endfor
             self.remote_public_key = new_key
         #endif
@@ -3667,6 +3676,22 @@ class lisp_keys(object):
         return(packet)
     #enddef
 #endclass
+
+#
+# lisp_store_byte
+#
+# We have to store a byte differently in a py2 string versus a py3 byte string.
+# Check if the code was compiled with either python2 or python3.
+#
+def lisp_store_byte_py2(byte):
+    return(chr(byte))
+#enddef
+def lisp_store_byte_py3(byte):
+    return(bytes([byte]))
+#enddef
+
+lisp_store_byte = lisp_store_byte_py2
+if (lisp_is_python3()): lisp_store_byte = lisp_store_byte_py3
 
 #
 # lisp_thread()
@@ -4331,10 +4356,10 @@ class lisp_map_request(object):
         source_eid = self.source_eid.print_address()
         target_eid = self.target_eid.print_address()
         sig_data = lisp_hex_string(self.nonce) + source_eid + target_eid
-        self.map_request_signature = privkey.sign(sig_data)
+        self.map_request_signature = privkey.sign(sig_data.encode())
         sig = binascii.b2a_base64(self.map_request_signature)
         sig = { "source-eid" : source_eid, "signature-eid" : sig_eid, 
-            "signature" : sig }
+            "signature" : sig.decode() }
         return(json.dumps(sig))
     #enddef
 
@@ -4361,6 +4386,7 @@ class lisp_map_request(object):
             
         if (good):
             try:
+                sig_data = sig_data.encode()
                 good = key.verify(self.map_request_signature, sig_data)
             except:
                 good = False
@@ -9809,7 +9835,7 @@ def lisp_verify_cga_sig(eid, rloc_record):
     # Note to use sha256 you need a curve of NIST256p.
     #
     try:
-        good = key.verify(sig, sig_data, hashfunc=hashlib.sha256)
+        good = key.verify(sig, sig_data.encode(), hashfunc=hashlib.sha256)
     except:
         lprint("  Signature library failed for signature data '{}'".format( \
             sig_data))
