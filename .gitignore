@@ -3,5 +3,6 @@ lisp/*pyc
 lisp/*pyo
 lisp/lisp-build-date.txt
 lisp/lisp-version.txt
+lisp/__pycache__    
 apps/*pyc
 apps/*pyo
