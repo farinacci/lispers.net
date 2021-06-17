@@ -23,6 +23,7 @@ alias tr     'traceroute'
 alias ver    'curl --silent --insecure -u root: https://localhost:8080/lisp/api/data/system | jq .'
 alias mcache  'curl --silent --insecure -u root: https://localhost:8080/lisp/api/data/map-cache | jq .'
 alias db     'curl --silent --insecure -u root: https://localhost:8080/lisp/api/data/database-mapping | jq .'
+alias packets './mc root@localhost | egrep "EID|packet-count"'
 
 #
 # Shortcut to command-line utilities.
