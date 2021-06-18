@@ -1128,12 +1128,13 @@ def lisp_hex_string ( integer_value ) :
 def lisp_get_timestamp ( ) :
  return ( time . time ( ) )
  if 65 - 65: OoOoOO00
- if 31 - 31: I11i * OoOoOO00 . IiII % Ii1I + Oo0Ooo
- if 47 - 47: O0 * I1IiiI * OoO0O00 . II111iiii
- if 95 - 95: Ii1I % IiII . O0 % I1Ii111
- if 68 - 68: Oo0Ooo . Oo0Ooo - I1ii11iIi11i / I11i . ooOoO0o / i1IIi
- if 12 - 12: I1ii11iIi11i * i1IIi * I11i
- if 23 - 23: OOooOOo / O0 / I1IiiI
+lisp_uptime = lisp_get_timestamp ( )
+if 31 - 31: I11i * OoOoOO00 . IiII % Ii1I + Oo0Ooo
+if 47 - 47: O0 * I1IiiI * OoO0O00 . II111iiii
+if 95 - 95: Ii1I % IiII . O0 % I1Ii111
+if 68 - 68: Oo0Ooo . Oo0Ooo - I1ii11iIi11i / I11i . ooOoO0o / i1IIi
+if 12 - 12: I1ii11iIi11i * i1IIi * I11i
+if 23 - 23: OOooOOo / O0 / I1IiiI
 def lisp_set_timestamp ( seconds ) :
  return ( time . time ( ) + seconds )
  if 49 - 49: I11i . o0oOOo0O0Ooo % oO0o / Ii1I
@@ -16314,94 +16315,83 @@ def lisp_timeout_map_cache_entry ( mc , delete_list ) :
   if 9 - 9: oO0o / i11iIiiIii + IiII / IiII - I11i
   if 87 - 87: iII111i
  O000oo = lisp_get_timestamp ( )
- if 37 - 37: oO0o + OoO0O00
- if 66 - 66: iIii1I11I1II1 * iIii1I11I1II1 + IiII % I1IiiI
- if 60 - 60: I1Ii111 . IiII / Oo0Ooo
- if 32 - 32: OoOoOO00 + Ii1I * iII111i % Oo0Ooo
- if 61 - 61: OoooooooOO % iII111i - O0
- if 62 - 62: iIii1I11I1II1
- if ( mc . last_refresh_time + mc . map_cache_ttl > O000oo ) :
+ iIIII1 = mc . last_refresh_time
+ if 11 - 11: I11i . I1IiiI * I1ii11iIi11i
+ if 44 - 44: I1Ii111
+ if 26 - 26: I1IiiI + OoO0O00 - I1Ii111 + OOooOOo % Oo0Ooo % oO0o
+ if 46 - 46: oO0o . O0 % iIii1I11I1II1 - iIii1I11I1II1 . O0
+ if 91 - 91: I1IiiI + IiII / OOooOOo - i1IIi % i11iIiiIii / iIii1I11I1II1
+ if 73 - 73: i11iIiiIii . I1ii11iIi11i * OoOoOO00
+ if 95 - 95: i1IIi + iIii1I11I1II1 . I1Ii111 / I1Ii111
+ if ( lisp_is_running ( "lisp-ms" ) and lisp_uptime + ( 5 * 60 ) >= O000oo ) :
+  if ( mc . action == LISP_NATIVE_FORWARD_ACTION ) :
+   iIIII1 = 0
+   lprint ( "Remove startup-mode native-forward map-cache entry" )
+   if 84 - 84: Oo0Ooo . OoO0O00 * IiII
+   if 95 - 95: OoO0O00
+   if 100 - 100: II111iiii
+   if 34 - 34: I11i % OOooOOo - iII111i % II111iiii
+   if 14 - 14: I11i * o0oOOo0O0Ooo % II111iiii
+   if 36 - 36: ooOoO0o - iIii1I11I1II1 / IiII + OoOoOO00
+   if 42 - 42: ooOoO0o + I1IiiI * iII111i / OoOoOO00 . i1IIi - OoooooooOO
+   if 8 - 8: iIii1I11I1II1 - Oo0Ooo + iII111i
+ if ( iIIII1 + mc . map_cache_ttl > O000oo ) :
   if ( mc . action == LISP_NO_ACTION ) : lisp_update_encap_port ( mc )
   return ( [ True , delete_list ] )
-  if 14 - 14: I1Ii111
-  if 95 - 95: II111iiii / o0oOOo0O0Ooo * OOooOOo
-  if 81 - 81: i11iIiiIii / iIii1I11I1II1
-  if 73 - 73: i11iIiiIii . I1ii11iIi11i * OoOoOO00
-  if 95 - 95: i1IIi + iIii1I11I1II1 . I1Ii111 / I1Ii111
+  if 40 - 40: o0oOOo0O0Ooo * I1IiiI
+  if 75 - 75: O0 * OOooOOo / ooOoO0o + I11i
+  if 56 - 56: I1IiiI % OoooooooOO % Oo0Ooo
+  if 19 - 19: i11iIiiIii - iIii1I11I1II1 . i1IIi . I1Ii111 / I1IiiI * I1Ii111
+  if 41 - 41: oO0o . o0oOOo0O0Ooo . I11i * OoOoOO00
  if ( lisp_nat_traversal and mc . eid . address == 0 and mc . eid . mask_len == 0 ) :
   return ( [ True , delete_list ] )
-  if 84 - 84: Oo0Ooo . OoO0O00 * IiII
-  if 95 - 95: OoO0O00
-  if 100 - 100: II111iiii
-  if 34 - 34: I11i % OOooOOo - iII111i % II111iiii
-  if 14 - 14: I11i * o0oOOo0O0Ooo % II111iiii
- i1i111Iiiiiii = lisp_print_elapsed ( mc . last_refresh_time )
+  if 16 - 16: oO0o
+  if 32 - 32: OoooooooOO
+  if 77 - 77: Oo0Ooo . i1IIi - I11i
+  if 98 - 98: O0
+  if 87 - 87: OoO0O00 % I1Ii111 - OOooOOo - II111iiii + iII111i
+ oo0ooOoOO0 = lisp_print_elapsed ( mc . uptime )
+ IIIIi1I1 = lisp_print_elapsed ( mc . last_refresh_time )
  o0oo0OO0oO = mc . print_eid_tuple ( )
- lprint ( "Map-cache entry for EID-prefix {} has {}, had uptime of {}" . format ( green ( o0oo0OO0oO , False ) , bold ( "timed out" , False ) , i1i111Iiiiiii ) )
- if 36 - 36: ooOoO0o - iIii1I11I1II1 / IiII + OoOoOO00
- if 42 - 42: ooOoO0o + I1IiiI * iII111i / OoOoOO00 . i1IIi - OoooooooOO
- if 8 - 8: iIii1I11I1II1 - Oo0Ooo + iII111i
- if 40 - 40: o0oOOo0O0Ooo * I1IiiI
- if 75 - 75: O0 * OOooOOo / ooOoO0o + I11i
+ lprint ( ( "Map-cache entry {} {}, had uptime {}, last-refresh-time {}" ) . format ( green ( o0oo0OO0oO , False ) , bold ( "timed out" , False ) , oo0ooOoOO0 , IIIIi1I1 ) )
+ if 32 - 32: Ii1I . OoO0O00
+ if 70 - 70: oO0o / iIii1I11I1II1 * II111iiii - iIii1I11I1II1 / ooOoO0o
+ if 26 - 26: I1ii11iIi11i * Ii1I / I1IiiI
+ if 10 - 10: I11i - iII111i / I1ii11iIi11i * i11iIiiIii % II111iiii % OoOoOO00
+ if 98 - 98: OoooooooOO * IiII . OoOoOO00
  delete_list . append ( mc )
  return ( [ True , delete_list ] )
- if 56 - 56: I1IiiI % OoooooooOO % Oo0Ooo
- if 19 - 19: i11iIiiIii - iIii1I11I1II1 . i1IIi . I1Ii111 / I1IiiI * I1Ii111
- if 41 - 41: oO0o . o0oOOo0O0Ooo . I11i * OoOoOO00
- if 16 - 16: oO0o
- if 32 - 32: OoooooooOO
- if 77 - 77: Oo0Ooo . i1IIi - I11i
- if 98 - 98: O0
- if 87 - 87: OoO0O00 % I1Ii111 - OOooOOo - II111iiii + iII111i
-def lisp_timeout_map_cache_walk ( mc , parms ) :
- iIi1II1IiI1I = parms [ 0 ]
- oo0ooOoOO0 = parms [ 1 ]
- if 22 - 22: Oo0Ooo - I1ii11iIi11i + I11i . oO0o
- if 85 - 85: iIii1I11I1II1 / Ii1I
- if 43 - 43: I1IiiI % I1Ii111 - oO0o . II111iiii / iIii1I11I1II1
- if 97 - 97: I1Ii111 + I1ii11iIi11i
- if ( mc . group . is_null ( ) ) :
-  o0o0O0O0Oooo0 , iIi1II1IiI1I = lisp_timeout_map_cache_entry ( mc , iIi1II1IiI1I )
-  if ( iIi1II1IiI1I == [ ] or mc != iIi1II1IiI1I [ - 1 ] ) :
-   oo0ooOoOO0 = lisp_write_checkpoint_entry ( oo0ooOoOO0 , mc )
-   if 21 - 21: O0 + o0oOOo0O0Ooo * OoooooooOO % IiII % I1ii11iIi11i
-  return ( [ o0o0O0O0Oooo0 , parms ] )
-  if 80 - 80: I11i
-  if 28 - 28: OoOoOO00 * OoooooooOO * i11iIiiIii
- if ( mc . source_cache == None ) : return ( [ True , parms ] )
- if 88 - 88: ooOoO0o + ooOoO0o / I1Ii111
- if 69 - 69: O0 * o0oOOo0O0Ooo + i1IIi * ooOoO0o . o0oOOo0O0Ooo
- if 46 - 46: Oo0Ooo / Oo0Ooo * IiII
- if 65 - 65: iIii1I11I1II1 * o0oOOo0O0Ooo - iII111i % II111iiii - I1ii11iIi11i
- if 65 - 65: I11i
- parms = mc . source_cache . walk_cache ( lisp_timeout_map_cache_entry , parms )
- return ( [ True , parms ] )
- if 92 - 92: iII111i . IiII + i1IIi % i1IIi
+ if 46 - 46: ooOoO0o / OOooOOo * I1Ii111 % OoOoOO00 . ooOoO0o - i1IIi
+ if 11 - 11: OoOoOO00 - II111iiii + I1Ii111 + IiII + OOooOOo - ooOoO0o
+ if 12 - 12: Ii1I - oO0o % I1ii11iIi11i / oO0o
+ if 14 - 14: OOooOOo * iII111i . IiII + i1IIi % i1IIi
  if 11 - 11: I1ii11iIi11i + iIii1I11I1II1 - I1Ii111 * iIii1I11I1II1 * IiII + oO0o
  if 6 - 6: I1Ii111 * OOooOOo + i1IIi - Ii1I / oO0o
  if 81 - 81: I1Ii111 % oO0o * i1IIi * OoooooooOO / Oo0Ooo
  if 70 - 70: I1IiiI
- if 35 - 35: i11iIiiIii
- if 59 - 59: ooOoO0o . iII111i - II111iiii
-def lisp_timeout_map_cache ( lisp_map_cache ) :
- I1iII1IIi1IiI = [ [ ] , [ ] ]
- I1iII1IIi1IiI = lisp_map_cache . walk_cache ( lisp_timeout_map_cache_walk , I1iII1IIi1IiI )
- if 30 - 30: o0oOOo0O0Ooo % iII111i - i11iIiiIii
- if 25 - 25: i11iIiiIii + OoOoOO00 + oO0o / Ii1I * Oo0Ooo + Oo0Ooo
- if 26 - 26: I1IiiI % I1ii11iIi11i + o0oOOo0O0Ooo / I1ii11iIi11i - I1IiiI
- if 55 - 55: OoooooooOO
- if 2 - 2: Oo0Ooo + I11i / OOooOOo + OOooOOo
- iIi1II1IiI1I = I1iII1IIi1IiI [ 0 ]
- for I11iiI1III in iIi1II1IiI1I : I11iiI1III . delete_cache ( )
- if 62 - 62: OOooOOo . iIii1I11I1II1 + I1IiiI / OOooOOo
+def lisp_timeout_map_cache_walk ( mc , parms ) :
+ iIi1II1IiI1I = parms [ 0 ]
+ iIiI1iiI1II1ii1 = parms [ 1 ]
+ if 43 - 43: OoOoOO00
+ if 47 - 47: I1Ii111 - Ii1I
+ if 44 - 44: II111iiii + OOooOOo % I1IiiI
+ if 34 - 34: o0oOOo0O0Ooo / I1ii11iIi11i - o0oOOo0O0Ooo / i11iIiiIii
+ if ( mc . group . is_null ( ) ) :
+  o0o0O0O0Oooo0 , iIi1II1IiI1I = lisp_timeout_map_cache_entry ( mc , iIi1II1IiI1I )
+  if ( iIi1II1IiI1I == [ ] or mc != iIi1II1IiI1I [ - 1 ] ) :
+   iIiI1iiI1II1ii1 = lisp_write_checkpoint_entry ( iIiI1iiI1II1ii1 , mc )
+   if 18 - 18: oO0o
+  return ( [ o0o0O0O0Oooo0 , parms ] )
+  if 43 - 43: I11i / OOooOOo + OOooOOo
+  if 62 - 62: OOooOOo . iIii1I11I1II1 + I1IiiI / OOooOOo
+ if ( mc . source_cache == None ) : return ( [ True , parms ] )
  if 90 - 90: OOooOOo
  if 29 - 29: OoOoOO00 - I1IiiI / oO0o + Oo0Ooo + I1Ii111 + O0
  if 65 - 65: oO0o
- oo0ooOoOO0 = I1iII1IIi1IiI [ 1 ]
- lisp_checkpoint ( oo0ooOoOO0 )
- return
  if 38 - 38: iIii1I11I1II1 / I1Ii111 + ooOoO0o . II111iiii - iIii1I11I1II1
  if 13 - 13: Ii1I
+ parms = mc . source_cache . walk_cache ( lisp_timeout_map_cache_entry , parms )
+ return ( [ True , parms ] )
  if 34 - 34: I1IiiI / iIii1I11I1II1
  if 35 - 35: oO0o / oO0o
  if 86 - 86: o0oOOo0O0Ooo . Oo0Ooo - Ii1I / i11iIiiIii
@@ -16409,88 +16399,87 @@ def lisp_timeout_map_cache ( lisp_map_cache ) :
  if 77 - 77: O0
  if 49 - 49: o0oOOo0O0Ooo / i11iIiiIii
  if 36 - 36: II111iiii
+def lisp_timeout_map_cache ( lisp_map_cache ) :
+ I1iII1IIi1IiI = [ [ ] , [ ] ]
+ I1iII1IIi1IiI = lisp_map_cache . walk_cache ( lisp_timeout_map_cache_walk , I1iII1IIi1IiI )
  if 78 - 78: OoO0O00 + iIii1I11I1II1 * i1IIi
  if 7 - 7: i11iIiiIii
  if 49 - 49: I1IiiI - oO0o % OOooOOo / O0 / II111iiii
  if 41 - 41: IiII % II111iiii
  if 99 - 99: IiII - O0
+ iIi1II1IiI1I = I1iII1IIi1IiI [ 0 ]
+ for I11iiI1III in iIi1II1IiI1I : I11iiI1III . delete_cache ( )
  if 59 - 59: iII111i % O0 + OOooOOo * ooOoO0o
  if 27 - 27: I1Ii111 % i11iIiiIii * I1IiiI
+ if 19 - 19: OoOoOO00 / o0oOOo0O0Ooo - iII111i / OoO0O00
+ if 12 - 12: I1ii11iIi11i - I11i * O0 % I1IiiI + O0 - II111iiii
+ iIiI1iiI1II1ii1 = I1iII1IIi1IiI [ 1 ]
+ lisp_checkpoint ( iIiI1iiI1II1ii1 )
+ return
+ if 13 - 13: iII111i / OOooOOo * i11iIiiIii / oO0o / OoooooooOO
+ if 89 - 89: Ii1I * Oo0Ooo / I1Ii111 * I1ii11iIi11i + O0 * Oo0Ooo
+ if 74 - 74: I11i . I11i
+ if 74 - 74: OoOoOO00 * ooOoO0o * I1Ii111
+ if 56 - 56: iIii1I11I1II1 * OoO0O00 - oO0o * Ii1I
+ if 62 - 62: i1IIi + I11i / OOooOOo - OoooooooOO % i1IIi . I1IiiI
+ if 13 - 13: O0 * iII111i
+ if 26 - 26: i1IIi - I1Ii111 - ooOoO0o
+ if 73 - 73: o0oOOo0O0Ooo . OoooooooOO
+ if 96 - 96: i1IIi - OOooOOo / I11i % OoOoOO00 - i11iIiiIii % II111iiii
+ if 47 - 47: I1Ii111 * iII111i
+ if 90 - 90: i1IIi * Ii1I . OoO0O00 % I11i * ooOoO0o . OOooOOo
+ if 76 - 76: iIii1I11I1II1 . i11iIiiIii * II111iiii - iII111i
+ if 51 - 51: I1IiiI
+ if 52 - 52: I1Ii111
+ if 82 - 82: iII111i + II111iiii
 def lisp_store_nat_info ( hostname , rloc , port ) :
  O0O0 = rloc . print_address_no_iid ( )
- IIII = "{} NAT state for {}, RLOC {}, port {}" . format ( "{}" ,
+ Ii1111i1iI1 = "{} NAT state for {}, RLOC {}, port {}" . format ( "{}" ,
  blue ( hostname , False ) , red ( O0O0 , False ) , port )
- if 23 - 23: iIii1I11I1II1 + I1ii11iIi11i * ooOoO0o - OOooOOo % O0
- iiii1i11 = lisp_nat_info ( O0O0 , hostname , port )
- if 67 - 67: i1IIi . oO0o
+ if 75 - 75: iII111i + i1IIi . I1IiiI / oO0o * II111iiii * i1IIi
+ I1i11i1I1 = lisp_nat_info ( O0O0 , hostname , port )
+ if 78 - 78: iII111i % I1ii11iIi11i . I11i
  if ( hostname not in lisp_nat_state_info ) :
-  lisp_nat_state_info [ hostname ] = [ iiii1i11 ]
-  lprint ( IIII . format ( "Store initial" ) )
+  lisp_nat_state_info [ hostname ] = [ I1i11i1I1 ]
+  lprint ( Ii1111i1iI1 . format ( "Store initial" ) )
   return ( True )
-  if 17 - 17: iII111i * I1IiiI % I1Ii111 + OoOoOO00 * ooOoO0o - O0
-  if 36 - 36: O0 / I11i % OoOoOO00 % OoOoOO00 * iII111i
-  if 99 - 99: o0oOOo0O0Ooo - iIii1I11I1II1 * OoO0O00 - oO0o * oO0o % IiII
-  if 44 - 44: I11i / I1ii11iIi11i
-  if 67 - 67: iIii1I11I1II1 / I1IiiI / I1IiiI . O0 * iII111i
-  if 26 - 26: i1IIi - I1Ii111 - ooOoO0o
+  if 58 - 58: OoooooooOO * I1Ii111 % OoO0O00
+  if 75 - 75: I11i - OOooOOo
+  if 88 - 88: Ii1I / i11iIiiIii
+  if 89 - 89: ooOoO0o
+  if 83 - 83: I11i . I11i * OOooOOo - OOooOOo
+  if 46 - 46: iIii1I11I1II1 . I1Ii111 % I1IiiI
  iII1ii1 = lisp_nat_state_info [ hostname ] [ 0 ]
  if ( iII1ii1 . address == O0O0 and iII1ii1 . port == port ) :
   iII1ii1 . uptime = lisp_get_timestamp ( )
-  lprint ( IIII . format ( "Refresh existing" ) )
+  lprint ( Ii1111i1iI1 . format ( "Refresh existing" ) )
   return ( False )
-  if 73 - 73: o0oOOo0O0Ooo . OoooooooOO
-  if 96 - 96: i1IIi - OOooOOo / I11i % OoOoOO00 - i11iIiiIii % II111iiii
-  if 47 - 47: I1Ii111 * iII111i
-  if 90 - 90: i1IIi * Ii1I . OoO0O00 % I11i * ooOoO0o . OOooOOo
-  if 76 - 76: iIii1I11I1II1 . i11iIiiIii * II111iiii - iII111i
-  if 51 - 51: I1IiiI
-  if 52 - 52: I1Ii111
- o0ooO0 = None
+  if 22 - 22: i1IIi * I11i + II111iiii + II111iiii
+  if 20 - 20: I11i
+  if 37 - 37: I1Ii111
+  if 19 - 19: I1ii11iIi11i / OOooOOo . I1IiiI / ooOoO0o + OoO0O00 + i11iIiiIii
+  if 80 - 80: OoO0O00 . O0 / Ii1I % I1Ii111 / iII111i * I1IiiI
+  if 41 - 41: O0 / OoooooooOO - i1IIi
+  if 6 - 6: i1IIi - I1ii11iIi11i % I1Ii111 - II111iiii / ooOoO0o / i11iIiiIii
+ III1 = None
  for iII1ii1 in lisp_nat_state_info [ hostname ] :
   if ( iII1ii1 . address == O0O0 and iII1ii1 . port == port ) :
-   o0ooO0 = iII1ii1
+   III1 = iII1ii1
    break
-   if 7 - 7: I11i % O0 * i11iIiiIii % I1Ii111 - I1Ii111 % Oo0Ooo
-   if 83 - 83: i1IIi
-   if 23 - 23: oO0o * II111iiii * i1IIi
- if ( o0ooO0 == None ) :
-  lprint ( IIII . format ( "Store new" ) )
+   if 3 - 3: OOooOOo * ooOoO0o / i11iIiiIii . OoO0O00 * ooOoO0o
+   if 58 - 58: i1IIi - OoO0O00 * II111iiii
+   if 92 - 92: ooOoO0o / I1Ii111 . iII111i
+ if ( III1 == None ) :
+  lprint ( Ii1111i1iI1 . format ( "Store new" ) )
  else :
-  lisp_nat_state_info [ hostname ] . remove ( o0ooO0 )
-  lprint ( IIII . format ( "Use previous" ) )
-  if 14 - 14: Ii1I - I11i / i1IIi * OoOoOO00 * ooOoO0o
-  if 78 - 78: iII111i % I1ii11iIi11i . I11i
- oo00O0oO000o = lisp_nat_state_info [ hostname ]
- lisp_nat_state_info [ hostname ] = [ iiii1i11 ] + oo00O0oO000o
+  lisp_nat_state_info [ hostname ] . remove ( III1 )
+  lprint ( Ii1111i1iI1 . format ( "Use previous" ) )
+  if 59 - 59: Ii1I - OoO0O00 % iII111i + I1ii11iIi11i * iII111i
+  if 51 - 51: ooOoO0o - Oo0Ooo / iII111i . I11i - Ii1I / OOooOOo
+ IiiII1i = lisp_nat_state_info [ hostname ]
+ lisp_nat_state_info [ hostname ] = [ I1i11i1I1 ] + IiiII1i
  return ( True )
- if 29 - 29: IiII . ooOoO0o . OOooOOo % I11i . I1Ii111
- if 75 - 75: OOooOOo % Oo0Ooo + iIii1I11I1II1 . I11i
- if 92 - 92: I1ii11iIi11i / ooOoO0o
- if 21 - 21: OoO0O00 % II111iiii / OoooooooOO
- if 4 - 4: i11iIiiIii + OoooooooOO * i1IIi * iIii1I11I1II1 - OOooOOo
- if 23 - 23: ooOoO0o + Oo0Ooo
- if 43 - 43: Ii1I
- if 87 - 87: OoO0O00
-def lisp_get_nat_info ( rloc , hostname ) :
- if ( hostname not in lisp_nat_state_info ) : return ( None )
- if 32 - 32: I11i
- O0O0 = rloc . print_address_no_iid ( )
- for iII1ii1 in lisp_nat_state_info [ hostname ] :
-  if ( iII1ii1 . address == O0O0 ) : return ( iII1ii1 )
-  if 78 - 78: ooOoO0o * iII111i
- return ( None )
- if 31 - 31: I1IiiI + OOooOOo . OoooooooOO
- if 24 - 24: ooOoO0o
- if 53 - 53: I1ii11iIi11i % OOooOOo
- if 92 - 92: I1IiiI / ooOoO0o
- if 5 - 5: OoooooooOO - oO0o
- if 52 - 52: I11i . OOooOOo * ooOoO0o / i11iIiiIii . OoO0O00 * ooOoO0o
- if 58 - 58: i1IIi - OoO0O00 * II111iiii
- if 92 - 92: ooOoO0o / I1Ii111 . iII111i
- if 59 - 59: Ii1I - OoO0O00 % iII111i + I1ii11iIi11i * iII111i
- if 51 - 51: ooOoO0o - Oo0Ooo / iII111i . I11i - Ii1I / OOooOOo
- if 4 - 4: II111iiii + OoOoOO00 . ooOoO0o - I11i . I1IiiI
- if 46 - 46: II111iiii
+ if 75 - 75: O0 + II111iiii
  if 38 - 38: OOooOOo % II111iiii
  if 82 - 82: i11iIiiIii . OoooooooOO % OoOoOO00 * O0 - I1Ii111
  if 78 - 78: OoOoOO00 % Ii1I % OOooOOo % Oo0Ooo % I11i . Ii1I
@@ -16498,229 +16487,205 @@ def lisp_get_nat_info ( rloc , hostname ) :
  if 89 - 89: I1Ii111
  if 29 - 29: I11i * ooOoO0o - OoooooooOO
  if 92 - 92: O0 % i1IIi / OOooOOo - oO0o
+def lisp_get_nat_info ( rloc , hostname ) :
+ if ( hostname not in lisp_nat_state_info ) : return ( None )
  if 83 - 83: o0oOOo0O0Ooo . OoO0O00 % iIii1I11I1II1 % OoOoOO00 - i11iIiiIii
-def lisp_build_info_requests ( lisp_sockets , dest , port ) :
- if ( lisp_nat_traversal == False ) : return
- if 71 - 71: I1ii11iIi11i - II111iiii / O0 % i1IIi + oO0o
+ O0O0 = rloc . print_address_no_iid ( )
+ for iII1ii1 in lisp_nat_state_info [ hostname ] :
+  if ( iII1ii1 . address == O0O0 ) : return ( iII1ii1 )
+  if 71 - 71: I1ii11iIi11i - II111iiii / O0 % i1IIi + oO0o
+ return ( None )
  if 73 - 73: OoooooooOO
  if 25 - 25: i1IIi . II111iiii . I1Ii111
  if 81 - 81: II111iiii + OoOoOO00 * II111iiii / iIii1I11I1II1 - Oo0Ooo % oO0o
  if 66 - 66: ooOoO0o % O0 + iIii1I11I1II1 * I1Ii111 - I1Ii111
  if 61 - 61: I1ii11iIi11i
- i1IiIi = [ ]
- IiiiIIiII = [ ]
+ if 12 - 12: OoO0O00
+ if 97 - 97: OOooOOo . Oo0Ooo . oO0o * i1IIi
+ if 7 - 7: Oo0Ooo
+ if 38 - 38: Oo0Ooo - I1ii11iIi11i
+ if 19 - 19: Ii1I * OoO0O00 / OoO0O00 . II111iiii % iIii1I11I1II1
+ if 61 - 61: I1ii11iIi11i * oO0o % iII111i + IiII + i11iIiiIii * I11i
+ if 3 - 3: Ii1I
+ if 71 - 71: iIii1I11I1II1 . OOooOOo / I11i / i1IIi
+ if 69 - 69: i1IIi / iII111i + Ii1I + I11i + IiII
+ if 86 - 86: Oo0Ooo
+ if 97 - 97: I1IiiI
+ if 91 - 91: ooOoO0o / oO0o * OOooOOo . II111iiii - I11i - I11i
+ if 5 - 5: O0 + OoooooooOO + i11iIiiIii * Oo0Ooo * OoOoOO00 . oO0o
+ if 6 - 6: OoO0O00 % Oo0Ooo % I1IiiI % o0oOOo0O0Ooo % O0 % Oo0Ooo
+ if 94 - 94: I11i . i1IIi / II111iiii + OOooOOo
+def lisp_build_info_requests ( lisp_sockets , dest , port ) :
+ if ( lisp_nat_traversal == False ) : return
+ if 64 - 64: I1IiiI % ooOoO0o
+ if 72 - 72: O0 * II111iiii % OoO0O00 - I1IiiI * OOooOOo
+ if 80 - 80: OOooOOo * I11i / OOooOOo - oO0o
+ if 18 - 18: i1IIi - OOooOOo - o0oOOo0O0Ooo - iIii1I11I1II1
+ if 72 - 72: OoooooooOO % I1IiiI . OoO0O00
+ if 28 - 28: II111iiii / iIii1I11I1II1 / iII111i - o0oOOo0O0Ooo . I1IiiI / O0
+ i1iIiII1iI1II = [ ]
+ iiIi1i = [ ]
  if ( dest == None ) :
   for iii1i in list ( lisp_map_resolvers_list . values ( ) ) :
-   IiiiIIiII . append ( iii1i . map_resolver )
-   if 60 - 60: ooOoO0o % Ii1I
-  i1IiIi = IiiiIIiII
-  if ( i1IiIi == [ ] ) :
+   iiIi1i . append ( iii1i . map_resolver )
+   if 6 - 6: OOooOOo . IiII / OoO0O00 * oO0o - I1Ii111 . OoOoOO00
+  i1iIiII1iI1II = iiIi1i
+  if ( i1iIiII1iI1II == [ ] ) :
    for oO00000oOO in list ( lisp_map_servers_list . values ( ) ) :
-    i1IiIi . append ( oO00000oOO . map_server )
-    if 33 - 33: OoO0O00 . II111iiii % iIii1I11I1II1
-    if 61 - 61: I1ii11iIi11i * oO0o % iII111i + IiII + i11iIiiIii * I11i
-  if ( i1IiIi == [ ] ) : return
+    i1iIiII1iI1II . append ( oO00000oOO . map_server )
+    if 85 - 85: i11iIiiIii + OoOoOO00
+    if 4 - 4: OOooOOo . OoO0O00 * II111iiii + OoO0O00 % Oo0Ooo
+  if ( i1iIiII1iI1II == [ ] ) : return
  else :
-  i1IiIi . append ( dest )
-  if 3 - 3: Ii1I
-  if 71 - 71: iIii1I11I1II1 . OOooOOo / I11i / i1IIi
-  if 69 - 69: i1IIi / iII111i + Ii1I + I11i + IiII
-  if 86 - 86: Oo0Ooo
-  if 97 - 97: I1IiiI
+  i1iIiII1iI1II . append ( dest )
+  if 60 - 60: OOooOOo . Ii1I
+  if 13 - 13: i1IIi . iII111i / OoOoOO00 . I1Ii111
+  if 65 - 65: oO0o % I1Ii111 % OoO0O00 . iIii1I11I1II1
+  if 38 - 38: IiII / I11i / IiII * iII111i
+  if 30 - 30: oO0o
  OOO0O0Oo0O0 = { }
  for OoO0oO in lisp_db_list :
   for OOOoOoo in OoO0oO . rloc_set :
    lisp_update_local_rloc ( OOOoOoo )
    if ( OOOoOoo . rloc . is_null ( ) ) : continue
    if ( OOOoOoo . interface == None ) : continue
-   if 91 - 91: ooOoO0o / oO0o * OOooOOo . II111iiii - I11i - I11i
+   if 30 - 30: IiII / OoO0O00
    IiI = OOOoOoo . rloc . print_address_no_iid ( )
    if ( IiI in OOO0O0Oo0O0 ) : continue
    OOO0O0Oo0O0 [ IiI ] = OOOoOoo . interface
-   if 5 - 5: O0 + OoooooooOO + i11iIiiIii * Oo0Ooo * OoOoOO00 . oO0o
-   if 6 - 6: OoO0O00 % Oo0Ooo % I1IiiI % o0oOOo0O0Ooo % O0 % Oo0Ooo
+   if 89 - 89: oO0o . OoOoOO00 . IiII / iIii1I11I1II1 . iIii1I11I1II1 / OoOoOO00
+   if 86 - 86: OoooooooOO - iIii1I11I1II1 . OoO0O00 * Ii1I / I1Ii111 + I1Ii111
  if ( OOO0O0Oo0O0 == { } ) :
   lprint ( 'Suppress Info-Request, no "interface = <device>" RLOC ' + "found in any database-mappings" )
-  if 94 - 94: I11i . i1IIi / II111iiii + OOooOOo
+  if 52 - 52: iIii1I11I1II1 % OoO0O00 - IiII % i11iIiiIii - o0oOOo0O0Ooo
   return
-  if 64 - 64: I1IiiI % ooOoO0o
-  if 72 - 72: O0 * II111iiii % OoO0O00 - I1IiiI * OOooOOo
-  if 80 - 80: OOooOOo * I11i / OOooOOo - oO0o
-  if 18 - 18: i1IIi - OOooOOo - o0oOOo0O0Ooo - iIii1I11I1II1
-  if 72 - 72: OoooooooOO % I1IiiI . OoO0O00
-  if 28 - 28: II111iiii / iIii1I11I1II1 / iII111i - o0oOOo0O0Ooo . I1IiiI / O0
+  if 25 - 25: Oo0Ooo - OOooOOo . i1IIi * OoOoOO00 / I11i / o0oOOo0O0Ooo
+  if 54 - 54: OoOoOO00 / i1IIi + OOooOOo - I1ii11iIi11i - I1IiiI * I1Ii111
+  if 91 - 91: OoooooooOO * OoooooooOO
+  if 27 - 27: ooOoO0o / I1IiiI * I1ii11iIi11i . o0oOOo0O0Ooo
+  if 30 - 30: o0oOOo0O0Ooo / i11iIiiIii
+  if 33 - 33: OOooOOo % OoooooooOO
  for IiI in OOO0O0Oo0O0 :
   i111IIiIiiI1 = OOO0O0Oo0O0 [ IiI ]
   OO0O00o0 = red ( IiI , False )
   lprint ( "Build Info-Request for private address {} ({})" . format ( OO0O00o0 ,
  i111IIiIiiI1 ) )
   ooO000OO = i111IIiIiiI1 if len ( OOO0O0Oo0O0 ) > 1 else None
-  for dest in i1IiIi :
+  for dest in i1iIiII1iI1II :
    lisp_send_info_request ( lisp_sockets , dest , port , ooO000OO )
-   if 16 - 16: ooOoO0o * oO0o . OoooooooOO
-   if 44 - 44: iIii1I11I1II1 * OOooOOo + OoO0O00 - OoooooooOO
-   if 13 - 13: Oo0Ooo . I11i . II111iiii
-   if 6 - 6: OOooOOo . IiII / OoO0O00 * oO0o - I1Ii111 . OoOoOO00
-   if 85 - 85: i11iIiiIii + OoOoOO00
-   if 4 - 4: OOooOOo . OoO0O00 * II111iiii + OoO0O00 % Oo0Ooo
- if ( IiiiIIiII != [ ] ) :
+   if 98 - 98: Ii1I
+   if 38 - 38: ooOoO0o - iII111i * OOooOOo % I1ii11iIi11i + Oo0Ooo
+   if 95 - 95: iIii1I11I1II1 / O0 % O0
+   if 53 - 53: ooOoO0o . ooOoO0o
+   if 80 - 80: i11iIiiIii % I1Ii111 % I1IiiI / I1IiiI + oO0o + iII111i
+   if 18 - 18: OoO0O00 * ooOoO0o
+ if ( iiIi1i != [ ] ) :
   for iii1i in list ( lisp_map_resolvers_list . values ( ) ) :
    iii1i . resolve_dns_name ( )
-   if 60 - 60: OOooOOo . Ii1I
-   if 13 - 13: i1IIi . iII111i / OoOoOO00 . I1Ii111
+   if 32 - 32: oO0o . OoooooooOO - o0oOOo0O0Ooo + II111iiii
+   if 4 - 4: OOooOOo * I1IiiI - I11i - I11i
  return
- if 65 - 65: oO0o % I1Ii111 % OoO0O00 . iIii1I11I1II1
- if 38 - 38: IiII / I11i / IiII * iII111i
- if 30 - 30: oO0o
- if 30 - 30: IiII / OoO0O00
- if 89 - 89: oO0o . OoOoOO00 . IiII / iIii1I11I1II1 . iIii1I11I1II1 / OoOoOO00
- if 86 - 86: OoooooooOO - iIii1I11I1II1 . OoO0O00 * Ii1I / I1Ii111 + I1Ii111
- if 52 - 52: iIii1I11I1II1 % OoO0O00 - IiII % i11iIiiIii - o0oOOo0O0Ooo
- if 25 - 25: Oo0Ooo - OOooOOo . i1IIi * OoOoOO00 / I11i / o0oOOo0O0Ooo
+ if 67 - 67: I1IiiI
+ if 32 - 32: oO0o * i11iIiiIii - I11i % Oo0Ooo * I1ii11iIi11i
+ if 79 - 79: II111iiii / Oo0Ooo / I1ii11iIi11i
+ if 30 - 30: I11i . o0oOOo0O0Ooo / II111iiii
+ if 59 - 59: i11iIiiIii
+ if 5 - 5: i11iIiiIii + o0oOOo0O0Ooo . OoO0O00 % OoOoOO00 + I11i
+ if 59 - 59: I1ii11iIi11i
+ if 47 - 47: I1IiiI + Oo0Ooo
 def lisp_valid_address_format ( kw , value ) :
  if ( kw != "address" ) : return ( True )
- if 54 - 54: OoOoOO00 / i1IIi + OOooOOo - I1ii11iIi11i - I1IiiI * I1Ii111
- if 91 - 91: OoooooooOO * OoooooooOO
- if 27 - 27: ooOoO0o / I1IiiI * I1ii11iIi11i . o0oOOo0O0Ooo
- if 30 - 30: o0oOOo0O0Ooo / i11iIiiIii
- if 33 - 33: OOooOOo % OoooooooOO
+ if 78 - 78: i1IIi / I1ii11iIi11i % ooOoO0o * OoO0O00
+ if 10 - 10: i1IIi % ooOoO0o / iII111i
+ if 98 - 98: IiII / o0oOOo0O0Ooo - i1IIi - OOooOOo
+ if 65 - 65: Ii1I + OoOoOO00 * Oo0Ooo . O0 . IiII
+ if 33 - 33: i11iIiiIii . i1IIi . I1Ii111 - OoOoOO00 + OOooOOo
  if ( value [ 0 ] == "'" and value [ - 1 ] == "'" ) : return ( True )
- if 98 - 98: Ii1I
- if 38 - 38: ooOoO0o - iII111i * OOooOOo % I1ii11iIi11i + Oo0Ooo
- if 95 - 95: iIii1I11I1II1 / O0 % O0
- if 53 - 53: ooOoO0o . ooOoO0o
+ if 34 - 34: I1ii11iIi11i . i1IIi * O0 / OoooooooOO
+ if 22 - 22: OOooOOo % o0oOOo0O0Ooo - i11iIiiIii
+ if 58 - 58: IiII . Ii1I + II111iiii
+ if 31 - 31: i11iIiiIii + i11iIiiIii + I11i * Oo0Ooo . I11i
  if ( value . find ( "." ) != - 1 ) :
   IiI = value . split ( "." )
   if ( len ( IiI ) != 4 ) : return ( False )
-  if 80 - 80: i11iIiiIii % I1Ii111 % I1IiiI / I1IiiI + oO0o + iII111i
+  if 28 - 28: OOooOOo * iIii1I11I1II1 * OoOoOO00
   for OoiIiiIi11 in IiI :
    if ( OoiIiiIi11 . isdigit ( ) == False ) : return ( False )
    if ( int ( OoiIiiIi11 ) > 255 ) : return ( False )
-   if 18 - 18: OoO0O00 * ooOoO0o
+   if 75 - 75: Oo0Ooo % IiII + II111iiii + oO0o
   return ( True )
-  if 32 - 32: oO0o . OoooooooOO - o0oOOo0O0Ooo + II111iiii
-  if 4 - 4: OOooOOo * I1IiiI - I11i - I11i
-  if 67 - 67: I1IiiI
-  if 32 - 32: oO0o * i11iIiiIii - I11i % Oo0Ooo * I1ii11iIi11i
-  if 79 - 79: II111iiii / Oo0Ooo / I1ii11iIi11i
+  if 35 - 35: I1ii11iIi11i - oO0o - O0 / iII111i % IiII
+  if 10 - 10: OOooOOo + oO0o - I1Ii111 . I1IiiI
+  if 11 - 11: I1ii11iIi11i . I1Ii111 / o0oOOo0O0Ooo + IiII
+  if 73 - 73: OoO0O00 . i11iIiiIii * OoO0O00 * i1IIi + I11i
+  if 27 - 27: i11iIiiIii / OoOoOO00 % O0 / II111iiii . I11i - ooOoO0o
  if ( value . find ( "-" ) != - 1 ) :
   IiI = value . split ( "-" )
   for iIi1iIIIiIiI in [ "N" , "S" , "W" , "E" ] :
    if ( iIi1iIIIiIiI in IiI ) :
     if ( len ( IiI ) < 8 ) : return ( False )
     return ( True )
-    if 30 - 30: I11i . o0oOOo0O0Ooo / II111iiii
-    if 59 - 59: i11iIiiIii
-    if 5 - 5: i11iIiiIii + o0oOOo0O0Ooo . OoO0O00 % OoOoOO00 + I11i
-    if 59 - 59: I1ii11iIi11i
-    if 47 - 47: I1IiiI + Oo0Ooo
-    if 78 - 78: i1IIi / I1ii11iIi11i % ooOoO0o * OoO0O00
-    if 10 - 10: i1IIi % ooOoO0o / iII111i
+    if 54 - 54: oO0o * II111iiii
+    if 79 - 79: o0oOOo0O0Ooo . ooOoO0o . Oo0Ooo * OoooooooOO
+    if 98 - 98: ooOoO0o
+    if 73 - 73: I1Ii111
+    if 97 - 97: OoO0O00 * Ii1I + Oo0Ooo
+    if 83 - 83: II111iiii - Oo0Ooo % II111iiii * o0oOOo0O0Ooo
+    if 51 - 51: iII111i * iIii1I11I1II1 % Ii1I * Ii1I + i11iIiiIii . OoooooooOO
  if ( value . find ( "-" ) != - 1 ) :
   IiI = value . split ( "-" )
   if ( len ( IiI ) != 3 ) : return ( False )
-  if 98 - 98: IiII / o0oOOo0O0Ooo - i1IIi - OOooOOo
-  for O00OoO in IiI :
-   try : int ( O00OoO , 16 )
+  if 54 - 54: i11iIiiIii . iIii1I11I1II1 * iIii1I11I1II1 + Ii1I % I11i - OoO0O00
+  for I11iIii1i11 in IiI :
+   try : int ( I11iIii1i11 , 16 )
    except : return ( False )
-   if 10 - 10: IiII
+   if 67 - 67: OoO0O00
   return ( True )
-  if 33 - 33: i11iIiiIii . i1IIi . I1Ii111 - OoOoOO00 + OOooOOo
-  if 34 - 34: I1ii11iIi11i . i1IIi * O0 / OoooooooOO
-  if 22 - 22: OOooOOo % o0oOOo0O0Ooo - i11iIiiIii
-  if 58 - 58: IiII . Ii1I + II111iiii
-  if 31 - 31: i11iIiiIii + i11iIiiIii + I11i * Oo0Ooo . I11i
+  if 37 - 37: o0oOOo0O0Ooo + I11i - Ii1I - Ii1I * OoO0O00 % i11iIiiIii
+  if 98 - 98: I1Ii111 % IiII % i1IIi * OOooOOo . iIii1I11I1II1
+  if 60 - 60: iII111i . Ii1I / I1IiiI
+  if 92 - 92: OoooooooOO % II111iiii + I1ii11iIi11i
+  if 93 - 93: OoooooooOO . I1ii11iIi11i
  if ( value . find ( ":" ) != - 1 ) :
   IiI = value . split ( ":" )
   if ( len ( IiI ) < 2 ) : return ( False )
-  if 28 - 28: OOooOOo * iIii1I11I1II1 * OoOoOO00
-  OOO0OoOO0O = False
+  if 100 - 100: iIii1I11I1II1 . i1IIi / OOooOOo * i11iIiiIii
+  oOo0OOo0 = False
   O0oo0oOo = 0
-  for O00OoO in IiI :
+  for I11iIii1i11 in IiI :
    O0oo0oOo += 1
-   if ( O00OoO == "" ) :
-    if ( OOO0OoOO0O ) :
+   if ( I11iIii1i11 == "" ) :
+    if ( oOo0OOo0 ) :
      if ( len ( IiI ) == O0oo0oOo ) : break
      if ( O0oo0oOo > 2 ) : return ( False )
-     if 58 - 58: II111iiii - OOooOOo . IiII % O0
-    OOO0OoOO0O = True
+     if 61 - 61: OOooOOo . iII111i * I1Ii111
+    oOo0OOo0 = True
     continue
-    if 53 - 53: o0oOOo0O0Ooo % iIii1I11I1II1 - I1Ii111
-   try : int ( O00OoO , 16 )
+    if 94 - 94: I1ii11iIi11i % II111iiii . O0
+   try : int ( I11iIii1i11 , 16 )
    except : return ( False )
-   if 34 - 34: OOooOOo
+   if 38 - 38: o0oOOo0O0Ooo % i11iIiiIii / I1Ii111 / I1ii11iIi11i % iII111i - oO0o
   return ( True )
-  if 2 - 2: I1Ii111 / o0oOOo0O0Ooo + I11i * Ii1I
-  if 1 - 1: i11iIiiIii * OoO0O00 * OoO0O00
-  if 25 - 25: ooOoO0o / i11iIiiIii / OoOoOO00 % O0 / OoooooooOO
-  if 28 - 28: ooOoO0o % i1IIi - oO0o * II111iiii
-  if 79 - 79: o0oOOo0O0Ooo . ooOoO0o . Oo0Ooo * OoooooooOO
+  if 76 - 76: iIii1I11I1II1 / I1ii11iIi11i + i1IIi % oO0o / iIii1I11I1II1
+  if 33 - 33: OoooooooOO * i1IIi / O0 * I1ii11iIi11i
+  if 55 - 55: o0oOOo0O0Ooo * Oo0Ooo . ooOoO0o
+  if 25 - 25: IiII . O0 / OoOoOO00
+  if 33 - 33: OoO0O00
  if ( value [ 0 ] == "+" ) :
   IiI = value [ 1 : : ]
-  for o0o00O0OO0O0O in IiI :
-   if ( o0o00O0OO0O0O . isdigit ( ) == False ) : return ( False )
-   if 66 - 66: Oo0Ooo % IiII
-  return ( True )
-  if 30 - 30: IiII - iII111i * iIii1I11I1II1 % ooOoO0o
- return ( False )
- if 78 - 78: iIii1I11I1II1 % OoooooooOO . o0oOOo0O0Ooo
- if 85 - 85: i11iIiiIii
- if 96 - 96: OoOoOO00
- if 12 - 12: oO0o % OoO0O00 % I1ii11iIi11i . IiII % ooOoO0o
- if 11 - 11: O0 . i1IIi % ooOoO0o
- if 84 - 84: OoO0O00 . ooOoO0o + o0oOOo0O0Ooo + I11i - I1ii11iIi11i
- if 78 - 78: I11i % i11iIiiIii + iII111i * I1Ii111 % IiII % I1Ii111
- if 22 - 22: OOooOOo
- if 11 - 11: iIii1I11I1II1 + i1IIi % I1IiiI % I1Ii111
- if 49 - 49: Oo0Ooo / I1ii11iIi11i / I1IiiI * OoooooooOO . I1ii11iIi11i
- if 100 - 100: iIii1I11I1II1 . i1IIi / OOooOOo * i11iIiiIii
- if 93 - 93: I1ii11iIi11i
- if 45 - 45: I1ii11iIi11i * I1ii11iIi11i
- if 31 - 31: OoO0O00 - OOooOOo . iII111i * I1Ii111 * iII111i + I1ii11iIi11i
-def lisp_process_api ( process , lisp_socket , data_structure ) :
- iIOooo00OO , I1iII1IIi1IiI = data_structure . split ( "%" )
- if 83 - 83: Ii1I % iIii1I11I1II1 / I1ii11iIi11i + I11i
- lprint ( "Process API request '{}', parameters: '{}'" . format ( iIOooo00OO ,
- I1iII1IIi1IiI ) )
- if 23 - 23: iIii1I11I1II1 - I1IiiI
- iiooo0o0oO = [ ]
- if ( iIOooo00OO == "map-cache" ) :
-  if ( I1iII1IIi1IiI == "" ) :
-   iiooo0o0oO = lisp_map_cache . walk_cache ( lisp_process_api_map_cache , iiooo0o0oO )
-  else :
-   iiooo0o0oO = lisp_process_api_map_cache_entry ( json . loads ( I1iII1IIi1IiI ) )
-   if 51 - 51: OoooooooOO / IiII / I1ii11iIi11i . Oo0Ooo - o0oOOo0O0Ooo * OoooooooOO
-   if 40 - 40: OoO0O00 / IiII . O0 / I1IiiI + OoO0O00 . o0oOOo0O0Ooo
- if ( iIOooo00OO == "site-cache" ) :
-  if ( I1iII1IIi1IiI == "" ) :
-   iiooo0o0oO = lisp_sites_by_eid . walk_cache ( lisp_process_api_site_cache ,
- iiooo0o0oO )
-  else :
-   iiooo0o0oO = lisp_process_api_site_cache_entry ( json . loads ( I1iII1IIi1IiI ) )
-   if 25 - 25: ooOoO0o * I1Ii111 * oO0o
+  for o0000O in IiI :
+   if ( o0000O . isdigit ( ) == False ) : return ( False )
    if 64 - 64: Ii1I / I1ii11iIi11i
- if ( iIOooo00OO == "site-cache-summary" ) :
-  iiooo0o0oO = lisp_process_api_site_cache_summary ( lisp_sites_by_eid )
+  return ( True )
   if 30 - 30: OoooooooOO + O0 / I1ii11iIi11i * o0oOOo0O0Ooo
- if ( iIOooo00OO == "map-server" ) :
-  I1iII1IIi1IiI = { } if ( I1iII1IIi1IiI == "" ) else json . loads ( I1iII1IIi1IiI )
-  iiooo0o0oO = lisp_process_api_ms_or_mr ( True , I1iII1IIi1IiI )
-  if 11 - 11: O0 + OoO0O00 - Oo0Ooo - Oo0Ooo . i11iIiiIii
- if ( iIOooo00OO == "map-resolver" ) :
-  I1iII1IIi1IiI = { } if ( I1iII1IIi1IiI == "" ) else json . loads ( I1iII1IIi1IiI )
-  iiooo0o0oO = lisp_process_api_ms_or_mr ( False , I1iII1IIi1IiI )
-  if 15 - 15: Ii1I % i11iIiiIii / OoOoOO00
- if ( iIOooo00OO == "database-mapping" ) :
-  iiooo0o0oO = lisp_process_api_database_mapping ( )
-  if 85 - 85: ooOoO0o . i1IIi / iII111i % iIii1I11I1II1 / II111iiii / I1Ii111
-  if 60 - 60: iIii1I11I1II1 - iIii1I11I1II1 . I11i
-  if 55 - 55: OoO0O00
-  if 87 - 87: Ii1I - iII111i / O0 - o0oOOo0O0Ooo - iIii1I11I1II1 % Ii1I
-  if 47 - 47: iII111i * I1Ii111 % o0oOOo0O0Ooo / OoOoOO00 / OoO0O00 % OoO0O00
- iiooo0o0oO = json . dumps ( iiooo0o0oO )
- OO = lisp_api_ipc ( process , iiooo0o0oO )
- lisp_ipc ( OO , lisp_socket , "lisp-core" )
- return
+ return ( False )
+ if 11 - 11: O0 + OoO0O00 - Oo0Ooo - Oo0Ooo . i11iIiiIii
+ if 15 - 15: Ii1I % i11iIiiIii / OoOoOO00
+ if 85 - 85: ooOoO0o . i1IIi / iII111i % iIii1I11I1II1 / II111iiii / I1Ii111
+ if 60 - 60: iIii1I11I1II1 - iIii1I11I1II1 . I11i
+ if 55 - 55: OoO0O00
+ if 87 - 87: Ii1I - iII111i / O0 - o0oOOo0O0Ooo - iIii1I11I1II1 % Ii1I
+ if 47 - 47: iII111i * I1Ii111 % o0oOOo0O0Ooo / OoOoOO00 / OoO0O00 % OoO0O00
  if 43 - 43: Oo0Ooo
  if 34 - 34: OoO0O00 . i1IIi + IiII * IiII
  if 76 - 76: OOooOOo
@@ -16728,67 +16693,72 @@ def lisp_process_api ( process , lisp_socket , data_structure ) :
  if 44 - 44: I1IiiI
  if 66 - 66: o0oOOo0O0Ooo
  if 40 - 40: OOooOOo * Ii1I
-def lisp_process_api_map_cache ( mc , data ) :
- if 38 - 38: ooOoO0o
- if 5 - 5: OoooooooOO + iII111i - I11i
- if 95 - 95: OOooOOo / i11iIiiIii - Ii1I + I1ii11iIi11i
- if 7 - 7: I1ii11iIi11i
- if ( mc . group . is_null ( ) ) : return ( lisp_gather_map_cache_data ( mc , data ) )
+def lisp_process_api ( process , lisp_socket , data_structure ) :
+ iiIIiI111Ii1I , I1iII1IIi1IiI = data_structure . split ( "%" )
+ if 2 - 2: I1ii11iIi11i % O0 . I1ii11iIi11i
+ lprint ( "Process API request '{}', parameters: '{}'" . format ( iiIIiI111Ii1I ,
+ I1iII1IIi1IiI ) )
  if 37 - 37: O0 . II111iiii
- if ( mc . source_cache == None ) : return ( [ True , data ] )
- if 70 - 70: o0oOOo0O0Ooo / iII111i + i1IIi + I11i % iIii1I11I1II1 % Oo0Ooo
- if 1 - 1: O0 + OoO0O00 . i11iIiiIii + I1Ii111 - OoO0O00 - IiII
- if 1 - 1: I1ii11iIi11i / i1IIi . I1IiiI / Ii1I
- if 19 - 19: iIii1I11I1II1 / Oo0Ooo . O0 - Oo0Ooo
- if 74 - 74: I1ii11iIi11i * OoooooooOO . iII111i
- data = mc . source_cache . walk_cache ( lisp_gather_map_cache_data , data )
- return ( [ True , data ] )
- if 45 - 45: I1IiiI - IiII % ooOoO0o - IiII . Oo0Ooo - o0oOOo0O0Ooo
- if 27 - 27: iII111i
- if 64 - 64: iIii1I11I1II1 - OOooOOo . iII111i % o0oOOo0O0Ooo / II111iiii % OoooooooOO
- if 87 - 87: OoooooooOO
- if 70 - 70: o0oOOo0O0Ooo % OoooooooOO % I1IiiI . OoOoOO00 * I1IiiI - ooOoO0o
- if 92 - 92: I1IiiI . I11i
- if 66 - 66: I1Ii111 / I11i / OoooooooOO % OoOoOO00 . oO0o * iII111i
-def lisp_gather_map_cache_data ( mc , data ) :
- oo0O00OOOOO = { }
- oo0O00OOOOO [ "instance-id" ] = str ( mc . eid . instance_id )
- oo0O00OOOOO [ "eid-prefix" ] = mc . eid . print_prefix_no_iid ( )
- if ( mc . group . is_null ( ) == False ) :
-  oo0O00OOOOO [ "group-prefix" ] = mc . group . print_prefix_no_iid ( )
-  if 34 - 34: I1ii11iIi11i * I1ii11iIi11i % I11i / OOooOOo % oO0o . OoOoOO00
- oo0O00OOOOO [ "uptime" ] = lisp_print_elapsed ( mc . uptime )
- oo0O00OOOOO [ "expires" ] = lisp_print_elapsed ( mc . uptime )
- oo0O00OOOOO [ "action" ] = lisp_map_reply_action_string [ mc . action ]
- oo0O00OOOOO [ "ttl" ] = "--" if mc . map_cache_ttl == None else str ( mc . map_cache_ttl / 60 )
+ iiooo0o0oO = [ ]
+ if ( iiIIiI111Ii1I == "map-cache" ) :
+  if ( I1iII1IIi1IiI == "" ) :
+   iiooo0o0oO = lisp_map_cache . walk_cache ( lisp_process_api_map_cache , iiooo0o0oO )
+  else :
+   iiooo0o0oO = lisp_process_api_map_cache_entry ( json . loads ( I1iII1IIi1IiI ) )
+   if 70 - 70: o0oOOo0O0Ooo / iII111i + i1IIi + I11i % iIii1I11I1II1 % Oo0Ooo
+   if 1 - 1: O0 + OoO0O00 . i11iIiiIii + I1Ii111 - OoO0O00 - IiII
+ if ( iiIIiI111Ii1I == "site-cache" ) :
+  if ( I1iII1IIi1IiI == "" ) :
+   iiooo0o0oO = lisp_sites_by_eid . walk_cache ( lisp_process_api_site_cache ,
+ iiooo0o0oO )
+  else :
+   iiooo0o0oO = lisp_process_api_site_cache_entry ( json . loads ( I1iII1IIi1IiI ) )
+   if 1 - 1: I1ii11iIi11i / i1IIi . I1IiiI / Ii1I
+   if 19 - 19: iIii1I11I1II1 / Oo0Ooo . O0 - Oo0Ooo
+ if ( iiIIiI111Ii1I == "site-cache-summary" ) :
+  iiooo0o0oO = lisp_process_api_site_cache_summary ( lisp_sites_by_eid )
+  if 74 - 74: I1ii11iIi11i * OoooooooOO . iII111i
+ if ( iiIIiI111Ii1I == "map-server" ) :
+  I1iII1IIi1IiI = { } if ( I1iII1IIi1IiI == "" ) else json . loads ( I1iII1IIi1IiI )
+  iiooo0o0oO = lisp_process_api_ms_or_mr ( True , I1iII1IIi1IiI )
+  if 45 - 45: I1IiiI - IiII % ooOoO0o - IiII . Oo0Ooo - o0oOOo0O0Ooo
+ if ( iiIIiI111Ii1I == "map-resolver" ) :
+  I1iII1IIi1IiI = { } if ( I1iII1IIi1IiI == "" ) else json . loads ( I1iII1IIi1IiI )
+  iiooo0o0oO = lisp_process_api_ms_or_mr ( False , I1iII1IIi1IiI )
+  if 27 - 27: iII111i
+ if ( iiIIiI111Ii1I == "database-mapping" ) :
+  iiooo0o0oO = lisp_process_api_database_mapping ( )
+  if 64 - 64: iIii1I11I1II1 - OOooOOo . iII111i % o0oOOo0O0Ooo / II111iiii % OoooooooOO
+  if 87 - 87: OoooooooOO
+  if 70 - 70: o0oOOo0O0Ooo % OoooooooOO % I1IiiI . OoOoOO00 * I1IiiI - ooOoO0o
+  if 92 - 92: I1IiiI . I11i
+  if 66 - 66: I1Ii111 / I11i / OoooooooOO % OoOoOO00 . oO0o * iII111i
+ iiooo0o0oO = json . dumps ( iiooo0o0oO )
+ OO = lisp_api_ipc ( process , iiooo0o0oO )
+ lisp_ipc ( OO , lisp_socket , "lisp-core" )
+ return
+ if 34 - 34: I1ii11iIi11i * I1ii11iIi11i % I11i / OOooOOo % oO0o . OoOoOO00
  if 25 - 25: I1ii11iIi11i / I11i + i1IIi . I1IiiI + ooOoO0o
  if 29 - 29: IiII + I1ii11iIi11i
  if 8 - 8: IiII % I1IiiI
  if 10 - 10: OoooooooOO / OoOoOO00
  if 77 - 77: OoOoOO00
- OO00O000OOO = [ ]
- for iIIiI11 in mc . rloc_set :
-  iiiI1I = lisp_fill_rloc_in_json ( iIIiI11 )
-  if 10 - 10: IiII / i11iIiiIii
-  if 19 - 19: OoO0O00
-  if 100 - 100: I1ii11iIi11i - I1ii11iIi11i
-  if 38 - 38: I1Ii111
-  if 23 - 23: Ii1I . I1ii11iIi11i + I1Ii111 + i1IIi * o0oOOo0O0Ooo - i11iIiiIii
-  if ( iIIiI11 . rloc . is_multicast_address ( ) ) :
-   iiiI1I [ "multicast-rloc-set" ] = [ ]
-   for O0o00O00oo0oO in list ( iIIiI11 . multicast_rloc_probe_list . values ( ) ) :
-    iii1i = lisp_fill_rloc_in_json ( O0o00O00oo0oO )
-    iiiI1I [ "multicast-rloc-set" ] . append ( iii1i )
-    if 92 - 92: I1Ii111 - I1IiiI + Ii1I / iII111i % OOooOOo
-    if 32 - 32: i1IIi . iII111i - Ii1I % iII111i % II111iiii - oO0o
-    if 36 - 36: OoooooooOO * OoooooooOO . ooOoO0o . O0
-  OO00O000OOO . append ( iiiI1I )
-  if 5 - 5: I11i % I1IiiI - OoO0O00 . Oo0Ooo
- oo0O00OOOOO [ "rloc-set" ] = OO00O000OOO
+ if 10 - 10: IiII / i11iIiiIii
+def lisp_process_api_map_cache ( mc , data ) :
+ if 19 - 19: OoO0O00
+ if 100 - 100: I1ii11iIi11i - I1ii11iIi11i
+ if 38 - 38: I1Ii111
+ if 23 - 23: Ii1I . I1ii11iIi11i + I1Ii111 + i1IIi * o0oOOo0O0Ooo - i11iIiiIii
+ if ( mc . group . is_null ( ) ) : return ( lisp_gather_map_cache_data ( mc , data ) )
+ if 92 - 92: I1Ii111 - I1IiiI + Ii1I / iII111i % OOooOOo
+ if ( mc . source_cache == None ) : return ( [ True , data ] )
+ if 32 - 32: i1IIi . iII111i - Ii1I % iII111i % II111iiii - oO0o
+ if 36 - 36: OoooooooOO * OoooooooOO . ooOoO0o . O0
+ if 5 - 5: I11i % I1IiiI - OoO0O00 . Oo0Ooo
  if 79 - 79: iII111i + IiII % I11i . Oo0Ooo / IiII * iII111i
- data . append ( oo0O00OOOOO )
- return ( [ True , data ] )
  if 40 - 40: iII111i - I1IiiI + OoOoOO00
+ data = mc . source_cache . walk_cache ( lisp_gather_map_cache_data , data )
+ return ( [ True , data ] )
  if 2 - 2: I11i - II111iiii / I1Ii111
  if 27 - 27: OoO0O00 - I1ii11iIi11i * i11iIiiIii + Oo0Ooo
  if 29 - 29: I1ii11iIi11i / IiII . I1Ii111 + Ii1I + OoO0O00
@@ -16796,26 +16766,72 @@ def lisp_gather_map_cache_data ( mc , data ) :
  if 53 - 53: II111iiii / OoOoOO00 / IiII * oO0o
  if 52 - 52: O0 % iII111i * iIii1I11I1II1 / I11i / I1IiiI * ooOoO0o
  if 93 - 93: iIii1I11I1II1 . II111iiii * OOooOOo - iIii1I11I1II1 . oO0o % Oo0Ooo
+def lisp_gather_map_cache_data ( mc , data ) :
+ oo0O00OOOOO = { }
+ oo0O00OOOOO [ "instance-id" ] = str ( mc . eid . instance_id )
+ oo0O00OOOOO [ "eid-prefix" ] = mc . eid . print_prefix_no_iid ( )
+ if ( mc . group . is_null ( ) == False ) :
+  oo0O00OOOOO [ "group-prefix" ] = mc . group . print_prefix_no_iid ( )
+  if 92 - 92: OoO0O00
+ oo0O00OOOOO [ "uptime" ] = lisp_print_elapsed ( mc . uptime )
+ oo0O00OOOOO [ "expires" ] = lisp_print_elapsed ( mc . uptime )
+ oo0O00OOOOO [ "action" ] = lisp_map_reply_action_string [ mc . action ]
+ oo0O00OOOOO [ "ttl" ] = "--" if mc . map_cache_ttl == None else str ( mc . map_cache_ttl / 60 )
+ if 42 - 42: I1ii11iIi11i - iIii1I11I1II1 % ooOoO0o
+ if 7 - 7: Oo0Ooo / ooOoO0o + o0oOOo0O0Ooo
+ if 38 - 38: o0oOOo0O0Ooo . O0 - OoO0O00 % I11i
+ if 80 - 80: o0oOOo0O0Ooo
+ if 100 - 100: iIii1I11I1II1 . OoOoOO00 . OoooooooOO / I1ii11iIi11i - I1IiiI * I11i
+ OO00O000OOO = [ ]
+ for iIIiI11 in mc . rloc_set :
+  iiiI1I = lisp_fill_rloc_in_json ( iIIiI11 )
+  if 5 - 5: i1IIi * o0oOOo0O0Ooo - I1Ii111 + I1IiiI - II111iiii
+  if 15 - 15: I1Ii111
+  if 38 - 38: O0
+  if 50 - 50: i11iIiiIii * OoO0O00 + iII111i / O0 * oO0o % ooOoO0o
+  if 6 - 6: OoO0O00 . o0oOOo0O0Ooo / Ii1I + Ii1I
+  if ( iIIiI11 . rloc . is_multicast_address ( ) ) :
+   iiiI1I [ "multicast-rloc-set" ] = [ ]
+   for O0o00O00oo0oO in list ( iIIiI11 . multicast_rloc_probe_list . values ( ) ) :
+    iii1i = lisp_fill_rloc_in_json ( O0o00O00oo0oO )
+    iiiI1I [ "multicast-rloc-set" ] . append ( iii1i )
+    if 59 - 59: II111iiii - o0oOOo0O0Ooo * OoooooooOO
+    if 83 - 83: oO0o . iIii1I11I1II1 . iII111i % Oo0Ooo
+    if 48 - 48: oO0o % OoO0O00 - OoooooooOO . IiII
+  OO00O000OOO . append ( iiiI1I )
+  if 11 - 11: I1Ii111 % o0oOOo0O0Ooo - o0oOOo0O0Ooo % OoooooooOO . o0oOOo0O0Ooo - I1ii11iIi11i
+ oo0O00OOOOO [ "rloc-set" ] = OO00O000OOO
+ if 33 - 33: OoO0O00 + II111iiii . Oo0Ooo * I1Ii111
+ data . append ( oo0O00OOOOO )
+ return ( [ True , data ] )
+ if 63 - 63: OoooooooOO + OoOoOO00 - OoooooooOO
+ if 54 - 54: OoO0O00 + I1IiiI % O0 + OoO0O00
+ if 37 - 37: II111iiii / I1ii11iIi11i * I1IiiI - OoooooooOO
+ if 55 - 55: IiII / ooOoO0o * I1IiiI / I1Ii111 - Oo0Ooo % o0oOOo0O0Ooo
+ if 82 - 82: OoO0O00 - iIii1I11I1II1 . Oo0Ooo / IiII . OoO0O00
+ if 47 - 47: OOooOOo + IiII
+ if 11 - 11: Oo0Ooo + I1IiiI % i11iIiiIii % Oo0Ooo + ooOoO0o + i1IIi
+ if 100 - 100: II111iiii - OOooOOo + iII111i - i11iIiiIii . O0 / iII111i
 def lisp_fill_rloc_in_json ( rloc ) :
  iiiI1I = { }
  O0O0 = None
  if ( rloc . rloc_exists ( ) ) :
   iiiI1I [ "address" ] = rloc . rloc . print_address_no_iid ( )
   O0O0 = iiiI1I [ "address" ]
-  if 92 - 92: OoO0O00
-  if 42 - 42: I1ii11iIi11i - iIii1I11I1II1 % ooOoO0o
+  if 64 - 64: Ii1I
+  if 4 - 4: OoOoOO00
  if ( rloc . translated_port != 0 ) :
   iiiI1I [ "encap-port" ] = str ( rloc . translated_port )
   O0O0 += ":" + iiiI1I [ "encap-port" ]
-  if 7 - 7: Oo0Ooo / ooOoO0o + o0oOOo0O0Ooo
-  if 38 - 38: o0oOOo0O0Ooo . O0 - OoO0O00 % I11i
+  if 78 - 78: i1IIi - iII111i + O0 - I1IiiI % o0oOOo0O0Ooo
+  if 48 - 48: iII111i / II111iiii * I1Ii111 + I11i / ooOoO0o . OoOoOO00
  if ( O0O0 and O0O0 in lisp_crypto_keys_by_rloc_encap ) :
   III = lisp_crypto_keys_by_rloc_encap [ O0O0 ] [ 1 ]
   if ( III != None and III . shared_key != None ) :
    iiiI1I [ "encap-crypto" ] = "crypto-" + III . cipher_suite_string
-   if 80 - 80: o0oOOo0O0Ooo
-   if 100 - 100: iIii1I11I1II1 . OoOoOO00 . OoooooooOO / I1ii11iIi11i - I1IiiI * I11i
-   if 5 - 5: i1IIi * o0oOOo0O0Ooo - I1Ii111 + I1IiiI - II111iiii
+   if 45 - 45: OOooOOo / Ii1I % O0
+   if 7 - 7: oO0o * i11iIiiIii + OoooooooOO + I11i
+   if 9 - 9: II111iiii * Oo0Ooo * I1Ii111 . IiII
  iiiI1I [ "state" ] = rloc . print_state ( )
  if ( rloc . geo ) : iiiI1I [ "geo" ] = rloc . geo . print_geo ( )
  if ( rloc . elp ) : iiiI1I [ "elp" ] = rloc . elp . print_elp ( False )
@@ -16829,130 +16845,130 @@ def lisp_fill_rloc_in_json ( rloc ) :
  iiiI1I [ "uweight" ] = str ( rloc . weight )
  iiiI1I [ "mpriority" ] = str ( rloc . mpriority )
  iiiI1I [ "mweight" ] = str ( rloc . mweight )
- iIiiI11iIIi11 = rloc . last_rloc_probe_reply
- if ( iIiiI11iIIi11 ) :
-  iiiI1I [ "last-rloc-probe-reply" ] = lisp_print_elapsed ( iIiiI11iIIi11 )
+ Ooii = rloc . last_rloc_probe_reply
+ if ( Ooii ) :
+  iiiI1I [ "last-rloc-probe-reply" ] = lisp_print_elapsed ( Ooii )
   iiiI1I [ "rloc-probe-rtt" ] = str ( rloc . rloc_probe_rtt )
-  if 9 - 9: ooOoO0o - oO0o . OoO0O00 . o0oOOo0O0Ooo / Oo0Ooo
+  if 53 - 53: I1Ii111
  iiiI1I [ "rloc-hop-count" ] = rloc . rloc_probe_hops
  iiiI1I [ "recent-rloc-hop-counts" ] = rloc . recent_rloc_probe_hops
- if 78 - 78: OoOoOO00 - II111iiii - o0oOOo0O0Ooo * iII111i . o0oOOo0O0Ooo
+ if 69 - 69: iIii1I11I1II1 * oO0o
  iiiI1I [ "rloc-probe-latency" ] = rloc . rloc_probe_latency
  iiiI1I [ "recent-rloc-probe-latencies" ] = rloc . recent_rloc_probe_latencies
- if 9 - 9: iIii1I11I1II1 . iII111i % OoOoOO00 + o0oOOo0O0Ooo
- OOoo0o000 = [ ]
- for OOOooOOoOO0o in rloc . recent_rloc_probe_rtts : OOoo0o000 . append ( str ( OOOooOOoOO0o ) )
- iiiI1I [ "recent-rloc-probe-rtts" ] = OOoo0o000
+ if 80 - 80: IiII - oO0o % Ii1I - iIii1I11I1II1 . OoO0O00
+ oOooO00Ooo = [ ]
+ for OOOooOOoOO0o in rloc . recent_rloc_probe_rtts : oOooO00Ooo . append ( str ( OOOooOOoOO0o ) )
+ iiiI1I [ "recent-rloc-probe-rtts" ] = oOooO00Ooo
  return ( iiiI1I )
- if 63 - 63: o0oOOo0O0Ooo % OoooooooOO . o0oOOo0O0Ooo - I1ii11iIi11i
- if 33 - 33: OoO0O00 + II111iiii . Oo0Ooo * I1Ii111
- if 63 - 63: OoooooooOO + OoOoOO00 - OoooooooOO
- if 54 - 54: OoO0O00 + I1IiiI % O0 + OoO0O00
- if 37 - 37: II111iiii / I1ii11iIi11i * I1IiiI - OoooooooOO
- if 55 - 55: IiII / ooOoO0o * I1IiiI / I1Ii111 - Oo0Ooo % o0oOOo0O0Ooo
- if 82 - 82: OoO0O00 - iIii1I11I1II1 . Oo0Ooo / IiII . OoO0O00
+ if 36 - 36: OoooooooOO . oO0o * Ii1I * i11iIiiIii
+ if 83 - 83: IiII * i1IIi + I1Ii111 + o0oOOo0O0Ooo * i1IIi * iII111i
+ if 5 - 5: iII111i + O0 / IiII + II111iiii . I1IiiI
+ if 57 - 57: iII111i - oO0o
+ if 90 - 90: oO0o . OOooOOo - OoO0O00
+ if 73 - 73: I1ii11iIi11i / iII111i / Oo0Ooo
+ if 85 - 85: Ii1I
 def lisp_process_api_map_cache_entry ( parms ) :
  oooo = parms [ "instance-id" ]
  oooo = 0 if ( oooo == "" ) else int ( oooo )
- if 47 - 47: OOooOOo + IiII
- if 11 - 11: Oo0Ooo + I1IiiI % i11iIiiIii % Oo0Ooo + ooOoO0o + i1IIi
- if 100 - 100: II111iiii - OOooOOo + iII111i - i11iIiiIii . O0 / iII111i
- if 64 - 64: Ii1I
+ if 67 - 67: i11iIiiIii / II111iiii . i11iIiiIii * i11iIiiIii / ooOoO0o . oO0o
+ if 46 - 46: oO0o . OoO0O00 - iIii1I11I1II1 . IiII
+ if 52 - 52: i11iIiiIii / O0 + oO0o . I11i
+ if 73 - 73: OoooooooOO / I1IiiI % Oo0Ooo . oO0o + OoooooooOO
  o0Ooo0Oooo0o = lisp_address ( LISP_AFI_NONE , "" , 0 , oooo )
  o0Ooo0Oooo0o . store_prefix ( parms [ "eid-prefix" ] )
  IIi11ii = o0Ooo0Oooo0o
  O0oo0OoO0oo = o0Ooo0Oooo0o
- if 4 - 4: OoOoOO00
- if 78 - 78: i1IIi - iII111i + O0 - I1IiiI % o0oOOo0O0Ooo
- if 48 - 48: iII111i / II111iiii * I1Ii111 + I11i / ooOoO0o . OoOoOO00
- if 45 - 45: OOooOOo / Ii1I % O0
- if 7 - 7: oO0o * i11iIiiIii + OoooooooOO + I11i
+ if 84 - 84: I1ii11iIi11i - OOooOOo * II111iiii
+ if 28 - 28: I1ii11iIi11i . oO0o / o0oOOo0O0Ooo - iII111i
+ if 65 - 65: I1ii11iIi11i * OOooOOo * ooOoO0o + oO0o - OOooOOo
+ if 100 - 100: iII111i
+ if 12 - 12: OoooooooOO - I1ii11iIi11i * iII111i / ooOoO0o
  oo0oOooo0O = lisp_address ( LISP_AFI_NONE , "" , 0 , oooo )
  if ( "group-prefix" in parms ) :
   oo0oOooo0O . store_prefix ( parms [ "group-prefix" ] )
   IIi11ii = oo0oOooo0O
-  if 9 - 9: II111iiii * Oo0Ooo * I1Ii111 . IiII
-  if 80 - 80: i11iIiiIii . i11iIiiIii . i11iIiiIii . OoooooooOO - OOooOOo * OoooooooOO
+  if 99 - 99: I1ii11iIi11i + I11i
+  if 29 - 29: I1ii11iIi11i / oO0o
  iiooo0o0oO = [ ]
  I11iiI1III = lisp_map_cache_lookup ( O0oo0OoO0oo , IIi11ii )
  if ( I11iiI1III ) : o0o0O0O0Oooo0 , iiooo0o0oO = lisp_process_api_map_cache ( I11iiI1III , iiooo0o0oO )
  return ( iiooo0o0oO )
- if 96 - 96: oO0o
- if 80 - 80: IiII - oO0o % Ii1I - iIii1I11I1II1 . OoO0O00
- if 64 - 64: I1IiiI % i11iIiiIii / oO0o
- if 78 - 78: II111iiii - Oo0Ooo . iIii1I11I1II1 - ooOoO0o . oO0o
- if 84 - 84: iII111i . ooOoO0o * I1IiiI * Oo0Ooo / I1Ii111
- if 93 - 93: i1IIi * i11iIiiIii % OoOoOO00 % iII111i
- if 31 - 31: OoO0O00
- if 89 - 89: II111iiii
- if 33 - 33: OOooOOo / oO0o % OoOoOO00 * O0
- if 65 - 65: OoO0O00 % OoOoOO00 % I1ii11iIi11i / OoooooooOO
- if 85 - 85: O0 * OOooOOo % I1Ii111
-def lisp_process_api_site_cache_summary ( site_cache ) :
- I1io0oOOooOoo0oO = { "site" : "" , "registrations" : [ ] }
- oo0O00OOOOO = { "eid-prefix" : "" , "count" : 0 , "registered-count" : 0 }
- if 33 - 33: O0
- IiiIIIiIIIii1II = { }
- for iiii11I1 in site_cache . cache_sorted :
-  for ooOO00o in list ( site_cache . cache [ iiii11I1 ] . entries . values ( ) ) :
-   if ( ooOO00o . accept_more_specifics == False ) : continue
-   if ( ooOO00o . site . site_name not in IiiIIIiIIIii1II ) :
-    IiiIIIiIIIii1II [ ooOO00o . site . site_name ] = [ ]
-    if 33 - 33: OoO0O00
-   oO0ooOOO = copy . deepcopy ( oo0O00OOOOO )
-   oO0ooOOO [ "eid-prefix" ] = ooOO00o . eid . print_prefix ( )
-   oO0ooOOO [ "count" ] = len ( ooOO00o . more_specific_registrations )
-   for i111ii1ii in ooOO00o . more_specific_registrations :
-    if ( i111ii1ii . registered ) : oO0ooOOO [ "registered-count" ] += 1
-    if 37 - 37: OoooooooOO - Oo0Ooo % oO0o
-   IiiIIIiIIIii1II [ ooOO00o . site . site_name ] . append ( oO0ooOOO )
-   if 59 - 59: II111iiii - o0oOOo0O0Ooo / I1ii11iIi11i . oO0o / o0oOOo0O0Ooo - iII111i
-   if 65 - 65: I1ii11iIi11i * OOooOOo * ooOoO0o + oO0o - OOooOOo
-   if 100 - 100: iII111i
- iiooo0o0oO = [ ]
- for IIiii in IiiIIIiIIIii1II :
-  I111 = copy . deepcopy ( I1io0oOOooOoo0oO )
-  I111 [ "site" ] = IIiii
-  I111 [ "registrations" ] = IiiIIIiIIIii1II [ IIiii ]
-  iiooo0o0oO . append ( I111 )
-  if 12 - 12: OoooooooOO - I1ii11iIi11i * iII111i / ooOoO0o
- return ( iiooo0o0oO )
- if 99 - 99: I1ii11iIi11i + I11i
- if 29 - 29: I1ii11iIi11i / oO0o
  if 2 - 2: Oo0Ooo / IiII - OoooooooOO
  if 65 - 65: OoO0O00 - Ii1I
  if 98 - 98: OoOoOO00 * I1Ii111 * iIii1I11I1II1 * OoOoOO00
  if 15 - 15: Oo0Ooo
  if 100 - 100: IiII + I1ii11iIi11i + iII111i . i1IIi . I1ii11iIi11i / OoooooooOO
-def lisp_process_api_site_cache ( se , data ) :
  if 84 - 84: o0oOOo0O0Ooo * I11i
  if 22 - 22: i1IIi + OOooOOo % OoooooooOO
  if 34 - 34: oO0o / O0 - II111iiii % Oo0Ooo + I11i
  if 23 - 23: o0oOOo0O0Ooo + i11iIiiIii . I1IiiI + iIii1I11I1II1
- if ( se . group . is_null ( ) ) : return ( lisp_gather_site_cache_data ( se , data ) )
  if 18 - 18: o0oOOo0O0Ooo . O0 + I1Ii111
- if ( se . source_cache == None ) : return ( [ True , data ] )
  if 66 - 66: OoooooooOO
+def lisp_process_api_site_cache_summary ( site_cache ) :
+ I1io0oOOooOoo0oO = { "site" : "" , "registrations" : [ ] }
+ oo0O00OOOOO = { "eid-prefix" : "" , "count" : 0 , "registered-count" : 0 }
  if 90 - 90: IiII - OoOoOO00
- if 98 - 98: Oo0Ooo / oO0o . Ii1I
- if 56 - 56: ooOoO0o % OoO0O00 * i11iIiiIii % IiII % I1IiiI - oO0o
- if 37 - 37: iII111i - Ii1I . oO0o
- data = se . source_cache . walk_cache ( lisp_gather_site_cache_data , data )
- return ( [ True , data ] )
- if 47 - 47: IiII / I1ii11iIi11i . o0oOOo0O0Ooo . ooOoO0o + OOooOOo . OOooOOo
- if 25 - 25: oO0o
- if 43 - 43: Ii1I - o0oOOo0O0Ooo % oO0o - O0
- if 20 - 20: OoO0O00 . ooOoO0o / OoOoOO00 - OoOoOO00 . iII111i / OOooOOo
- if 39 - 39: iIii1I11I1II1 % ooOoO0o
+ oOoOO000O0o00OoO = { }
+ for iiii11I1 in site_cache . cache_sorted :
+  for ooOO00o in list ( site_cache . cache [ iiii11I1 ] . entries . values ( ) ) :
+   if ( ooOO00o . accept_more_specifics == False ) : continue
+   if ( ooOO00o . site . site_name not in oOoOO000O0o00OoO ) :
+    oOoOO000O0o00OoO [ ooOO00o . site . site_name ] = [ ]
+    if 37 - 37: iII111i - Ii1I . oO0o
+   oO0ooOOO = copy . deepcopy ( oo0O00OOOOO )
+   oO0ooOOO [ "eid-prefix" ] = ooOO00o . eid . print_prefix ( )
+   oO0ooOOO [ "count" ] = len ( ooOO00o . more_specific_registrations )
+   for I1iI in ooOO00o . more_specific_registrations :
+    if ( I1iI . registered ) : oO0ooOOO [ "registered-count" ] += 1
+    if 12 - 12: ooOoO0o + OOooOOo . i1IIi % i11iIiiIii
+   oOoOO000O0o00OoO [ ooOO00o . site . site_name ] . append ( oO0ooOOO )
+   if 61 - 61: o0oOOo0O0Ooo - Ii1I % o0oOOo0O0Ooo
+   if 59 - 59: OoooooooOO . iIii1I11I1II1 * OoooooooOO + ooOoO0o
+   if 56 - 56: OoOoOO00 . iII111i / OOooOOo
+ iiooo0o0oO = [ ]
+ for IIiii in oOoOO000O0o00OoO :
+  I111 = copy . deepcopy ( I1io0oOOooOoo0oO )
+  I111 [ "site" ] = IIiii
+  I111 [ "registrations" ] = oOoOO000O0o00OoO [ IIiii ]
+  iiooo0o0oO . append ( I111 )
+  if 39 - 39: iIii1I11I1II1 % ooOoO0o
+ return ( iiooo0o0oO )
  if 75 - 75: i1IIi * II111iiii * O0 * i11iIiiIii % iII111i / iII111i
  if 36 - 36: IiII / I1IiiI % iII111i / iII111i
+ if 38 - 38: OOooOOo * I1ii11iIi11i * I1Ii111 + I11i
+ if 65 - 65: O0 + O0 * I1Ii111
+ if 66 - 66: OOooOOo / O0 + i1IIi . O0 % I1ii11iIi11i - OoooooooOO
+ if 16 - 16: I11i % iII111i
+ if 29 - 29: I1IiiI - ooOoO0o * OoO0O00 . i11iIiiIii % OoOoOO00 * o0oOOo0O0Ooo
+def lisp_process_api_site_cache ( se , data ) :
+ if 43 - 43: OoO0O00 * OOooOOo / I1Ii111 % OoOoOO00 . oO0o / OOooOOo
+ if 62 - 62: O0 * I1ii11iIi11i - O0 / I11i % ooOoO0o
+ if 1 - 1: O0 / iIii1I11I1II1
+ if 17 - 17: OoOoOO00 + ooOoO0o * II111iiii * OoOoOO00 + I1IiiI + i11iIiiIii
+ if ( se . group . is_null ( ) ) : return ( lisp_gather_site_cache_data ( se , data ) )
+ if 46 - 46: i1IIi - II111iiii . I1IiiI . i11iIiiIii
+ if ( se . source_cache == None ) : return ( [ True , data ] )
+ if 54 - 54: O0 * I1ii11iIi11i / OOooOOo / IiII * IiII
+ if 69 - 69: Oo0Ooo * OoooooooOO / I1IiiI
+ if 16 - 16: o0oOOo0O0Ooo
+ if 3 - 3: i11iIiiIii . I1ii11iIi11i
+ if 65 - 65: II111iiii * iII111i - OoO0O00 + oO0o % OoO0O00
+ data = se . source_cache . walk_cache ( lisp_gather_site_cache_data , data )
+ return ( [ True , data ] )
+ if 83 - 83: OoooooooOO % I1ii11iIi11i . IiII + OOooOOo . iII111i - ooOoO0o
+ if 100 - 100: o0oOOo0O0Ooo
+ if 95 - 95: iII111i * oO0o * i1IIi
+ if 100 - 100: iII111i . o0oOOo0O0Ooo - I1Ii111 % oO0o
+ if 11 - 11: o0oOOo0O0Ooo . OoooooooOO - i1IIi
+ if 71 - 71: I1IiiI . OOooOOo . I1ii11iIi11i
+ if 90 - 90: i11iIiiIii + I1Ii111 % II111iiii
 def lisp_process_api_ms_or_mr ( ms_or_mr , data ) :
  I1IIIi = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
  iiiiII = data [ "dns-name" ] if ( "dns-name" in data ) else None
  if ( "address" in data ) :
   I1IIIi . store_address ( data [ "address" ] )
-  if 38 - 38: OOooOOo * I1ii11iIi11i * I1Ii111 + I11i
-  if 65 - 65: O0 + O0 * I1Ii111
+  if 67 - 67: OoOoOO00 / iII111i * OoO0O00 % i11iIiiIii
+  if 76 - 76: OoO0O00
  oOO0 = { }
  if ( ms_or_mr ) :
   for oO00000oOO in list ( lisp_map_servers_list . values ( ) ) :
@@ -16960,79 +16976,79 @@ def lisp_process_api_ms_or_mr ( ms_or_mr , data ) :
     if ( iiiiII != oO00000oOO . dns_name ) : continue
    else :
     if ( I1IIIi . is_exact_match ( oO00000oOO . map_server ) == False ) : continue
-    if 66 - 66: OOooOOo / O0 + i1IIi . O0 % I1ii11iIi11i - OoooooooOO
-    if 16 - 16: I11i % iII111i
+    if 92 - 92: iIii1I11I1II1 * O0 % I11i
+    if 92 - 92: OoOoOO00 + oO0o
    oOO0 [ "dns-name" ] = oO00000oOO . dns_name
    oOO0 [ "address" ] = oO00000oOO . map_server . print_address_no_iid ( )
    oOO0 [ "ms-name" ] = "" if oO00000oOO . ms_name == None else oO00000oOO . ms_name
    return ( [ oOO0 ] )
-   if 29 - 29: I1IiiI - ooOoO0o * OoO0O00 . i11iIiiIii % OoOoOO00 * o0oOOo0O0Ooo
+   if 89 - 89: IiII % iII111i / iIii1I11I1II1 . Ii1I . Oo0Ooo + ooOoO0o
  else :
   for iii1i in list ( lisp_map_resolvers_list . values ( ) ) :
    if ( iiiiII ) :
     if ( iiiiII != iii1i . dns_name ) : continue
    else :
     if ( I1IIIi . is_exact_match ( iii1i . map_resolver ) == False ) : continue
-    if 43 - 43: OoO0O00 * OOooOOo / I1Ii111 % OoOoOO00 . oO0o / OOooOOo
-    if 62 - 62: O0 * I1ii11iIi11i - O0 / I11i % ooOoO0o
+    if 28 - 28: I1IiiI . iIii1I11I1II1
+    if 12 - 12: I1Ii111 * OOooOOo
    oOO0 [ "dns-name" ] = iii1i . dns_name
    oOO0 [ "address" ] = iii1i . map_resolver . print_address_no_iid ( )
    oOO0 [ "mr-name" ] = "" if iii1i . mr_name == None else iii1i . mr_name
    return ( [ oOO0 ] )
-   if 1 - 1: O0 / iIii1I11I1II1
-   if 17 - 17: OoOoOO00 + ooOoO0o * II111iiii * OoOoOO00 + I1IiiI + i11iIiiIii
+   if 11 - 11: II111iiii % O0 % O0 % o0oOOo0O0Ooo
+   if 45 - 45: OoooooooOO * oO0o
  return ( [ ] )
- if 46 - 46: i1IIi - II111iiii . I1IiiI . i11iIiiIii
- if 54 - 54: O0 * I1ii11iIi11i / OOooOOo / IiII * IiII
- if 69 - 69: Oo0Ooo * OoooooooOO / I1IiiI
- if 16 - 16: o0oOOo0O0Ooo
- if 3 - 3: i11iIiiIii . I1ii11iIi11i
- if 65 - 65: II111iiii * iII111i - OoO0O00 + oO0o % OoO0O00
- if 83 - 83: OoooooooOO % I1ii11iIi11i . IiII + OOooOOo . iII111i - ooOoO0o
- if 100 - 100: o0oOOo0O0Ooo
-def lisp_process_api_database_mapping ( ) :
- iiooo0o0oO = [ ]
- if 95 - 95: iII111i * oO0o * i1IIi
- for OoO0oO in lisp_db_list :
-  oo0O00OOOOO = { }
-  oo0O00OOOOO [ "eid-prefix" ] = OoO0oO . eid . print_prefix ( )
-  if ( OoO0oO . group . is_null ( ) == False ) :
-   oo0O00OOOOO [ "group-prefix" ] = OoO0oO . group . print_prefix ( )
-   if 100 - 100: iII111i . o0oOOo0O0Ooo - I1Ii111 % oO0o
-   if 11 - 11: o0oOOo0O0Ooo . OoooooooOO - i1IIi
-  OOOO00 = [ ]
-  for iiiI1I in OoO0oO . rloc_set :
-   iIIiI11 = { }
-   if ( iiiI1I . rloc . is_null ( ) == False ) :
-    iIIiI11 [ "rloc" ] = iiiI1I . rloc . print_address_no_iid ( )
-    if 71 - 71: I1IiiI . OOooOOo . I1ii11iIi11i
-   if ( iiiI1I . rloc_name != None ) : iIIiI11 [ "rloc-name" ] = iiiI1I . rloc_name
-   if ( iiiI1I . interface != None ) : iIIiI11 [ "interface" ] = iiiI1I . interface
-   oo00oOO = iiiI1I . translated_rloc
-   if ( oo00oOO . is_null ( ) == False ) :
-    iIIiI11 [ "translated-rloc" ] = oo00oOO . print_address_no_iid ( )
-    if 18 - 18: iII111i * OoO0O00 % i11iIiiIii
-   if ( iIIiI11 != { } ) : OOOO00 . append ( iIIiI11 )
-   if 76 - 76: OoO0O00
-   if 92 - 92: iIii1I11I1II1 * O0 % I11i
-   if 92 - 92: OoOoOO00 + oO0o
-   if 89 - 89: IiII % iII111i / iIii1I11I1II1 . Ii1I . Oo0Ooo + ooOoO0o
-   if 28 - 28: I1IiiI . iIii1I11I1II1
-  oo0O00OOOOO [ "rlocs" ] = OOOO00
-  if 12 - 12: I1Ii111 * OOooOOo
-  if 11 - 11: II111iiii % O0 % O0 % o0oOOo0O0Ooo
-  if 45 - 45: OoooooooOO * oO0o
-  if 74 - 74: ooOoO0o * I11i / oO0o - IiII + OoOoOO00
-  iiooo0o0oO . append ( oo0O00OOOOO )
-  if 16 - 16: Oo0Ooo
- return ( iiooo0o0oO )
+ if 74 - 74: ooOoO0o * I11i / oO0o - IiII + OoOoOO00
+ if 16 - 16: Oo0Ooo
  if 29 - 29: Oo0Ooo . I1ii11iIi11i / II111iiii / oO0o / o0oOOo0O0Ooo + I11i
  if 4 - 4: OoooooooOO % I1ii11iIi11i . OoO0O00 * o0oOOo0O0Ooo + I1ii11iIi11i * IiII
  if 67 - 67: I1IiiI
  if 93 - 93: ooOoO0o . Ii1I + IiII / Oo0Ooo % I11i
  if 40 - 40: Oo0Ooo % OoOoOO00 . IiII / I1IiiI % OoooooooOO
  if 33 - 33: OOooOOo - OoooooooOO . iII111i
+def lisp_process_api_database_mapping ( ) :
+ iiooo0o0oO = [ ]
  if 2 - 2: I11i + i1IIi
+ for OoO0oO in lisp_db_list :
+  oo0O00OOOOO = { }
+  oo0O00OOOOO [ "eid-prefix" ] = OoO0oO . eid . print_prefix ( )
+  if ( OoO0oO . group . is_null ( ) == False ) :
+   oo0O00OOOOO [ "group-prefix" ] = OoO0oO . group . print_prefix ( )
+   if 52 - 52: I11i - OoO0O00 % I1Ii111 . OOooOOo
+   if 90 - 90: O0 - Oo0Ooo / i1IIi * iIii1I11I1II1 % o0oOOo0O0Ooo / oO0o
+  OOOO00 = [ ]
+  for iiiI1I in OoO0oO . rloc_set :
+   iIIiI11 = { }
+   if ( iiiI1I . rloc . is_null ( ) == False ) :
+    iIIiI11 [ "rloc" ] = iiiI1I . rloc . print_address_no_iid ( )
+    if 73 - 73: iII111i % iIii1I11I1II1 + o0oOOo0O0Ooo % Ii1I . II111iiii + IiII
+   if ( iiiI1I . rloc_name != None ) : iIIiI11 [ "rloc-name" ] = iiiI1I . rloc_name
+   if ( iiiI1I . interface != None ) : iIIiI11 [ "interface" ] = iiiI1I . interface
+   OOooO0o0oo00o = iiiI1I . translated_rloc
+   if ( OOooO0o0oo00o . is_null ( ) == False ) :
+    iIIiI11 [ "translated-rloc" ] = OOooO0o0oo00o . print_address_no_iid ( )
+    if 59 - 59: Oo0Ooo
+   if ( iIIiI11 != { } ) : OOOO00 . append ( iIIiI11 )
+   if 40 - 40: o0oOOo0O0Ooo
+   if 50 - 50: i11iIiiIii . I1ii11iIi11i * I1Ii111
+   if 22 - 22: I1ii11iIi11i . i1IIi + I1ii11iIi11i / OoooooooOO - i11iIiiIii / iIii1I11I1II1
+   if 96 - 96: o0oOOo0O0Ooo . I1Ii111 + Oo0Ooo . I11i + ooOoO0o
+   if 33 - 33: OoO0O00 / OOooOOo % Oo0Ooo . o0oOOo0O0Ooo % II111iiii
+  oo0O00OOOOO [ "rlocs" ] = OOOO00
+  if 62 - 62: iII111i . OoooooooOO - i1IIi
+  if 59 - 59: OoOoOO00 + i1IIi * OoooooooOO . oO0o
+  if 38 - 38: I1ii11iIi11i / o0oOOo0O0Ooo
+  if 95 - 95: iIii1I11I1II1 / OoOoOO00 % I1Ii111
+  iiooo0o0oO . append ( oo0O00OOOOO )
+  if 54 - 54: OoooooooOO % Ii1I
+ return ( iiooo0o0oO )
+ if 100 - 100: OOooOOo - I11i . O0 * i1IIi % OoooooooOO - ooOoO0o
+ if 54 - 54: O0 + I11i
+ if 71 - 71: OoOoOO00
+ if 29 - 29: O0 . i11iIiiIii
+ if 51 - 51: IiII
+ if 53 - 53: O0
+ if 19 - 19: o0oOOo0O0Ooo / iII111i % OoOoOO00
 def lisp_gather_site_cache_data ( se , data ) :
  oo0O00OOOOO = { }
  oo0O00OOOOO [ "site-name" ] = se . site . site_name
@@ -17040,11 +17056,11 @@ def lisp_gather_site_cache_data ( se , data ) :
  oo0O00OOOOO [ "eid-prefix" ] = se . eid . print_prefix_no_iid ( )
  if ( se . group . is_null ( ) == False ) :
   oo0O00OOOOO [ "group-prefix" ] = se . group . print_prefix_no_iid ( )
-  if 52 - 52: I11i - OoO0O00 % I1Ii111 . OOooOOo
+  if 65 - 65: o0oOOo0O0Ooo
  oo0O00OOOOO [ "registered" ] = "yes" if se . registered else "no"
  oo0O00OOOOO [ "first-registered" ] = lisp_print_elapsed ( se . first_registered )
  oo0O00OOOOO [ "last-registered" ] = lisp_print_elapsed ( se . last_registered )
- if 90 - 90: O0 - Oo0Ooo / i1IIi * iIii1I11I1II1 % o0oOOo0O0Ooo / oO0o
+ if 89 - 89: iIii1I11I1II1 + OoooooooOO + i1IIi + OoooooooOO % IiII * OoO0O00
  IiI = se . last_registerer
  IiI = "none" if IiI . is_null ( ) else IiI . print_address ( )
  oo0O00OOOOO [ "last-registerer" ] = IiI
@@ -17053,17 +17069,17 @@ def lisp_gather_site_cache_data ( se , data ) :
  oo0O00OOOOO [ "site-id" ] = str ( se . site_id )
  if ( se . xtr_id_present ) :
   oo0O00OOOOO [ "xtr-id" ] = "0x" + lisp_hex_string ( se . xtr_id )
-  if 73 - 73: iII111i % iIii1I11I1II1 + o0oOOo0O0Ooo % Ii1I . II111iiii + IiII
-  if 55 - 55: OoOoOO00 * II111iiii / iII111i + OOooOOo / OoooooooOO
-  if 12 - 12: II111iiii * O0 - Oo0Ooo + o0oOOo0O0Ooo . Oo0Ooo + iIii1I11I1II1
-  if 4 - 4: I1Ii111 - I1Ii111 / I1ii11iIi11i . i1IIi + I1ii11iIi11i / oO0o
-  if 18 - 18: iIii1I11I1II1 . ooOoO0o
+  if 53 - 53: OOooOOo . IiII % I11i - OoO0O00 - Oo0Ooo
+  if 58 - 58: I1Ii111 / OoooooooOO . I11i % I1Ii111
+  if 8 - 8: Oo0Ooo % ooOoO0o / i11iIiiIii
+  if 54 - 54: IiII
+  if 85 - 85: OOooOOo - i1IIi
  OO00O000OOO = [ ]
  for iIIiI11 in se . registered_rlocs :
   iiiI1I = { }
   iiiI1I [ "address" ] = iIIiI11 . rloc . print_address_no_iid ( ) if iIIiI11 . rloc_exists ( ) else "none"
-  if 68 - 68: o0oOOo0O0Ooo
-  if 36 - 36: Oo0Ooo . I11i + I1IiiI * i1IIi % Ii1I + OOooOOo
+  if 10 - 10: I1ii11iIi11i
+  if 3 - 3: ooOoO0o * O0 / o0oOOo0O0Ooo
   if ( iIIiI11 . geo ) : iiiI1I [ "geo" ] = iIIiI11 . geo . print_geo ( )
   if ( iIIiI11 . elp ) : iiiI1I [ "elp" ] = iIIiI11 . elp . print_elp ( False )
   if ( iIIiI11 . rle ) : iiiI1I [ "rle" ] = iIIiI11 . rle . print_rle ( False , True )
@@ -17074,75 +17090,75 @@ def lisp_gather_site_cache_data ( se , data ) :
   iiiI1I [ "uweight" ] = str ( iIIiI11 . weight )
   iiiI1I [ "mpriority" ] = str ( iIIiI11 . mpriority )
   iiiI1I [ "mweight" ] = str ( iIIiI11 . mweight )
-  if 5 - 5: o0oOOo0O0Ooo % oO0o / OoO0O00
+  if 22 - 22: OoOoOO00 + OOooOOo . iII111i % iIii1I11I1II1 - I11i
   OO00O000OOO . append ( iiiI1I )
-  if 17 - 17: OoooooooOO - I1ii11iIi11i / OoO0O00 - I1Ii111 + i1IIi
+  if 23 - 23: OoOoOO00 * I1Ii111
  oo0O00OOOOO [ "registered-rlocs" ] = OO00O000OOO
- if 6 - 6: Oo0Ooo - II111iiii
+ if 18 - 18: o0oOOo0O0Ooo % i11iIiiIii . Ii1I . O0
  data . append ( oo0O00OOOOO )
  return ( [ True , data ] )
- if 33 - 33: I1Ii111 - I1IiiI + iII111i . OoOoOO00
- if 91 - 91: OOooOOo / Ii1I / IiII * OOooOOo
- if 68 - 68: I11i
- if 91 - 91: I11i
- if 24 - 24: ooOoO0o . i1IIi - O0 + I11i
- if 71 - 71: OoOoOO00
- if 29 - 29: O0 . i11iIiiIii
+ if 85 - 85: I1ii11iIi11i * iIii1I11I1II1 + o0oOOo0O0Ooo * OoO0O00
+ if 25 - 25: o0oOOo0O0Ooo / Ii1I / Oo0Ooo . ooOoO0o - ooOoO0o * O0
+ if 14 - 14: O0 - Ii1I + iIii1I11I1II1 + II111iiii . ooOoO0o + Ii1I
+ if 25 - 25: OoO0O00 * oO0o
+ if 29 - 29: OOooOOo - I1Ii111 - i11iIiiIii % i1IIi
+ if 2 - 2: i11iIiiIii % iIii1I11I1II1 * OOooOOo
+ if 45 - 45: oO0o + i1IIi + iII111i + o0oOOo0O0Ooo * OOooOOo + ooOoO0o
 def lisp_process_api_site_cache_entry ( parms ) :
  oooo = parms [ "instance-id" ]
  oooo = 0 if ( oooo == "" ) else int ( oooo )
- if 51 - 51: IiII
- if 53 - 53: O0
- if 19 - 19: o0oOOo0O0Ooo / iII111i % OoOoOO00
- if 65 - 65: o0oOOo0O0Ooo
+ if 83 - 83: OoO0O00 - ooOoO0o / OoooooooOO % iIii1I11I1II1 - II111iiii
+ if 73 - 73: Oo0Ooo + II111iiii - IiII
+ if 60 - 60: i1IIi . i11iIiiIii / i1IIi . I11i % OOooOOo
+ if 47 - 47: oO0o + IiII * I1Ii111 % o0oOOo0O0Ooo - O0 % IiII
  o0Ooo0Oooo0o = lisp_address ( LISP_AFI_NONE , "" , 0 , oooo )
  o0Ooo0Oooo0o . store_prefix ( parms [ "eid-prefix" ] )
- if 89 - 89: iIii1I11I1II1 + OoooooooOO + i1IIi + OoooooooOO % IiII * OoO0O00
- if 53 - 53: OOooOOo . IiII % I11i - OoO0O00 - Oo0Ooo
- if 58 - 58: I1Ii111 / OoooooooOO . I11i % I1Ii111
- if 8 - 8: Oo0Ooo % ooOoO0o / i11iIiiIii
- if 54 - 54: IiII
+ if 66 - 66: II111iiii * I1IiiI . Oo0Ooo * OoooooooOO % OoOoOO00 . II111iiii
+ if 4 - 4: iII111i + I1Ii111 % OoOoOO00 / Ii1I
+ if 94 - 94: OoO0O00
+ if 35 - 35: I1ii11iIi11i % OoO0O00 + II111iiii % II111iiii / IiII - iII111i
+ if 9 - 9: I1ii11iIi11i * o0oOOo0O0Ooo . oO0o
  oo0oOooo0O = lisp_address ( LISP_AFI_NONE , "" , 0 , oooo )
  if ( "group-prefix" in parms ) :
   oo0oOooo0O . store_prefix ( parms [ "group-prefix" ] )
-  if 85 - 85: OOooOOo - i1IIi
-  if 10 - 10: I1ii11iIi11i
+  if 48 - 48: IiII . I1Ii111 + OoooooooOO - I1Ii111 . Ii1I . I1Ii111
+  if 24 - 24: ooOoO0o * iIii1I11I1II1
  iiooo0o0oO = [ ]
  ooOO00o = lisp_site_eid_lookup ( o0Ooo0Oooo0o , oo0oOooo0O , False )
  if ( ooOO00o ) : lisp_gather_site_cache_data ( ooOO00o , iiooo0o0oO )
  return ( iiooo0o0oO )
- if 3 - 3: ooOoO0o * O0 / o0oOOo0O0Ooo
- if 22 - 22: OoOoOO00 + OOooOOo . iII111i % iIii1I11I1II1 - I11i
- if 23 - 23: OoOoOO00 * I1Ii111
- if 18 - 18: o0oOOo0O0Ooo % i11iIiiIii . Ii1I . O0
- if 85 - 85: I1ii11iIi11i * iIii1I11I1II1 + o0oOOo0O0Ooo * OoO0O00
- if 25 - 25: o0oOOo0O0Ooo / Ii1I / Oo0Ooo . ooOoO0o - ooOoO0o * O0
- if 14 - 14: O0 - Ii1I + iIii1I11I1II1 + II111iiii . ooOoO0o + Ii1I
+ if 1 - 1: I1ii11iIi11i . O0
+ if 3 - 3: iIii1I11I1II1 * ooOoO0o - OoOoOO00 * I1ii11iIi11i % OoOoOO00 - OoooooooOO
+ if 42 - 42: I1Ii111 - i1IIi
+ if 91 - 91: iII111i . OOooOOo / iIii1I11I1II1 . Oo0Ooo . II111iiii . OoOoOO00
+ if 31 - 31: OoO0O00 . I1ii11iIi11i % I11i - II111iiii
+ if 70 - 70: ooOoO0o - IiII - OoO0O00 / I11i
+ if 59 - 59: IiII % ooOoO0o . iII111i / Ii1I * Ii1I
 def lisp_get_interface_instance_id ( device , source_eid ) :
  i111IIiIiiI1 = None
  if ( device in lisp_myinterfaces ) :
   i111IIiIiiI1 = lisp_myinterfaces [ device ]
-  if 25 - 25: OoO0O00 * oO0o
-  if 29 - 29: OOooOOo - I1Ii111 - i11iIiiIii % i1IIi
-  if 2 - 2: i11iIiiIii % iIii1I11I1II1 * OOooOOo
-  if 45 - 45: oO0o + i1IIi + iII111i + o0oOOo0O0Ooo * OOooOOo + ooOoO0o
-  if 83 - 83: OoO0O00 - ooOoO0o / OoooooooOO % iIii1I11I1II1 - II111iiii
-  if 73 - 73: Oo0Ooo + II111iiii - IiII
+  if 73 - 73: I1ii11iIi11i . oO0o % I11i . I1ii11iIi11i / I1Ii111 / II111iiii
+  if 23 - 23: OoooooooOO . o0oOOo0O0Ooo
+  if 76 - 76: I1Ii111
+  if 91 - 91: iIii1I11I1II1 / Ii1I . I1IiiI
+  if 63 - 63: ooOoO0o . Ii1I - I1Ii111 - oO0o * I1Ii111 + ooOoO0o
+  if 85 - 85: II111iiii + I1ii11iIi11i
  if ( i111IIiIiiI1 == None or i111IIiIiiI1 . instance_id == None ) :
   return ( lisp_default_iid )
-  if 60 - 60: i1IIi . i11iIiiIii / i1IIi . I11i % OOooOOo
-  if 47 - 47: oO0o + IiII * I1Ii111 % o0oOOo0O0Ooo - O0 % IiII
-  if 66 - 66: II111iiii * I1IiiI . Oo0Ooo * OoooooooOO % OoOoOO00 . II111iiii
-  if 4 - 4: iII111i + I1Ii111 % OoOoOO00 / Ii1I
-  if 94 - 94: OoO0O00
-  if 35 - 35: I1ii11iIi11i % OoO0O00 + II111iiii % II111iiii / IiII - iII111i
-  if 9 - 9: I1ii11iIi11i * o0oOOo0O0Ooo . oO0o
-  if 48 - 48: IiII . I1Ii111 + OoooooooOO - I1Ii111 . Ii1I . I1Ii111
-  if 24 - 24: ooOoO0o * iIii1I11I1II1
+  if 33 - 33: iII111i
+  if 14 - 14: O0 * Oo0Ooo / i1IIi
+  if 95 - 95: O0 % i1IIi % ooOoO0o % oO0o - I1IiiI
+  if 78 - 78: II111iiii % OOooOOo
+  if 6 - 6: OOooOOo
+  if 21 - 21: I1Ii111 - Ii1I - i1IIi % oO0o
+  if 55 - 55: OOooOOo + oO0o - II111iiii
+  if 5 - 5: iII111i * OoooooooOO . OoO0O00 % ooOoO0o + Ii1I
+  if 59 - 59: OoOoOO00
  oooo = i111IIiIiiI1 . get_instance_id ( )
  if ( source_eid == None ) : return ( oooo )
- if 1 - 1: I1ii11iIi11i . O0
- IiI11I1IIIiIi = source_eid . instance_id
+ if 96 - 96: I1IiiI
+ ii1i = source_eid . instance_id
  O0O0OO0o0 = None
  for i111IIiIiiI1 in lisp_multi_tenant_interfaces :
   if ( i111IIiIiiI1 . device != device ) : continue
@@ -17151,401 +17167,360 @@ def lisp_get_interface_instance_id ( device , source_eid ) :
   if ( source_eid . is_more_specific ( Oo0OoOI1I11iII1I1i ) == False ) : continue
   if ( O0O0OO0o0 == None or O0O0OO0o0 . multi_tenant_eid . mask_len < Oo0OoOI1I11iII1I1i . mask_len ) :
    O0O0OO0o0 = i111IIiIiiI1
-   if 57 - 57: I1Ii111 / i11iIiiIii * OoooooooOO % OoooooooOO % i11iIiiIii . Oo0Ooo
-   if 14 - 14: I1IiiI + o0oOOo0O0Ooo
- source_eid . instance_id = IiI11I1IIIiIi
- if 5 - 5: I1ii11iIi11i % I11i - II111iiii
+   if 86 - 86: i11iIiiIii . I1ii11iIi11i . iIii1I11I1II1 * O0 - iII111i * IiII
+   if 12 - 12: IiII . I1Ii111 - iIii1I11I1II1 + II111iiii . I1ii11iIi11i + OoooooooOO
+ source_eid . instance_id = ii1i
+ if 37 - 37: IiII % OoooooooOO * iIii1I11I1II1 / OOooOOo + I1Ii111 + o0oOOo0O0Ooo
  if ( O0O0OO0o0 == None ) : return ( oooo )
  return ( O0O0OO0o0 . get_instance_id ( ) )
- if 70 - 70: ooOoO0o - IiII - OoO0O00 / I11i
- if 59 - 59: IiII % ooOoO0o . iII111i / Ii1I * Ii1I
- if 73 - 73: I1ii11iIi11i . oO0o % I11i . I1ii11iIi11i / I1Ii111 / II111iiii
- if 23 - 23: OoooooooOO . o0oOOo0O0Ooo
- if 76 - 76: I1Ii111
- if 91 - 91: iIii1I11I1II1 / Ii1I . I1IiiI
- if 63 - 63: ooOoO0o . Ii1I - I1Ii111 - oO0o * I1Ii111 + ooOoO0o
- if 85 - 85: II111iiii + I1ii11iIi11i
- if 33 - 33: iII111i
+ if 5 - 5: I1IiiI - ooOoO0o / OoooooooOO
+ if 71 - 71: OOooOOo + I11i * O0 / o0oOOo0O0Ooo + I1IiiI + Ii1I
+ if 41 - 41: ooOoO0o * I1Ii111
+ if 40 - 40: OoOoOO00
+ if 60 - 60: IiII . i11iIiiIii * II111iiii . Ii1I
+ if 10 - 10: O0
+ if 65 - 65: I11i % i11iIiiIii + i11iIiiIii % II111iiii
+ if 95 - 95: I1Ii111 - I11i . II111iiii . i1IIi / II111iiii + Oo0Ooo
+ if 96 - 96: iIii1I11I1II1 * iII111i / OOooOOo * iIii1I11I1II1 - O0
 def lisp_allow_dynamic_eid ( device , eid ) :
  if ( device not in lisp_myinterfaces ) : return ( None )
- if 14 - 14: O0 * Oo0Ooo / i1IIi
+ if 28 - 28: I11i / I1IiiI - I1Ii111 + I1ii11iIi11i % iIii1I11I1II1
  i111IIiIiiI1 = lisp_myinterfaces [ device ]
- Oo0o00OOo0 = device if i111IIiIiiI1 . dynamic_eid_device == None else i111IIiIiiI1 . dynamic_eid_device
- if 26 - 26: OOooOOo / OoooooooOO . i1IIi % o0oOOo0O0Ooo - I1Ii111
- if 65 - 65: i1IIi % o0oOOo0O0Ooo - Oo0Ooo + OOooOOo - oO0o
- if ( i111IIiIiiI1 . does_dynamic_eid_match ( eid ) ) : return ( Oo0o00OOo0 )
+ Ii1Ii1IiiII = device if i111IIiIiiI1 . dynamic_eid_device == None else i111IIiIiiI1 . dynamic_eid_device
+ if 81 - 81: II111iiii + oO0o
+ if 67 - 67: ooOoO0o + I11i - I1ii11iIi11i - OoooooooOO
+ if ( i111IIiIiiI1 . does_dynamic_eid_match ( eid ) ) : return ( Ii1Ii1IiiII )
  return ( None )
- if 30 - 30: iII111i
- if 91 - 91: OoooooooOO . OoO0O00 % ooOoO0o + I1ii11iIi11i % iIii1I11I1II1
- if 48 - 48: I1IiiI . OoooooooOO . i11iIiiIii / i1IIi % ooOoO0o * O0
- if 1 - 1: I1ii11iIi11i
- if 85 - 85: I1ii11iIi11i
- if 6 - 6: IiII % ooOoO0o . IiII . I1Ii111 - iIii1I11I1II1 + iIii1I11I1II1
- if 30 - 30: OoooooooOO - ooOoO0o + Ii1I
+ if 37 - 37: I11i % I1IiiI
+ if 32 - 32: OOooOOo + OoooooooOO . IiII . Oo0Ooo * iII111i
+ if 86 - 86: I1ii11iIi11i . iII111i + Ii1I - IiII / i11iIiiIii + OoOoOO00
+ if 50 - 50: o0oOOo0O0Ooo - IiII + OoOoOO00 - II111iiii
+ if 24 - 24: I1Ii111 - IiII % I1IiiI - OoooooooOO % Ii1I
+ if 56 - 56: I1ii11iIi11i
+ if 40 - 40: OoooooooOO
 def lisp_start_rloc_probe_timer ( interval , lisp_sockets ) :
  global lisp_rloc_probe_timer
- if 88 - 88: II111iiii / Oo0Ooo . Oo0Ooo % o0oOOo0O0Ooo * OoOoOO00 . I1ii11iIi11i
+ if 100 - 100: IiII - I11i
  if ( lisp_rloc_probe_timer != None ) : lisp_rloc_probe_timer . cancel ( )
- if 32 - 32: OoooooooOO * I11i
- o00ooOOOo = lisp_process_rloc_probe_timer
- oo0O00O0O0O00Ooo = threading . Timer ( interval , o00ooOOOo , [ lisp_sockets ] )
+ if 79 - 79: iII111i % O0
+ oooOO0 = lisp_process_rloc_probe_timer
+ oo0O00O0O0O00Ooo = threading . Timer ( interval , oooOO0 , [ lisp_sockets ] )
  lisp_rloc_probe_timer = oo0O00O0O0O00Ooo
  oo0O00O0O0O00Ooo . start ( )
  return
- if 80 - 80: iII111i / I1Ii111 * Oo0Ooo
- if 6 - 6: o0oOOo0O0Ooo - IiII . iII111i
- if 3 - 3: II111iiii
- if 79 - 79: i11iIiiIii
- if 7 - 7: I11i - OoOoOO00 % I11i . i11iIiiIii
- if 28 - 28: oO0o * i11iIiiIii * i11iIiiIii % OoooooooOO / I1IiiI / II111iiii
- if 36 - 36: ooOoO0o % i1IIi . ooOoO0o % oO0o % O0 . II111iiii
+ if 8 - 8: I1Ii111 % oO0o
+ if 19 - 19: O0 + OoO0O00 - i1IIi % OoOoOO00 / Oo0Ooo + OoooooooOO
+ if 93 - 93: i11iIiiIii % OOooOOo . I11i * ooOoO0o
+ if 90 - 90: OoO0O00
+ if 54 - 54: OOooOOo + Oo0Ooo * o0oOOo0O0Ooo - iIii1I11I1II1 * ooOoO0o
+ if 76 - 76: i11iIiiIii * I1IiiI - IiII . o0oOOo0O0Ooo % iII111i . i11iIiiIii
+ if 69 - 69: O0 + o0oOOo0O0Ooo / ooOoO0o
 def lisp_show_rloc_probe_list ( ) :
  lprint ( bold ( "----- RLOC-probe-list -----" , False ) )
  for III in lisp_rloc_probe_list :
-  oOoO00OoO0 = lisp_rloc_probe_list [ III ]
+  I1io00 = lisp_rloc_probe_list [ III ]
   lprint ( "RLOC {}:" . format ( III ) )
-  for iiiI1I , oO0ooOOO , Oo in oOoO00OoO0 :
+  for iiiI1I , oO0ooOOO , Oo in I1io00 :
    lprint ( "  [{}, {}, {}, {}]" . format ( hex ( id ( iiiI1I ) ) , oO0ooOOO . print_prefix ( ) ,
  Oo . print_prefix ( ) , iiiI1I . translated_port ) )
-   if 83 - 83: I11i
-   if 39 - 39: o0oOOo0O0Ooo * iIii1I11I1II1
+   if 8 - 8: OoO0O00
+   if 39 - 39: OoO0O00 * I11i . OoOoOO00
  lprint ( bold ( "---------------------------" , False ) )
  return
- if 13 - 13: iII111i + Oo0Ooo / oO0o / OOooOOo
- if 58 - 58: oO0o * I1ii11iIi11i % I1ii11iIi11i
- if 16 - 16: I11i / I1IiiI % I1IiiI
- if 78 - 78: O0 % i11iIiiIii / IiII
- if 87 - 87: IiII % iIii1I11I1II1 * I1ii11iIi11i
- if 43 - 43: Ii1I - IiII / i11iIiiIii + OoOoOO00 + I1ii11iIi11i - o0oOOo0O0Ooo
- if 39 - 39: OoOoOO00 - i1IIi / oO0o % I11i * o0oOOo0O0Ooo * I1IiiI
- if 79 - 79: Ii1I
- if 56 - 56: I1ii11iIi11i
-def lisp_mark_rlocs_for_other_eids ( eid_list ) :
- if 40 - 40: OoooooooOO
- if 100 - 100: IiII - I11i
- if 79 - 79: iII111i % O0
- if 73 - 73: Oo0Ooo
- iIIiI11 , oO0ooOOO , Oo = eid_list [ 0 ]
- iI1ii11I = [ lisp_print_eid_tuple ( oO0ooOOO , Oo ) ]
- if 19 - 19: O0 + OoO0O00 - i1IIi % OoOoOO00 / Oo0Ooo + OoooooooOO
- for iIIiI11 , oO0ooOOO , Oo in eid_list [ 1 : : ] :
-  iIIiI11 . state = LISP_RLOC_UNREACH_STATE
-  iIIiI11 . last_state_change = lisp_get_timestamp ( )
-  iI1ii11I . append ( lisp_print_eid_tuple ( oO0ooOOO , Oo ) )
-  if 93 - 93: i11iIiiIii % OOooOOo . I11i * ooOoO0o
-  if 90 - 90: OoO0O00
- O00OOO0 = bold ( "unreachable" , False )
- IIIOo0O = red ( iIIiI11 . rloc . print_address_no_iid ( ) , False )
- if 12 - 12: ooOoO0o % i11iIiiIii * I1IiiI - IiII . o0oOOo0O0Ooo % i11iIiiIii
- for o0Ooo0Oooo0o in iI1ii11I :
-  oO0ooOOO = green ( o0Ooo0Oooo0o , False )
-  lprint ( "RLOC {} went {} for EID {}" . format ( IIIOo0O , O00OOO0 , oO0ooOOO ) )
-  if 84 - 84: OOooOOo
-  if 35 - 35: I1IiiI . ooOoO0o - O0
-  if 63 - 63: Ii1I
-  if 9 - 9: iIii1I11I1II1 / OOooOOo * O0 . Oo0Ooo + OoO0O00
-  if 95 - 95: I11i . o0oOOo0O0Ooo + O0
-  if 36 - 36: I1IiiI * ooOoO0o
- for iIIiI11 , oO0ooOOO , Oo in eid_list :
-  I11iiI1III = lisp_map_cache . lookup_cache ( oO0ooOOO , True )
-  if ( I11iiI1III ) : lisp_write_ipc_map_cache ( True , I11iiI1III )
-  if 74 - 74: I1IiiI - ooOoO0o / I1ii11iIi11i
- return
- if 82 - 82: II111iiii % OoOoOO00
- if 32 - 32: i11iIiiIii
- if 38 - 38: IiII + I1Ii111 % Ii1I / Ii1I
- if 39 - 39: iII111i * i11iIiiIii
- if 31 - 31: IiII - Ii1I . i1IIi
- if 1 - 1: o0oOOo0O0Ooo + OOooOOo % Ii1I - O0 / I1ii11iIi11i
+ if 53 - 53: Oo0Ooo
+ if 28 - 28: ooOoO0o + Oo0Ooo % I1IiiI - ooOoO0o / iII111i - I1IiiI
+ if 76 - 76: I1IiiI + O0
+ if 4 - 4: I1IiiI - OOooOOo * I1Ii111
+ if 26 - 26: Oo0Ooo % ooOoO0o / i11iIiiIii * Oo0Ooo / oO0o
+ if 87 - 87: Ii1I
+ if 21 - 21: iII111i
+ if 38 - 38: OOooOOo % Ii1I - O0 / I1ii11iIi11i
  if 20 - 20: o0oOOo0O0Ooo + II111iiii * Ii1I . OoooooooOO
+def lisp_mark_rlocs_for_other_eids ( eid_list ) :
  if 88 - 88: O0 + iIii1I11I1II1 . o0oOOo0O0Ooo . iIii1I11I1II1 - Ii1I
  if 74 - 74: Ii1I . IiII
  if 67 - 67: oO0o
+ if 12 - 12: I1IiiI + OoooooooOO
+ iIIiI11 , oO0ooOOO , Oo = eid_list [ 0 ]
+ IiiIIi1i = [ lisp_print_eid_tuple ( oO0ooOOO , Oo ) ]
+ if 27 - 27: IiII . Oo0Ooo
+ for iIIiI11 , oO0ooOOO , Oo in eid_list [ 1 : : ] :
+  iIIiI11 . state = LISP_RLOC_UNREACH_STATE
+  iIIiI11 . last_state_change = lisp_get_timestamp ( )
+  IiiIIi1i . append ( lisp_print_eid_tuple ( oO0ooOOO , Oo ) )
+  if 70 - 70: ooOoO0o + OoooooooOO
+  if 17 - 17: iIii1I11I1II1
+ iI1iiiIi11II = bold ( "unreachable" , False )
+ IIIOo0O = red ( iIIiI11 . rloc . print_address_no_iid ( ) , False )
+ if 42 - 42: I1ii11iIi11i
+ for o0Ooo0Oooo0o in IiiIIi1i :
+  oO0ooOOO = green ( o0Ooo0Oooo0o , False )
+  lprint ( "RLOC {} went {} for EID {}" . format ( IIIOo0O , iI1iiiIi11II , oO0ooOOO ) )
+  if 22 - 22: IiII + I1ii11iIi11i + i11iIiiIii
+  if 3 - 3: o0oOOo0O0Ooo . oO0o + IiII + OoO0O00
+  if 89 - 89: iIii1I11I1II1 / OoooooooOO
+  if 28 - 28: i11iIiiIii / O0 / iIii1I11I1II1 / I1IiiI % OoooooooOO % ooOoO0o
+  if 29 - 29: I1ii11iIi11i
+  if 12 - 12: I11i . o0oOOo0O0Ooo . iIii1I11I1II1
+ for iIIiI11 , oO0ooOOO , Oo in eid_list :
+  I11iiI1III = lisp_map_cache . lookup_cache ( oO0ooOOO , True )
+  if ( I11iiI1III ) : lisp_write_ipc_map_cache ( True , I11iiI1III )
+  if 93 - 93: ooOoO0o - OoooooooOO + iIii1I11I1II1 / o0oOOo0O0Ooo + iIii1I11I1II1
+ return
+ if 9 - 9: OoOoOO00 + ooOoO0o
+ if 61 - 61: i11iIiiIii + OOooOOo - i1IIi
+ if 2 - 2: I1ii11iIi11i / I1Ii111 / I1ii11iIi11i / iII111i * i11iIiiIii % iII111i
+ if 48 - 48: O0 + o0oOOo0O0Ooo . oO0o - IiII * OoooooooOO . OoO0O00
+ if 63 - 63: oO0o * OoO0O00 * oO0o
+ if 31 - 31: Oo0Ooo
+ if 90 - 90: I11i . IiII * iIii1I11I1II1 . I11i + i1IIi
+ if 67 - 67: I1Ii111 . I1ii11iIi11i
+ if 2 - 2: O0 + I1Ii111
+ if 82 - 82: Ii1I / iII111i
 def lisp_process_rloc_probe_timer ( lisp_sockets ) :
  lisp_set_exception ( )
- if 12 - 12: I1IiiI + OoooooooOO
+ if 13 - 13: I11i + iII111i
  lisp_start_rloc_probe_timer ( LISP_RLOC_PROBE_INTERVAL , lisp_sockets )
  if ( lisp_rloc_probing == False ) : return
- if 25 - 25: iIii1I11I1II1 - I1IiiI . i11iIiiIii + ooOoO0o
- if 19 - 19: OoooooooOO / IiII
- if 40 - 40: OoOoOO00 / OoooooooOO * iIii1I11I1II1 / i1IIi . OoooooooOO
- if 88 - 88: I1IiiI % I1IiiI / II111iiii - IiII
+ if 54 - 54: I1ii11iIi11i - I1IiiI . Ii1I
+ if 59 - 59: Oo0Ooo + I1ii11iIi11i
+ if 87 - 87: ooOoO0o * OoooooooOO + OoO0O00 + oO0o - I1Ii111
+ if 70 - 70: i1IIi . Ii1I / Ii1I
  if ( lisp_print_rloc_probe_list ) : lisp_show_rloc_probe_list ( )
- if 72 - 72: OoO0O00 - I1ii11iIi11i . Oo0Ooo / OoO0O00
- if 86 - 86: i11iIiiIii - oO0o . i11iIiiIii
- if 51 - 51: OoO0O00 - OoO0O00 * IiII
- if 24 - 24: OoooooooOO . II111iiii
- ooi1I = lisp_get_default_route_next_hops ( )
- if 74 - 74: II111iiii * O0
+ if 9 - 9: iII111i + I1Ii111 + iII111i % ooOoO0o + i11iIiiIii + i11iIiiIii
+ if 45 - 45: i1IIi + I1ii11iIi11i
+ if 49 - 49: i11iIiiIii . I1ii11iIi11i
+ if 91 - 91: ooOoO0o - OOooOOo - OOooOOo * o0oOOo0O0Ooo
+ iIiI1 = lisp_get_default_route_next_hops ( )
+ if 72 - 72: o0oOOo0O0Ooo . i11iIiiIii
  lprint ( "---------- Start RLOC Probing for {} entries ----------" . format ( len ( lisp_rloc_probe_list ) ) )
- if 57 - 57: OoO0O00
- if 12 - 12: o0oOOo0O0Ooo . I1Ii111 . oO0o % Oo0Ooo * OoooooooOO
- if 25 - 25: OoO0O00
- if 54 - 54: O0
- if 20 - 20: ooOoO0o + Oo0Ooo - Oo0Ooo
+ if 59 - 59: OoOoOO00 . Ii1I - ooOoO0o - oO0o
+ if 13 - 13: OoOoOO00 . IiII / i11iIiiIii - OOooOOo
+ if 9 - 9: II111iiii + i11iIiiIii % I1Ii111 - Oo0Ooo * OOooOOo
+ if 55 - 55: I1Ii111 + ooOoO0o
+ if 58 - 58: iII111i . I1ii11iIi11i - Oo0Ooo % o0oOOo0O0Ooo + I1Ii111
  O0oo0oOo = 0
  Oooooo0OOO = bold ( "RLOC-probe" , False )
- for Iii1iIi1i in list ( lisp_rloc_probe_list . values ( ) ) :
-  if 60 - 60: OOooOOo * iII111i . ooOoO0o + O0 + o0oOOo0O0Ooo . o0oOOo0O0Ooo
-  if 62 - 62: O0 * OoO0O00 / Oo0Ooo - oO0o * OoO0O00 * oO0o
-  if 31 - 31: Oo0Ooo
-  if 90 - 90: I11i . IiII * iIii1I11I1II1 . I11i + i1IIi
-  if 67 - 67: I1Ii111 . I1ii11iIi11i
-  ii11ii1 = None
-  for oO00O , o0Ooo0Oooo0o , oo0oOooo0O in Iii1iIi1i :
-   O0O0 = oO00O . rloc . print_address_no_iid ( )
-   if 46 - 46: i11iIiiIii - Ii1I / OoooooooOO - OoO0O00
-   if 36 - 36: Ii1I * ooOoO0o * OoooooooOO + OoOoOO00
-   if 43 - 43: I1Ii111 - Oo0Ooo % i1IIi . II111iiii
-   if 80 - 80: IiII . iII111i + I1Ii111 + iII111i % Oo0Ooo
-   Ooo00O , ooiiIIiii , ii1I1I1iII = lisp_allow_gleaning ( o0Ooo0Oooo0o , None , oO00O )
-   if ( Ooo00O and ooiiIIiii == False ) :
+ for OOo in list ( lisp_rloc_probe_list . values ( ) ) :
+  if 98 - 98: I1IiiI
+  if 85 - 85: iIii1I11I1II1 - ooOoO0o % OoOoOO00
+  if 83 - 83: o0oOOo0O0Ooo / I1ii11iIi11i . i1IIi - Oo0Ooo / iIii1I11I1II1
+  if 67 - 67: oO0o % i11iIiiIii - I1IiiI % iIii1I11I1II1 . iIii1I11I1II1
+  if 73 - 73: OOooOOo % OoO0O00 + IiII . Ii1I * I1Ii111
+  i11iI1II1 = None
+  for oooooOO0OooO0 , o0Ooo0Oooo0o , oo0oOooo0O in OOo :
+   O0O0 = oooooOO0OooO0 . rloc . print_address_no_iid ( )
+   if 41 - 41: I1Ii111
+   if 3 - 3: oO0o
+   if 15 - 15: OoOoOO00 * II111iiii . ooOoO0o
+   if 31 - 31: Oo0Ooo
+   Ooo00O , OoOO0OOo0 , ii1I1I1iII = lisp_allow_gleaning ( o0Ooo0Oooo0o , None , oooooOO0OooO0 )
+   if ( Ooo00O and OoOO0OOo0 == False ) :
     oO0ooOOO = green ( o0Ooo0Oooo0o . print_address ( ) , False )
-    O0O0 += ":{}" . format ( oO00O . translated_port )
+    O0O0 += ":{}" . format ( oooooOO0OooO0 . translated_port )
     lprint ( "Suppress probe to RLOC {} for gleaned EID {}" . format ( red ( O0O0 , False ) , oO0ooOOO ) )
-    if 58 - 58: OOooOOo - o0oOOo0O0Ooo * iII111i % o0oOOo0O0Ooo % O0 / II111iiii
+    if 28 - 28: I1Ii111 . o0oOOo0O0Ooo . I1ii11iIi11i % OoO0O00 / IiII
     continue
-    if 39 - 39: ooOoO0o + I11i
-    if 24 - 24: o0oOOo0O0Ooo
-    if 5 - 5: i11iIiiIii - oO0o + o0oOOo0O0Ooo % ooOoO0o
-    if 63 - 63: oO0o
-    if 7 - 7: IiII / i11iIiiIii - OOooOOo
-    if 9 - 9: II111iiii + i11iIiiIii % I1Ii111 - Oo0Ooo * OOooOOo
-    if 55 - 55: I1Ii111 + ooOoO0o
-   if ( oO00O . down_state ( ) ) : continue
-   if 58 - 58: iII111i . I1ii11iIi11i - Oo0Ooo % o0oOOo0O0Ooo + I1Ii111
-   if 58 - 58: oO0o . ooOoO0o . I1IiiI . Oo0Ooo * iIii1I11I1II1 - iII111i
-   if 96 - 96: OOooOOo % o0oOOo0O0Ooo / iIii1I11I1II1
-   if 60 - 60: i1IIi / iIii1I11I1II1 + I11i % iII111i
-   if 64 - 64: I11i . i11iIiiIii / iIii1I11I1II1 . I11i
-   if 73 - 73: OoO0O00 % iIii1I11I1II1 + IiII * I1Ii111 % II111iiii
-   if 20 - 20: I11i % I1ii11iIi11i . OoO0O00 % OoOoOO00
-   if 84 - 84: OoooooooOO / i11iIiiIii . IiII / I1IiiI
-   if 62 - 62: iII111i - I1IiiI + OoooooooOO
-   if 59 - 59: iIii1I11I1II1 + i11iIiiIii * oO0o . Oo0Ooo . I1Ii111
-   if 49 - 49: II111iiii
-   if ( ii11ii1 ) :
-    oO00O . last_rloc_probe_nonce = ii11ii1 . last_rloc_probe_nonce
-    if 99 - 99: Oo0Ooo . OOooOOo
-    if ( ii11ii1 . translated_port == oO00O . translated_port and ii11ii1 . rloc_name == oO00O . rloc_name ) :
-     if 85 - 85: OoOoOO00 . IiII + oO0o - II111iiii
+    if 77 - 77: i1IIi % ooOoO0o % II111iiii + OoO0O00 - I11i + i11iIiiIii
+    if 17 - 17: Ii1I - OoOoOO00 * I1ii11iIi11i / I1IiiI * Oo0Ooo
+    if 28 - 28: I1ii11iIi11i . OoOoOO00 % OoOoOO00
+    if 61 - 61: Ii1I % I1ii11iIi11i . I1ii11iIi11i / Oo0Ooo - I1Ii111 * OoOoOO00
+    if 47 - 47: IiII
+    if 76 - 76: iII111i / II111iiii / I11i
+    if 62 - 62: I1ii11iIi11i
+   if ( oooooOO0OooO0 . down_state ( ) ) : continue
+   if 100 - 100: iII111i / ooOoO0o / IiII % II111iiii
+   if 6 - 6: OoooooooOO - I1IiiI + OoooooooOO
+   if 89 - 89: oO0o % Oo0Ooo . O0 . ooOoO0o
+   if 46 - 46: IiII * I11i - OoO0O00 - Ii1I
+   if 93 - 93: iIii1I11I1II1 / o0oOOo0O0Ooo - I11i - OOooOOo % ooOoO0o
+   if 16 - 16: ooOoO0o * o0oOOo0O0Ooo - IiII + I1ii11iIi11i / o0oOOo0O0Ooo - O0
+   if 71 - 71: i1IIi
+   if 79 - 79: iII111i * O0 / Ii1I / O0 % i1IIi
+   if 52 - 52: OoooooooOO % oO0o - I11i % OoOoOO00 . II111iiii
+   if 62 - 62: Ii1I . I1ii11iIi11i . iII111i + I11i * o0oOOo0O0Ooo
+   if 56 - 56: oO0o * iIii1I11I1II1 . II111iiii - II111iiii + II111iiii - i11iIiiIii
+   if ( i11iI1II1 ) :
+    oooooOO0OooO0 . last_rloc_probe_nonce = i11iI1II1 . last_rloc_probe_nonce
+    if 79 - 79: iII111i
+    if ( i11iI1II1 . translated_port == oooooOO0OooO0 . translated_port and i11iI1II1 . rloc_name == oooooOO0OooO0 . rloc_name ) :
+     if 29 - 29: Ii1I * I1Ii111 / OoO0O00 - O0 - i11iIiiIii * I1IiiI
      oO0ooOOO = green ( lisp_print_eid_tuple ( o0Ooo0Oooo0o , oo0oOooo0O ) , False )
      lprint ( "Suppress probe to duplicate RLOC {} for {}" . format ( red ( O0O0 , False ) , oO0ooOOO ) )
-     if 70 - 70: O0 % I1Ii111
-     if 13 - 13: I1ii11iIi11i % OoO0O00 / Ii1I * IiII
-     if 82 - 82: ooOoO0o % Oo0Ooo
-     if 26 - 26: OoO0O00 + i11iIiiIii % I11i . I1ii11iIi11i
-     if 76 - 76: i1IIi + ooOoO0o - Oo0Ooo + OoOoOO00 / I1ii11iIi11i . OOooOOo
-     if 50 - 50: IiII - Ii1I % iIii1I11I1II1
-     oO00O . last_rloc_probe = ii11ii1 . last_rloc_probe
+     if 2 - 2: OoOoOO00 . I1ii11iIi11i * I1ii11iIi11i
+     if 42 - 42: OoO0O00 . OoO0O00 + II111iiii - IiII - OOooOOo * Oo0Ooo
+     if 47 - 47: oO0o - OoooooooOO + iII111i
+     if 69 - 69: I1ii11iIi11i - I1IiiI % oO0o + OOooOOo - I1Ii111
+     if 5 - 5: ooOoO0o . OoO0O00
+     if 40 - 40: iII111i
+     oooooOO0OooO0 . last_rloc_probe = i11iI1II1 . last_rloc_probe
      continue
-     if 60 - 60: o0oOOo0O0Ooo - Oo0Ooo
-     if 92 - 92: OoOoOO00 + IiII . OoO0O00 % iII111i / II111iiii / I11i
-     if 62 - 62: I1ii11iIi11i
+     if 87 - 87: IiII / II111iiii
+     if 44 - 44: OoO0O00 . I1Ii111 - OoooooooOO * OoOoOO00 . OoO0O00
+     if 84 - 84: OOooOOo . OOooOOo . oO0o % iII111i * Oo0Ooo - iIii1I11I1II1
    OoII1 = None
    iIIiI11 = None
    while ( True ) :
-    iIIiI11 = oO00O if iIIiI11 == None else iIIiI11 . next_rloc
+    iIIiI11 = oooooOO0OooO0 if iIIiI11 == None else iIIiI11 . next_rloc
     if ( iIIiI11 == None ) : break
-    if 100 - 100: iII111i / ooOoO0o / IiII % II111iiii
-    if 6 - 6: OoooooooOO - I1IiiI + OoooooooOO
-    if 89 - 89: oO0o % Oo0Ooo . O0 . ooOoO0o
-    if 46 - 46: IiII * I11i - OoO0O00 - Ii1I
-    if 93 - 93: iIii1I11I1II1 / o0oOOo0O0Ooo - I11i - OOooOOo % ooOoO0o
+    if 4 - 4: iII111i
+    if 23 - 23: i1IIi . iIii1I11I1II1 / I1IiiI . OoOoOO00 . iII111i / IiII
+    if 65 - 65: Ii1I + IiII + I11i / I1Ii111 % iIii1I11I1II1
+    if 17 - 17: I1ii11iIi11i * OOooOOo % II111iiii
+    if 30 - 30: I1Ii111 . Ii1I . Oo0Ooo / OOooOOo * OoooooooOO / I1ii11iIi11i
     if ( iIIiI11 . rloc_next_hop != None ) :
-     if ( iIIiI11 . rloc_next_hop not in ooi1I ) :
+     if ( iIIiI11 . rloc_next_hop not in iIiI1 ) :
       if ( iIIiI11 . up_state ( ) ) :
        IiI11I111 , iii1111ii = iIIiI11 . rloc_next_hop
        iIIiI11 . state = LISP_RLOC_UNREACH_STATE
        iIIiI11 . last_state_change = lisp_get_timestamp ( )
        lisp_update_rtr_updown ( iIIiI11 . rloc , False )
-       if 16 - 16: ooOoO0o * o0oOOo0O0Ooo - IiII + I1ii11iIi11i / o0oOOo0O0Ooo - O0
-      O00OOO0 = bold ( "unreachable" , False )
+       if 41 - 41: i1IIi
+      iI1iiiIi11II = bold ( "unreachable" , False )
       lprint ( "Next-hop {}({}) for RLOC {} is {}" . format ( iii1111ii , IiI11I111 ,
- red ( O0O0 , False ) , O00OOO0 ) )
+ red ( O0O0 , False ) , iI1iiiIi11II ) )
       continue
-      if 71 - 71: i1IIi
-      if 79 - 79: iII111i * O0 / Ii1I / O0 % i1IIi
-      if 52 - 52: OoooooooOO % oO0o - I11i % OoOoOO00 . II111iiii
-      if 62 - 62: Ii1I . I1ii11iIi11i . iII111i + I11i * o0oOOo0O0Ooo
-      if 56 - 56: oO0o * iIii1I11I1II1 . II111iiii - II111iiii + II111iiii - i11iIiiIii
-      if 79 - 79: iII111i
+      if 75 - 75: o0oOOo0O0Ooo . I1Ii111 - I1Ii111 % Ii1I * OoooooooOO
+      if 99 - 99: OOooOOo + o0oOOo0O0Ooo - OOooOOo . i1IIi
+      if 86 - 86: Ii1I % oO0o - i11iIiiIii - O0 + IiII + iII111i
+      if 100 - 100: OoO0O00 . Oo0Ooo
+      if 29 - 29: OoO0O00
+      if 34 - 34: O0 - o0oOOo0O0Ooo % OOooOOo . OoO0O00 % IiII
     i11iII11I1III = iIIiI11 . last_rloc_probe
-    I1i1IIIi1iii = 0 if i11iII11I1III == None else time . time ( ) - i11iII11I1III
-    if ( iIIiI11 . unreach_state ( ) and I1i1IIIi1iii < LISP_RLOC_PROBE_INTERVAL ) :
+    OooooO0o00 = 0 if i11iII11I1III == None else time . time ( ) - i11iII11I1III
+    if ( iIIiI11 . unreach_state ( ) and OooooO0o00 < LISP_RLOC_PROBE_INTERVAL ) :
      lprint ( "Waiting for probe-reply from RLOC {}" . format ( red ( O0O0 , False ) ) )
-     if 43 - 43: OoOoOO00
+     if 24 - 24: IiII / I1ii11iIi11i / OOooOOo
      continue
-     if 99 - 99: OoO0O00 - O0 * OoO0O00 + OoO0O00
-     if 62 - 62: IiII - I1Ii111
-     if 68 - 68: Oo0Ooo + oO0o - OoO0O00
-     if 17 - 17: I11i % I1ii11iIi11i - I1IiiI % oO0o + I1ii11iIi11i
-     if 68 - 68: i1IIi . ooOoO0o . Oo0Ooo + iII111i . I1IiiI * i1IIi
-     if 88 - 88: iII111i + i11iIiiIii
+     if 23 - 23: o0oOOo0O0Ooo - OoooooooOO % I1ii11iIi11i * i1IIi
+     if 67 - 67: I1ii11iIi11i % OoOoOO00 . iII111i / Ii1I . I1IiiI
+     if 48 - 48: IiII + II111iiii . I1IiiI % o0oOOo0O0Ooo
+     if 57 - 57: OOooOOo . I11i % OoOoOO00
+     if 68 - 68: iIii1I11I1II1 % I1ii11iIi11i % II111iiii / O0 + iII111i
+     if 78 - 78: iII111i - OOooOOo / I1Ii111
     I111Ii1I1I1iI = lisp_get_echo_nonce ( None , O0O0 )
     if ( I111Ii1I1I1iI and I111Ii1I1I1iI . request_nonce_timeout ( ) ) :
      iIIiI11 . state = LISP_RLOC_NO_ECHOED_NONCE_STATE
      iIIiI11 . last_state_change = lisp_get_timestamp ( )
-     O00OOO0 = bold ( "unreachable" , False )
-     lprint ( "RLOC {} went {}, nonce-echo failed" . format ( red ( O0O0 , False ) , O00OOO0 ) )
-     if 42 - 42: I1Ii111 * O0 / OoO0O00 + iII111i
+     iI1iiiIi11II = bold ( "unreachable" , False )
+     lprint ( "RLOC {} went {}, nonce-echo failed" . format ( red ( O0O0 , False ) , iI1iiiIi11II ) )
+     if 38 - 38: I11i % i1IIi + o0oOOo0O0Ooo + I1ii11iIi11i + I1IiiI
      lisp_update_rtr_updown ( iIIiI11 . rloc , False )
      continue
-     if 86 - 86: OOooOOo
-     if 6 - 6: oO0o % iII111i * Oo0Ooo - i11iIiiIii . OoooooooOO
-     if 85 - 85: O0 * i1IIi
-     if 29 - 29: i11iIiiIii
-     if 34 - 34: OoOoOO00
-     if 17 - 17: oO0o * OoOoOO00 % OoO0O00 % I1IiiI * I11i
-    if ( I111Ii1I1I1iI and I111Ii1I1I1iI . recently_echoed ( ) ) :
-     lprint ( ( "Suppress RLOC-probe to {}, nonce-echo " + "received" ) . format ( red ( O0O0 , False ) ) )
-     if 78 - 78: OoooooooOO . I1Ii111 + Ii1I - II111iiii - IiII / iIii1I11I1II1
-     continue
-     if 92 - 92: Ii1I
-     if 34 - 34: OOooOOo * OoooooooOO / I1ii11iIi11i
-     if 41 - 41: i1IIi
-     if 75 - 75: o0oOOo0O0Ooo . I1Ii111 - I1Ii111 % Ii1I * OoooooooOO
-     if 99 - 99: OOooOOo + o0oOOo0O0Ooo - OOooOOo . i1IIi
-     if 86 - 86: Ii1I % oO0o - i11iIiiIii - O0 + IiII + iII111i
-    if ( iIIiI11 . last_rloc_probe != None ) :
-     i11iII11I1III = iIIiI11 . last_rloc_probe_reply
-     if ( i11iII11I1III == None ) : i11iII11I1III = 0
-     I1i1IIIi1iii = time . time ( ) - i11iII11I1III
-     if ( iIIiI11 . up_state ( ) and I1i1IIIi1iii >= LISP_RLOC_PROBE_REPLY_WAIT ) :
-      if 100 - 100: OoO0O00 . Oo0Ooo
-      iIIiI11 . state = LISP_RLOC_UNREACH_STATE
-      iIIiI11 . last_state_change = lisp_get_timestamp ( )
-      lisp_update_rtr_updown ( iIIiI11 . rloc , False )
-      O00OOO0 = bold ( "unreachable" , False )
-      lprint ( "RLOC {} went {}, probe it" . format ( red ( O0O0 , False ) , O00OOO0 ) )
-      if 29 - 29: OoO0O00
-      if 34 - 34: O0 - o0oOOo0O0Ooo % OOooOOo . OoO0O00 % IiII
-      lisp_mark_rlocs_for_other_eids ( Iii1iIi1i )
-      if 63 - 63: O0 % iIii1I11I1II1 . o0oOOo0O0Ooo . I1IiiI * Ii1I % i1IIi
-      if 47 - 47: II111iiii * I1ii11iIi11i
-      if 70 - 70: I1ii11iIi11i - o0oOOo0O0Ooo
-    iIIiI11 . last_rloc_probe = lisp_get_timestamp ( )
-    if 71 - 71: I1ii11iIi11i * i1IIi
-    OOoOo0o0oO = "" if iIIiI11 . unreach_state ( ) == False else " unreachable"
-    if 57 - 57: O0 * Ii1I / I1IiiI
-    if 54 - 54: iIii1I11I1II1 + iII111i % OoOoOO00 % OOooOOo
-    if 67 - 67: iII111i . II111iiii - I1IiiI / iII111i . Ii1I
-    if 42 - 42: I1IiiI % I1Ii111 % iII111i + iII111i
-    if 71 - 71: Oo0Ooo / OoOoOO00 - I1ii11iIi11i
-    if 32 - 32: iII111i
-    if 99 - 99: o0oOOo0O0Ooo . oO0o
-    iIiI1iIiII1 = ""
-    iii1111ii = None
-    if ( iIIiI11 . rloc_next_hop != None ) :
-     IiI11I111 , iii1111ii = iIIiI11 . rloc_next_hop
-     lisp_install_host_route ( O0O0 , iii1111ii , True )
-     iIiI1iIiII1 = ", send on nh {}({})" . format ( iii1111ii , IiI11I111 )
+     if 1 - 1: II111iiii * o0oOOo0O0Ooo . O0 - Ii1I / oO0o
+     if 17 - 17: OoooooooOO % OoooooooOO + Oo0Ooo + I1Ii111
      if 56 - 56: I11i % OoOoOO00 - OoO0O00
      if 31 - 31: iII111i % i11iIiiIii - Ii1I / OOooOOo - I1Ii111
      if 60 - 60: o0oOOo0O0Ooo + Oo0Ooo . O0
      if 51 - 51: i11iIiiIii / iIii1I11I1II1 . I1IiiI - Ii1I * I1Ii111 . iII111i
+    if ( I111Ii1I1I1iI and I111Ii1I1I1iI . recently_echoed ( ) ) :
+     lprint ( ( "Suppress RLOC-probe to {}, nonce-echo " + "received" ) . format ( red ( O0O0 , False ) ) )
      if 72 - 72: Ii1I . I11i / i1IIi % i1IIi + I1ii11iIi11i
+     continue
+     if 56 - 56: OoO0O00 - OoOoOO00 - II111iiii * o0oOOo0O0Ooo
+     if 87 - 87: ooOoO0o * OoooooooOO % O0 * OoooooooOO . I1Ii111
+     if 66 - 66: OoO0O00 * Ii1I . OoO0O00
+     if 90 - 90: II111iiii % Ii1I
+     if 67 - 67: I1IiiI - I11i - i11iIiiIii
+     if 45 - 45: ooOoO0o - IiII / OoO0O00 / IiII
+    if ( iIIiI11 . last_rloc_probe != None ) :
+     i11iII11I1III = iIIiI11 . last_rloc_probe_reply
+     if ( i11iII11I1III == None ) : i11iII11I1III = 0
+     OooooO0o00 = time . time ( ) - i11iII11I1III
+     if ( iIIiI11 . up_state ( ) and OooooO0o00 >= LISP_RLOC_PROBE_REPLY_WAIT ) :
+      if 63 - 63: ooOoO0o . i11iIiiIii + iII111i . OoO0O00 / ooOoO0o % iII111i
+      iIIiI11 . state = LISP_RLOC_UNREACH_STATE
+      iIIiI11 . last_state_change = lisp_get_timestamp ( )
+      lisp_update_rtr_updown ( iIIiI11 . rloc , False )
+      iI1iiiIi11II = bold ( "unreachable" , False )
+      lprint ( "RLOC {} went {}, probe it" . format ( red ( O0O0 , False ) , iI1iiiIi11II ) )
+      if 23 - 23: iIii1I11I1II1 - ooOoO0o / I11i * I11i
+      if 62 - 62: OOooOOo - I1IiiI * oO0o + O0 / ooOoO0o * iIii1I11I1II1
+      lisp_mark_rlocs_for_other_eids ( OOo )
+      if 25 - 25: I1Ii111 % Oo0Ooo + OoO0O00 % OOooOOo
+      if 85 - 85: I1IiiI . i11iIiiIii - ooOoO0o * I11i * OoOoOO00 * I11i
+      if 29 - 29: I1Ii111 * I1Ii111 . iII111i + o0oOOo0O0Ooo
+    iIIiI11 . last_rloc_probe = lisp_get_timestamp ( )
+    if 57 - 57: I1Ii111 - IiII
+    oO0O00 = "" if iIIiI11 . unreach_state ( ) == False else " unreachable"
+    if 70 - 70: i11iIiiIii . II111iiii - IiII - O0 . O0 / IiII
+    if 3 - 3: Oo0Ooo
+    if 10 - 10: IiII % OoO0O00 / OoO0O00 . ooOoO0o . IiII
+    if 38 - 38: I11i / iII111i - iIii1I11I1II1 + ooOoO0o + o0oOOo0O0Ooo . I1IiiI
+    if 96 - 96: IiII - I1IiiI . I1ii11iIi11i . O0
+    if 82 - 82: Ii1I % o0oOOo0O0Ooo . Oo0Ooo * OoO0O00 - Oo0Ooo
+    if 49 - 49: i11iIiiIii - I1IiiI * IiII
+    oO0oOo00o0 = ""
+    iii1111ii = None
+    if ( iIIiI11 . rloc_next_hop != None ) :
+     IiI11I111 , iii1111ii = iIIiI11 . rloc_next_hop
+     lisp_install_host_route ( O0O0 , iii1111ii , True )
+     oO0oOo00o0 = ", send on nh {}({})" . format ( iii1111ii , IiI11I111 )
+     if 14 - 14: Ii1I * I1Ii111 + I1ii11iIi11i % OoO0O00 * Ii1I + iII111i
+     if 6 - 6: iII111i / iII111i . i11iIiiIii
+     if 12 - 12: I11i - OoO0O00
+     if 68 - 68: IiII - OoOoOO00
+     if 22 - 22: i1IIi . IiII
     OOOooOOoOO0o = iIIiI11 . print_rloc_probe_rtt ( )
-    OOOO0oO00 = O0O0
+    i1iIi1Ii1I1 = O0O0
     if ( iIIiI11 . translated_port != 0 ) :
-     OOOO0oO00 += ":{}" . format ( iIIiI11 . translated_port )
-     if 91 - 91: OoooooooOO % O0 * OoooooooOO . OOooOOo * I1Ii111 + OoO0O00
-    OOOO0oO00 = red ( OOOO0oO00 , False )
+     i1iIi1Ii1I1 += ":{}" . format ( iIIiI11 . translated_port )
+     if 100 - 100: I11i % i1IIi / OoooooooOO
+    i1iIi1Ii1I1 = red ( i1iIi1Ii1I1 , False )
     if ( iIIiI11 . rloc_name != None ) :
-     OOOO0oO00 += " (" + blue ( iIIiI11 . rloc_name , False ) + ")"
-     if 6 - 6: IiII + I11i / Ii1I / Oo0Ooo - oO0o
-    lprint ( "Send {}{} {}, last rtt: {}{}" . format ( Oooooo0OOO , OOoOo0o0oO ,
- OOOO0oO00 , OOOooOOoOO0o , iIiI1iIiII1 ) )
-    if 31 - 31: i11iIiiIii % oO0o + ooOoO0o - i1IIi
-    if 87 - 87: IiII + oO0o
-    if 87 - 87: ooOoO0o
-    if 47 - 47: i11iIiiIii
-    if 84 - 84: Ii1I + ooOoO0o
-    if 81 - 81: I1ii11iIi11i - iIii1I11I1II1
-    if 31 - 31: I11i * oO0o % I1ii11iIi11i * I1Ii111 % OoOoOO00 + oO0o
-    if 33 - 33: I1Ii111
+     i1iIi1Ii1I1 += " (" + blue ( iIIiI11 . rloc_name , False ) + ")"
+     if 12 - 12: Ii1I . Ii1I
+    lprint ( "Send {}{} {}, last rtt: {}{}" . format ( Oooooo0OOO , oO0O00 ,
+ i1iIi1Ii1I1 , OOOooOOoOO0o , oO0oOo00o0 ) )
+    if 13 - 13: oO0o - i1IIi / i1IIi + OoooooooOO
+    if 57 - 57: OoooooooOO / O0 + I1ii11iIi11i % I11i * oO0o / Ii1I
+    if 49 - 49: I1IiiI * ooOoO0o * OOooOOo + OoO0O00 + ooOoO0o
+    if 42 - 42: i1IIi . OoO0O00 % iII111i
+    if 57 - 57: I1ii11iIi11i / I1IiiI
+    if 69 - 69: iII111i - iII111i . OoO0O00 / oO0o - OoO0O00 + I1Ii111
+    if 98 - 98: iII111i . oO0o - O0 % I1IiiI . I1ii11iIi11i / i1IIi
+    if 72 - 72: I1IiiI / Oo0Ooo % IiII - O0 / O0 * O0
     if ( iIIiI11 . rloc_next_hop != None ) :
      OoII1 = lisp_get_host_route_next_hop ( O0O0 )
      if ( OoII1 ) : lisp_install_host_route ( O0O0 , OoII1 , False )
-     if 96 - 96: i1IIi
-     if 52 - 52: OoO0O00 * Ii1I + OOooOOo + ooOoO0o * OoooooooOO
-     if 34 - 34: I1Ii111 . I1Ii111 * ooOoO0o % OoOoOO00
-     if 71 - 71: I1Ii111 - I1Ii111
-     if 13 - 13: iII111i + I1ii11iIi11i - oO0o / IiII * i1IIi * Oo0Ooo
-     if 65 - 65: Ii1I - OOooOOo % O0 * I1ii11iIi11i . II111iiii
+     if 83 - 83: O0 / I1Ii111 - OoooooooOO
+     if 42 - 42: Ii1I / i1IIi - IiII / I1Ii111
+     if 39 - 39: OoooooooOO
+     if 4 - 4: iIii1I11I1II1 - Oo0Ooo / OOooOOo % OoooooooOO . Oo0Ooo - Oo0Ooo
+     if 41 - 41: II111iiii . o0oOOo0O0Ooo
+     if 92 - 92: Ii1I - O0 - i11iIiiIii + IiII % I1Ii111 + II111iiii
     if ( iIIiI11 . rloc . is_null ( ) ) :
-     iIIiI11 . rloc . copy_address ( oO00O . rloc )
-     if 59 - 59: O0 . O0 / i11iIiiIii * Oo0Ooo . I11i . Ii1I
-     if 89 - 89: O0 + OoO0O00
-     if 3 - 3: Oo0Ooo * OoooooooOO * oO0o % OoOoOO00 * OoOoOO00 . ooOoO0o
-     if 16 - 16: ooOoO0o / o0oOOo0O0Ooo - O0 * I1IiiI
-     if 13 - 13: iII111i . iII111i % O0 % o0oOOo0O0Ooo
+     iIIiI11 . rloc . copy_address ( oooooOO0OooO0 . rloc )
+     if 71 - 71: ooOoO0o * I1Ii111 + i11iIiiIii + i1IIi . I1IiiI
+     if 15 - 15: OoO0O00
+     if 37 - 37: OoO0O00 . OoooooooOO - OOooOOo
+     if 34 - 34: o0oOOo0O0Ooo + iIii1I11I1II1 / o0oOOo0O0Ooo / ooOoO0o
+     if 53 - 53: II111iiii / iIii1I11I1II1
     OoiIii11i11i = None if ( oo0oOooo0O . is_null ( ) ) else o0Ooo0Oooo0o
-    oOOOOOo0o = o0Ooo0Oooo0o if ( oo0oOooo0O . is_null ( ) ) else oo0oOooo0O
-    lisp_send_map_request ( lisp_sockets , 0 , OoiIii11i11i , oOOOOOo0o , iIIiI11 )
-    ii11ii1 = oO00O
-    if 89 - 89: I11i + IiII + Oo0Ooo . ooOoO0o / I1IiiI * Ii1I
-    if 14 - 14: Ii1I * I1Ii111 + I1ii11iIi11i % OoO0O00 * Ii1I + iII111i
-    if 6 - 6: iII111i / iII111i . i11iIiiIii
-    if 12 - 12: I11i - OoO0O00
+    iIi1Iiii11Ii1 = o0Ooo0Oooo0o if ( oo0oOooo0O . is_null ( ) ) else oo0oOooo0O
+    lisp_send_map_request ( lisp_sockets , 0 , OoiIii11i11i , iIi1Iiii11Ii1 , iIIiI11 )
+    i11iI1II1 = oooooOO0OooO0
+    if 27 - 27: II111iiii - i1IIi
+    if 4 - 4: I1IiiI
+    if 5 - 5: Ii1I / O0 + iIii1I11I1II1
+    if 22 - 22: ooOoO0o . ooOoO0o * OOooOOo % OoOoOO00
     if ( iii1111ii ) : lisp_install_host_route ( O0O0 , iii1111ii , False )
-    if 68 - 68: IiII - OoOoOO00
-    if 22 - 22: i1IIi . IiII
-    if 8 - 8: IiII % o0oOOo0O0Ooo . i11iIiiIii
-    if 69 - 69: I1Ii111 / Ii1I - ooOoO0o
-    if 38 - 38: II111iiii % OoooooooOO / OoooooooOO . Ii1I . Ii1I
+    if 51 - 51: OoOoOO00 . oO0o - OoOoOO00
+    if 79 - 79: iII111i
+    if 71 - 71: i1IIi / OoO0O00 / OOooOOo + I1Ii111
+    if 80 - 80: Oo0Ooo . iIii1I11I1II1 . OoooooooOO % iII111i . oO0o
+    if 10 - 10: i11iIiiIii * OoooooooOO . i11iIiiIii
    if ( OoII1 ) : lisp_install_host_route ( O0O0 , OoII1 , True )
-   if 13 - 13: oO0o - i1IIi / i1IIi + OoooooooOO
-   if 57 - 57: OoooooooOO / O0 + I1ii11iIi11i % I11i * oO0o / Ii1I
-   if 49 - 49: I1IiiI * ooOoO0o * OOooOOo + OoO0O00 + ooOoO0o
-   if 42 - 42: i1IIi . OoO0O00 % iII111i
+   if 35 - 35: OOooOOo * OOooOOo + o0oOOo0O0Ooo / i1IIi - I11i
+   if 12 - 12: I1ii11iIi11i - i11iIiiIii + I1IiiI . Oo0Ooo
+   if 26 - 26: oO0o + I1Ii111 + IiII * o0oOOo0O0Ooo . oO0o
+   if 95 - 95: OoOoOO00 . I1Ii111 / Ii1I . I1Ii111 % OoO0O00
    O0oo0oOo += 1
    if ( ( O0oo0oOo % 10 ) == 0 ) : time . sleep ( 0.020 )
-   if 57 - 57: I1ii11iIi11i / I1IiiI
-   if 69 - 69: iII111i - iII111i . OoO0O00 / oO0o - OoO0O00 + I1Ii111
-   if 98 - 98: iII111i . oO0o - O0 % I1IiiI . I1ii11iIi11i / i1IIi
+   if 16 - 16: Ii1I / I1IiiI / I1IiiI - OoooooooOO
+   if 13 - 13: OOooOOo / OoooooooOO
+   if 7 - 7: II111iiii - ooOoO0o
  lprint ( "---------- End RLOC Probing ----------" )
- return
- if 72 - 72: I1IiiI / Oo0Ooo % IiII - O0 / O0 * O0
- if 83 - 83: O0 / I1Ii111 - OoooooooOO
- if 42 - 42: Ii1I / i1IIi - IiII / I1Ii111
- if 39 - 39: OoooooooOO
- if 4 - 4: iIii1I11I1II1 - Oo0Ooo / OOooOOo % OoooooooOO . Oo0Ooo - Oo0Ooo
- if 41 - 41: II111iiii . o0oOOo0O0Ooo
- if 92 - 92: Ii1I - O0 - i11iIiiIii + IiII % I1Ii111 + II111iiii
- if 71 - 71: ooOoO0o * I1Ii111 + i11iIiiIii + i1IIi . I1IiiI
-def lisp_update_rtr_updown ( rtr , updown ) :
- global lisp_ipc_socket
- if 15 - 15: OoO0O00
- if 37 - 37: OoO0O00 . OoooooooOO - OOooOOo
- if 34 - 34: o0oOOo0O0Ooo + iIii1I11I1II1 / o0oOOo0O0Ooo / ooOoO0o
- if 53 - 53: II111iiii / iIii1I11I1II1
- if ( lisp_i_am_itr == False ) : return
- if 25 - 25: I1Ii111
- if 58 - 58: OoOoOO00 * i1IIi
- if 20 - 20: IiII
- if 81 - 81: I1Ii111 . i1IIi / o0oOOo0O0Ooo
- if 30 - 30: i11iIiiIii . I1IiiI
- if ( lisp_register_all_rtrs ) : return
- if 5 - 5: Ii1I / O0 + iIii1I11I1II1
- I1O0OOOoOOOO0 = rtr . print_address_no_iid ( )
- if 9 - 9: o0oOOo0O0Ooo % i1IIi / OoO0O00 / OOooOOo + I1Ii111
- if 80 - 80: Oo0Ooo . iIii1I11I1II1 . OoooooooOO % iII111i . oO0o
- if 10 - 10: i11iIiiIii * OoooooooOO . i11iIiiIii
- if 35 - 35: OOooOOo * OOooOOo + o0oOOo0O0Ooo / i1IIi - I11i
- if 12 - 12: I1ii11iIi11i - i11iIiiIii + I1IiiI . Oo0Ooo
- if ( I1O0OOOoOOOO0 not in lisp_rtr_list ) : return
- if 26 - 26: oO0o + I1Ii111 + IiII * o0oOOo0O0Ooo . oO0o
- updown = "up" if updown else "down"
- lprint ( "Send ETR IPC message, RTR {} has done {}" . format (
- red ( I1O0OOOoOOOO0 , False ) , bold ( updown , False ) ) )
- if 95 - 95: OoOoOO00 . I1Ii111 / Ii1I . I1Ii111 % OoO0O00
- if 16 - 16: Ii1I / I1IiiI / I1IiiI - OoooooooOO
- if 13 - 13: OOooOOo / OoooooooOO
- if 7 - 7: II111iiii - ooOoO0o
- OO = "rtr%{}%{}" . format ( I1O0OOOoOOOO0 , updown )
- OO = lisp_command_ipc ( OO , "lisp-itr" )
- lisp_ipc ( OO , lisp_ipc_socket , "lisp-etr" )
  return
  if 72 - 72: Ii1I
  if 27 - 27: ooOoO0o / IiII + OoO0O00 + Ii1I % I1Ii111
@@ -17554,377 +17529,418 @@ def lisp_update_rtr_updown ( rtr , updown ) :
  if 53 - 53: OoOoOO00 * i11iIiiIii / I1Ii111
  if 100 - 100: ooOoO0o + I1IiiI * oO0o + ooOoO0o
  if 24 - 24: i11iIiiIii + ooOoO0o
+ if 80 - 80: IiII % I11i % oO0o
+def lisp_update_rtr_updown ( rtr , updown ) :
+ global lisp_ipc_socket
+ if 97 - 97: i1IIi * i11iIiiIii / Ii1I - I1IiiI % IiII
+ if 70 - 70: iIii1I11I1II1
+ if 2 - 2: IiII - i1IIi * IiII % O0 / Ii1I
+ if 64 - 64: iII111i - Oo0Ooo
+ if ( lisp_i_am_itr == False ) : return
+ if 73 - 73: iIii1I11I1II1 * I1Ii111 * OoO0O00
+ if 68 - 68: ooOoO0o * Ii1I / I1ii11iIi11i * OoooooooOO + OoooooooOO . OoooooooOO
+ if 50 - 50: I1IiiI % o0oOOo0O0Ooo
+ if 1 - 1: II111iiii
+ if 22 - 22: I1Ii111 + iII111i
+ if ( lisp_register_all_rtrs ) : return
+ if 50 - 50: iII111i % OoOoOO00 - II111iiii + II111iiii / OoO0O00
+ o0oo000oOo0Oo = rtr . print_address_no_iid ( )
+ if 56 - 56: ooOoO0o % Oo0Ooo + I1ii11iIi11i + OoO0O00
+ if 89 - 89: OOooOOo * ooOoO0o - I1Ii111 * i11iIiiIii
+ if 81 - 81: O0 % i1IIi + oO0o % i1IIi + iIii1I11I1II1
+ if 19 - 19: iII111i % Ii1I / II111iiii + IiII / Oo0Ooo * OOooOOo
+ if 34 - 34: OOooOOo . oO0o + I11i / I1Ii111 . I11i
+ if ( o0oo000oOo0Oo not in lisp_rtr_list ) : return
+ if 59 - 59: Ii1I
+ updown = "up" if updown else "down"
+ lprint ( "Send ETR IPC message, RTR {} has done {}" . format (
+ red ( o0oo000oOo0Oo , False ) , bold ( updown , False ) ) )
+ if 47 - 47: iII111i % iII111i
+ if 81 - 81: oO0o / I1ii11iIi11i . OoooooooOO % II111iiii / oO0o
+ if 23 - 23: IiII + oO0o + o0oOOo0O0Ooo . I1ii11iIi11i / i11iIiiIii + iIii1I11I1II1
+ if 74 - 74: I11i % OOooOOo
+ OO = "rtr%{}%{}" . format ( o0oo000oOo0Oo , updown )
+ OO = lisp_command_ipc ( OO , "lisp-itr" )
+ lisp_ipc ( OO , lisp_ipc_socket , "lisp-etr" )
+ return
+ if 57 - 57: O0 + I1IiiI + i11iIiiIii
+ if 90 - 90: I1ii11iIi11i . OoO0O00 * iIii1I11I1II1 - Oo0Ooo
+ if 28 - 28: I1IiiI . ooOoO0o - ooOoO0o * OOooOOo . IiII
+ if 16 - 16: iIii1I11I1II1 % i11iIiiIii / Ii1I % iIii1I11I1II1 / iII111i
+ if 27 - 27: II111iiii * OoooooooOO / Oo0Ooo % O0
+ if 41 - 41: oO0o / iIii1I11I1II1 % iII111i - I1Ii111 % I11i * i11iIiiIii
+ if 21 - 21: O0
 def lisp_process_rloc_probe_reply ( rloc_entry , source , port , map_reply , ttl ,
  mrloc ) :
  iIIiI11 = rloc_entry . rloc
  o0Oo0o = map_reply . nonce
- o000O000oo = map_reply . hop_count
+ i1II = map_reply . hop_count
  Oooooo0OOO = bold ( "RLOC-probe reply" , False )
- I1I11iii1I1 = iIIiI11 . print_address_no_iid ( )
- o0oo0OoO0O = source . print_address_no_iid ( )
- oo00O0000o00 = lisp_rloc_probe_list
+ o00oO0O0O0 = iIIiI11 . print_address_no_iid ( )
+ IiI1IIiIiI1I = source . print_address_no_iid ( )
+ OOoo0o00O = lisp_rloc_probe_list
  OoO00 = rloc_entry . json . json_string if rloc_entry . json else None
  i1 = lisp_get_timestamp ( )
- if 56 - 56: O0 / OoooooooOO / OoOoOO00
- if 19 - 19: o0oOOo0O0Ooo / i11iIiiIii . i1IIi / Oo0Ooo / I1Ii111
- if 83 - 83: iII111i % o0oOOo0O0Ooo * OoOoOO00
- if 49 - 49: II111iiii / OoO0O00
- if 69 - 69: Ii1I * II111iiii
- if 24 - 24: I1Ii111 * I1ii11iIi11i . OOooOOo . I1IiiI - I1ii11iIi11i
- if ( mrloc != None ) :
-  OOOOOO0O00O00 = mrloc . rloc . print_address_no_iid ( )
-  if ( I1I11iii1I1 not in mrloc . multicast_rloc_probe_list ) :
-   o00oOo0OOoo = lisp_rloc ( )
-   o00oOo0OOoo = copy . deepcopy ( mrloc )
-   o00oOo0OOoo . rloc . copy_address ( iIIiI11 )
-   o00oOo0OOoo . multicast_rloc_probe_list = { }
-   mrloc . multicast_rloc_probe_list [ I1I11iii1I1 ] = o00oOo0OOoo
-   if 19 - 19: iII111i % Ii1I / II111iiii + IiII / Oo0Ooo * OOooOOo
-  o00oOo0OOoo = mrloc . multicast_rloc_probe_list [ I1I11iii1I1 ]
-  o00oOo0OOoo . last_rloc_probe_nonce = mrloc . last_rloc_probe_nonce
-  o00oOo0OOoo . last_rloc_probe = mrloc . last_rloc_probe
-  iiiI1I , o0Ooo0Oooo0o , oo0oOooo0O = lisp_rloc_probe_list [ OOOOOO0O00O00 ] [ 0 ]
-  o00oOo0OOoo . process_rloc_probe_reply ( i1 , o0Oo0o , o0Ooo0Oooo0o , oo0oOooo0O , o000O000oo , ttl , OoO00 )
-  mrloc . process_rloc_probe_reply ( i1 , o0Oo0o , o0Ooo0Oooo0o , oo0oOooo0O , o000O000oo , ttl , OoO00 )
-  return
-  if 34 - 34: OOooOOo . oO0o + I11i / I1Ii111 . I11i
-  if 59 - 59: Ii1I
-  if 47 - 47: iII111i % iII111i
-  if 81 - 81: oO0o / I1ii11iIi11i . OoooooooOO % II111iiii / oO0o
-  if 23 - 23: IiII + oO0o + o0oOOo0O0Ooo . I1ii11iIi11i / i11iIiiIii + iIii1I11I1II1
-  if 74 - 74: I11i % OOooOOo
-  if 57 - 57: O0 + I1IiiI + i11iIiiIii
- IiI = I1I11iii1I1
- if ( IiI not in oo00O0000o00 ) :
-  IiI += ":" + str ( port )
-  if ( IiI not in oo00O0000o00 ) :
-   IiI = o0oo0OoO0O
-   if ( IiI not in oo00O0000o00 ) :
-    IiI += ":" + str ( port )
-    lprint ( "    Received unsolicited {} from {}/{}, port {}" . format ( Oooooo0OOO , red ( I1I11iii1I1 , False ) , red ( o0oo0OoO0O ,
-    # iIii1I11I1II1 - iII111i - oO0o + Oo0Ooo . Ii1I / i11iIiiIii
- False ) , port ) )
-    return
-    if 31 - 31: I1Ii111 * i11iIiiIii * IiII - OoooooooOO
-    if 82 - 82: II111iiii . Ii1I . i1IIi % iII111i . II111iiii
-    if 61 - 61: I1IiiI / Ii1I . O0 + iII111i + oO0o / I11i
-    if 14 - 14: I11i % iII111i * i11iIiiIii % i1IIi
-    if 10 - 10: iIii1I11I1II1
-    if 42 - 42: Oo0Ooo * I1ii11iIi11i
-    if 77 - 77: ooOoO0o % I1IiiI * oO0o
-    if 91 - 91: OoOoOO00 * Oo0Ooo * IiII - I1IiiI
- for iIIiI11 , o0Ooo0Oooo0o , oo0oOooo0O in lisp_rloc_probe_list [ IiI ] :
-  if ( lisp_i_am_rtr ) :
-   if ( iIIiI11 . translated_port != 0 and iIIiI11 . translated_port != port ) :
-    continue
-    if 37 - 37: Oo0Ooo - oO0o / I1ii11iIi11i . o0oOOo0O0Ooo * Ii1I
-    if 95 - 95: i11iIiiIii - ooOoO0o / I11i / I1Ii111
-  iIIiI11 . process_rloc_probe_reply ( i1 , o0Oo0o , o0Ooo0Oooo0o , oo0oOooo0O , o000O000oo , ttl , OoO00 )
-  if 59 - 59: iII111i
- return
- if 59 - 59: Oo0Ooo - IiII
- if 6 - 6: OOooOOo - I1IiiI . IiII
- if 40 - 40: II111iiii
- if 13 - 13: OoOoOO00
+ if 9 - 9: OoooooooOO - Oo0Ooo - O0 * o0oOOo0O0Ooo + i11iIiiIii % I1IiiI
+ if 87 - 87: II111iiii . iIii1I11I1II1 . OoOoOO00
  if 23 - 23: Oo0Ooo / II111iiii % OOooOOo % iII111i - Oo0Ooo / OoO0O00
  if 7 - 7: Ii1I / I11i / II111iiii % I11i * I11i + iIii1I11I1II1
  if 6 - 6: iIii1I11I1II1 * oO0o - iIii1I11I1II1 . O0 . O0
  if 96 - 96: I1Ii111 * II111iiii % i11iIiiIii - oO0o
+ if ( mrloc != None ) :
+  IiiIiiii1ii11 = mrloc . rloc . print_address_no_iid ( )
+  if ( o00oO0O0O0 not in mrloc . multicast_rloc_probe_list ) :
+   II11iii1111 = lisp_rloc ( )
+   II11iii1111 = copy . deepcopy ( mrloc )
+   II11iii1111 . rloc . copy_address ( iIIiI11 )
+   II11iii1111 . multicast_rloc_probe_list = { }
+   mrloc . multicast_rloc_probe_list [ o00oO0O0O0 ] = II11iii1111
+   if 2 - 2: ooOoO0o * iIii1I11I1II1 * i11iIiiIii * i11iIiiIii
+  II11iii1111 = mrloc . multicast_rloc_probe_list [ o00oO0O0O0 ]
+  II11iii1111 . last_rloc_probe_nonce = mrloc . last_rloc_probe_nonce
+  II11iii1111 . last_rloc_probe = mrloc . last_rloc_probe
+  iiiI1I , o0Ooo0Oooo0o , oo0oOooo0O = lisp_rloc_probe_list [ IiiIiiii1ii11 ] [ 0 ]
+  II11iii1111 . process_rloc_probe_reply ( i1 , o0Oo0o , o0Ooo0Oooo0o , oo0oOooo0O , i1II , ttl , OoO00 )
+  mrloc . process_rloc_probe_reply ( i1 , o0Oo0o , o0Ooo0Oooo0o , oo0oOooo0O , i1II , ttl , OoO00 )
+  return
+  if 74 - 74: ooOoO0o * OOooOOo . I1ii11iIi11i
+  if 65 - 65: I11i / ooOoO0o + II111iiii / I1ii11iIi11i - OoooooooOO + OOooOOo
+  if 67 - 67: OoO0O00 . I11i % OOooOOo + Oo0Ooo
+  if 40 - 40: OoO0O00 / I11i % iIii1I11I1II1 - ooOoO0o
+  if 51 - 51: Oo0Ooo % iIii1I11I1II1 % oO0o + o0oOOo0O0Ooo
+  if 32 - 32: I1Ii111 * I1IiiI + Ii1I
+  if 30 - 30: OoooooooOO / I1IiiI . iIii1I11I1II1 / ooOoO0o
+ IiI = o00oO0O0O0
+ if ( IiI not in OOoo0o00O ) :
+  IiI += ":" + str ( port )
+  if ( IiI not in OOoo0o00O ) :
+   IiI = IiI1IIiIiI1I
+   if ( IiI not in OOoo0o00O ) :
+    IiI += ":" + str ( port )
+    lprint ( "    Received unsolicited {} from {}/{}, port {}" . format ( Oooooo0OOO , red ( o00oO0O0O0 , False ) , red ( IiI1IIiIiI1I ,
+    # IiII / OoooooooOO
+ False ) , port ) )
+    return
+    if 67 - 67: OOooOOo + i11iIiiIii % OoOoOO00 / I1IiiI * II111iiii
+    if 17 - 17: O0 * OoooooooOO * ooOoO0o / I11i * oO0o - i11iIiiIii
+    if 75 - 75: II111iiii . I1Ii111 . OoO0O00 * OOooOOo
+    if 25 - 25: OoooooooOO + o0oOOo0O0Ooo - o0oOOo0O0Ooo . OOooOOo
+    if 15 - 15: i11iIiiIii * O0 % iIii1I11I1II1 . OoooooooOO % oO0o + o0oOOo0O0Ooo
+    if 37 - 37: oO0o + O0 . IiII * I1ii11iIi11i
+    if 2 - 2: O0 . ooOoO0o
+    if 97 - 97: i1IIi . Oo0Ooo
+ for iIIiI11 , o0Ooo0Oooo0o , oo0oOooo0O in lisp_rloc_probe_list [ IiI ] :
+  if ( lisp_i_am_rtr ) :
+   if ( iIIiI11 . translated_port != 0 and iIIiI11 . translated_port != port ) :
+    continue
+    if 81 - 81: OoOoOO00
+    if 81 - 81: O0
+  iIIiI11 . process_rloc_probe_reply ( i1 , o0Oo0o , o0Ooo0Oooo0o , oo0oOooo0O , i1II , ttl , OoO00 )
+  if 57 - 57: oO0o - o0oOOo0O0Ooo % i11iIiiIii / OoOoOO00 . iIii1I11I1II1
+ return
+ if 68 - 68: iII111i
+ if 59 - 59: O0 - i11iIiiIii + OoooooooOO - iII111i - Oo0Ooo . OoooooooOO
+ if 60 - 60: O0 * iIii1I11I1II1 - Ii1I * II111iiii . ooOoO0o
+ if 61 - 61: I1IiiI . iII111i
+ if 19 - 19: iIii1I11I1II1 * Oo0Ooo - I1IiiI - I1IiiI + O0 - I1Ii111
+ if 56 - 56: I1Ii111 - i1IIi + I11i . i1IIi / II111iiii * oO0o
+ if 70 - 70: ooOoO0o - II111iiii . I11i
+ if 70 - 70: OOooOOo / iII111i - I11i + OoOoOO00 % Ii1I * IiII
 def lisp_db_list_length ( ) :
  O0oo0oOo = 0
  for OoO0oO in lisp_db_list :
   O0oo0oOo += len ( OoO0oO . dynamic_eids ) if OoO0oO . dynamic_eid_configured ( ) else 1
   O0oo0oOo += len ( OoO0oO . eid . iid_list )
-  if 32 - 32: i11iIiiIii * o0oOOo0O0Ooo . OoooooooOO / O0
+  if 26 - 26: O0 / oO0o
  return ( O0oo0oOo )
- if 14 - 14: i11iIiiIii . I1Ii111 % I1ii11iIi11i . I1ii11iIi11i % IiII
- if 93 - 93: iIii1I11I1II1 / IiII
- if 91 - 91: i11iIiiIii % ooOoO0o - iII111i * I1Ii111 . i11iIiiIii
- if 1 - 1: IiII + iIii1I11I1II1 * I1ii11iIi11i - IiII - i1IIi
- if 75 - 75: II111iiii * o0oOOo0O0Ooo / I1ii11iIi11i
- if 46 - 46: OOooOOo
- if 67 - 67: OoO0O00 . I11i % OOooOOo + Oo0Ooo
- if 40 - 40: OoO0O00 / I11i % iIii1I11I1II1 - ooOoO0o
+ if 96 - 96: ooOoO0o * iII111i . IiII
+ if 77 - 77: OOooOOo - I11i % o0oOOo0O0Ooo
+ if 46 - 46: I1IiiI % oO0o . OoooooooOO . IiII / I11i - i1IIi
+ if 43 - 43: OoOoOO00 - o0oOOo0O0Ooo
+ if 22 - 22: i1IIi
+ if 33 - 33: O0
+ if 34 - 34: I1Ii111 . IiII % iII111i
+ if 94 - 94: OOooOOo % i11iIiiIii . OOooOOo
 def lisp_is_myeid ( eid ) :
  for OoO0oO in lisp_db_list :
   if ( eid . is_more_specific ( OoO0oO . eid ) ) : return ( True )
-  if 51 - 51: Oo0Ooo % iIii1I11I1II1 % oO0o + o0oOOo0O0Ooo
+  if 55 - 55: OoOoOO00 . OoOoOO00 % o0oOOo0O0Ooo . I11i . I1ii11iIi11i - o0oOOo0O0Ooo
  return ( False )
- if 32 - 32: I1Ii111 * I1IiiI + Ii1I
- if 30 - 30: OoooooooOO / I1IiiI . iIii1I11I1II1 / ooOoO0o
- if 20 - 20: OoooooooOO * OOooOOo
- if 77 - 77: Ii1I - OoooooooOO . OoOoOO00
- if 93 - 93: OoooooooOO / I1Ii111
- if 91 - 91: I1Ii111
- if 18 - 18: ooOoO0o * I11i
- if 53 - 53: I11i . i11iIiiIii - iIii1I11I1II1 / I1Ii111
- if 86 - 86: i1IIi % OoO0O00 - OoooooooOO
-def lisp_format_macs ( sa , da ) :
- sa = sa [ 0 : 4 ] + "-" + sa [ 4 : 8 ] + "-" + sa [ 8 : 12 ]
- da = da [ 0 : 4 ] + "-" + da [ 4 : 8 ] + "-" + da [ 8 : 12 ]
- return ( "{} -> {}" . format ( sa , da ) )
- if 63 - 63: o0oOOo0O0Ooo . iIii1I11I1II1 % IiII * i11iIiiIii
- if 70 - 70: iIii1I11I1II1
- if 12 - 12: OoOoOO00 / o0oOOo0O0Ooo - I1ii11iIi11i + oO0o + O0
- if 9 - 9: I1ii11iIi11i * OoooooooOO . O0 . ooOoO0o * i11iIiiIii / i1IIi
- if 38 - 38: OoOoOO00 . OoooooooOO % I1ii11iIi11i . oO0o % oO0o
- if 80 - 80: i11iIiiIii / OoOoOO00 . OOooOOo . iIii1I11I1II1
- if 81 - 81: I1ii11iIi11i * OoO0O00 . o0oOOo0O0Ooo . OoooooooOO
-def lisp_get_echo_nonce ( rloc , rloc_str ) :
- if ( lisp_nonce_echoing == False ) : return ( None )
- if 64 - 64: Oo0Ooo . I1ii11iIi11i / ooOoO0o % oO0o . iIii1I11I1II1
- if ( rloc ) : rloc_str = rloc . print_address_no_iid ( )
- I111Ii1I1I1iI = None
- if ( rloc_str in lisp_nonce_echo_list ) :
-  I111Ii1I1I1iI = lisp_nonce_echo_list [ rloc_str ]
-  if 84 - 84: II111iiii . oO0o * O0 / iII111i + OoooooooOO
- return ( I111Ii1I1I1iI )
- if 99 - 99: I1ii11iIi11i . oO0o + Oo0Ooo + I1ii11iIi11i / I1Ii111 . I1ii11iIi11i
- if 95 - 95: OoOoOO00 * iIii1I11I1II1 / OoooooooOO % i1IIi
- if 91 - 91: OOooOOo - OoOoOO00
- if 58 - 58: II111iiii . OOooOOo % II111iiii * oO0o % OoO0O00 % I11i
- if 71 - 71: Ii1I * II111iiii * I1IiiI
- if 22 - 22: oO0o
- if 96 - 96: ooOoO0o * iII111i . IiII
- if 77 - 77: OOooOOo - I11i % o0oOOo0O0Ooo
-def lisp_decode_dist_name ( packet ) :
- O0oo0oOo = 0
- IIiIiii1I1i = b""
- if 43 - 43: OoOoOO00 - o0oOOo0O0Ooo
- while ( packet [ 0 : 1 ] != b"\x00" ) :
-  if ( O0oo0oOo == 255 ) : return ( [ None , None ] )
-  IIiIiii1I1i += packet [ 0 : 1 ]
-  packet = packet [ 1 : : ]
-  O0oo0oOo += 1
-  if 22 - 22: i1IIi
-  if 33 - 33: O0
- packet = packet [ 1 : : ]
- return ( packet , IIiIiii1I1i . decode ( ) )
- if 34 - 34: I1Ii111 . IiII % iII111i
- if 94 - 94: OOooOOo % i11iIiiIii . OOooOOo
- if 55 - 55: OoOoOO00 . OoOoOO00 % o0oOOo0O0Ooo . I11i . I1ii11iIi11i - o0oOOo0O0Ooo
  if 1 - 1: i11iIiiIii - i1IIi * oO0o - iIii1I11I1II1
  if 75 - 75: i1IIi * i11iIiiIii
  if 40 - 40: I1ii11iIi11i + OoO0O00
  if 8 - 8: i11iIiiIii - iIii1I11I1II1
  if 73 - 73: OoOoOO00
-def lisp_write_flow_log ( flow_log ) :
- o0OoO0 = open ( "./logs/lisp-flow.log" , "a" )
  if 25 - 25: iII111i / oO0o
- O0oo0oOo = 0
- for oo000o in flow_log :
-  Oo00oo = oo000o [ 3 ]
-  OoooO0O0o0oOO = Oo00oo . print_flow ( oo000o [ 0 ] , oo000o [ 1 ] , oo000o [ 2 ] )
-  o0OoO0 . write ( OoooO0O0o0oOO )
-  O0oo0oOo += 1
-  if 9 - 9: OoooooooOO / OOooOOo / O0 - OoOoOO00
- o0OoO0 . close ( )
- del ( flow_log )
+ if 61 - 61: OoooooooOO . Ii1I . I11i + oO0o
+ if 73 - 73: II111iiii % i11iIiiIii * I1ii11iIi11i + O0
+ if 61 - 61: I1IiiI / OOooOOo
+def lisp_format_macs ( sa , da ) :
+ sa = sa [ 0 : 4 ] + "-" + sa [ 4 : 8 ] + "-" + sa [ 8 : 12 ]
+ da = da [ 0 : 4 ] + "-" + da [ 4 : 8 ] + "-" + da [ 8 : 12 ]
+ return ( "{} -> {}" . format ( sa , da ) )
+ if 67 - 67: OoOoOO00
  if 22 - 22: Ii1I * I1ii11iIi11i * o0oOOo0O0Ooo - I1IiiI . i11iIiiIii
- O0oo0oOo = bold ( str ( O0oo0oOo ) , False )
- lprint ( "Wrote {} flow entries to ./logs/lisp-flow.log" . format ( O0oo0oOo ) )
- return
  if 30 - 30: O0 / oO0o * i11iIiiIii + iIii1I11I1II1 + O0 % I1IiiI
  if 95 - 95: ooOoO0o % OOooOOo
  if 17 - 17: i1IIi + Ii1I
  if 35 - 35: iIii1I11I1II1 - Oo0Ooo - OoooooooOO % I1ii11iIi11i
  if 27 - 27: Oo0Ooo * II111iiii - OOooOOo + o0oOOo0O0Ooo
+def lisp_get_echo_nonce ( rloc , rloc_str ) :
+ if ( lisp_nonce_echoing == False ) : return ( None )
  if 26 - 26: oO0o / I1ii11iIi11i - oO0o
- if 9 - 9: ooOoO0o * iIii1I11I1II1 * OoooooooOO
+ if ( rloc ) : rloc_str = rloc . print_address_no_iid ( )
+ I111Ii1I1I1iI = None
+ if ( rloc_str in lisp_nonce_echo_list ) :
+  I111Ii1I1I1iI = lisp_nonce_echo_list [ rloc_str ]
+  if 9 - 9: ooOoO0o * iIii1I11I1II1 * OoooooooOO
+ return ( I111Ii1I1I1iI )
+ if 13 - 13: iII111i . i11iIiiIii * o0oOOo0O0Ooo . iII111i
+ if 96 - 96: Ii1I
+ if 90 - 90: II111iiii
+ if 93 - 93: i11iIiiIii / Ii1I * Oo0Ooo . iII111i % iII111i / IiII
+ if 15 - 15: OoOoOO00 % I1Ii111 - iIii1I11I1II1
+ if 52 - 52: i11iIiiIii * ooOoO0o
+ if 15 - 15: OoooooooOO . oO0o . i11iIiiIii / o0oOOo0O0Ooo
+ if 91 - 91: ooOoO0o
+def lisp_decode_dist_name ( packet ) :
+ O0oo0oOo = 0
+ IiI111i = b""
+ if 36 - 36: OoooooooOO . O0 + OOooOOo * I1IiiI . iIii1I11I1II1
+ while ( packet [ 0 : 1 ] != b"\x00" ) :
+  if ( O0oo0oOo == 255 ) : return ( [ None , None ] )
+  IiI111i += packet [ 0 : 1 ]
+  packet = packet [ 1 : : ]
+  O0oo0oOo += 1
+  if 93 - 93: OoOoOO00 % OoooooooOO * iIii1I11I1II1 . Ii1I % I1ii11iIi11i
+  if 93 - 93: O0 % IiII
+ packet = packet [ 1 : : ]
+ return ( packet , IiI111i . decode ( ) )
+ if 40 - 40: iII111i - OoOoOO00 / IiII - I11i
+ if 86 - 86: OoOoOO00 + oO0o / II111iiii % IiII % IiII * O0
+ if 32 - 32: OoO0O00 / OoOoOO00 % iII111i * I11i . OoO0O00
+ if 26 - 26: IiII
+ if 15 - 15: OoooooooOO / OoO0O00 - II111iiii / IiII + oO0o
+ if 48 - 48: iII111i * OoO0O00 * OoOoOO00 * I11i
+ if 74 - 74: ooOoO0o
+ if 93 - 93: Oo0Ooo % ooOoO0o
+def lisp_write_flow_log ( flow_log ) :
+ o0OoO0 = open ( "./logs/lisp-flow.log" , "a" )
+ if 38 - 38: II111iiii . I1Ii111 . iIii1I11I1II1 / o0oOOo0O0Ooo
+ O0oo0oOo = 0
+ for oo000o in flow_log :
+  Oo00oo = oo000o [ 3 ]
+  i11iiiii = Oo00oo . print_flow ( oo000o [ 0 ] , oo000o [ 1 ] , oo000o [ 2 ] )
+  o0OoO0 . write ( i11iiiii )
+  O0oo0oOo += 1
+  if 12 - 12: I1ii11iIi11i . OoOoOO00 * I1Ii111 - I1IiiI / oO0o * ooOoO0o
+ o0OoO0 . close ( )
+ del ( flow_log )
+ if 6 - 6: i1IIi % II111iiii % Oo0Ooo + o0oOOo0O0Ooo
+ O0oo0oOo = bold ( str ( O0oo0oOo ) , False )
+ lprint ( "Wrote {} flow entries to ./logs/lisp-flow.log" . format ( O0oo0oOo ) )
+ return
+ if 61 - 61: I11i / i11iIiiIii
+ if 89 - 89: II111iiii
+ if 2 - 2: OoOoOO00 . i11iIiiIii
+ if 11 - 11: Ii1I
+ if 82 - 82: I11i - i1IIi . Oo0Ooo * I1Ii111
+ if 44 - 44: iII111i
+ if 56 - 56: II111iiii / Oo0Ooo % IiII * II111iiii - iIii1I11I1II1 + ooOoO0o
 def lisp_policy_command ( kv_pair ) :
  iIIiiIi = lisp_policy ( "" )
- I1oO0 = None
- if 96 - 96: Ii1I
- o00ooOO = [ ]
+ iIiooOO0 = None
+ if 59 - 59: I11i / IiII * OoO0O00 / IiII . I1Ii111
+ o0OIii = [ ]
  for iIi1iIIIiIiI in range ( len ( kv_pair [ "datetime-range" ] ) ) :
-  o00ooOO . append ( lisp_policy_match ( ) )
-  if 74 - 74: iII111i / iIii1I11I1II1 * I11i + oO0o + iIii1I11I1II1 * o0oOOo0O0Ooo
-  if 28 - 28: ooOoO0o . o0oOOo0O0Ooo . OoooooooOO . oO0o . i11iIiiIii / o0oOOo0O0Ooo
- for oO0OoO000oO0o in list ( kv_pair . keys ( ) ) :
-  oOO0 = kv_pair [ oO0OoO000oO0o ]
-  if 18 - 18: IiII . i11iIiiIii % I1IiiI
-  if 11 - 11: I11i % I1Ii111 + O0 . Ii1I . I1ii11iIi11i % I1Ii111
-  if 28 - 28: IiII . o0oOOo0O0Ooo + iII111i - OoOoOO00 / OOooOOo
-  if 86 - 86: ooOoO0o * OoOoOO00 + oO0o / II111iiii % OOooOOo
-  if ( oO0OoO000oO0o == "instance-id" ) :
-   for iIi1iIIIiIiI in range ( len ( o00ooOO ) ) :
-    Ooo0oO0O00o0 = oOO0 [ iIi1iIIIiIiI ]
-    if ( Ooo0oO0O00o0 == "" ) : continue
-    i1i = o00ooOO [ iIi1iIIIiIiI ]
-    if ( i1i . source_eid == None ) :
-     i1i . source_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
-     if 74 - 74: I1ii11iIi11i . OoO0O00
-    if ( i1i . dest_eid == None ) :
-     i1i . dest_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
-     if 23 - 23: IiII + oO0o
-    i1i . source_eid . instance_id = int ( Ooo0oO0O00o0 )
-    i1i . dest_eid . instance_id = int ( Ooo0oO0O00o0 )
-    if 48 - 48: iII111i * OoO0O00 * OoOoOO00 * I11i
-    if 74 - 74: ooOoO0o
-  if ( oO0OoO000oO0o == "source-eid" ) :
-   for iIi1iIIIiIiI in range ( len ( o00ooOO ) ) :
-    Ooo0oO0O00o0 = oOO0 [ iIi1iIIIiIiI ]
-    if ( Ooo0oO0O00o0 == "" ) : continue
-    i1i = o00ooOO [ iIi1iIIIiIiI ]
-    if ( i1i . source_eid == None ) :
-     i1i . source_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
-     if 93 - 93: Oo0Ooo % ooOoO0o
-    oooo = i1i . source_eid . instance_id
-    i1i . source_eid . store_prefix ( Ooo0oO0O00o0 )
-    i1i . source_eid . instance_id = oooo
-    if 38 - 38: II111iiii . I1Ii111 . iIii1I11I1II1 / o0oOOo0O0Ooo
-    if 6 - 6: ooOoO0o - i1IIi * I1IiiI
-  if ( oO0OoO000oO0o == "destination-eid" ) :
-   for iIi1iIIIiIiI in range ( len ( o00ooOO ) ) :
-    Ooo0oO0O00o0 = oOO0 [ iIi1iIIIiIiI ]
-    if ( Ooo0oO0O00o0 == "" ) : continue
-    i1i = o00ooOO [ iIi1iIIIiIiI ]
-    if ( i1i . dest_eid == None ) :
-     i1i . dest_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
-     if 24 - 24: iIii1I11I1II1 / I1Ii111
-    oooo = i1i . dest_eid . instance_id
-    i1i . dest_eid . store_prefix ( Ooo0oO0O00o0 )
-    i1i . dest_eid . instance_id = oooo
-    if 16 - 16: OoOoOO00 * I1Ii111 - I1IiiI / I1Ii111
-    if 64 - 64: I1ii11iIi11i . i1IIi % II111iiii % Oo0Ooo + oO0o - I1IiiI
-  if ( oO0OoO000oO0o == "source-rloc" ) :
-   for iIi1iIIIiIiI in range ( len ( o00ooOO ) ) :
-    Ooo0oO0O00o0 = oOO0 [ iIi1iIIIiIiI ]
-    if ( Ooo0oO0O00o0 == "" ) : continue
-    i1i = o00ooOO [ iIi1iIIIiIiI ]
-    i1i . source_rloc = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
-    i1i . source_rloc . store_prefix ( Ooo0oO0O00o0 )
-    if 24 - 24: IiII . II111iiii . II111iiii . OoOoOO00 . i11iIiiIii
-    if 11 - 11: Ii1I
-  if ( oO0OoO000oO0o == "destination-rloc" ) :
-   for iIi1iIIIiIiI in range ( len ( o00ooOO ) ) :
-    Ooo0oO0O00o0 = oOO0 [ iIi1iIIIiIiI ]
-    if ( Ooo0oO0O00o0 == "" ) : continue
-    i1i = o00ooOO [ iIi1iIIIiIiI ]
-    i1i . dest_rloc = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
-    i1i . dest_rloc . store_prefix ( Ooo0oO0O00o0 )
-    if 82 - 82: I11i - i1IIi . Oo0Ooo * I1Ii111
-    if 44 - 44: iII111i
-  if ( oO0OoO000oO0o == "rloc-record-name" ) :
-   for iIi1iIIIiIiI in range ( len ( o00ooOO ) ) :
-    Ooo0oO0O00o0 = oOO0 [ iIi1iIIIiIiI ]
-    if ( Ooo0oO0O00o0 == "" ) : continue
-    i1i = o00ooOO [ iIi1iIIIiIiI ]
-    i1i . rloc_record_name = Ooo0oO0O00o0
-    if 56 - 56: II111iiii / Oo0Ooo % IiII * II111iiii - iIii1I11I1II1 + ooOoO0o
-    if 33 - 33: o0oOOo0O0Ooo . I11i / I1IiiI
-  if ( oO0OoO000oO0o == "geo-name" ) :
-   for iIi1iIIIiIiI in range ( len ( o00ooOO ) ) :
-    Ooo0oO0O00o0 = oOO0 [ iIi1iIIIiIiI ]
-    if ( Ooo0oO0O00o0 == "" ) : continue
-    i1i = o00ooOO [ iIi1iIIIiIiI ]
-    i1i . geo_name = Ooo0oO0O00o0
-    if 29 - 29: o0oOOo0O0Ooo - ooOoO0o
-    if 59 - 59: I11i / IiII * OoO0O00 / IiII . I1Ii111
-  if ( oO0OoO000oO0o == "elp-name" ) :
-   for iIi1iIIIiIiI in range ( len ( o00ooOO ) ) :
-    Ooo0oO0O00o0 = oOO0 [ iIi1iIIIiIiI ]
-    if ( Ooo0oO0O00o0 == "" ) : continue
-    i1i = o00ooOO [ iIi1iIIIiIiI ]
-    i1i . elp_name = Ooo0oO0O00o0
-    if 82 - 82: OOooOOo . iIii1I11I1II1 + I1Ii111
-    if 14 - 14: IiII . i11iIiiIii
-  if ( oO0OoO000oO0o == "rle-name" ) :
-   for iIi1iIIIiIiI in range ( len ( o00ooOO ) ) :
-    Ooo0oO0O00o0 = oOO0 [ iIi1iIIIiIiI ]
-    if ( Ooo0oO0O00o0 == "" ) : continue
-    i1i = o00ooOO [ iIi1iIIIiIiI ]
-    i1i . rle_name = Ooo0oO0O00o0
-    if 17 - 17: ooOoO0o % ooOoO0o * oO0o
-    if 8 - 8: ooOoO0o + OoO0O00 . II111iiii / iIii1I11I1II1 - OOooOOo
-  if ( oO0OoO000oO0o == "json-name" ) :
-   for iIi1iIIIiIiI in range ( len ( o00ooOO ) ) :
-    Ooo0oO0O00o0 = oOO0 [ iIi1iIIIiIiI ]
-    if ( Ooo0oO0O00o0 == "" ) : continue
-    i1i = o00ooOO [ iIi1iIIIiIiI ]
-    i1i . json_name = Ooo0oO0O00o0
-    if 87 - 87: iIii1I11I1II1 . IiII % I1IiiI . OoO0O00 - I1Ii111
-    if 53 - 53: I1Ii111 % i11iIiiIii
-  if ( oO0OoO000oO0o == "datetime-range" ) :
-   for iIi1iIIIiIiI in range ( len ( o00ooOO ) ) :
-    Ooo0oO0O00o0 = oOO0 [ iIi1iIIIiIiI ]
-    i1i = o00ooOO [ iIi1iIIIiIiI ]
-    if ( Ooo0oO0O00o0 == "" ) : continue
-    oOO0O00o0O0 = lisp_datetime ( Ooo0oO0O00o0 [ 0 : 19 ] )
-    ii11IIiI1iIi = lisp_datetime ( Ooo0oO0O00o0 [ 19 : : ] )
-    if ( oOO0O00o0O0 . valid_datetime ( ) and ii11IIiI1iIi . valid_datetime ( ) ) :
-     i1i . datetime_lower = oOO0O00o0O0
-     i1i . datetime_upper = ii11IIiI1iIi
-     if 99 - 99: I1IiiI - i1IIi * i11iIiiIii + OoO0O00
-     if 80 - 80: o0oOOo0O0Ooo . I11i % iIii1I11I1II1 + OoOoOO00
-     if 87 - 87: I1Ii111 + II111iiii / I1ii11iIi11i + OoOoOO00
-     if 71 - 71: I1IiiI + iIii1I11I1II1 + O0 * iII111i % IiII
-     if 42 - 42: OOooOOo - I1ii11iIi11i
-     if 93 - 93: I1Ii111 + OOooOOo % ooOoO0o / I1Ii111 % OOooOOo . IiII
-     if 37 - 37: iII111i * oO0o / oO0o / Ii1I % I11i
-  if ( oO0OoO000oO0o == "set-action" ) :
-   iIIiiIi . set_action = oOO0
-   if 12 - 12: i11iIiiIii
-  if ( oO0OoO000oO0o == "set-record-ttl" ) :
-   iIIiiIi . set_record_ttl = int ( oOO0 )
-   if 62 - 62: oO0o + OOooOOo + oO0o + I1IiiI
-  if ( oO0OoO000oO0o == "set-instance-id" ) :
-   if ( iIIiiIi . set_source_eid == None ) :
-    iIIiiIi . set_source_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
-    if 10 - 10: IiII - Oo0Ooo % ooOoO0o
-   if ( iIIiiIi . set_dest_eid == None ) :
-    iIIiiIi . set_dest_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
-    if 38 - 38: oO0o * o0oOOo0O0Ooo . I11i % II111iiii / I11i % Ii1I
-   I1oO0 = int ( oOO0 )
-   iIIiiIi . set_source_eid . instance_id = I1oO0
-   iIIiiIi . set_dest_eid . instance_id = I1oO0
-   if 19 - 19: II111iiii / i11iIiiIii * II111iiii + OoOoOO00 - OoOoOO00
-  if ( oO0OoO000oO0o == "set-source-eid" ) :
-   if ( iIIiiIi . set_source_eid == None ) :
-    iIIiiIi . set_source_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
+  o0OIii . append ( lisp_policy_match ( ) )
+  if 88 - 88: OoooooooOO
+  if 40 - 40: ooOoO0o * oO0o * Ii1I . ooOoO0o + i11iIiiIii
+ for iIiI1o00 in list ( kv_pair . keys ( ) ) :
+  oOO0 = kv_pair [ iIiI1o00 ]
+  if 9 - 9: OoO0O00 - I1Ii111
+  if 53 - 53: I1Ii111 % i11iIiiIii
+  if 99 - 99: I1IiiI - i1IIi * i11iIiiIii + OoO0O00
+  if 80 - 80: o0oOOo0O0Ooo . I11i % iIii1I11I1II1 + OoOoOO00
+  if ( iIiI1o00 == "instance-id" ) :
+   for iIi1iIIIiIiI in range ( len ( o0OIii ) ) :
+    O0ooOOO = oOO0 [ iIi1iIIIiIiI ]
+    if ( O0ooOOO == "" ) : continue
+    OOOo0o0 = o0OIii [ iIi1iIIIiIiI ]
+    if ( OOOo0o0 . source_eid == None ) :
+     OOOo0o0 . source_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
+     if 84 - 84: II111iiii + OOooOOo - I1Ii111 - Oo0Ooo * Ii1I * OOooOOo
+    if ( OOOo0o0 . dest_eid == None ) :
+     OOOo0o0 . dest_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
+     if 30 - 30: I1Ii111 % OOooOOo . Oo0Ooo * ooOoO0o % II111iiii % oO0o
+    OOOo0o0 . source_eid . instance_id = int ( O0ooOOO )
+    OOOo0o0 . dest_eid . instance_id = int ( O0ooOOO )
+    if 28 - 28: Ii1I % iIii1I11I1II1 % i11iIiiIii . oO0o
+    if 54 - 54: Oo0Ooo - Oo0Ooo % oO0o
+  if ( iIiI1o00 == "source-eid" ) :
+   for iIi1iIIIiIiI in range ( len ( o0OIii ) ) :
+    O0ooOOO = oOO0 [ iIi1iIIIiIiI ]
+    if ( O0ooOOO == "" ) : continue
+    OOOo0o0 = o0OIii [ iIi1iIIIiIiI ]
+    if ( OOOo0o0 . source_eid == None ) :
+     OOOo0o0 . source_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
+     if 31 - 31: OoOoOO00
+    oooo = OOOo0o0 . source_eid . instance_id
+    OOOo0o0 . source_eid . store_prefix ( O0ooOOO )
+    OOOo0o0 . source_eid . instance_id = oooo
+    if 60 - 60: Oo0Ooo % Oo0Ooo * IiII * O0 - Ii1I - I11i
+    if 20 - 20: I11i % Ii1I
+  if ( iIiI1o00 == "destination-eid" ) :
+   for iIi1iIIIiIiI in range ( len ( o0OIii ) ) :
+    O0ooOOO = oOO0 [ iIi1iIIIiIiI ]
+    if ( O0ooOOO == "" ) : continue
+    OOOo0o0 = o0OIii [ iIi1iIIIiIiI ]
+    if ( OOOo0o0 . dest_eid == None ) :
+     OOOo0o0 . dest_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
+     if 19 - 19: II111iiii / i11iIiiIii * II111iiii + OoOoOO00 - OoOoOO00
+    oooo = OOOo0o0 . dest_eid . instance_id
+    OOOo0o0 . dest_eid . store_prefix ( O0ooOOO )
+    OOOo0o0 . dest_eid . instance_id = oooo
     if 7 - 7: OoOoOO00 - OoO0O00 % OoOoOO00 . I1ii11iIi11i % Oo0Ooo * iII111i
-   iIIiiIi . set_source_eid . store_prefix ( oOO0 )
-   if ( I1oO0 != None ) : iIIiiIi . set_source_eid . instance_id = I1oO0
-   if 90 - 90: IiII - OOooOOo + iIii1I11I1II1
-  if ( oO0OoO000oO0o == "set-destination-eid" ) :
+    if 90 - 90: IiII - OOooOOo + iIii1I11I1II1
+  if ( iIiI1o00 == "source-rloc" ) :
+   for iIi1iIIIiIiI in range ( len ( o0OIii ) ) :
+    O0ooOOO = oOO0 [ iIi1iIIIiIiI ]
+    if ( O0ooOOO == "" ) : continue
+    OOOo0o0 = o0OIii [ iIi1iIIIiIiI ]
+    OOOo0o0 . source_rloc = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
+    OOOo0o0 . source_rloc . store_prefix ( O0ooOOO )
+    if 88 - 88: ooOoO0o . o0oOOo0O0Ooo . OOooOOo - I11i
+    if 76 - 76: IiII % I1IiiI . iII111i
+  if ( iIiI1o00 == "destination-rloc" ) :
+   for iIi1iIIIiIiI in range ( len ( o0OIii ) ) :
+    O0ooOOO = oOO0 [ iIi1iIIIiIiI ]
+    if ( O0ooOOO == "" ) : continue
+    OOOo0o0 = o0OIii [ iIi1iIIIiIiI ]
+    OOOo0o0 . dest_rloc = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
+    OOOo0o0 . dest_rloc . store_prefix ( O0ooOOO )
+    if 5 - 5: ooOoO0o . oO0o - OoOoOO00 - OoooooooOO
+    if 2 - 2: OOooOOo
+  if ( iIiI1o00 == "rloc-record-name" ) :
+   for iIi1iIIIiIiI in range ( len ( o0OIii ) ) :
+    O0ooOOO = oOO0 [ iIi1iIIIiIiI ]
+    if ( O0ooOOO == "" ) : continue
+    OOOo0o0 = o0OIii [ iIi1iIIIiIiI ]
+    OOOo0o0 . rloc_record_name = O0ooOOO
+    if 37 - 37: IiII - iIii1I11I1II1 * i11iIiiIii . ooOoO0o
+    if 78 - 78: OOooOOo - I1ii11iIi11i + iII111i % OoOoOO00
+  if ( iIiI1o00 == "geo-name" ) :
+   for iIi1iIIIiIiI in range ( len ( o0OIii ) ) :
+    O0ooOOO = oOO0 [ iIi1iIIIiIiI ]
+    if ( O0ooOOO == "" ) : continue
+    OOOo0o0 = o0OIii [ iIi1iIIIiIiI ]
+    OOOo0o0 . geo_name = O0ooOOO
+    if 28 - 28: I11i + i1IIi / i11iIiiIii * OOooOOo * II111iiii
+    if 78 - 78: OoO0O00 - i1IIi % I1Ii111
+  if ( iIiI1o00 == "elp-name" ) :
+   for iIi1iIIIiIiI in range ( len ( o0OIii ) ) :
+    O0ooOOO = oOO0 [ iIi1iIIIiIiI ]
+    if ( O0ooOOO == "" ) : continue
+    OOOo0o0 = o0OIii [ iIi1iIIIiIiI ]
+    OOOo0o0 . elp_name = O0ooOOO
+    if 87 - 87: I11i
+    if 37 - 37: iII111i . I1Ii111 - iII111i - I11i - iIii1I11I1II1 - II111iiii
+  if ( iIiI1o00 == "rle-name" ) :
+   for iIi1iIIIiIiI in range ( len ( o0OIii ) ) :
+    O0ooOOO = oOO0 [ iIi1iIIIiIiI ]
+    if ( O0ooOOO == "" ) : continue
+    OOOo0o0 = o0OIii [ iIi1iIIIiIiI ]
+    OOOo0o0 . rle_name = O0ooOOO
+    if 80 - 80: I1Ii111 % O0 - IiII / II111iiii + i1IIi
+    if 4 - 4: OOooOOo + II111iiii
+  if ( iIiI1o00 == "json-name" ) :
+   for iIi1iIIIiIiI in range ( len ( o0OIii ) ) :
+    O0ooOOO = oOO0 [ iIi1iIIIiIiI ]
+    if ( O0ooOOO == "" ) : continue
+    OOOo0o0 = o0OIii [ iIi1iIIIiIiI ]
+    OOOo0o0 . json_name = O0ooOOO
+    if 1 - 1: OoooooooOO * I1Ii111 - I11i / IiII
+    if 43 - 43: i11iIiiIii * I1IiiI
+  if ( iIiI1o00 == "datetime-range" ) :
+   for iIi1iIIIiIiI in range ( len ( o0OIii ) ) :
+    O0ooOOO = oOO0 [ iIi1iIIIiIiI ]
+    OOOo0o0 = o0OIii [ iIi1iIIIiIiI ]
+    if ( O0ooOOO == "" ) : continue
+    oOO0O00o0O0 = lisp_datetime ( O0ooOOO [ 0 : 19 ] )
+    ii11IIiI1iIi = lisp_datetime ( O0ooOOO [ 19 : : ] )
+    if ( oOO0O00o0O0 . valid_datetime ( ) and ii11IIiI1iIi . valid_datetime ( ) ) :
+     OOOo0o0 . datetime_lower = oOO0O00o0O0
+     OOOo0o0 . datetime_upper = ii11IIiI1iIi
+     if 48 - 48: Oo0Ooo - OOooOOo / iII111i % I1ii11iIi11i . OoOoOO00
+     if 6 - 6: i11iIiiIii
+     if 51 - 51: o0oOOo0O0Ooo - OoooooooOO - I11i % i11iIiiIii / I1IiiI + IiII
+     if 91 - 91: O0
+     if 13 - 13: o0oOOo0O0Ooo
+     if 15 - 15: iIii1I11I1II1 * Oo0Ooo . iIii1I11I1II1 . Ii1I % iII111i - i11iIiiIii
+     if 77 - 77: ooOoO0o - o0oOOo0O0Ooo * OoOoOO00 % oO0o
+  if ( iIiI1o00 == "set-action" ) :
+   iIIiiIi . set_action = oOO0
+   if 4 - 4: i11iIiiIii + OoOoOO00
+  if ( iIiI1o00 == "set-record-ttl" ) :
+   iIIiiIi . set_record_ttl = int ( oOO0 )
+   if 45 - 45: ooOoO0o / OoooooooOO . Oo0Ooo
+  if ( iIiI1o00 == "set-instance-id" ) :
+   if ( iIIiiIi . set_source_eid == None ) :
+    iIIiiIi . set_source_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
+    if 35 - 35: i11iIiiIii / o0oOOo0O0Ooo / oO0o / I11i . O0
    if ( iIIiiIi . set_dest_eid == None ) :
     iIIiiIi . set_dest_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
-    if 88 - 88: ooOoO0o . o0oOOo0O0Ooo . OOooOOo - I11i
+    if 53 - 53: i1IIi
+   iIiooOO0 = int ( oOO0 )
+   iIIiiIi . set_source_eid . instance_id = iIiooOO0
+   iIIiiIi . set_dest_eid . instance_id = iIiooOO0
+   if 51 - 51: OoOoOO00 / iIii1I11I1II1 . oO0o - I1ii11iIi11i - OOooOOo
+  if ( iIiI1o00 == "set-source-eid" ) :
+   if ( iIIiiIi . set_source_eid == None ) :
+    iIIiiIi . set_source_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
+    if 90 - 90: i1IIi / oO0o * I1Ii111 + II111iiii % I11i
+   iIIiiIi . set_source_eid . store_prefix ( oOO0 )
+   if ( iIiooOO0 != None ) : iIIiiIi . set_source_eid . instance_id = iIiooOO0
+   if 41 - 41: o0oOOo0O0Ooo - II111iiii . ooOoO0o . iII111i - ooOoO0o / iII111i
+  if ( iIiI1o00 == "set-destination-eid" ) :
+   if ( iIIiiIi . set_dest_eid == None ) :
+    iIIiiIi . set_dest_eid = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
+    if 59 - 59: O0 / II111iiii * II111iiii - ooOoO0o
    iIIiiIi . set_dest_eid . store_prefix ( oOO0 )
-   if ( I1oO0 != None ) : iIIiiIi . set_dest_eid . instance_id = I1oO0
-   if 76 - 76: IiII % I1IiiI . iII111i
-  if ( oO0OoO000oO0o == "set-rloc-address" ) :
+   if ( iIiooOO0 != None ) : iIIiiIi . set_dest_eid . instance_id = iIiooOO0
+   if 63 - 63: I1ii11iIi11i * IiII % OoO0O00 . OoOoOO00 - II111iiii % IiII
+  if ( iIiI1o00 == "set-rloc-address" ) :
    iIIiiIi . set_rloc_address = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
    iIIiiIi . set_rloc_address . store_address ( oOO0 )
-   if 5 - 5: ooOoO0o . oO0o - OoOoOO00 - OoooooooOO
-  if ( oO0OoO000oO0o == "set-rloc-record-name" ) :
+   if 8 - 8: iIii1I11I1II1
+  if ( iIiI1o00 == "set-rloc-record-name" ) :
    iIIiiIi . set_rloc_record_name = oOO0
-   if 2 - 2: OOooOOo
-  if ( oO0OoO000oO0o == "set-elp-name" ) :
+   if 71 - 71: oO0o / o0oOOo0O0Ooo % iIii1I11I1II1 * iIii1I11I1II1
+  if ( iIiI1o00 == "set-elp-name" ) :
    iIIiiIi . set_elp_name = oOO0
-   if 37 - 37: IiII - iIii1I11I1II1 * i11iIiiIii . ooOoO0o
-  if ( oO0OoO000oO0o == "set-geo-name" ) :
+   if 29 - 29: ooOoO0o - OoOoOO00 - o0oOOo0O0Ooo
+  if ( iIiI1o00 == "set-geo-name" ) :
    iIIiiIi . set_geo_name = oOO0
-   if 78 - 78: OOooOOo - I1ii11iIi11i + iII111i % OoOoOO00
-  if ( oO0OoO000oO0o == "set-rle-name" ) :
+   if 54 - 54: Ii1I + i11iIiiIii + i1IIi - OoooooooOO
+  if ( iIiI1o00 == "set-rle-name" ) :
    iIIiiIi . set_rle_name = oOO0
-   if 28 - 28: I11i + i1IIi / i11iIiiIii * OOooOOo * II111iiii
-  if ( oO0OoO000oO0o == "set-json-name" ) :
+   if 100 - 100: oO0o . ooOoO0o
+  if ( iIiI1o00 == "set-json-name" ) :
    iIIiiIi . set_json_name = oOO0
-   if 78 - 78: OoO0O00 - i1IIi % I1Ii111
-  if ( oO0OoO000oO0o == "policy-name" ) :
+   if 14 - 14: OoooooooOO + iII111i / iIii1I11I1II1 / ooOoO0o % iIii1I11I1II1 - IiII
+  if ( iIiI1o00 == "policy-name" ) :
    iIIiiIi . policy_name = oOO0
-   if 87 - 87: I11i
-   if 37 - 37: iII111i . I1Ii111 - iII111i - I11i - iIii1I11I1II1 - II111iiii
-   if 80 - 80: I1Ii111 % O0 - IiII / II111iiii + i1IIi
-   if 4 - 4: OOooOOo + II111iiii
-   if 1 - 1: OoooooooOO * I1Ii111 - I11i / IiII
-   if 43 - 43: i11iIiiIii * I1IiiI
- iIIiiIi . match_clauses = o00ooOO
+   if 34 - 34: I1ii11iIi11i + i11iIiiIii - I1ii11iIi11i / OoOoOO00 + i1IIi . i11iIiiIii
+   if 48 - 48: I1ii11iIi11i % OoOoOO00 * OoOoOO00 % o0oOOo0O0Ooo * II111iiii / OoOoOO00
+   if 73 - 73: OoOoOO00 + OOooOOo * II111iiii . OOooOOo % I1Ii111 % oO0o
+   if 79 - 79: I1ii11iIi11i % I11i
+   if 78 - 78: i11iIiiIii % I1Ii111 + iIii1I11I1II1 + iII111i
+   if 66 - 66: I1IiiI - o0oOOo0O0Ooo
+ iIIiiIi . match_clauses = o0OIii
  iIIiiIi . save_policy ( )
  return
- if 48 - 48: Oo0Ooo - OOooOOo / iII111i % I1ii11iIi11i . OoOoOO00
- if 6 - 6: i11iIiiIii
+ if 67 - 67: oO0o . iII111i * Ii1I - OOooOOo / oO0o
+ if 98 - 98: OoOoOO00 * OoO0O00 . Oo0Ooo
 lisp_policy_commands = {
  "lisp policy" : [ lisp_policy_command , {
  "policy-name" : [ True ] ,
@@ -17952,82 +17968,56 @@ lisp_policy_commands = {
  "set-rle-name" : [ True ] ,
  "set-json-name" : [ True ] } ]
  }
-if 51 - 51: o0oOOo0O0Ooo - OoooooooOO - I11i % i11iIiiIii / I1IiiI + IiII
-if 91 - 91: O0
-if 13 - 13: o0oOOo0O0Ooo
-if 15 - 15: iIii1I11I1II1 * Oo0Ooo . iIii1I11I1II1 . Ii1I % iII111i - i11iIiiIii
-if 77 - 77: ooOoO0o - o0oOOo0O0Ooo * OoOoOO00 % oO0o
-if 4 - 4: i11iIiiIii + OoOoOO00
-if 45 - 45: ooOoO0o / OoooooooOO . Oo0Ooo
+if 6 - 6: I11i % iIii1I11I1II1 + I1Ii111
+if 48 - 48: II111iiii . OOooOOo . ooOoO0o - iII111i
+if 90 - 90: OOooOOo
+if 43 - 43: IiII + ooOoO0o
+if 4 - 4: i1IIi
+if 89 - 89: Oo0Ooo / iIii1I11I1II1 . OoOoOO00
+if 6 - 6: Ii1I / iII111i
 def lisp_send_to_arista ( command , interface ) :
  interface = "" if ( interface == None ) else "interface " + interface
- if 35 - 35: i11iIiiIii / o0oOOo0O0Ooo / oO0o / I11i . O0
- oO0oiII = command
- if ( interface != "" ) : oO0oiII = interface + ": " + oO0oiII
- lprint ( "Send CLI command '{}' to hardware" . format ( oO0oiII ) )
- if 65 - 65: IiII % I1IiiI % ooOoO0o / oO0o
- Ii1I1IIiii = '''
+ if 69 - 69: iIii1I11I1II1 % I1Ii111 % OOooOOo + O0 - OoOoOO00 % oO0o
+ oOOO0OOoO = command
+ if ( interface != "" ) : oOOO0OOoO = interface + ": " + oOOO0OOoO
+ lprint ( "Send CLI command '{}' to hardware" . format ( oOOO0OOoO ) )
+ if 55 - 55: Oo0Ooo / o0oOOo0O0Ooo . OOooOOo - iII111i / i1IIi / I1IiiI
+ Iii1i1i1I1 = '''
         enable
         configure
         {}
         {}
     ''' . format ( interface , command )
- if 97 - 97: I1IiiI % iII111i * oO0o - i1IIi
- os . system ( "FastCli -c '{}'" . format ( Ii1I1IIiii ) )
+ if 74 - 74: OoooooooOO / i1IIi * i1IIi / OoO0O00 / I1Ii111
+ os . system ( "FastCli -c '{}'" . format ( Iii1i1i1I1 ) )
  return
- if 7 - 7: oO0o / ooOoO0o / IiII - I1ii11iIi11i * IiII % O0
- if 41 - 41: Ii1I + IiII / O0 . iIii1I11I1II1
- if 71 - 71: oO0o / o0oOOo0O0Ooo % iIii1I11I1II1 * iIii1I11I1II1
- if 29 - 29: ooOoO0o - OoOoOO00 - o0oOOo0O0Ooo
- if 54 - 54: Ii1I + i11iIiiIii + i1IIi - OoooooooOO
- if 100 - 100: oO0o . ooOoO0o
- if 14 - 14: OoooooooOO + iII111i / iIii1I11I1II1 / ooOoO0o % iIii1I11I1II1 - IiII
-def lisp_arista_is_alive ( prefix ) :
- oO00o00 = "enable\nsh plat trident l3 software routes {}\n" . format ( prefix )
- oOo0OOoooO = getoutput ( "FastCli -c '{}'" . format ( oO00o00 ) )
- if 34 - 34: I1ii11iIi11i + i11iIiiIii - I1ii11iIi11i / OoOoOO00 + i1IIi . i11iIiiIii
- if 48 - 48: I1ii11iIi11i % OoOoOO00 * OoOoOO00 % o0oOOo0O0Ooo * II111iiii / OoOoOO00
- if 73 - 73: OoOoOO00 + OOooOOo * II111iiii . OOooOOo % I1Ii111 % oO0o
- if 79 - 79: I1ii11iIi11i % I11i
- oOo0OOoooO = oOo0OOoooO . split ( "\n" ) [ 1 ]
- OoO0Oo0OoOo = oOo0OOoooO . split ( " " )
- OoO0Oo0OoOo = OoO0Oo0OoOo [ - 1 ] . replace ( "\r" , "" )
- if 52 - 52: i11iIiiIii % IiII - I1ii11iIi11i * Ii1I
- if 27 - 27: ooOoO0o - IiII + iIii1I11I1II1 + Oo0Ooo + O0
- if 42 - 42: OoO0O00 % I1Ii111 . I1ii11iIi11i + II111iiii . OoooooooOO
- if 66 - 66: iII111i * O0 * OoO0O00 % II111iiii
- return ( OoO0Oo0OoOo == "Y" )
- if 39 - 39: i11iIiiIii * i1IIi . OoOoOO00 * Oo0Ooo / iIii1I11I1II1 . OoOoOO00
- if 6 - 6: Ii1I / iII111i
- if 69 - 69: iIii1I11I1II1 % I1Ii111 % OOooOOo + O0 - OoOoOO00 % oO0o
- if 70 - 70: oO0o - I1IiiI + Ii1I
- if 54 - 54: OoOoOO00 / ooOoO0o - I1IiiI
- if 37 - 37: o0oOOo0O0Ooo
- if 57 - 57: iII111i / i1IIi / i1IIi + IiII
- if 75 - 75: IiII / O0
- if 72 - 72: I11i
- if 35 - 35: I11i % OoooooooOO / i1IIi * i1IIi / I1IiiI
- if 42 - 42: I11i - i1IIi - oO0o / I11i + Ii1I + ooOoO0o
+ if 51 - 51: i1IIi - oO0o / I11i + Ii1I + ooOoO0o
  if 23 - 23: OoOoOO00 . oO0o - iII111i
  if 27 - 27: Oo0Ooo * OOooOOo - OoOoOO00
  if 1 - 1: II111iiii * i11iIiiIii . OoooooooOO
  if 37 - 37: OoooooooOO + O0 . I11i % OoOoOO00
  if 57 - 57: I1Ii111 . OOooOOo + I1Ii111 . iIii1I11I1II1 / oO0o / O0
  if 88 - 88: I1Ii111
+def lisp_arista_is_alive ( prefix ) :
+ oO00o00 = "enable\nsh plat trident l3 software routes {}\n" . format ( prefix )
+ oOo0OOoooO = getoutput ( "FastCli -c '{}'" . format ( oO00o00 ) )
  if 16 - 16: Oo0Ooo . ooOoO0o / OoO0O00 / o0oOOo0O0Ooo . OoooooooOO * OoO0O00
  if 50 - 50: II111iiii + I11i . OoooooooOO . I1Ii111 - OOooOOo
  if 83 - 83: oO0o
  if 100 - 100: I1Ii111 + o0oOOo0O0Ooo * oO0o / oO0o . oO0o + iII111i
- if 71 - 71: II111iiii + iII111i + O0 % Oo0Ooo / I1IiiI
- if 52 - 52: Oo0Ooo . I1Ii111 * i1IIi / Oo0Ooo / OoO0O00
- if 29 - 29: iII111i
- if 91 - 91: Oo0Ooo - IiII
- if 47 - 47: iII111i / OOooOOo + iII111i
- if 69 - 69: I1IiiI . I1ii11iIi11i
- if 18 - 18: I11i * I1IiiI
- if 42 - 42: i1IIi . I1Ii111 - ooOoO0o + I11i / oO0o
- if 60 - 60: i1IIi + OoooooooOO % i11iIiiIii / IiII % Oo0Ooo + I1IiiI
- if 87 - 87: Ii1I % OoooooooOO % I1Ii111 * i11iIiiIii * OoOoOO00
+ oOo0OOoooO = oOo0OOoooO . split ( "\n" ) [ 1 ]
+ OoO00oo = oOo0OOoooO . split ( " " )
+ OoO00oo = OoO00oo [ - 1 ] . replace ( "\r" , "" )
+ if 38 - 38: I11i - i11iIiiIii
+ if 38 - 38: I1IiiI * i1IIi / OoO0O00 + iIii1I11I1II1 / I1Ii111 % II111iiii
+ if 62 - 62: OoOoOO00 * i1IIi + iII111i
+ if 43 - 43: OOooOOo % i11iIiiIii / I1ii11iIi11i + i1IIi / ooOoO0o
+ return ( OoO00oo == "Y" )
+ if 74 - 74: Ii1I + iIii1I11I1II1
+ if 23 - 23: OoO0O00 * i1IIi * oO0o % I1ii11iIi11i
+ if 92 - 92: iII111i / I1IiiI / i11iIiiIii
+ if 75 - 75: Oo0Ooo + IiII / I11i % I11i % IiII / I1Ii111
+ if 95 - 95: OoOoOO00
  if 78 - 78: I11i
  if 62 - 62: iIii1I11I1II1 . o0oOOo0O0Ooo . ooOoO0o % oO0o % O0 % oO0o
  if 51 - 51: Oo0Ooo / IiII - Oo0Ooo
@@ -18041,239 +18031,265 @@ def lisp_arista_is_alive ( prefix ) :
  if 35 - 35: o0oOOo0O0Ooo - i11iIiiIii
  if 78 - 78: ooOoO0o - II111iiii - i1IIi
  if 18 - 18: OoooooooOO % OoOoOO00 - IiII / oO0o . OOooOOo . I1IiiI
-def lisp_program_vxlan_hardware ( mc ) :
  if 77 - 77: I1ii11iIi11i . OoO0O00 / OoOoOO00 / O0
  if 67 - 67: ooOoO0o % I11i % oO0o
  if 74 - 74: II111iiii
  if 44 - 44: Oo0Ooo + OoO0O00 + OoOoOO00 - I1IiiI
  if 68 - 68: i11iIiiIii / OOooOOo . i1IIi . i11iIiiIii . I11i
  if 56 - 56: iIii1I11I1II1 - II111iiii * i1IIi / Ii1I
- if ( os . path . exists ( "/persist/local/lispers.net" ) == False ) : return
  if 65 - 65: OOooOOo / I1IiiI . OoooooooOO + I1IiiI + OoooooooOO + i11iIiiIii
  if 20 - 20: I1IiiI + iII111i + O0 * O0
  if 18 - 18: I11i - I11i . OoOoOO00 . ooOoO0o
  if 31 - 31: ooOoO0o
- if ( len ( mc . best_rloc_set ) == 0 ) : return
  if 87 - 87: OoooooooOO + OOooOOo - I1ii11iIi11i / I1IiiI + ooOoO0o - Oo0Ooo
  if 19 - 19: ooOoO0o + I1ii11iIi11i - ooOoO0o
  if 17 - 17: I11i * i1IIi + iIii1I11I1II1 % I1IiiI
  if 44 - 44: IiII + I1IiiI . Ii1I % Oo0Ooo
- o0OOOooO = mc . eid . print_prefix_no_iid ( )
- iIIiI11 = mc . best_rloc_set [ 0 ] . rloc . print_address_no_iid ( )
  if 97 - 97: O0
  if 95 - 95: OoO0O00 % iII111i / I1IiiI * OoooooooOO
  if 31 - 31: iIii1I11I1II1
  if 62 - 62: o0oOOo0O0Ooo - iII111i / II111iiii . o0oOOo0O0Ooo
- ii11i11iiI = getoutput ( "ip route get {} | egrep vlan4094" . format ( o0OOOooO ) )
- if 67 - 67: OoOoOO00 % iII111i . o0oOOo0O0Ooo / II111iiii * O0 / I1IiiI
- if ( ii11i11iiI != "" ) :
-  lprint ( "Route {} already in hardware: '{}'" . format ( green ( o0OOOooO , False ) , ii11i11iiI ) )
-  if 20 - 20: oO0o * O0 - Ii1I + i11iIiiIii - OoOoOO00
-  return
-  if 18 - 18: I1ii11iIi11i . iII111i
-  if 31 - 31: I11i * o0oOOo0O0Ooo
-  if 17 - 17: Ii1I * iIii1I11I1II1
-  if 9 - 9: o0oOOo0O0Ooo - IiII
-  if 78 - 78: i11iIiiIii . o0oOOo0O0Ooo
-  if 72 - 72: Oo0Ooo % II111iiii + O0 * OoOoOO00 - OOooOOo + I1Ii111
-  if 23 - 23: I1IiiI - O0 - iII111i . II111iiii / oO0o
- I1II11IIIiI11 = getoutput ( "ifconfig | egrep 'vxlan|vlan4094'" )
- if ( I1II11IIIiI11 . find ( "vxlan" ) == - 1 ) :
-  lprint ( "No VXLAN interface found, cannot program hardware" )
-  return
-  if 65 - 65: I1Ii111 * I1ii11iIi11i
- if ( I1II11IIIiI11 . find ( "vlan4094" ) == - 1 ) :
-  lprint ( "No vlan4094 interface found, cannot program hardware" )
-  return
-  if 54 - 54: ooOoO0o . i1IIi . OoooooooOO
- IIIIiII = getoutput ( "ip addr | egrep vlan4094 | egrep inet" )
- if ( IIIIiII == "" ) :
-  lprint ( "No IP address found on vlan4094, cannot program hardware" )
-  return
-  if 2 - 2: OoOoOO00 . I1IiiI
- IIIIiII = IIIIiII . split ( "inet " ) [ 1 ]
- IIIIiII = IIIIiII . split ( "/" ) [ 0 ]
- if 88 - 88: I1IiiI
- if 34 - 34: ooOoO0o + I1Ii111 / iIii1I11I1II1 + Ii1I . o0oOOo0O0Ooo * OoO0O00
- if 74 - 74: i1IIi / iIii1I11I1II1 . I1ii11iIi11i
- if 71 - 71: ooOoO0o % ooOoO0o * iII111i / Ii1I * O0
- if 21 - 21: o0oOOo0O0Ooo * o0oOOo0O0Ooo - OoOoOO00 % OoOoOO00
- if 8 - 8: I1ii11iIi11i
- if 5 - 5: OOooOOo * i11iIiiIii % oO0o * ooOoO0o
- iII = [ ]
- O000oOoo = getoutput ( "arp -i vlan4094" ) . split ( "\n" )
- for IiiiI1 in O000oOoo :
-  if ( IiiiI1 . find ( "vlan4094" ) == - 1 ) : continue
-  if ( IiiiI1 . find ( "(incomplete)" ) == - 1 ) : continue
-  OoII1 = IiiiI1 . split ( " " ) [ 0 ]
-  iII . append ( OoII1 )
-  if 10 - 10: I1Ii111 / Ii1I + i11iIiiIii * I1Ii111 - OoOoOO00 / I1ii11iIi11i
-  if 78 - 78: oO0o % I11i - O0
- OoII1 = None
- ooO0oOOoOO = IIIIiII
- IIIIiII = IIIIiII . split ( "." )
- for iIi1iIIIiIiI in range ( 1 , 255 ) :
-  IIIIiII [ 3 ] = str ( iIi1iIIIiIiI )
-  IiI = "." . join ( IIIIiII )
-  if ( IiI in iII ) : continue
-  if ( IiI == ooO0oOOoOO ) : continue
-  OoII1 = IiI
-  break
+ if 20 - 20: iIii1I11I1II1 % OOooOOo
+ if 91 - 91: ooOoO0o
+ if 96 - 96: I1IiiI . OOooOOo
+ if 94 - 94: OoooooooOO + II111iiii % ooOoO0o - II111iiii / O0
+ if 34 - 34: IiII % oO0o
+ if 54 - 54: I1IiiI
+ if 80 - 80: OoOoOO00 . I1IiiI / I1ii11iIi11i . iII111i
+ if 31 - 31: I11i * o0oOOo0O0Ooo
+def lisp_program_vxlan_hardware ( mc ) :
+ if 17 - 17: Ii1I * iIii1I11I1II1
+ if 9 - 9: o0oOOo0O0Ooo - IiII
+ if 78 - 78: i11iIiiIii . o0oOOo0O0Ooo
+ if 72 - 72: Oo0Ooo % II111iiii + O0 * OoOoOO00 - OOooOOo + I1Ii111
+ if 23 - 23: I1IiiI - O0 - iII111i . II111iiii / oO0o
+ if 1 - 1: I11i . OOooOOo / oO0o % I11i * Oo0Ooo + Oo0Ooo
+ if ( os . path . exists ( "/persist/local/lispers.net" ) == False ) : return
+ if 23 - 23: Ii1I % i1IIi - I1Ii111
+ if 95 - 95: OoOoOO00 - ooOoO0o . i1IIi . OoooooooOO
+ if 38 - 38: I1IiiI + I1ii11iIi11i - Oo0Ooo . i11iIiiIii - i1IIi
+ if 11 - 11: IiII / I1IiiI . I1IiiI
+ if ( len ( mc . best_rloc_set ) == 0 ) : return
+ if 87 - 87: OoooooooOO * OoO0O00 * iIii1I11I1II1
+ if 16 - 16: o0oOOo0O0Ooo * I11i + OoooooooOO + O0 / iIii1I11I1II1
+ if 60 - 60: Ii1I % IiII * OoooooooOO * ooOoO0o * Ii1I
+ if 8 - 8: I1Ii111 - o0oOOo0O0Ooo
+ o0OOOooO = mc . eid . print_prefix_no_iid ( )
+ iIIiI11 = mc . best_rloc_set [ 0 ] . rloc . print_address_no_iid ( )
+ if 52 - 52: OoOoOO00 % O0 + I1ii11iIi11i . i11iIiiIii
+ if 59 - 59: Ii1I - I1Ii111 . ooOoO0o - OoOoOO00 + oO0o . OoO0O00
+ if 88 - 88: OOooOOo - ooOoO0o * o0oOOo0O0Ooo . OoooooooOO
+ if 3 - 3: I1Ii111
+ I11iI1i = getoutput ( "ip route get {} | egrep vlan4094" . format ( o0OOOooO ) )
+ if 49 - 49: OoOoOO00 % oO0o % I11i - O0
+ if ( I11iI1i != "" ) :
+  lprint ( "Route {} already in hardware: '{}'" . format ( green ( o0OOOooO , False ) , I11iI1i ) )
   if 35 - 35: OoooooooOO - II111iiii / o0oOOo0O0Ooo - o0oOOo0O0Ooo
- if ( OoII1 == None ) :
-  lprint ( "Address allocation failed for vlan4094, cannot program " + "hardware" )
-  if 55 - 55: OoooooooOO / IiII + i1IIi
   return
+  if 55 - 55: OoooooooOO / IiII + i1IIi
   if 54 - 54: ooOoO0o * Ii1I / Ii1I
   if 15 - 15: oO0o * I1Ii111
   if 11 - 11: Ii1I + o0oOOo0O0Ooo * OoooooooOO % iIii1I11I1II1
   if 87 - 87: OoO0O00 + o0oOOo0O0Ooo
   if 46 - 46: oO0o + OoOoOO00
   if 17 - 17: Ii1I . Oo0Ooo - oO0o % OOooOOo
-  if 59 - 59: O0
- OOooOOo0ooO00OO0 = iIIiI11 . split ( "." )
- Oooo = lisp_hex_string ( OOooOOo0ooO00OO0 [ 1 ] ) . zfill ( 2 )
- I1i11I111i = lisp_hex_string ( OOooOOo0ooO00OO0 [ 2 ] ) . zfill ( 2 )
- I11iI1 = lisp_hex_string ( OOooOOo0ooO00OO0 [ 3 ] ) . zfill ( 2 )
- iiiI1IiIIii = "00:00:00:{}:{}:{}" . format ( Oooo , I1i11I111i , I11iI1 )
- ii1Ii1iII1iIi = "0000.00{}.{}{}" . format ( Oooo , I1i11I111i , I11iI1 )
- i1I1iII1111II = "arp -i vlan4094 -s {} {}" . format ( OoII1 , iiiI1IiIIii )
- os . system ( i1I1iII1111II )
+ o0ooo0O0Oo = getoutput ( "ifconfig | egrep 'vxlan|vlan4094'" )
+ if ( o0ooo0O0Oo . find ( "vxlan" ) == - 1 ) :
+  lprint ( "No VXLAN interface found, cannot program hardware" )
+  return
+  if 75 - 75: OoO0O00 / iII111i
+ if ( o0ooo0O0Oo . find ( "vlan4094" ) == - 1 ) :
+  lprint ( "No vlan4094 interface found, cannot program hardware" )
+  return
+  if 80 - 80: I11i - I11i % i11iIiiIii
+ IiiI1i11I111i = getoutput ( "ip addr | egrep vlan4094 | egrep inet" )
+ if ( IiiI1i11I111i == "" ) :
+  lprint ( "No IP address found on vlan4094, cannot program hardware" )
+  return
+  if 39 - 39: iII111i + i1IIi * iII111i - iIii1I11I1II1
+ IiiI1i11I111i = IiiI1i11I111i . split ( "inet " ) [ 1 ]
+ IiiI1i11I111i = IiiI1i11I111i . split ( "/" ) [ 0 ]
+ if 5 - 5: Ii1I / i1IIi - iIii1I11I1II1 * I1ii11iIi11i - O0 % OOooOOo
+ if 17 - 17: I1Ii111 . ooOoO0o
+ if 34 - 34: o0oOOo0O0Ooo / OOooOOo + Ii1I % Oo0Ooo % I1ii11iIi11i
  if 72 - 72: IiII / II111iiii
  if 25 - 25: i1IIi + OoOoOO00 + oO0o + OoooooooOO
  if 21 - 21: I1ii11iIi11i
  if 60 - 60: i1IIi / OoO0O00 . Ii1I
- Ii1III1 = ( "mac address-table static {} vlan 4094 " + "interface vxlan 1 vtep {}" ) . format ( ii1Ii1iII1iIi , iIIiI11 )
- if 56 - 56: I1Ii111 % II111iiii
- lisp_send_to_arista ( Ii1III1 , None )
- if 11 - 11: i11iIiiIii / OoO0O00 * OoO0O00 . I1Ii111 - OOooOOo
- if 12 - 12: OOooOOo . OoOoOO00 % ooOoO0o
- if 100 - 100: OoOoOO00 . iII111i
- if 50 - 50: iIii1I11I1II1 * OOooOOo . I1IiiI . OoOoOO00 - O0 + Oo0Ooo
- if 89 - 89: IiII - iII111i + IiII
- IIi11I1IIii = "ip route add {} via {}" . format ( o0OOOooO , OoII1 )
- os . system ( IIi11I1IIii )
- if 93 - 93: OoO0O00 . I1IiiI / I1Ii111 % iII111i
+ Ii1III1 = [ ]
+ o0oo0oo0OoO = getoutput ( "arp -i vlan4094" ) . split ( "\n" )
+ for IiiiI1 in o0oo0oo0OoO :
+  if ( IiiiI1 . find ( "vlan4094" ) == - 1 ) : continue
+  if ( IiiiI1 . find ( "(incomplete)" ) == - 1 ) : continue
+  OoII1 = IiiiI1 . split ( " " ) [ 0 ]
+  Ii1III1 . append ( OoII1 )
+  if 55 - 55: iIii1I11I1II1 % iIii1I11I1II1 + I11i - ooOoO0o + I1IiiI * O0
+  if 47 - 47: ooOoO0o + iIii1I11I1II1 * OOooOOo . I1IiiI . o0oOOo0O0Ooo
+ OoII1 = None
+ ooO0oOOoOO = IiiI1i11I111i
+ IiiI1i11I111i = IiiI1i11I111i . split ( "." )
+ for iIi1iIIIiIiI in range ( 1 , 255 ) :
+  IiiI1i11I111i [ 3 ] = str ( iIi1iIIIiIiI )
+  IiI = "." . join ( IiiI1i11I111i )
+  if ( IiI in Ii1III1 ) : continue
+  if ( IiI == ooO0oOOoOO ) : continue
+  OoII1 = IiI
+  break
+  if 49 - 49: Oo0Ooo . OoOoOO00 * OOooOOo
+ if ( OoII1 == None ) :
+  lprint ( "Address allocation failed for vlan4094, cannot program " + "hardware" )
+  if 86 - 86: IiII * OOooOOo + Ii1I
+  return
+  if 62 - 62: I11i
+  if 86 - 86: Oo0Ooo % II111iiii + I1Ii111 / I1ii11iIi11i
+  if 15 - 15: I1IiiI / I1Ii111 % iII111i
+  if 57 - 57: I1Ii111 . iIii1I11I1II1 / Oo0Ooo / IiII / iII111i * OoOoOO00
+  if 35 - 35: i1IIi + I1Ii111 - ooOoO0o . I1ii11iIi11i + Oo0Ooo
+  if 43 - 43: oO0o . OoO0O00 * i1IIi
+  if 1 - 1: ooOoO0o / i1IIi
+ III11IiI1111I = iIIiI11 . split ( "." )
+ o00oOOO0O00 = lisp_hex_string ( III11IiI1111I [ 1 ] ) . zfill ( 2 )
+ Ooo00O0000O00 = lisp_hex_string ( III11IiI1111I [ 2 ] ) . zfill ( 2 )
+ iIIi1III = lisp_hex_string ( III11IiI1111I [ 3 ] ) . zfill ( 2 )
+ iiiI1IiIIii = "00:00:00:{}:{}:{}" . format ( o00oOOO0O00 , Ooo00O0000O00 , iIIi1III )
+ iii1iiii1 = "0000.00{}.{}{}" . format ( o00oOOO0O00 , Ooo00O0000O00 , iIIi1III )
+ Oo0o0 = "arp -i vlan4094 -s {} {}" . format ( OoII1 , iiiI1IiIIii )
+ os . system ( Oo0o0 )
+ if 85 - 85: i11iIiiIii * i11iIiiIii
+ if 47 - 47: OoooooooOO / I1IiiI . OoO0O00 . I1Ii111 - i11iIiiIii - oO0o
+ if 7 - 7: i1IIi
+ if 6 - 6: OoooooooOO - Oo0Ooo - I1ii11iIi11i
+ i1ii1I = ( "mac address-table static {} vlan 4094 " + "interface vxlan 1 vtep {}" ) . format ( iii1iiii1 , iIIiI11 )
+ if 94 - 94: oO0o + ooOoO0o % iII111i
+ lisp_send_to_arista ( i1ii1I , None )
+ if 81 - 81: i11iIiiIii . II111iiii * I11i + Ii1I / O0 . Oo0Ooo
+ if 29 - 29: IiII - IiII - OoooooooOO . Ii1I % OoooooooOO - OoOoOO00
+ if 33 - 33: oO0o * OoO0O00 / i11iIiiIii - I1IiiI * OoO0O00
+ if 19 - 19: OoooooooOO
+ if 34 - 34: OoOoOO00 . oO0o
+ oO0o000 = "ip route add {} via {}" . format ( o0OOOooO , OoII1 )
+ os . system ( oO0o000 )
+ if 57 - 57: o0oOOo0O0Ooo % o0oOOo0O0Ooo % iII111i * OoOoOO00
  lprint ( "Hardware programmed with commands:" )
- IIi11I1IIii = IIi11I1IIii . replace ( o0OOOooO , green ( o0OOOooO , False ) )
- lprint ( "  " + IIi11I1IIii )
- lprint ( "  " + i1I1iII1111II )
- Ii1III1 = Ii1III1 . replace ( iIIiI11 , red ( iIIiI11 , False ) )
- lprint ( "  " + Ii1III1 )
+ oO0o000 = oO0o000 . replace ( o0OOOooO , green ( o0OOOooO , False ) )
+ lprint ( "  " + oO0o000 )
+ lprint ( "  " + Oo0o0 )
+ i1ii1I = i1ii1I . replace ( iIIiI11 , red ( iIIiI11 , False ) )
+ lprint ( "  " + i1ii1I )
  return
- if 57 - 57: I1Ii111 . iIii1I11I1II1 / Oo0Ooo / IiII / iII111i * OoOoOO00
- if 35 - 35: i1IIi + I1Ii111 - ooOoO0o . I1ii11iIi11i + Oo0Ooo
- if 43 - 43: oO0o . OoO0O00 * i1IIi
- if 1 - 1: ooOoO0o / i1IIi
- if 42 - 42: I1ii11iIi11i * ooOoO0o + OoOoOO00 % I1ii11iIi11i . IiII
- if 75 - 75: OoO0O00 * i1IIi - OOooOOo % II111iiii % OoO0O00 - OoOoOO00
- if 75 - 75: I11i * IiII * ooOoO0o
+ if 50 - 50: I1Ii111 + I1Ii111 + I11i - OoOoOO00
+ if 65 - 65: oO0o / I11i + iII111i - I1ii11iIi11i
+ if 80 - 80: II111iiii . i11iIiiIii
+ if 66 - 66: ooOoO0o * iII111i * OOooOOo % OoO0O00 / I1ii11iIi11i
+ if 33 - 33: iIii1I11I1II1
+ if 52 - 52: iIii1I11I1II1 + O0
+ if 84 - 84: OOooOOo / iII111i . I1IiiI / O0 % OOooOOo . iII111i
 def lisp_clear_hardware_walk ( mc , parms ) :
  Oo0OoOI1I11iII1I1i = mc . eid . print_prefix_no_iid ( )
  os . system ( "ip route delete {}" . format ( Oo0OoOI1I11iII1I1i ) )
  return ( [ True , None ] )
- if 31 - 31: Ii1I
- if 72 - 72: OOooOOo * Ii1I % OoO0O00
- if 72 - 72: OoOoOO00 + o0oOOo0O0Ooo - i1IIi - OoO0O00 % OoOoOO00
- if 42 - 42: oO0o / i1IIi . IiII
- if 12 - 12: i11iIiiIii . ooOoO0o
- if 80 - 80: O0 / iIii1I11I1II1 % iII111i * ooOoO0o / i11iIiiIii . OoOoOO00
- if 88 - 88: OoooooooOO . I1IiiI
- if 6 - 6: I1Ii111 - i11iIiiIii - oO0o
+ if 32 - 32: OoO0O00 + OoO0O00 % o0oOOo0O0Ooo / O0
+ if 29 - 29: iII111i % I1Ii111
+ if 95 - 95: OOooOOo - ooOoO0o % i1IIi / O0 % I11i . IiII
+ if 63 - 63: ooOoO0o
+ if 22 - 22: OOooOOo . i11iIiiIii + II111iiii - Oo0Ooo % i1IIi / o0oOOo0O0Ooo
+ if 90 - 90: IiII
+ if 38 - 38: i1IIi / ooOoO0o / I11i * I1ii11iIi11i / II111iiii . iIii1I11I1II1
+ if 52 - 52: I1ii11iIi11i % ooOoO0o * Ii1I * IiII + IiII / i11iIiiIii
 def lisp_clear_map_cache ( ) :
  global lisp_map_cache , lisp_rloc_probe_list
  global lisp_crypto_keys_by_rloc_encap , lisp_crypto_keys_by_rloc_decap
  global lisp_rtr_list , lisp_gleaned_groups
  global lisp_no_map_request_rate_limit
- if 7 - 7: i1IIi
- iiIIIiII = bold ( "User cleared" , False )
+ if 51 - 51: iIii1I11I1II1 * o0oOOo0O0Ooo % o0oOOo0O0Ooo . Ii1I / OoooooooOO
+ IIIiIIi1i1iI1 = bold ( "User cleared" , False )
  O0oo0oOo = lisp_map_cache . cache_count
- lprint ( "{} map-cache with {} entries" . format ( iiIIIiII , O0oo0oOo ) )
- if 83 - 83: i11iIiiIii
+ lprint ( "{} map-cache with {} entries" . format ( IIIiIIi1i1iI1 , O0oo0oOo ) )
+ if 88 - 88: Ii1I . OoOoOO00 . OOooOOo / I1ii11iIi11i % O0
  if ( lisp_program_hardware ) :
   lisp_map_cache . walk_cache ( lisp_clear_hardware_walk , None )
-  if 86 - 86: OoO0O00 * oO0o + ooOoO0o % iII111i
+  if 98 - 98: OOooOOo
  lisp_map_cache = lisp_cache ( )
- if 81 - 81: i11iIiiIii . II111iiii * I11i + Ii1I / O0 . Oo0Ooo
- if 29 - 29: IiII - IiII - OoooooooOO . Ii1I % OoooooooOO - OoOoOO00
- if 33 - 33: oO0o * OoO0O00 / i11iIiiIii - I1IiiI * OoO0O00
- if 19 - 19: OoooooooOO
- lisp_no_map_request_rate_limit = lisp_get_timestamp ( )
- if 34 - 34: OoOoOO00 . oO0o
- if 53 - 53: oO0o + OoooooooOO * ooOoO0o
- if 85 - 85: I1ii11iIi11i - o0oOOo0O0Ooo % o0oOOo0O0Ooo % iII111i * OoOoOO00
- if 50 - 50: I1Ii111 + I1Ii111 + I11i - OoOoOO00
- if 65 - 65: oO0o / I11i + iII111i - I1ii11iIi11i
- lisp_rloc_probe_list = { }
- if 80 - 80: II111iiii . i11iIiiIii
- if 66 - 66: ooOoO0o * iII111i * OOooOOo % OoO0O00 / I1ii11iIi11i
- if 33 - 33: iIii1I11I1II1
- if 52 - 52: iIii1I11I1II1 + O0
- lisp_crypto_keys_by_rloc_encap = { }
- lisp_crypto_keys_by_rloc_decap = { }
- if 84 - 84: OOooOOo / iII111i . I1IiiI / O0 % OOooOOo . iII111i
- if 32 - 32: OoO0O00 + OoO0O00 % o0oOOo0O0Ooo / O0
- if 29 - 29: iII111i % I1Ii111
- if 95 - 95: OOooOOo - ooOoO0o % i1IIi / O0 % I11i . IiII
- if 63 - 63: ooOoO0o
- lisp_rtr_list = { }
- if 22 - 22: OOooOOo . i11iIiiIii + II111iiii - Oo0Ooo % i1IIi / o0oOOo0O0Ooo
- if 90 - 90: IiII
- if 38 - 38: i1IIi / ooOoO0o / I11i * I1ii11iIi11i / II111iiii . iIii1I11I1II1
- if 52 - 52: I1ii11iIi11i % ooOoO0o * Ii1I * IiII + IiII / i11iIiiIii
- lisp_gleaned_groups = { }
- if 51 - 51: iIii1I11I1II1 * o0oOOo0O0Ooo % o0oOOo0O0Ooo . Ii1I / OoooooooOO
- if 23 - 23: oO0o * I1IiiI - oO0o - ooOoO0o . IiII / i11iIiiIii
- if 53 - 53: Ii1I * Ii1I . OoOoOO00 . OOooOOo / I1ii11iIi11i % O0
- if 98 - 98: OOooOOo
- lisp_process_data_plane_restart ( True )
- return
  if 11 - 11: OOooOOo * iIii1I11I1II1 % IiII - I1IiiI . I11i
  if 29 - 29: OOooOOo % I11i - OOooOOo - OOooOOo * I11i . oO0o
  if 75 - 75: II111iiii . O0 . I1Ii111 * O0 / OoooooooOO
  if 60 - 60: OOooOOo - Oo0Ooo * OOooOOo / OoO0O00
+ lisp_no_map_request_rate_limit = lisp_get_timestamp ( )
  if 55 - 55: I1ii11iIi11i * II111iiii * iIii1I11I1II1
  if 38 - 38: iIii1I11I1II1 % I1ii11iIi11i . Ii1I + I1IiiI % i11iIiiIii - i11iIiiIii
  if 62 - 62: I1Ii111 + I1IiiI
  if 9 - 9: iIii1I11I1II1 / iIii1I11I1II1
  if 24 - 24: OOooOOo . I1IiiI % i11iIiiIii
+ lisp_rloc_probe_list = { }
  if 43 - 43: OoooooooOO . o0oOOo0O0Ooo - I1ii11iIi11i + OoO0O00 . I1Ii111 . iII111i
  if 1 - 1: iII111i / OoO0O00 / OoOoOO00 * Oo0Ooo * OoooooooOO
+ if 59 - 59: iII111i
+ if 14 - 14: oO0o . IiII + iIii1I11I1II1 - i1IIi
+ lisp_crypto_keys_by_rloc_encap = { }
+ lisp_crypto_keys_by_rloc_decap = { }
+ if 46 - 46: i11iIiiIii * II111iiii / i11iIiiIii % i11iIiiIii * II111iiii + i11iIiiIii
+ if 87 - 87: Oo0Ooo + OoO0O00 / II111iiii * OoooooooOO
+ if 95 - 95: I1Ii111 * o0oOOo0O0Ooo + OoO0O00 % OoOoOO00 - ooOoO0o / OoOoOO00
+ if 45 - 45: OoooooooOO / oO0o / o0oOOo0O0Ooo + Ii1I + O0 . iII111i
+ if 34 - 34: iIii1I11I1II1 . o0oOOo0O0Ooo + ooOoO0o
+ lisp_rtr_list = { }
+ if 96 - 96: O0 / ooOoO0o
+ if 82 - 82: OoO0O00 * OOooOOo * I11i * I1Ii111 % iIii1I11I1II1
+ if 50 - 50: Ii1I * Ii1I % I11i / iIii1I11I1II1 / ooOoO0o / iII111i
+ if 91 - 91: Ii1I - O0 . I11i - OoooooooOO * IiII . II111iiii
+ lisp_gleaned_groups = { }
+ if 38 - 38: I1IiiI + OoO0O00
+ if 11 - 11: iIii1I11I1II1 + i1IIi * IiII - Oo0Ooo
+ if 66 - 66: I1Ii111 . Ii1I / I1ii11iIi11i / iIii1I11I1II1 + O0 / i1IIi
+ if 72 - 72: ooOoO0o . II111iiii
+ lisp_process_data_plane_restart ( True )
+ return
+ if 32 - 32: I1Ii111 - oO0o + OoooooooOO . OoOoOO00 + i11iIiiIii / i1IIi
+ if 26 - 26: I1IiiI + OoooooooOO % OoOoOO00 . IiII - II111iiii . OoOoOO00
+ if 37 - 37: OoO0O00 % O0 + OoOoOO00 * I11i . Ii1I * OoO0O00
+ if 18 - 18: o0oOOo0O0Ooo / OOooOOo
+ if 28 - 28: O0 / Ii1I - oO0o % I1ii11iIi11i % O0 . OoO0O00
+ if 100 - 100: O0
+ if 19 - 19: Ii1I * iIii1I11I1II1 * Oo0Ooo - i11iIiiIii * i11iIiiIii - OOooOOo
+ if 88 - 88: O0 . iIii1I11I1II1 . I1ii11iIi11i
+ if 80 - 80: oO0o / i1IIi * iIii1I11I1II1
+ if 38 - 38: Ii1I
+ if 20 - 20: iIii1I11I1II1 + Oo0Ooo - Ii1I / i11iIiiIii . OoO0O00
 def lisp_encapsulate_rloc_probe ( lisp_sockets , rloc , nat_info , packet ) :
  if ( len ( lisp_sockets ) != 4 ) : return
- if 59 - 59: iII111i
- IIIiiI11ii = lisp_myrlocs [ 0 ]
- if 30 - 30: iII111i . OoO0O00 . i11iIiiIii / I1ii11iIi11i * Oo0Ooo
- if 38 - 38: IiII + II111iiii
- if 20 - 20: iII111i * I1IiiI * iII111i - o0oOOo0O0Ooo + i1IIi + ooOoO0o
- if 49 - 49: II111iiii * I1IiiI / oO0o
- if 50 - 50: Ii1I + O0 . I1IiiI * Oo0Ooo
+ if 66 - 66: OoooooooOO - Ii1I / iII111i . I1IiiI + I1ii11iIi11i - I1Ii111
+ I1iI1IIi1 = lisp_myrlocs [ 0 ]
+ if 58 - 58: oO0o - iIii1I11I1II1 * i11iIiiIii / i11iIiiIii % I11i
+ if 69 - 69: iII111i * i1IIi
+ if 100 - 100: Oo0Ooo + Oo0Ooo - II111iiii
+ if 4 - 4: iII111i / OoO0O00 . i11iIiiIii * II111iiii - Ii1I * IiII
+ if 45 - 45: OoO0O00
  i1iIii = len ( packet ) + 28
  O0O = struct . pack ( "BBHIBBHII" , 0x45 , 0 , socket . htons ( i1iIii ) , 0 , 64 ,
- 17 , 0 , socket . htonl ( IIIiiI11ii . address ) , socket . htonl ( rloc . address ) )
+ 17 , 0 , socket . htonl ( I1iI1IIi1 . address ) , socket . htonl ( rloc . address ) )
  O0O = lisp_ip_checksum ( O0O )
- if 15 - 15: Oo0Ooo
+ if 15 - 15: iII111i * o0oOOo0O0Ooo * Ii1I % IiII
  O0I1II1 = struct . pack ( "HHHH" , 0 , socket . htons ( LISP_CTRL_PORT ) ,
  socket . htons ( i1iIii - 20 ) , 0 )
- if 53 - 53: OoooooooOO * O0 / iII111i * ooOoO0o % I1Ii111 + OOooOOo
- if 95 - 95: I1Ii111 % OoOoOO00 . IiII * iII111i % Ii1I
- if 18 - 18: iIii1I11I1II1 / ooOoO0o / I1Ii111 % oO0o * Ii1I
- if 14 - 14: oO0o
+ if 31 - 31: ooOoO0o . IiII + I1ii11iIi11i * II111iiii * iII111i + Oo0Ooo
+ if 35 - 35: oO0o + I1ii11iIi11i / o0oOOo0O0Ooo
+ if 78 - 78: i11iIiiIii
+ if 21 - 21: iII111i / ooOoO0o - i11iIiiIii % iII111i
  packet = lisp_packet ( O0O + O0I1II1 + packet )
- if 72 - 72: iIii1I11I1II1 / II111iiii * II111iiii + I1IiiI + iIii1I11I1II1 + oO0o
- if 46 - 46: I1Ii111
- if 23 - 23: Oo0Ooo * IiII - I1Ii111 . OoooooooOO
- if 78 - 78: OoOoOO00 - iIii1I11I1II1
+ if 94 - 94: OoooooooOO / iII111i * ooOoO0o / i1IIi * i11iIiiIii * II111iiii
+ if 98 - 98: Ii1I * Ii1I / IiII
+ if 1 - 1: OOooOOo
+ if 47 - 47: i11iIiiIii - I11i
  packet . inner_dest . copy_address ( rloc )
  packet . inner_dest . instance_id = 0xffffff
- packet . inner_source . copy_address ( IIIiiI11ii )
+ packet . inner_source . copy_address ( I1iI1IIi1 )
  packet . inner_ttl = 64
  packet . outer_dest . copy_address ( rloc )
- packet . outer_source . copy_address ( IIIiiI11ii )
+ packet . outer_source . copy_address ( I1iI1IIi1 )
  packet . outer_version = packet . outer_dest . afi_to_version ( )
  packet . outer_ttl = 64
  packet . encap_port = nat_info . port if nat_info else LISP_DATA_PORT
- if 20 - 20: i1IIi
+ if 38 - 38: Oo0Ooo % OoooooooOO + iII111i
  IIIOo0O = red ( rloc . print_address_no_iid ( ) , False )
  if ( nat_info ) :
   oOOOo00000Oo = " {}" . format ( blue ( nat_info . hostname , False ) )
@@ -18281,171 +18297,103 @@ def lisp_encapsulate_rloc_probe ( lisp_sockets , rloc , nat_info , packet ) :
  else :
   oOOOo00000Oo = ""
   Oooooo0OOO = bold ( "RLOC-probe reply" , False )
-  if 72 - 72: ooOoO0o . II111iiii
-  if 32 - 32: I1Ii111 - oO0o + OoooooooOO . OoOoOO00 + i11iIiiIii / i1IIi
+  if 31 - 31: OoO0O00 + I1Ii111 / iIii1I11I1II1
+  if 11 - 11: ooOoO0o - OoOoOO00
  lprint ( ( "Data encapsulate {} to {}{} port {} for " + "NAT-traversal" ) . format ( Oooooo0OOO , IIIOo0O , oOOOo00000Oo , packet . encap_port ) )
- if 26 - 26: I1IiiI + OoooooooOO % OoOoOO00 . IiII - II111iiii . OoOoOO00
- if 37 - 37: OoO0O00 % O0 + OoOoOO00 * I11i . Ii1I * OoO0O00
- if 18 - 18: o0oOOo0O0Ooo / OOooOOo
- if 28 - 28: O0 / Ii1I - oO0o % I1ii11iIi11i % O0 . OoO0O00
- if 100 - 100: O0
+ if 19 - 19: O0 . OoOoOO00 - i1IIi . oO0o
+ if 96 - 96: o0oOOo0O0Ooo % o0oOOo0O0Ooo - OoO0O00 * iIii1I11I1II1 + ooOoO0o - ooOoO0o
+ if 4 - 4: OoO0O00 - OOooOOo
+ if 21 - 21: I1Ii111 * i11iIiiIii
+ if 63 - 63: oO0o + OoOoOO00
  if ( packet . encode ( None ) == None ) : return
  packet . print_packet ( "Send" , True )
- if 19 - 19: Ii1I * iIii1I11I1II1 * Oo0Ooo - i11iIiiIii * i11iIiiIii - OOooOOo
- oooIIiI1iiIi1i = lisp_sockets [ 3 ]
- packet . send_packet ( oooIIiI1iiIi1i , packet . outer_dest )
+ if 50 - 50: o0oOOo0O0Ooo / Oo0Ooo * ooOoO0o * Ii1I
+ OoOOO = lisp_sockets [ 3 ]
+ packet . send_packet ( OoOOO , packet . outer_dest )
  del ( packet )
  return
- if 82 - 82: I1ii11iIi11i . i1IIi + Ii1I
- if 4 - 4: OoO0O00
- if 66 - 66: OoooooooOO - Ii1I / iII111i . I1IiiI + I1ii11iIi11i - I1Ii111
- if 36 - 36: I1Ii111 - OoO0O00 . I1ii11iIi11i * I1ii11iIi11i
- if 9 - 9: OOooOOo - oO0o - iIii1I11I1II1 * i11iIiiIii / I11i
- if 2 - 2: i1IIi % iII111i * ooOoO0o / OoOoOO00 + Oo0Ooo
- if 59 - 59: i11iIiiIii / I1IiiI * iII111i
- if 16 - 16: i11iIiiIii * II111iiii - ooOoO0o
+ if 92 - 92: oO0o * o0oOOo0O0Ooo % ooOoO0o + OoOoOO00 * OoooooooOO * Oo0Ooo
+ if 86 - 86: iII111i / OoooooooOO * I1Ii111 % I1IiiI + Ii1I
+ if 16 - 16: OoO0O00
+ if 41 - 41: i1IIi
+ if 72 - 72: OoooooooOO / i11iIiiIii - O0 . OoOoOO00
+ if 41 - 41: IiII + oO0o * iIii1I11I1II1 % oO0o + IiII
+ if 64 - 64: I1ii11iIi11i % OoO0O00 + oO0o
+ if 47 - 47: I1ii11iIi11i + Ii1I % I1Ii111 % OoO0O00 . IiII % i1IIi
 def lisp_get_default_route_next_hops ( ) :
- if 80 - 80: iIii1I11I1II1 + iIii1I11I1II1 + I1Ii111 - IiII * iII111i - Ii1I
- if 89 - 89: O0 * ooOoO0o
- if 36 - 36: I1ii11iIi11i * II111iiii * iII111i + I1IiiI + OoO0O00 + oO0o
- if 28 - 28: Ii1I - i11iIiiIii . oO0o / II111iiii
+ if 14 - 14: O0 / I1IiiI . I1ii11iIi11i
+ if 47 - 47: I1Ii111 * ooOoO0o / iII111i . O0
+ if 61 - 61: II111iiii . OoO0O00 * OoO0O00 % II111iiii % OOooOOo * OoOoOO00
+ if 82 - 82: Ii1I
  if ( lisp_is_macos ( ) ) :
   oO00o00 = "route -n get default"
-  O0o000oo00o00 = getoutput ( oO00o00 ) . split ( "\n" )
-  Iio0o00oo0OoOo = i111IIiIiiI1 = None
-  for o0OoO0 in O0o000oo00o00 :
-   if ( o0OoO0 . find ( "gateway: " ) != - 1 ) : Iio0o00oo0OoOo = o0OoO0 . split ( ": " ) [ 1 ]
+  ooOo0O = getoutput ( oO00o00 ) . split ( "\n" )
+  Oo000O0O0OOO = i111IIiIiiI1 = None
+  for o0OoO0 in ooOo0O :
+   if ( o0OoO0 . find ( "gateway: " ) != - 1 ) : Oo000O0O0OOO = o0OoO0 . split ( ": " ) [ 1 ]
    if ( o0OoO0 . find ( "interface: " ) != - 1 ) : i111IIiIiiI1 = o0OoO0 . split ( ": " ) [ 1 ]
-   if 74 - 74: OOooOOo + OoOoOO00 + OoooooooOO
-  return ( [ [ i111IIiIiiI1 , Iio0o00oo0OoOo ] ] )
-  if 81 - 81: OoO0O00 + OoO0O00
-  if 30 - 30: iIii1I11I1II1 . I1ii11iIi11i / OoOoOO00 * oO0o / O0 . o0oOOo0O0Ooo
-  if 47 - 47: i1IIi
-  if 61 - 61: OOooOOo * I1ii11iIi11i - ooOoO0o - Oo0Ooo + o0oOOo0O0Ooo . ooOoO0o
-  if 98 - 98: II111iiii
+   if 87 - 87: I1ii11iIi11i / iIii1I11I1II1 % OoooooooOO
+  return ( [ [ i111IIiIiiI1 , Oo000O0O0OOO ] ] )
+  if 15 - 15: iIii1I11I1II1 % I1ii11iIi11i + Oo0Ooo
+  if 18 - 18: I1Ii111 + OoooooooOO . I1IiiI - I1ii11iIi11i . I1Ii111
+  if 81 - 81: IiII . ooOoO0o + O0 . ooOoO0o + iIii1I11I1II1
+  if 68 - 68: i11iIiiIii . iII111i + OoooooooOO + II111iiii + iIii1I11I1II1 % I11i
+  if 7 - 7: i1IIi - o0oOOo0O0Ooo - I1IiiI
  oO00o00 = "ip route | egrep 'default via'"
  IIOoo0O = getoutput ( oO00o00 ) . split ( "\n" )
- if 56 - 56: i1IIi % IiII / I1Ii111
+ if 62 - 62: OoOoOO00 * oO0o - I1IiiI / Ii1I
  Ii11i = [ ]
- for ii11i11iiI in IIOoo0O :
-  if ( ii11i11iiI . find ( " metric " ) != - 1 ) : continue
-  iiiI1I = ii11i11iiI . split ( " " )
+ for I11iI1i in IIOoo0O :
+  if ( I11iI1i . find ( " metric " ) != - 1 ) : continue
+  iiiI1I = I11iI1i . split ( " " )
   try :
-   IIIIII1I = iiiI1I . index ( "via" ) + 1
-   if ( IIIIII1I >= len ( iiiI1I ) ) : continue
-   O0OooOOO000 = iiiI1I . index ( "dev" ) + 1
-   if ( O0OooOOO000 >= len ( iiiI1I ) ) : continue
+   iIIIIi1IIi = iiiI1I . index ( "via" ) + 1
+   if ( iIIIIi1IIi >= len ( iiiI1I ) ) : continue
+   o0oOO0Oo0ooOo = iiiI1I . index ( "dev" ) + 1
+   if ( o0oOO0Oo0ooOo >= len ( iiiI1I ) ) : continue
   except :
    continue
-   if 61 - 61: OoOoOO00 - I1Ii111 * ooOoO0o + Oo0Ooo / IiII
-   if 79 - 79: ooOoO0o % OoooooooOO
-  Ii11i . append ( [ iiiI1I [ O0OooOOO000 ] , iiiI1I [ IIIIII1I ] ] )
-  if 67 - 67: I1IiiI + OoooooooOO % OoO0O00 . OoooooooOO + I11i / oO0o
+   if 94 - 94: OoOoOO00 % OoOoOO00 + o0oOOo0O0Ooo - OoO0O00
+   if 26 - 26: Ii1I - II111iiii - I1ii11iIi11i
+  Ii11i . append ( [ iiiI1I [ o0oOO0Oo0ooOo ] , iiiI1I [ iIIIIi1IIi ] ] )
+  if 45 - 45: Ii1I - I1Ii111 . OoOoOO00 . OOooOOo
  return ( Ii11i )
- if 33 - 33: I1ii11iIi11i
- if 5 - 5: O0
- if 50 - 50: Oo0Ooo % IiII * oO0o
- if 71 - 71: OoO0O00
- if 64 - 64: OoO0O00 - I1ii11iIi11i % OoO0O00 + OoOoOO00 - Oo0Ooo * I1ii11iIi11i
- if 78 - 78: I1Ii111 % OoO0O00 . IiII % iIii1I11I1II1 / OoO0O00
- if 34 - 34: iIii1I11I1II1
+ if 22 - 22: Ii1I * iII111i
+ if 9 - 9: iII111i . oO0o * iIii1I11I1II1 % iII111i
+ if 11 - 11: Oo0Ooo . oO0o
+ if 90 - 90: OoooooooOO . o0oOOo0O0Ooo
+ if 70 - 70: Ii1I . IiII - iII111i - I11i
+ if 63 - 63: iIii1I11I1II1 . I1IiiI * OoO0O00 - ooOoO0o % I11i
+ if 29 - 29: I11i . IiII + I1Ii111 . i1IIi . oO0o - ooOoO0o
 def lisp_get_host_route_next_hop ( rloc ) :
  oO00o00 = "ip route | egrep '{} via'" . format ( rloc )
- ii11i11iiI = getoutput ( oO00o00 ) . split ( " " )
- if 33 - 33: I1ii11iIi11i + I1Ii111 * ooOoO0o / i11iIiiIii
- try : OOOooo0OooOoO = ii11i11iiI . index ( "via" ) + 1
+ I11iI1i = getoutput ( oO00o00 ) . split ( " " )
+ if 71 - 71: OoOoOO00 * o0oOOo0O0Ooo + oO0o - Ii1I
+ try : OOOooo0OooOoO = I11iI1i . index ( "via" ) + 1
  except : return ( None )
- if 83 - 83: oO0o
- if ( OOOooo0OooOoO >= len ( ii11i11iiI ) ) : return ( None )
- return ( ii11i11iiI [ OOOooo0OooOoO ] )
- if 93 - 93: II111iiii
- if 89 - 89: OoO0O00 % II111iiii % iII111i
- if 66 - 66: OoooooooOO % iII111i % i11iIiiIii
- if 35 - 35: OoooooooOO - IiII
- if 38 - 38: I1Ii111 % I11i . I11i % I11i + OoOoOO00
- if 79 - 79: I1ii11iIi11i + OoO0O00 * I1ii11iIi11i / I11i
- if 13 - 13: OoOoOO00 . iII111i
+ if 79 - 79: I1IiiI + oO0o
+ if ( OOOooo0OooOoO >= len ( I11iI1i ) ) : return ( None )
+ return ( I11iI1i [ OOOooo0OooOoO ] )
+ if 70 - 70: I1Ii111 % iIii1I11I1II1
+ if 74 - 74: i1IIi % i11iIiiIii + oO0o
+ if 94 - 94: OoO0O00 * I1IiiI / O0 + I1Ii111 / i11iIiiIii
+ if 34 - 34: Oo0Ooo . i1IIi
+ if 97 - 97: I11i
+ if 89 - 89: iII111i % OoOoOO00 . Oo0Ooo
+ if 20 - 20: oO0o % OoOoOO00
 def lisp_install_host_route ( dest , nh , install ) :
  install = "add" if install else "delete"
- iIiI1iIiII1 = "none" if nh == None else nh
- if 11 - 11: Oo0Ooo - Ii1I / OoO0O00
- lprint ( "{} host-route {}, nh {}" . format ( install . title ( ) , dest , iIiI1iIiII1 ) )
- if 95 - 95: OoooooooOO
+ oO0oOo00o0 = "none" if nh == None else nh
+ if 93 - 93: I1ii11iIi11i - Ii1I % i1IIi / i1IIi
+ lprint ( "{} host-route {}, nh {}" . format ( install . title ( ) , dest , oO0oOo00o0 ) )
+ if 82 - 82: OOooOOo
  if ( nh == None ) :
   O0Ooo0iII111III = "ip route {} {}/32" . format ( install , dest )
  else :
   O0Ooo0iII111III = "ip route {} {}/32 via {}" . format ( install , dest , nh )
-  if 64 - 64: I1ii11iIi11i . I1Ii111
+  if 27 - 27: I1Ii111 / IiII - i1IIi * Ii1I
  os . system ( O0Ooo0iII111III )
  return
- if 81 - 81: IiII . ooOoO0o + O0 . ooOoO0o + iIii1I11I1II1
- if 68 - 68: i11iIiiIii . iII111i + OoooooooOO + II111iiii + iIii1I11I1II1 % I11i
- if 7 - 7: i1IIi - o0oOOo0O0Ooo - I1IiiI
- if 62 - 62: OoOoOO00 * oO0o - I1IiiI / Ii1I
- if 48 - 48: o0oOOo0O0Ooo % o0oOOo0O0Ooo - OoOoOO00
- if 13 - 13: OoO0O00 - Ii1I . ooOoO0o / O0 * OoOoOO00
- if 57 - 57: O0 + OoooooooOO % o0oOOo0O0Ooo / I1Ii111 / OOooOOo - OoOoOO00
- if 48 - 48: o0oOOo0O0Ooo - II111iiii + OoOoOO00
-def lisp_checkpoint ( checkpoint_list ) :
- if ( lisp_checkpoint_map_cache == False ) : return
- if 54 - 54: II111iiii - OoO0O00 - o0oOOo0O0Ooo - O0 % I1Ii111
- o0OoO0 = open ( lisp_checkpoint_filename , "w" )
- for oo0O00OOOOO in checkpoint_list :
-  o0OoO0 . write ( oo0O00OOOOO + "\n" )
-  if 9 - 9: i1IIi % iII111i / Ii1I
- o0OoO0 . close ( )
- lprint ( "{} {} entries to file '{}'" . format ( bold ( "Checkpoint" , False ) ,
- len ( checkpoint_list ) , lisp_checkpoint_filename ) )
- return
- if 83 - 83: oO0o
- if 1 - 1: oO0o * iIii1I11I1II1 % iIii1I11I1II1 % iIii1I11I1II1 / oO0o + IiII
- if 29 - 29: OoooooooOO
- if 55 - 55: O0 - o0oOOo0O0Ooo % I1ii11iIi11i * I11i * oO0o
- if 83 - 83: iIii1I11I1II1
- if 92 - 92: OoO0O00 - iII111i
- if 97 - 97: ooOoO0o / I11i . IiII + I1Ii111 . iIii1I11I1II1
- if 24 - 24: ooOoO0o - oO0o % OoOoOO00 * Oo0Ooo
-def lisp_load_checkpoint ( ) :
- if ( lisp_checkpoint_map_cache == False ) : return
- if ( os . path . exists ( lisp_checkpoint_filename ) == False ) : return
- if 54 - 54: Ii1I - OoooooooOO % I1IiiI + oO0o
- o0OoO0 = open ( lisp_checkpoint_filename , "r" )
- if 70 - 70: I1Ii111 % iIii1I11I1II1
- O0oo0oOo = 0
- for oo0O00OOOOO in o0OoO0 :
-  O0oo0oOo += 1
-  oO0ooOOO = oo0O00OOOOO . split ( " rloc " )
-  OOOO00 = [ ] if ( oO0ooOOO [ 1 ] in [ "native-forward\n" , "\n" ] ) else oO0ooOOO [ 1 ] . split ( ", " )
-  if 74 - 74: i1IIi % i11iIiiIii + oO0o
-  if 94 - 94: OoO0O00 * I1IiiI / O0 + I1Ii111 / i11iIiiIii
-  OO00O000OOO = [ ]
-  for iIIiI11 in OOOO00 :
-   OOOoOoo = lisp_rloc ( False )
-   iiiI1I = iIIiI11 . split ( " " )
-   OOOoOoo . rloc . store_address ( iiiI1I [ 0 ] )
-   OOOoOoo . priority = int ( iiiI1I [ 1 ] )
-   OOOoOoo . weight = int ( iiiI1I [ 2 ] )
-   OO00O000OOO . append ( OOOoOoo )
-   if 34 - 34: Oo0Ooo . i1IIi
-   if 97 - 97: I11i
-  I11iiI1III = lisp_mapping ( "" , "" , OO00O000OOO )
-  if ( I11iiI1III != None ) :
-   I11iiI1III . eid . store_prefix ( oO0ooOOO [ 0 ] )
-   I11iiI1III . checkpoint_entry = True
-   I11iiI1III . map_cache_ttl = LISP_NMR_TTL * 60
-   if ( OO00O000OOO == [ ] ) : I11iiI1III . action = LISP_NATIVE_FORWARD_ACTION
-   I11iiI1III . add_cache ( )
-   continue
-   if 89 - 89: iII111i % OoOoOO00 . Oo0Ooo
-   if 20 - 20: oO0o % OoOoOO00
-  O0oo0oOo -= 1
-  if 93 - 93: I1ii11iIi11i - Ii1I % i1IIi / i1IIi
-  if 82 - 82: OOooOOo
- o0OoO0 . close ( )
- lprint ( "{} {} map-cache entries from file '{}'" . format (
- bold ( "Loaded" , False ) , O0oo0oOo , lisp_checkpoint_filename ) )
- return
- if 27 - 27: I1Ii111 / IiII - i1IIi * Ii1I
  if 90 - 90: ooOoO0o
  if 100 - 100: iII111i * i1IIi . iII111i / O0 / OoO0O00 - oO0o
  if 65 - 65: OoOoOO00 + ooOoO0o * OoO0O00 % OoooooooOO + OoooooooOO * OoooooooOO
@@ -18454,45 +18402,67 @@ def lisp_load_checkpoint ( ) :
  if 88 - 88: OoooooooOO / I11i % II111iiii % OOooOOo - I11i
  if 55 - 55: Oo0Ooo - OOooOOo - O0
  if 40 - 40: OoOoOO00 - OOooOOo
+def lisp_checkpoint ( checkpoint_list ) :
+ if ( lisp_checkpoint_map_cache == False ) : return
  if 3 - 3: IiII % I11i * I1Ii111 + iIii1I11I1II1 . oO0o
- if 35 - 35: II111iiii
+ o0OoO0 = open ( lisp_checkpoint_filename , "w" )
+ for oo0O00OOOOO in checkpoint_list :
+  o0OoO0 . write ( oo0O00OOOOO + "\n" )
+  if 35 - 35: II111iiii
+ o0OoO0 . close ( )
+ lprint ( "{} {} entries to file '{}'" . format ( bold ( "Checkpoint" , False ) ,
+ len ( checkpoint_list ) , lisp_checkpoint_filename ) )
+ return
  if 15 - 15: I11i * iIii1I11I1II1 + OOooOOo % IiII . o0oOOo0O0Ooo % Oo0Ooo
  if 96 - 96: O0
  if 15 - 15: i1IIi . iIii1I11I1II1
-def lisp_write_checkpoint_entry ( checkpoint_list , mc ) :
- if ( lisp_checkpoint_map_cache == False ) : return
  if 3 - 3: II111iiii * i11iIiiIii * i1IIi - i1IIi
- oo0O00OOOOO = "{} rloc " . format ( mc . eid . print_prefix ( ) )
  if 11 - 11: I1IiiI % Ii1I * i11iIiiIii % OOooOOo + II111iiii
- for OOOoOoo in mc . rloc_set :
-  if ( OOOoOoo . rloc . is_null ( ) ) : continue
-  oo0O00OOOOO += "{} {} {}, " . format ( OOOoOoo . rloc . print_address_no_iid ( ) ,
- OOOoOoo . priority , OOOoOoo . weight )
-  if 61 - 61: I1Ii111 + I11i + I1IiiI
-  if 48 - 48: I11i
- if ( mc . rloc_set != [ ] ) :
-  oo0O00OOOOO = oo0O00OOOOO [ 0 : - 2 ]
- elif ( mc . action == LISP_NATIVE_FORWARD_ACTION ) :
-  oo0O00OOOOO += "native-forward"
-  if 67 - 67: o0oOOo0O0Ooo
-  if 36 - 36: IiII - I11i - Ii1I / OoOoOO00 % OoO0O00 * iIii1I11I1II1
- checkpoint_list . append ( oo0O00OOOOO )
- return
+ if 61 - 61: I1Ii111 + I11i + I1IiiI
+ if 48 - 48: I11i
+ if 67 - 67: o0oOOo0O0Ooo
+def lisp_load_checkpoint ( ) :
+ if ( lisp_checkpoint_map_cache == False ) : return
+ if ( os . path . exists ( lisp_checkpoint_filename ) == False ) : return
+ if 36 - 36: IiII - I11i - Ii1I / OoOoOO00 % OoO0O00 * iIii1I11I1II1
+ o0OoO0 = open ( lisp_checkpoint_filename , "r" )
  if 61 - 61: i11iIiiIii / Ii1I - OOooOOo . I1ii11iIi11i
- if 89 - 89: ooOoO0o % i11iIiiIii
- if 57 - 57: Oo0Ooo / ooOoO0o - O0 . ooOoO0o
- if 61 - 61: o0oOOo0O0Ooo / OoooooooOO . I1ii11iIi11i + Oo0Ooo
- if 75 - 75: Ii1I
- if 79 - 79: i1IIi . I1ii11iIi11i * o0oOOo0O0Ooo / I11i . I11i / ooOoO0o
- if 99 - 99: oO0o + I11i % i1IIi . iII111i
-def lisp_check_dp_socket ( ) :
- OOoooOOOoo = lisp_ipc_dp_socket_name
- if ( os . path . exists ( OOoooOOOoo ) == False ) :
-  OOI11iiiiiII1 = bold ( "does not exist" , False )
-  lprint ( "Socket '{}' {}" . format ( OOoooOOOoo , OOI11iiiiiII1 ) )
-  return ( False )
-  if 6 - 6: I1Ii111 + OoO0O00 + O0 * OoOoOO00 . iIii1I11I1II1 . I1Ii111
- return ( True )
+ O0oo0oOo = 0
+ for oo0O00OOOOO in o0OoO0 :
+  O0oo0oOo += 1
+  oO0ooOOO = oo0O00OOOOO . split ( " rloc " )
+  OOOO00 = [ ] if ( oO0ooOOO [ 1 ] in [ "native-forward\n" , "\n" ] ) else oO0ooOOO [ 1 ] . split ( ", " )
+  if 89 - 89: ooOoO0o % i11iIiiIii
+  if 57 - 57: Oo0Ooo / ooOoO0o - O0 . ooOoO0o
+  OO00O000OOO = [ ]
+  for iIIiI11 in OOOO00 :
+   OOOoOoo = lisp_rloc ( False )
+   iiiI1I = iIIiI11 . split ( " " )
+   OOOoOoo . rloc . store_address ( iiiI1I [ 0 ] )
+   OOOoOoo . priority = int ( iiiI1I [ 1 ] )
+   OOOoOoo . weight = int ( iiiI1I [ 2 ] )
+   OO00O000OOO . append ( OOOoOoo )
+   if 61 - 61: o0oOOo0O0Ooo / OoooooooOO . I1ii11iIi11i + Oo0Ooo
+   if 75 - 75: Ii1I
+  I11iiI1III = lisp_mapping ( "" , "" , OO00O000OOO )
+  if ( I11iiI1III != None ) :
+   I11iiI1III . eid . store_prefix ( oO0ooOOO [ 0 ] )
+   I11iiI1III . checkpoint_entry = True
+   I11iiI1III . map_cache_ttl = LISP_NMR_TTL * 60
+   if ( OO00O000OOO == [ ] ) : I11iiI1III . action = LISP_NATIVE_FORWARD_ACTION
+   I11iiI1III . add_cache ( )
+   continue
+   if 79 - 79: i1IIi . I1ii11iIi11i * o0oOOo0O0Ooo / I11i . I11i / ooOoO0o
+   if 99 - 99: oO0o + I11i % i1IIi . iII111i
+  O0oo0oOo -= 1
+  if 58 - 58: Oo0Ooo % i11iIiiIii . Oo0Ooo / Oo0Ooo - I1IiiI . Ii1I
+  if 65 - 65: OoO0O00
+ o0OoO0 . close ( )
+ lprint ( "{} {} map-cache entries from file '{}'" . format (
+ bold ( "Loaded" , False ) , O0oo0oOo , lisp_checkpoint_filename ) )
+ return
+ if 16 - 16: IiII % I1IiiI % iIii1I11I1II1 . I1IiiI . I1ii11iIi11i - IiII
+ if 6 - 6: I1Ii111 + OoO0O00 + O0 * OoOoOO00 . iIii1I11I1II1 . I1Ii111
  if 93 - 93: ooOoO0o % iIii1I11I1II1 + I1ii11iIi11i
  if 74 - 74: OoOoOO00 + I1ii11iIi11i
  if 82 - 82: II111iiii
@@ -18500,55 +18470,101 @@ def lisp_check_dp_socket ( ) :
  if 48 - 48: ooOoO0o + Oo0Ooo / Oo0Ooo
  if 15 - 15: iIii1I11I1II1 . I1Ii111 * OoooooooOO * O0 % OOooOOo
  if 53 - 53: Ii1I
+ if 63 - 63: I11i % OoOoOO00
+ if 46 - 46: iIii1I11I1II1 . II111iiii / OoooooooOO - ooOoO0o * iII111i
+ if 52 - 52: I11i + iII111i
+ if 9 - 9: OoOoOO00 % II111iiii . I11i * Oo0Ooo
+ if 53 - 53: II111iiii / i1IIi + OoooooooOO * O0
+def lisp_write_checkpoint_entry ( checkpoint_list , mc ) :
+ if ( lisp_checkpoint_map_cache == False ) : return
+ if 62 - 62: IiII . O0
+ oo0O00OOOOO = "{} rloc " . format ( mc . eid . print_prefix ( ) )
+ if 87 - 87: I1ii11iIi11i / oO0o / IiII . OOooOOo
+ for OOOoOoo in mc . rloc_set :
+  if ( OOOoOoo . rloc . is_null ( ) ) : continue
+  oo0O00OOOOO += "{} {} {}, " . format ( OOOoOoo . rloc . print_address_no_iid ( ) ,
+ OOOoOoo . priority , OOOoOoo . weight )
+  if 91 - 91: OOooOOo % oO0o . OoOoOO00 . I1IiiI - OoOoOO00
+  if 18 - 18: O0 - I1IiiI + i1IIi % i11iIiiIii
+ if ( mc . rloc_set != [ ] ) :
+  oo0O00OOOOO = oo0O00OOOOO [ 0 : - 2 ]
+ elif ( mc . action == LISP_NATIVE_FORWARD_ACTION ) :
+  oo0O00OOOOO += "native-forward"
+  if 97 - 97: iII111i * OoooooooOO + I1Ii111 + ooOoO0o - ooOoO0o
+  if 63 - 63: o0oOOo0O0Ooo * OOooOOo + iIii1I11I1II1 + Oo0Ooo
+ checkpoint_list . append ( oo0O00OOOOO )
+ return
+ if 25 - 25: oO0o + IiII % o0oOOo0O0Ooo
+ if 24 - 24: OoOoOO00
+ if 87 - 87: I1ii11iIi11i / ooOoO0o * i1IIi
+ if 71 - 71: OoOoOO00 - I11i
+ if 83 - 83: oO0o + oO0o - Oo0Ooo . Oo0Ooo - iII111i . OOooOOo
+ if 56 - 56: OoOoOO00 * IiII + i1IIi
+ if 40 - 40: I1ii11iIi11i / O0
+def lisp_check_dp_socket ( ) :
+ o0OO00o0OOoo0 = lisp_ipc_dp_socket_name
+ if ( os . path . exists ( o0OO00o0OOoo0 ) == False ) :
+  OOiIiIiIii = bold ( "does not exist" , False )
+  lprint ( "Socket '{}' {}" . format ( o0OO00o0OOoo0 , OOiIiIiIii ) )
+  return ( False )
+  if 41 - 41: OOooOOo * ooOoO0o
+ return ( True )
+ if 47 - 47: OOooOOo + I1Ii111 . OoooooooOO * oO0o / I11i + Ii1I
+ if 75 - 75: IiII
+ if 66 - 66: o0oOOo0O0Ooo + oO0o
+ if 36 - 36: Oo0Ooo / IiII % Ii1I / o0oOOo0O0Ooo * I1Ii111
+ if 83 - 83: iIii1I11I1II1 - Oo0Ooo - iIii1I11I1II1 * I1ii11iIi11i - II111iiii + IiII
+ if 84 - 84: I11i
+ if 74 - 74: OoooooooOO - I1ii11iIi11i + OOooOOo % IiII . o0oOOo0O0Ooo
 def lisp_write_to_dp_socket ( entry ) :
  try :
-  o0OO0ooooO = json . dumps ( entry )
-  I1IiI11iI1Iii = bold ( "Write IPC" , False )
-  lprint ( "{} record to named socket: '{}'" . format ( I1IiI11iI1Iii , o0OO0ooooO ) )
-  lisp_ipc_dp_socket . sendto ( o0OO0ooooO , lisp_ipc_dp_socket_name )
+  i11i1iiI1i1 = json . dumps ( entry )
+  O00o0O00o = bold ( "Write IPC" , False )
+  lprint ( "{} record to named socket: '{}'" . format ( O00o0O00o , i11i1iiI1i1 ) )
+  lisp_ipc_dp_socket . sendto ( i11i1iiI1i1 , lisp_ipc_dp_socket_name )
  except :
-  lprint ( "Failed to write IPC record to named socket: '{}'" . format ( o0OO0ooooO ) )
-  if 88 - 88: o0oOOo0O0Ooo + OoooooooOO - OoO0O00 / I1Ii111 / OoooooooOO
+  lprint ( "Failed to write IPC record to named socket: '{}'" . format ( i11i1iiI1i1 ) )
+  if 50 - 50: Oo0Ooo . I1Ii111 % I1Ii111
  return
- if 8 - 8: i11iIiiIii / O0 * OOooOOo * i1IIi
- if 57 - 57: O0 - IiII
- if 66 - 66: OOooOOo % i11iIiiIii % OoooooooOO - o0oOOo0O0Ooo + OoOoOO00 + OoooooooOO
- if 66 - 66: OoOoOO00 . Ii1I / i11iIiiIii / ooOoO0o
- if 76 - 76: OoO0O00 % OoO0O00 / I1ii11iIi11i * ooOoO0o * o0oOOo0O0Ooo - I1Ii111
- if 53 - 53: OoO0O00 % Oo0Ooo . i1IIi
- if 34 - 34: Ii1I - o0oOOo0O0Ooo * i1IIi
- if 7 - 7: OoO0O00 * I1ii11iIi11i / I1Ii111
- if 98 - 98: II111iiii % I1ii11iIi11i
+ if 92 - 92: o0oOOo0O0Ooo
+ if 78 - 78: iIii1I11I1II1 - OoOoOO00 * I1IiiI + I1ii11iIi11i
+ if 34 - 34: Ii1I / Oo0Ooo - II111iiii + iIii1I11I1II1 . I1ii11iIi11i % II111iiii
+ if 37 - 37: OoO0O00 * i1IIi
+ if 84 - 84: OOooOOo . ooOoO0o % iIii1I11I1II1
+ if 52 - 52: I1IiiI / OoO0O00 + OoOoOO00
+ if 94 - 94: OoooooooOO + O0 * iIii1I11I1II1 * II111iiii
+ if 90 - 90: I11i + O0 / I1IiiI . oO0o / O0
+ if 46 - 46: O0 . O0 - oO0o . II111iiii * I1IiiI * Ii1I
 def lisp_write_ipc_keys ( rloc ) :
  O0O0 = rloc . rloc . print_address_no_iid ( )
  ooO0 = rloc . translated_port
  if ( ooO0 != 0 ) : O0O0 += ":" + str ( ooO0 )
  if ( O0O0 not in lisp_rloc_probe_list ) : return
- if 48 - 48: iII111i % oO0o + oO0o - Oo0Ooo . OOooOOo
+ if 10 - 10: i1IIi + i1IIi . i1IIi - I1IiiI - I1IiiI
  for iiiI1I , oO0ooOOO , Oo in lisp_rloc_probe_list [ O0O0 ] :
   I11iiI1III = lisp_map_cache . lookup_cache ( oO0ooOOO , True )
   if ( I11iiI1III == None ) : continue
   lisp_write_ipc_map_cache ( True , I11iiI1III )
-  if 38 - 38: iII111i
+  if 26 - 26: Ii1I * I11i / I11i
  return
- if 66 - 66: iII111i + Oo0Ooo + i1IIi * Oo0Ooo
- if 18 - 18: O0 - IiII
- if 5 - 5: I1ii11iIi11i * iII111i + II111iiii * Oo0Ooo * O0 - I1IiiI
- if 71 - 71: i11iIiiIii % I1IiiI + I1ii11iIi11i + II111iiii + OoooooooOO + oO0o
- if 12 - 12: I1IiiI + I1Ii111
- if 66 - 66: I1Ii111 + OOooOOo + I1Ii111 . OoooooooOO * oO0o / OoO0O00
- if 74 - 74: O0 % OOooOOo * OoOoOO00 / oO0o - Oo0Ooo
+ if 79 - 79: ooOoO0o / oO0o - oO0o / OoooooooOO
+ if 91 - 91: iIii1I11I1II1 - O0 * o0oOOo0O0Ooo * o0oOOo0O0Ooo . II111iiii
+ if 69 - 69: II111iiii - Oo0Ooo + i1IIi . II111iiii + o0oOOo0O0Ooo
+ if 20 - 20: OoooooooOO - OoO0O00 * ooOoO0o * OoOoOO00 / OOooOOo
+ if 64 - 64: O0 + iII111i / I11i * OoOoOO00 + o0oOOo0O0Ooo + I1Ii111
+ if 16 - 16: I11i
+ if 9 - 9: Ii1I / IiII * I11i - i11iIiiIii * I1ii11iIi11i / iII111i
 def lisp_write_ipc_map_cache ( add_or_delete , mc , dont_send = False ) :
  if ( lisp_i_am_etr ) : return
  if ( lisp_ipc_dp_socket == None ) : return
  if ( lisp_check_dp_socket ( ) == False ) : return
- if 79 - 79: Ii1I + IiII
- if 21 - 21: o0oOOo0O0Ooo * iII111i * o0oOOo0O0Ooo * o0oOOo0O0Ooo . Oo0Ooo
- if 98 - 98: I1ii11iIi11i
- if 58 - 58: IiII / i11iIiiIii % I11i
+ if 61 - 61: O0 % iII111i
+ if 41 - 41: I1Ii111 * OoooooooOO
+ if 76 - 76: OoooooooOO * II111iiii . II111iiii / o0oOOo0O0Ooo - iII111i
+ if 49 - 49: O0 . I1ii11iIi11i . OoOoOO00 . I1Ii111 % O0 . iIii1I11I1II1
  oOOoo = "add" if add_or_delete else "delete"
  oo0O00OOOOO = { "type" : "map-cache" , "opcode" : oOOoo }
- if 74 - 74: OoooooooOO - I1ii11iIi11i + OOooOOo % IiII . o0oOOo0O0Ooo
+ if 19 - 19: iIii1I11I1II1
  II1OO0Oo0oOOO000 = ( mc . group . is_null ( ) == False )
  if ( II1OO0Oo0oOOO000 ) :
   oo0O00OOOOO [ "eid-prefix" ] = mc . group . print_prefix_no_iid ( )
@@ -18556,190 +18572,150 @@ def lisp_write_ipc_map_cache ( add_or_delete , mc , dont_send = False ) :
  else :
   oo0O00OOOOO [ "eid-prefix" ] = mc . eid . print_prefix_no_iid ( )
   oo0O00OOOOO [ "rlocs" ] = [ ]
-  if 21 - 21: Ii1I
+  if 97 - 97: Ii1I . I11i / ooOoO0o + Oo0Ooo
  oo0O00OOOOO [ "instance-id" ] = str ( mc . eid . instance_id )
- if 72 - 72: I1Ii111 . OoooooooOO / I1Ii111 - Ii1I / I1ii11iIi11i * I1ii11iIi11i
+ if 100 - 100: iII111i / I1Ii111 % OoOoOO00 . O0 / OoOoOO00
  if ( II1OO0Oo0oOOO000 ) :
   if ( len ( mc . rloc_set ) >= 1 and mc . rloc_set [ 0 ] . rle ) :
    for iIIi in mc . rloc_set [ 0 ] . rle . rle_forwarding_list :
     IiI = iIIi . address . print_address_no_iid ( )
     ooO0 = str ( 4341 ) if iIIi . translated_port == 0 else str ( iIIi . translated_port )
-    if 72 - 72: IiII . Ii1I + OoooooooOO * OoOoOO00 + Oo0Ooo . iII111i
+    if 81 - 81: OoO0O00 % i11iIiiIii / OoO0O00 + ooOoO0o
     iiiI1I = { "rle" : IiI , "port" : ooO0 }
-    iiIio0o0 , OoO0OOo0OOoOO = iIIi . get_encap_keys ( )
-    iiiI1I = lisp_build_json_keys ( iiiI1I , iiIio0o0 , OoO0OOo0OOoOO , "encrypt-key" )
+    iiIio0o0 , Oo0IiiiII = iIIi . get_encap_keys ( )
+    iiiI1I = lisp_build_json_keys ( iiiI1I , iiIio0o0 , Oo0IiiiII , "encrypt-key" )
     oo0O00OOOOO [ "rles" ] . append ( iiiI1I )
-    if 91 - 91: OOooOOo % Oo0Ooo
-    if 44 - 44: iIii1I11I1II1 . OOooOOo
+    if 60 - 60: OOooOOo - OoOoOO00 - I1ii11iIi11i % i1IIi . I1IiiI + OoooooooOO
+    if 72 - 72: II111iiii . II111iiii / iII111i % i1IIi / OoO0O00
  else :
   for iIIiI11 in mc . rloc_set :
    if ( iIIiI11 . rloc . is_ipv4 ( ) == False and iIIiI11 . rloc . is_ipv6 ( ) == False ) :
     continue
-    if 57 - 57: II111iiii + I1Ii111
+    if 83 - 83: I11i % iIii1I11I1II1 * OoO0O00 - I1IiiI
    if ( iIIiI11 . up_state ( ) == False ) : continue
-   if 42 - 42: OoOoOO00 % O0
+   if 80 - 80: ooOoO0o - OoO0O00 . I1IiiI - I1IiiI
    ooO0 = str ( 4341 ) if iIIiI11 . translated_port == 0 else str ( iIIiI11 . translated_port )
-   if 70 - 70: iIii1I11I1II1 * Oo0Ooo - I1IiiI / OoO0O00 + OoOoOO00
+   if 61 - 61: II111iiii - iIii1I11I1II1 + OoOoOO00
    iiiI1I = { "rloc" : iIIiI11 . rloc . print_address_no_iid ( ) , "priority" :
  str ( iIIiI11 . priority ) , "weight" : str ( iIIiI11 . weight ) , "port" :
  ooO0 }
-   iiIio0o0 , OoO0OOo0OOoOO = iIIiI11 . get_encap_keys ( )
-   iiiI1I = lisp_build_json_keys ( iiiI1I , iiIio0o0 , OoO0OOo0OOoOO , "encrypt-key" )
+   iiIio0o0 , Oo0IiiiII = iIIiI11 . get_encap_keys ( )
+   iiiI1I = lisp_build_json_keys ( iiiI1I , iiIio0o0 , Oo0IiiiII , "encrypt-key" )
    oo0O00OOOOO [ "rlocs" ] . append ( iiiI1I )
-   if 94 - 94: OoooooooOO + O0 * iIii1I11I1II1 * II111iiii
-   if 90 - 90: I11i + O0 / I1IiiI . oO0o / O0
-   if 46 - 46: O0 . O0 - oO0o . II111iiii * I1IiiI * Ii1I
+   if 65 - 65: iII111i % Oo0Ooo * iIii1I11I1II1 + I1IiiI + II111iiii
+   if 72 - 72: OoOoOO00 . OoooooooOO - OOooOOo
+   if 15 - 15: OoOoOO00
  if ( dont_send == False ) : lisp_write_to_dp_socket ( oo0O00OOOOO )
  return ( oo0O00OOOOO )
- if 10 - 10: i1IIi + i1IIi . i1IIi - I1IiiI - I1IiiI
- if 26 - 26: Ii1I * I11i / I11i
- if 79 - 79: ooOoO0o / oO0o - oO0o / OoooooooOO
- if 91 - 91: iIii1I11I1II1 - O0 * o0oOOo0O0Ooo * o0oOOo0O0Ooo . II111iiii
- if 69 - 69: II111iiii - Oo0Ooo + i1IIi . II111iiii + o0oOOo0O0Ooo
- if 20 - 20: OoooooooOO - OoO0O00 * ooOoO0o * OoOoOO00 / OOooOOo
- if 64 - 64: O0 + iII111i / I11i * OoOoOO00 + o0oOOo0O0Ooo + I1Ii111
-def lisp_write_ipc_decap_key ( rloc_addr , keys ) :
- if ( lisp_i_am_itr ) : return
- if ( lisp_ipc_dp_socket == None ) : return
- if ( lisp_check_dp_socket ( ) == False ) : return
- if 16 - 16: I11i
- if 9 - 9: Ii1I / IiII * I11i - i11iIiiIii * I1ii11iIi11i / iII111i
- if 61 - 61: O0 % iII111i
- if 41 - 41: I1Ii111 * OoooooooOO
- if ( keys == None or len ( keys ) == 0 or keys [ 1 ] == None ) : return
- if 76 - 76: OoooooooOO * II111iiii . II111iiii / o0oOOo0O0Ooo - iII111i
- iiIio0o0 = keys [ 1 ] . encrypt_key
- OoO0OOo0OOoOO = keys [ 1 ] . icv_key
- if 49 - 49: O0 . I1ii11iIi11i . OoOoOO00 . I1Ii111 % O0 . iIii1I11I1II1
- if 19 - 19: iIii1I11I1II1
- if 97 - 97: Ii1I . I11i / ooOoO0o + Oo0Ooo
- if 100 - 100: iII111i / I1Ii111 % OoOoOO00 . O0 / OoOoOO00
- OOooOO000oo = rloc_addr . split ( ":" )
- if ( len ( OOooOO000oo ) == 1 ) :
-  oo0O00OOOOO = { "type" : "decap-keys" , "rloc" : OOooOO000oo [ 0 ] }
- else :
-  oo0O00OOOOO = { "type" : "decap-keys" , "rloc" : OOooOO000oo [ 0 ] , "port" : OOooOO000oo [ 1 ] }
-  if 78 - 78: Oo0Ooo % O0 / i11iIiiIii
- oo0O00OOOOO = lisp_build_json_keys ( oo0O00OOOOO , iiIio0o0 , OoO0OOo0OOoOO , "decrypt-key" )
- if 56 - 56: IiII - OOooOOo - OoOoOO00 - I11i
- lisp_write_to_dp_socket ( oo0O00OOOOO )
- return
- if 57 - 57: i1IIi
- if 41 - 41: I11i / Ii1I
- if 1 - 1: II111iiii / iII111i
- if 83 - 83: OoO0O00 / iII111i
- if 59 - 59: I1Ii111 % OOooOOo . I1IiiI + I1ii11iIi11i % oO0o
- if 96 - 96: OoO0O00
- if 53 - 53: oO0o + OoO0O00
- if 58 - 58: iIii1I11I1II1 + OoOoOO00
-def lisp_build_json_keys ( entry , ekey , ikey , key_type ) :
- if ( ekey == None ) : return ( entry )
- if 65 - 65: iII111i % Oo0Ooo * iIii1I11I1II1 + I1IiiI + II111iiii
- entry [ "keys" ] = [ ]
- III = { "key-id" : "1" , key_type : ekey , "icv-key" : ikey }
- entry [ "keys" ] . append ( III )
- return ( entry )
- if 72 - 72: OoOoOO00 . OoooooooOO - OOooOOo
- if 15 - 15: OoOoOO00
  if 13 - 13: I1ii11iIi11i - OOooOOo - i11iIiiIii / IiII
  if 65 - 65: IiII
  if 76 - 76: I1Ii111 % I1ii11iIi11i + ooOoO0o / I1IiiI
  if 59 - 59: OOooOOo - o0oOOo0O0Ooo - o0oOOo0O0Ooo % I1IiiI
  if 55 - 55: o0oOOo0O0Ooo % I1ii11iIi11i - IiII + OoooooooOO
-def lisp_write_ipc_database_mappings ( ephem_port ) :
- if ( lisp_i_am_etr == False ) : return
- if ( lisp_ipc_dp_socket == None ) : return
- if ( lisp_check_dp_socket ( ) == False ) : return
  if 44 - 44: iII111i * I1Ii111 - I1IiiI % i1IIi
  if 35 - 35: iII111i . OoOoOO00 + i1IIi . I1Ii111 - oO0o
+def lisp_write_ipc_decap_key ( rloc_addr , keys ) :
+ if ( lisp_i_am_itr ) : return
+ if ( lisp_ipc_dp_socket == None ) : return
+ if ( lisp_check_dp_socket ( ) == False ) : return
  if 92 - 92: o0oOOo0O0Ooo
  if 8 - 8: i1IIi / IiII . O0
- oo0O00OOOOO = { "type" : "database-mappings" , "database-mappings" : [ ] }
  if 72 - 72: OOooOOo
  if 20 - 20: i11iIiiIii + Oo0Ooo * Oo0Ooo % OOooOOo
+ if ( keys == None or len ( keys ) == 0 or keys [ 1 ] == None ) : return
  if 66 - 66: I1ii11iIi11i + iII111i / Ii1I / I1IiiI * i11iIiiIii
+ iiIio0o0 = keys [ 1 ] . encrypt_key
+ Oo0IiiiII = keys [ 1 ] . icv_key
  if 41 - 41: Ii1I / Oo0Ooo . OoO0O00 . iIii1I11I1II1 % IiII . I11i
- for OoO0oO in lisp_db_list :
-  if ( OoO0oO . eid . is_ipv4 ( ) == False and OoO0oO . eid . is_ipv6 ( ) == False ) : continue
-  OoOo00 = { "instance-id" : str ( OoO0oO . eid . instance_id ) ,
- "eid-prefix" : OoO0oO . eid . print_prefix_no_iid ( ) }
-  oo0O00OOOOO [ "database-mappings" ] . append ( OoOo00 )
-  if 36 - 36: oO0o . I1ii11iIi11i % Oo0Ooo * oO0o + I1IiiI
- lisp_write_to_dp_socket ( oo0O00OOOOO )
- if 15 - 15: ooOoO0o - Ii1I * OoOoOO00
- if 80 - 80: i1IIi % OOooOOo - ooOoO0o % iII111i . I1Ii111 + I1ii11iIi11i
- if 9 - 9: OoooooooOO . iII111i . iIii1I11I1II1 . I11i % ooOoO0o % I1IiiI
- if 78 - 78: OoO0O00 - ooOoO0o * I1IiiI * iII111i . i1IIi - OOooOOo
- if 47 - 47: oO0o + ooOoO0o . OoooooooOO / ooOoO0o + i1IIi / I1Ii111
- oo0O00OOOOO = { "type" : "etr-nat-port" , "port" : ephem_port }
+ if 59 - 59: O0 + II111iiii + IiII % Oo0Ooo
+ if 71 - 71: oO0o
+ if 75 - 75: Oo0Ooo * oO0o + iIii1I11I1II1 / Oo0Ooo
+ O0O000oOO00o = rloc_addr . split ( ":" )
+ if ( len ( O0O000oOO00o ) == 1 ) :
+  oo0O00OOOOO = { "type" : "decap-keys" , "rloc" : O0O000oOO00o [ 0 ] }
+ else :
+  oo0O00OOOOO = { "type" : "decap-keys" , "rloc" : O0O000oOO00o [ 0 ] , "port" : O0O000oOO00o [ 1 ] }
+  if 82 - 82: I1ii11iIi11i * I1Ii111 . O0
+ oo0O00OOOOO = lisp_build_json_keys ( oo0O00OOOOO , iiIio0o0 , Oo0IiiiII , "decrypt-key" )
+ if 19 - 19: iII111i
  lisp_write_to_dp_socket ( oo0O00OOOOO )
  return
- if 92 - 92: I1IiiI
- if 56 - 56: I1Ii111 . Oo0Ooo
- if 29 - 29: I1IiiI * Ii1I . OoooooooOO
- if 18 - 18: I11i % iIii1I11I1II1 * OOooOOo
+ if 4 - 4: iII111i
+ if 75 - 75: I1IiiI * IiII % OoO0O00 - ooOoO0o * iII111i
+ if 32 - 32: iII111i
+ if 59 - 59: OoOoOO00 - I1Ii111
+ if 34 - 34: ooOoO0o . OoooooooOO / ooOoO0o + OoooooooOO
+ if 24 - 24: OoooooooOO * I1ii11iIi11i / O0 / Oo0Ooo * I1IiiI / ooOoO0o
+ if 33 - 33: Ii1I
+ if 20 - 20: Ii1I + I11i
+def lisp_build_json_keys ( entry , ekey , ikey , key_type ) :
+ if ( ekey == None ) : return ( entry )
+ if 98 - 98: OOooOOo
+ entry [ "keys" ] = [ ]
+ III = { "key-id" : "1" , key_type : ekey , "icv-key" : ikey }
+ entry [ "keys" ] . append ( III )
+ return ( entry )
  if 58 - 58: i11iIiiIii / OoOoOO00
  if 18 - 18: ooOoO0o + O0 - OOooOOo + iIii1I11I1II1 . OOooOOo * iIii1I11I1II1
  if 83 - 83: OoO0O00 - Oo0Ooo * I1IiiI % Oo0Ooo % oO0o
-def lisp_write_ipc_interfaces ( ) :
- if ( lisp_i_am_etr ) : return
- if ( lisp_ipc_dp_socket == None ) : return
- if ( lisp_check_dp_socket ( ) == False ) : return
  if 64 - 64: OoOoOO00 + oO0o / OoooooooOO . i11iIiiIii / II111iiii
  if 55 - 55: ooOoO0o . i11iIiiIii . o0oOOo0O0Ooo
  if 52 - 52: IiII . oO0o + i11iIiiIii % IiII
  if 45 - 45: i1IIi - I1IiiI / IiII - I1IiiI
- oo0O00OOOOO = { "type" : "interfaces" , "interfaces" : [ ] }
+def lisp_write_ipc_database_mappings ( ephem_port ) :
+ if ( lisp_i_am_etr == False ) : return
+ if ( lisp_ipc_dp_socket == None ) : return
+ if ( lisp_check_dp_socket ( ) == False ) : return
  if 21 - 21: IiII
- for i111IIiIiiI1 in list ( lisp_myinterfaces . values ( ) ) :
-  if ( i111IIiIiiI1 . instance_id == None ) : continue
-  OoOo00 = { "interface" : i111IIiIiiI1 . device ,
- "instance-id" : str ( i111IIiIiiI1 . instance_id ) }
-  oo0O00OOOOO [ "interfaces" ] . append ( OoOo00 )
-  if 43 - 43: IiII
-  if 9 - 9: OOooOOo * ooOoO0o + ooOoO0o . I1Ii111
- lisp_write_to_dp_socket ( oo0O00OOOOO )
- return
+ if 43 - 43: IiII
+ if 9 - 9: OOooOOo * ooOoO0o + ooOoO0o . I1Ii111
  if 8 - 8: IiII * iIii1I11I1II1
+ oo0O00OOOOO = { "type" : "database-mappings" , "database-mappings" : [ ] }
  if 7 - 7: I1Ii111 / OoooooooOO % O0 - I1ii11iIi11i
  if 49 - 49: OoooooooOO . I1ii11iIi11i / OoooooooOO * oO0o
  if 81 - 81: I1ii11iIi11i . ooOoO0o + I1ii11iIi11i
  if 84 - 84: OoooooooOO
- if 95 - 95: o0oOOo0O0Ooo
- if 22 - 22: ooOoO0o / o0oOOo0O0Ooo - OoooooooOO / Oo0Ooo - I1Ii111 / OOooOOo
- if 41 - 41: oO0o . II111iiii
- if 47 - 47: I1ii11iIi11i
+ for OoO0oO in lisp_db_list :
+  if ( OoO0oO . eid . is_ipv4 ( ) == False and OoO0oO . eid . is_ipv6 ( ) == False ) : continue
+  oo0o0OOo = { "instance-id" : str ( OoO0oO . eid . instance_id ) ,
+ "eid-prefix" : OoO0oO . eid . print_prefix_no_iid ( ) }
+  oo0O00OOOOO [ "database-mappings" ] . append ( oo0o0OOo )
+  if 18 - 18: II111iiii + OOooOOo * i1IIi + i11iIiiIii
+ lisp_write_to_dp_socket ( oo0O00OOOOO )
+ if 61 - 61: i11iIiiIii + I1ii11iIi11i
  if 5 - 5: Oo0Ooo
  if 23 - 23: i11iIiiIii / I11i + i1IIi % I1Ii111
  if 100 - 100: Oo0Ooo
  if 13 - 13: I1IiiI + ooOoO0o * II111iiii
+ oo0O00OOOOO = { "type" : "etr-nat-port" , "port" : ephem_port }
+ lisp_write_to_dp_socket ( oo0O00OOOOO )
+ return
  if 32 - 32: iIii1I11I1II1 + O0 + i1IIi
-def lisp_parse_auth_key ( value ) :
- Iii1iIi1i = value . split ( "[" )
- i11i1Ii = { }
- if ( len ( Iii1iIi1i ) == 1 ) :
-  i11i1Ii [ 0 ] = value
-  return ( i11i1Ii )
-  if 9 - 9: o0oOOo0O0Ooo
-  if 20 - 20: ooOoO0o - I1Ii111 % II111iiii - O0
- for Ooo0oO0O00o0 in Iii1iIi1i :
-  if ( Ooo0oO0O00o0 == "" ) : continue
-  OOOooo0OooOoO = Ooo0oO0O00o0 . find ( "]" )
-  IiII11iI1 = Ooo0oO0O00o0 [ 0 : OOOooo0OooOoO ]
-  try : IiII11iI1 = int ( IiII11iI1 )
-  except : return
-  if 76 - 76: i1IIi + iII111i * iII111i
-  i11i1Ii [ IiII11iI1 ] = Ooo0oO0O00o0 [ OOOooo0OooOoO + 1 : : ]
-  if 31 - 31: O0 - iIii1I11I1II1 . I11i . oO0o
- return ( i11i1Ii )
+ if 28 - 28: IiII + I11i
+ if 1 - 1: OoooooooOO - i11iIiiIii . OoooooooOO - o0oOOo0O0Ooo - OOooOOo * I1Ii111
+ if 56 - 56: Ii1I . OoO0O00
+ if 43 - 43: iII111i * iII111i
+ if 31 - 31: O0 - iIii1I11I1II1 . I11i . oO0o
  if 96 - 96: OoooooooOO * iIii1I11I1II1 * Oo0Ooo
+def lisp_write_ipc_interfaces ( ) :
+ if ( lisp_i_am_etr ) : return
+ if ( lisp_ipc_dp_socket == None ) : return
+ if ( lisp_check_dp_socket ( ) == False ) : return
  if 76 - 76: OoO0O00 / i11iIiiIii % ooOoO0o % I11i * O0
  if 84 - 84: II111iiii - iII111i / IiII . O0 % i1IIi / I1ii11iIi11i
  if 2 - 2: OoooooooOO . OoO0O00 . II111iiii / Ii1I - OOooOOo % Oo0Ooo
  if 47 - 47: OOooOOo * oO0o
+ oo0O00OOOOO = { "type" : "interfaces" , "interfaces" : [ ] }
  if 41 - 41: OoooooooOO * I1IiiI
- if 3 - 3: IiII
- if 96 - 96: I11i - OOooOOo + I11i
+ for i111IIiIiiI1 in list ( lisp_myinterfaces . values ( ) ) :
+  if ( i111IIiIiiI1 . instance_id == None ) : continue
+  oo0o0OOo = { "interface" : i111IIiIiiI1 . device ,
+ "instance-id" : str ( i111IIiIiiI1 . instance_id ) }
+  oo0O00OOOOO [ "interfaces" ] . append ( oo0o0OOo )
+  if 3 - 3: IiII
+  if 96 - 96: I11i - OOooOOo + I11i
+ lisp_write_to_dp_socket ( oo0O00OOOOO )
+ return
  if 71 - 71: Oo0Ooo
  if 48 - 48: o0oOOo0O0Ooo / II111iiii / OoOoOO00 * o0oOOo0O0Ooo + I1IiiI . OoOoOO00
  if 52 - 52: Ii1I / OoOoOO00 . OOooOOo * IiII . OoooooooOO
@@ -18748,30 +18724,70 @@ def lisp_parse_auth_key ( value ) :
  if 25 - 25: iII111i * I1ii11iIi11i + I11i - I1ii11iIi11i
  if 75 - 75: IiII
  if 74 - 74: o0oOOo0O0Ooo - iIii1I11I1II1
-def lisp_reassemble ( packet ) :
- Oo0ooo = socket . ntohs ( struct . unpack ( "H" , packet [ 6 : 8 ] ) [ 0 ] )
  if 92 - 92: i11iIiiIii * iIii1I11I1II1 - I1Ii111 . i1IIi
  if 23 - 23: O0 - O0 . I1Ii111 . I1IiiI - I1IiiI * i1IIi
  if 8 - 8: I1IiiI . I1ii11iIi11i + oO0o % oO0o * oO0o
  if 70 - 70: II111iiii + IiII + O0 / Ii1I - i11iIiiIii
- if ( Oo0ooo == 0 or Oo0ooo == 0x4000 ) : return ( packet )
  if 72 - 72: II111iiii - II111iiii
  if 44 - 44: o0oOOo0O0Ooo + OoooooooOO
- if 34 - 34: i11iIiiIii + iIii1I11I1II1 - i11iIiiIii * o0oOOo0O0Ooo - iII111i
- if 87 - 87: OOooOOo * OoO0O00
- OOoo0 = socket . ntohs ( struct . unpack ( "H" , packet [ 4 : 6 ] ) [ 0 ] )
- oOi11iIIIIi = socket . ntohs ( struct . unpack ( "H" , packet [ 2 : 4 ] ) [ 0 ] )
- if 61 - 61: iII111i - II111iiii . I1Ii111 % II111iiii / I11i
- o000O = ( Oo0ooo & 0x2000 == 0 and ( Oo0ooo & 0x1fff ) != 0 )
- oo0O00OOOOO = [ ( Oo0ooo & 0x1fff ) * 8 , oOi11iIIIIi - 20 , packet , o000O ]
- if 88 - 88: Ii1I % Oo0Ooo / Oo0Ooo - O0 - Oo0Ooo
- if 17 - 17: II111iiii - i1IIi
- if 91 - 91: Ii1I
+def lisp_parse_auth_key ( value ) :
+ OOo = value . split ( "[" )
+ IiIi1i = { }
+ if ( len ( OOo ) == 1 ) :
+  IiIi1i [ 0 ] = value
+  return ( IiIi1i )
+  if 62 - 62: IiII % ooOoO0o / OoO0O00 % oO0o
+  if 71 - 71: i11iIiiIii % iII111i / II111iiii * II111iiii
+ for O0ooOOO in OOo :
+  if ( O0ooOOO == "" ) : continue
+  OOOooo0OooOoO = O0ooOOO . find ( "]" )
+  IiII11iI1 = O0ooOOO [ 0 : OOOooo0OooOoO ]
+  try : IiII11iI1 = int ( IiII11iI1 )
+  except : return
+  if 75 - 75: II111iiii . I11i * o0oOOo0O0Ooo % Ii1I * Ii1I % II111iiii
+  IiIi1i [ IiII11iI1 ] = O0ooOOO [ OOOooo0OooOoO + 1 : : ]
+  if 36 - 36: o0oOOo0O0Ooo + Oo0Ooo . II111iiii / oO0o
+ return ( IiIi1i )
+ if 28 - 28: iIii1I11I1II1 * Ii1I
  if 45 - 45: I1ii11iIi11i + Oo0Ooo
  if 72 - 72: I1ii11iIi11i
  if 5 - 5: i1IIi
  if 31 - 31: iII111i - OoooooooOO + oO0o / OoooooooOO + I1ii11iIi11i
  if 93 - 93: o0oOOo0O0Ooo * I1ii11iIi11i % I1IiiI * ooOoO0o
+ if 37 - 37: OoO0O00 * OoooooooOO / oO0o * I11i * I1ii11iIi11i
+ if 42 - 42: OoooooooOO - ooOoO0o . OOooOOo + OoOoOO00
+ if 53 - 53: o0oOOo0O0Ooo
+ if 55 - 55: ooOoO0o . i1IIi - ooOoO0o + O0 + I1IiiI
+ if 31 - 31: OoO0O00 % I1Ii111
+ if 62 - 62: oO0o / O0 - I1Ii111 . IiII
+ if 81 - 81: i11iIiiIii
+ if 57 - 57: O0
+ if 85 - 85: i11iIiiIii - i11iIiiIii - OoOoOO00 / II111iiii - II111iiii
+ if 4 - 4: I1ii11iIi11i * O0 / OoO0O00 * II111iiii . iIii1I11I1II1 / OOooOOo
+def lisp_reassemble ( packet ) :
+ Oo0ooo = socket . ntohs ( struct . unpack ( "H" , packet [ 6 : 8 ] ) [ 0 ] )
+ if 97 - 97: i1IIi - OoOoOO00 . OoooooooOO
+ if 24 - 24: iIii1I11I1II1 + OOooOOo * iII111i % IiII % OOooOOo
+ if 64 - 64: IiII . I1ii11iIi11i - o0oOOo0O0Ooo - ooOoO0o + OoooooooOO
+ if 95 - 95: iII111i . I1ii11iIi11i + ooOoO0o + o0oOOo0O0Ooo % OoO0O00
+ if ( Oo0ooo == 0 or Oo0ooo == 0x4000 ) : return ( packet )
+ if 50 - 50: iII111i * O0 % II111iiii
+ if 80 - 80: OOooOOo - II111iiii - OoO0O00
+ if 62 - 62: Ii1I . i11iIiiIii % OOooOOo
+ if 44 - 44: i1IIi * I1ii11iIi11i % Ii1I . Ii1I * I11i + II111iiii
+ OOoo0 = socket . ntohs ( struct . unpack ( "H" , packet [ 4 : 6 ] ) [ 0 ] )
+ oOi11iIIIIi = socket . ntohs ( struct . unpack ( "H" , packet [ 2 : 4 ] ) [ 0 ] )
+ if 15 - 15: i1IIi - I11i - I1Ii111 / OoO0O00 + Oo0Ooo + I1IiiI
+ oOO0O0OOoOoo = ( Oo0ooo & 0x2000 == 0 and ( Oo0ooo & 0x1fff ) != 0 )
+ oo0O00OOOOO = [ ( Oo0ooo & 0x1fff ) * 8 , oOi11iIIIIi - 20 , packet , oOO0O0OOoOoo ]
+ if 96 - 96: OoooooooOO
+ if 1 - 1: oO0o * II111iiii + i1IIi * oO0o % I1IiiI
+ if 53 - 53: i11iIiiIii . I1ii11iIi11i - OOooOOo - OOooOOo
+ if 97 - 97: I1IiiI % iII111i % OoooooooOO / ooOoO0o / i11iIiiIii
+ if 7 - 7: O0 % IiII / o0oOOo0O0Ooo
+ if 79 - 79: IiII + I1Ii111
+ if 59 - 59: iII111i - oO0o . ooOoO0o / IiII * i11iIiiIii
+ if 61 - 61: I11i - Oo0Ooo * II111iiii + iIii1I11I1II1
  if ( Oo0ooo == 0x2000 ) :
   oooooO0oO0ooO , iIII1IiI = struct . unpack ( "HH" , packet [ 20 : 24 ] )
   oooooO0oO0ooO = socket . ntohs ( oooooO0oO0ooO )
@@ -18779,183 +18795,146 @@ def lisp_reassemble ( packet ) :
   if ( iIII1IiI not in [ 4341 , 8472 , 4789 ] and oooooO0oO0ooO != 4341 ) :
    lisp_reassembly_queue [ OOoo0 ] = [ ]
    oo0O00OOOOO [ 2 ] = None
-   if 37 - 37: OoO0O00 * OoooooooOO / oO0o * I11i * I1ii11iIi11i
-   if 42 - 42: OoooooooOO - ooOoO0o . OOooOOo + OoOoOO00
-   if 53 - 53: o0oOOo0O0Ooo
-   if 55 - 55: ooOoO0o . i1IIi - ooOoO0o + O0 + I1IiiI
-   if 31 - 31: OoO0O00 % I1Ii111
-   if 62 - 62: oO0o / O0 - I1Ii111 . IiII
+   if 37 - 37: OoooooooOO % II111iiii / o0oOOo0O0Ooo . OOooOOo * I1ii11iIi11i . iIii1I11I1II1
+   if 73 - 73: OoOoOO00
+   if 44 - 44: Oo0Ooo / oO0o
+   if 9 - 9: i1IIi % I1IiiI + OoO0O00 * ooOoO0o / iIii1I11I1II1 / iII111i
+   if 80 - 80: OOooOOo / O0 % IiII * OoOoOO00
+   if 53 - 53: OOooOOo + i11iIiiIii
  if ( OOoo0 not in lisp_reassembly_queue ) :
   lisp_reassembly_queue [ OOoo0 ] = [ ]
-  if 81 - 81: i11iIiiIii
-  if 57 - 57: O0
-  if 85 - 85: i11iIiiIii - i11iIiiIii - OoOoOO00 / II111iiii - II111iiii
-  if 4 - 4: I1ii11iIi11i * O0 / OoO0O00 * II111iiii . iIii1I11I1II1 / OOooOOo
-  if 97 - 97: i1IIi - OoOoOO00 . OoooooooOO
+  if 25 - 25: i11iIiiIii
+  if 51 - 51: iII111i . ooOoO0o
+  if 70 - 70: I11i / O0 - I11i + o0oOOo0O0Ooo . ooOoO0o . o0oOOo0O0Ooo
+  if 6 - 6: I11i + II111iiii - I1Ii111
+  if 45 - 45: i1IIi / iII111i + i11iIiiIii * I11i + ooOoO0o / OoooooooOO
  queue = lisp_reassembly_queue [ OOoo0 ]
- if 24 - 24: iIii1I11I1II1 + OOooOOo * iII111i % IiII % OOooOOo
- if 64 - 64: IiII . I1ii11iIi11i - o0oOOo0O0Ooo - ooOoO0o + OoooooooOO
- if 95 - 95: iII111i . I1ii11iIi11i + ooOoO0o + o0oOOo0O0Ooo % OoO0O00
- if 50 - 50: iII111i * O0 % II111iiii
- if 80 - 80: OOooOOo - II111iiii - OoO0O00
+ if 56 - 56: I11i + I1Ii111
+ if 80 - 80: II111iiii . Ii1I + o0oOOo0O0Ooo / II111iiii / OoO0O00 + iIii1I11I1II1
+ if 29 - 29: o0oOOo0O0Ooo + OoOoOO00 + ooOoO0o - I1ii11iIi11i
+ if 64 - 64: O0 / OoooooooOO
+ if 28 - 28: I1ii11iIi11i + oO0o . Oo0Ooo % iIii1I11I1II1 / I1Ii111
  if ( len ( queue ) == 1 and queue [ 0 ] [ 2 ] == None ) :
   dprint ( "Drop non-LISP encapsulated fragment 0x{}" . format ( lisp_hex_string ( OOoo0 ) . zfill ( 4 ) ) )
-  if 62 - 62: Ii1I . i11iIiiIii % OOooOOo
+  if 8 - 8: O0 . I1IiiI * o0oOOo0O0Ooo + I1IiiI
   return ( None )
-  if 44 - 44: i1IIi * I1ii11iIi11i % Ii1I . Ii1I * I11i + II111iiii
-  if 15 - 15: i1IIi - I11i - I1Ii111 / OoO0O00 + Oo0Ooo + I1IiiI
-  if 81 - 81: IiII
-  if 54 - 54: I1IiiI % OoO0O00 % OoOoOO00
-  if 12 - 12: II111iiii . O0 * i11iIiiIii . I11i
+  if 44 - 44: i1IIi % iII111i . i11iIiiIii / I11i + OoooooooOO
+  if 21 - 21: OoOoOO00 . OoO0O00 . OoOoOO00 + OoOoOO00
+  if 30 - 30: I1IiiI - iII111i - OOooOOo + oO0o
+  if 51 - 51: Ii1I % O0 / II111iiii . Oo0Ooo
+  if 90 - 90: i11iIiiIii * II111iiii % iIii1I11I1II1 . I1ii11iIi11i / Oo0Ooo . OOooOOo
  queue . append ( oo0O00OOOOO )
  queue = sorted ( queue )
- if 98 - 98: II111iiii + i1IIi * oO0o % I1IiiI
- if 53 - 53: i11iIiiIii . I1ii11iIi11i - OOooOOo - OOooOOo
- if 97 - 97: I1IiiI % iII111i % OoooooooOO / ooOoO0o / i11iIiiIii
- if 7 - 7: O0 % IiII / o0oOOo0O0Ooo
- IiI = lisp_address ( LISP_AFI_IPV4 , "" , 32 , 0 )
- IiI . address = socket . ntohl ( struct . unpack ( "I" , packet [ 12 : 16 ] ) [ 0 ] )
- o00O0O0 = IiI . print_address_no_iid ( )
- IiI . address = socket . ntohl ( struct . unpack ( "I" , packet [ 16 : 20 ] ) [ 0 ] )
- I111II11IIii = IiI . print_address_no_iid ( )
- IiI = red ( "{} -> {}" . format ( o00O0O0 , I111II11IIii ) , False )
- if 37 - 37: OoooooooOO % II111iiii / o0oOOo0O0Ooo . OOooOOo * I1ii11iIi11i . iIii1I11I1II1
- dprint ( "{}{} fragment, RLOCs: {}, packet 0x{}, frag-offset: 0x{}" . format ( bold ( "Received" , False ) , " non-LISP encapsulated" if oo0O00OOOOO [ 2 ] == None else "" , IiI , lisp_hex_string ( OOoo0 ) . zfill ( 4 ) ,
- # OoOoOO00 . i1IIi + Oo0Ooo / O0 - IiII
- # Oo0Ooo / ooOoO0o + II111iiii + OoooooooOO * iIii1I11I1II1
- lisp_hex_string ( Oo0ooo ) . zfill ( 4 ) ) )
- if 82 - 82: i1IIi - I11i % ooOoO0o . OoOoOO00 * o0oOOo0O0Ooo
- if 20 - 20: i11iIiiIii - O0 / i11iIiiIii
- if 51 - 51: iII111i . ooOoO0o
- if 70 - 70: I11i / O0 - I11i + o0oOOo0O0Ooo . ooOoO0o . o0oOOo0O0Ooo
- if 6 - 6: I11i + II111iiii - I1Ii111
- if ( queue [ 0 ] [ 0 ] != 0 or queue [ - 1 ] [ 3 ] == False ) : return ( None )
- IiI1 = queue [ 0 ]
- for Ii in queue [ 1 : : ] :
-  Oo0ooo = Ii [ 0 ]
-  o0o0oOo , I11iiI1iIiiII = IiI1 [ 0 ] , IiI1 [ 1 ]
-  if ( o0o0oOo + I11iiI1iIiiII != Oo0ooo ) : return ( None )
-  IiI1 = Ii
-  if 11 - 11: Oo0Ooo - o0oOOo0O0Ooo
- lisp_reassembly_queue . pop ( OOoo0 )
- if 45 - 45: ooOoO0o - oO0o - I1IiiI
- if 21 - 21: OoooooooOO
- if 28 - 28: I1ii11iIi11i + oO0o . Oo0Ooo % iIii1I11I1II1 / I1Ii111
- if 8 - 8: O0 . I1IiiI * o0oOOo0O0Ooo + I1IiiI
- if 44 - 44: i1IIi % iII111i . i11iIiiIii / I11i + OoooooooOO
- packet = queue [ 0 ] [ 2 ]
- for Ii in queue [ 1 : : ] : packet += Ii [ 2 ] [ 20 : : ]
- if 21 - 21: OoOoOO00 . OoO0O00 . OoOoOO00 + OoOoOO00
- dprint ( "{} fragments arrived for packet 0x{}, length {}" . format ( bold ( "All" , False ) , lisp_hex_string ( OOoo0 ) . zfill ( 4 ) , len ( packet ) ) )
- if 30 - 30: I1IiiI - iII111i - OOooOOo + oO0o
- if 51 - 51: Ii1I % O0 / II111iiii . Oo0Ooo
- if 90 - 90: i11iIiiIii * II111iiii % iIii1I11I1II1 . I1ii11iIi11i / Oo0Ooo . OOooOOo
  if 77 - 77: OoO0O00
  if 95 - 95: II111iiii
- i1iIii = socket . htons ( len ( packet ) )
- IiIii1iIIII = packet [ 0 : 2 ] + struct . pack ( "H" , i1iIii ) + packet [ 4 : 6 ] + struct . pack ( "H" , 0 ) + packet [ 8 : 10 ] + struct . pack ( "H" , 0 ) + packet [ 12 : 20 ]
  if 59 - 59: iIii1I11I1II1 % OOooOOo / OoOoOO00 * I1Ii111 * OoooooooOO * O0
  if 43 - 43: OoO0O00 * I1IiiI * OOooOOo * O0 - O0 / o0oOOo0O0Ooo
- IiIii1iIIII = lisp_ip_checksum ( IiIii1iIIII )
- return ( IiIii1iIIII + packet [ 20 : : ] )
- if 77 - 77: I11i % I1Ii111 . IiII % OoooooooOO * o0oOOo0O0Ooo
- if 87 - 87: iII111i + IiII / ooOoO0o * ooOoO0o * OOooOOo
- if 97 - 97: I1Ii111
- if 47 - 47: iII111i / I1ii11iIi11i - Ii1I . II111iiii
- if 56 - 56: O0 - i1IIi % o0oOOo0O0Ooo + IiII
- if 42 - 42: o0oOOo0O0Ooo . OOooOOo % I11i - OoOoOO00
- if 38 - 38: OoooooooOO
- if 27 - 27: O0 + I1ii11iIi11i % Ii1I . i1IIi + OoO0O00 + OoOoOO00
-def lisp_get_crypto_decap_lookup_key ( addr , port ) :
- O0O0 = addr . print_address_no_iid ( ) + ":" + str ( port )
- if ( O0O0 in lisp_crypto_keys_by_rloc_decap ) : return ( O0O0 )
- if 22 - 22: II111iiii / I1IiiI + o0oOOo0O0Ooo * I1IiiI . OoooooooOO * OOooOOo
- O0O0 = addr . print_address_no_iid ( )
- if ( O0O0 in lisp_crypto_keys_by_rloc_decap ) : return ( O0O0 )
- if 49 - 49: I1ii11iIi11i * I1IiiI + OOooOOo + i11iIiiIii * I1ii11iIi11i . o0oOOo0O0Ooo
- if 36 - 36: o0oOOo0O0Ooo - i11iIiiIii
- if 37 - 37: O0 + IiII + I1IiiI
- if 50 - 50: OoooooooOO . I1Ii111
- if 100 - 100: ooOoO0o * ooOoO0o - Ii1I
- for I1OO in lisp_crypto_keys_by_rloc_decap :
-  OO0O00o0 = I1OO . split ( ":" )
-  if ( len ( OO0O00o0 ) == 1 ) : continue
-  OO0O00o0 = OO0O00o0 [ 0 ] if len ( OO0O00o0 ) == 2 else ":" . join ( OO0O00o0 [ 0 : - 1 ] )
-  if ( OO0O00o0 == O0O0 ) :
-   iI1iiiiiii = lisp_crypto_keys_by_rloc_decap [ I1OO ]
-   lisp_crypto_keys_by_rloc_decap [ O0O0 ] = iI1iiiiiii
-   return ( O0O0 )
-   if 8 - 8: iIii1I11I1II1 - o0oOOo0O0Ooo
-   if 68 - 68: Ii1I % o0oOOo0O0Ooo / OoooooooOO + Ii1I - Ii1I
- return ( None )
- if 79 - 79: II111iiii / IiII
- if 4 - 4: O0 - i11iIiiIii % ooOoO0o * O0 - ooOoO0o
- if 96 - 96: oO0o % II111iiii . Ii1I % OoO0O00 . iIii1I11I1II1 / IiII
+ IiI = lisp_address ( LISP_AFI_IPV4 , "" , 32 , 0 )
+ IiI . address = socket . ntohl ( struct . unpack ( "I" , packet [ 12 : 16 ] ) [ 0 ] )
+ O0o0000oO0 = IiI . print_address_no_iid ( )
+ IiI . address = socket . ntohl ( struct . unpack ( "I" , packet [ 16 : 20 ] ) [ 0 ] )
+ oo0000000o0O = IiI . print_address_no_iid ( )
+ IiI = red ( "{} -> {}" . format ( O0o0000oO0 , oo0000000o0O ) , False )
+ if 56 - 56: oO0o % I1ii11iIi11i
+ dprint ( "{}{} fragment, RLOCs: {}, packet 0x{}, frag-offset: 0x{}" . format ( bold ( "Received" , False ) , " non-LISP encapsulated" if oo0O00OOOOO [ 2 ] == None else "" , IiI , lisp_hex_string ( OOoo0 ) . zfill ( 4 ) ,
+ # Ii1I
+ # o0oOOo0O0Ooo - I1ii11iIi11i
+ lisp_hex_string ( Oo0ooo ) . zfill ( 4 ) ) )
+ if 6 - 6: OoO0O00 / IiII - I1ii11iIi11i + o0oOOo0O0Ooo . OOooOOo
+ if 70 - 70: OoOoOO00 % iIii1I11I1II1 + II111iiii / IiII
+ if 46 - 46: I11i
+ if 58 - 58: Ii1I
+ if 35 - 35: OoO0O00 + OoOoOO00
+ if ( queue [ 0 ] [ 0 ] != 0 or queue [ - 1 ] [ 3 ] == False ) : return ( None )
+ IiIi1 = queue [ 0 ]
+ for Ii in queue [ 1 : : ] :
+  Oo0ooo = Ii [ 0 ]
+  o0o0O , OOoO00oo = IiIi1 [ 0 ] , IiIi1 [ 1 ]
+  if ( o0o0O + OOoO00oo != Oo0ooo ) : return ( None )
+  IiIi1 = Ii
+  if 56 - 56: II111iiii + o0oOOo0O0Ooo - Oo0Ooo . OoO0O00
+ lisp_reassembly_queue . pop ( OOoo0 )
+ if 43 - 43: OoO0O00
+ if 88 - 88: I1IiiI + OoooooooOO
+ if 19 - 19: Oo0Ooo * ooOoO0o * ooOoO0o - iIii1I11I1II1 % O0 * iII111i
+ if 100 - 100: OoO0O00 . i1IIi . iIii1I11I1II1 - OOooOOo - Ii1I
+ if 67 - 67: o0oOOo0O0Ooo / OoooooooOO + Ii1I - Ii1I % II111iiii
+ packet = queue [ 0 ] [ 2 ]
+ for Ii in queue [ 1 : : ] : packet += Ii [ 2 ] [ 20 : : ]
+ if 25 - 25: i11iIiiIii * Ii1I
+ dprint ( "{} fragments arrived for packet 0x{}, length {}" . format ( bold ( "All" , False ) , lisp_hex_string ( OOoo0 ) . zfill ( 4 ) , len ( packet ) ) )
+ if 58 - 58: Ii1I
+ if 5 - 5: oO0o * ooOoO0o . ooOoO0o * oO0o % II111iiii . iII111i
+ if 80 - 80: OoO0O00
+ if 19 - 19: IiII
  if 96 - 96: o0oOOo0O0Ooo / O0 . iIii1I11I1II1 . Ii1I % OOooOOo % II111iiii
+ i1iIii = socket . htons ( len ( packet ) )
+ IiIii1iIIII = packet [ 0 : 2 ] + struct . pack ( "H" , i1iIii ) + packet [ 4 : 6 ] + struct . pack ( "H" , 0 ) + packet [ 8 : 10 ] + struct . pack ( "H" , 0 ) + packet [ 12 : 20 ]
  if 5 - 5: OoooooooOO / I1Ii111 % I1Ii111 / I1IiiI
  if 19 - 19: I1IiiI - ooOoO0o % IiII - o0oOOo0O0Ooo * OOooOOo + I1ii11iIi11i
+ IiIii1iIIII = lisp_ip_checksum ( IiIii1iIIII )
+ return ( IiIii1iIIII + packet [ 20 : : ] )
  if 44 - 44: i1IIi
  if 85 - 85: I1ii11iIi11i / IiII + oO0o
  if 95 - 95: IiII . OoO0O00
  if 36 - 36: IiII % Ii1I - OoOoOO00 + OoO0O00 + IiII * Ii1I
  if 15 - 15: I1IiiI / O0 % I1ii11iIi11i % OoOoOO00 . OoOoOO00 + iII111i
+ if 79 - 79: OOooOOo + Ii1I . I1Ii111 / Oo0Ooo / i11iIiiIii / O0
+ if 28 - 28: i1IIi % OoO0O00 / i1IIi - o0oOOo0O0Ooo
+ if 97 - 97: II111iiii + O0 . Ii1I + OoooooooOO
+def lisp_get_crypto_decap_lookup_key ( addr , port ) :
+ O0O0 = addr . print_address_no_iid ( ) + ":" + str ( port )
+ if ( O0O0 in lisp_crypto_keys_by_rloc_decap ) : return ( O0O0 )
+ if 39 - 39: i11iIiiIii + OoO0O00 + I11i * oO0o + iIii1I11I1II1 % o0oOOo0O0Ooo
+ O0O0 = addr . print_address_no_iid ( )
+ if ( O0O0 in lisp_crypto_keys_by_rloc_decap ) : return ( O0O0 )
+ if 25 - 25: OoooooooOO
+ if 78 - 78: oO0o / i11iIiiIii * O0 / OOooOOo % i11iIiiIii % O0
+ if 86 - 86: IiII
+ if 26 - 26: IiII - I1Ii111 + i11iIiiIii % ooOoO0o * i11iIiiIii + Oo0Ooo
+ if 39 - 39: Ii1I - i1IIi + i11iIiiIii
+ for i1I1IIIIIii1 in lisp_crypto_keys_by_rloc_decap :
+  OO0O00o0 = i1I1IIIIIii1 . split ( ":" )
+  if ( len ( OO0O00o0 ) == 1 ) : continue
+  OO0O00o0 = OO0O00o0 [ 0 ] if len ( OO0O00o0 ) == 2 else ":" . join ( OO0O00o0 [ 0 : - 1 ] )
+  if ( OO0O00o0 == O0O0 ) :
+   iI1iiiiiii = lisp_crypto_keys_by_rloc_decap [ i1I1IIIIIii1 ]
+   lisp_crypto_keys_by_rloc_decap [ O0O0 ] = iI1iiiiiii
+   return ( O0O0 )
+   if 64 - 64: OoOoOO00
+   if 37 - 37: ooOoO0o - oO0o - i1IIi
+ return ( None )
+ if 55 - 55: IiII % IiII * i1IIi . II111iiii + II111iiii
+ if 33 - 33: OoO0O00 % OoooooooOO * ooOoO0o * O0 % IiII % O0
+ if 76 - 76: I1ii11iIi11i - OOooOOo + o0oOOo0O0Ooo % Ii1I * Oo0Ooo + Ii1I
+ if 1 - 1: Oo0Ooo * I1Ii111
+ if 95 - 95: iIii1I11I1II1 - O0 - IiII * OoO0O00
+ if 9 - 9: Ii1I
+ if 58 - 58: OoooooooOO + OoO0O00 . I1IiiI % OoOoOO00 / Ii1I
+ if 32 - 32: IiII
+ if 52 - 52: O0
+ if 60 - 60: OoooooooOO % OoooooooOO . II111iiii / iIii1I11I1II1
+ if 82 - 82: o0oOOo0O0Ooo / ooOoO0o . I1IiiI + ooOoO0o
 def lisp_build_crypto_decap_lookup_key ( addr , port ) :
  addr = addr . print_address_no_iid ( )
- OOo0o0o = addr + ":" + str ( port )
- if 37 - 37: O0 . II111iiii
+ oO00o0 = addr + ":" + str ( port )
+ if 99 - 99: O0 + I1Ii111 - I1Ii111 + iII111i
  if ( lisp_i_am_rtr ) :
   if ( addr in lisp_rloc_probe_list ) : return ( addr )
-  if 56 - 56: II111iiii / oO0o + o0oOOo0O0Ooo / OOooOOo * OoO0O00
-  if 29 - 29: O0
-  if 43 - 43: Oo0Ooo / OoO0O00 * Oo0Ooo . IiII + I11i
-  if 46 - 46: iIii1I11I1II1 % i1IIi - OoooooooOO . Ii1I
-  if 91 - 91: iII111i - i11iIiiIii
-  if 27 - 27: iII111i
+  if 4 - 4: i1IIi
+  if 43 - 43: oO0o * ooOoO0o - I11i
+  if 70 - 70: oO0o / Ii1I
+  if 15 - 15: iIii1I11I1II1 % ooOoO0o % i11iIiiIii
+  if 16 - 16: iII111i
+  if 50 - 50: iIii1I11I1II1 - II111iiii % i1IIi
   for iII1ii1 in list ( lisp_nat_state_info . values ( ) ) :
    for Iiii1iiI in iII1ii1 :
-    if ( addr == Iiii1iiI . address ) : return ( OOo0o0o )
-    if 66 - 66: O0 . iIii1I11I1II1 * II111iiii * OOooOOo * IiII
-    if 44 - 44: i11iIiiIii % ooOoO0o * i11iIiiIii + Oo0Ooo + I1ii11iIi11i + Ii1I
+    if ( addr == Iiii1iiI . address ) : return ( oO00o0 )
+    if 48 - 48: O0
+    if 60 - 60: ooOoO0o - IiII % i1IIi
   return ( addr )
-  if 43 - 43: i1IIi . iIii1I11I1II1
- return ( OOo0o0o )
- if 86 - 86: OOooOOo + OoOoOO00 - OoO0O00 + i1IIi + iIii1I11I1II1
- if 68 - 68: OoOoOO00 . I1IiiI + ooOoO0o - o0oOOo0O0Ooo
- if 62 - 62: Ii1I - OOooOOo
- if 88 - 88: iIii1I11I1II1 * Oo0Ooo / II111iiii / IiII / OoO0O00 % ooOoO0o
- if 19 - 19: I11i * iII111i . O0 * iII111i % I1ii11iIi11i - OoOoOO00
- if 68 - 68: I1Ii111 - OoO0O00 % Ii1I + i1IIi . ooOoO0o
- if 36 - 36: oO0o * iIii1I11I1II1 - O0 - IiII * O0 + i11iIiiIii
-def lisp_set_ttl ( lisp_socket , ttl ) :
- try :
-  lisp_socket . setsockopt ( socket . SOL_IP , socket . IP_TTL , ttl )
-  lisp_socket . setsockopt ( socket . SOL_IP , socket . IP_MULTICAST_TTL , ttl )
- except :
-  lprint ( "socket.setsockopt(IP_TTL) not supported" )
-  pass
-  if 76 - 76: OoO0O00 % O0 / Ii1I + I1IiiI
- return
- if 23 - 23: I1IiiI % IiII . o0oOOo0O0Ooo
- if 2 - 2: I1ii11iIi11i
- if 51 - 51: iIii1I11I1II1 / II111iiii / iIii1I11I1II1 / oO0o % i1IIi
- if 54 - 54: ooOoO0o
- if 47 - 47: I11i * I1IiiI / oO0o
- if 98 - 98: Ii1I / oO0o * O0 + I1Ii111 - I1Ii111 + iII111i
- if 4 - 4: i1IIi
-def lisp_is_rloc_probe_request ( lisp_type ) :
- lisp_type = struct . unpack ( "B" , lisp_type ) [ 0 ]
- return ( lisp_type == 0x12 )
- if 43 - 43: oO0o * ooOoO0o - I11i
- if 70 - 70: oO0o / Ii1I
- if 15 - 15: iIii1I11I1II1 % ooOoO0o % i11iIiiIii
- if 16 - 16: iII111i
- if 50 - 50: iIii1I11I1II1 - II111iiii % i1IIi
- if 48 - 48: O0
- if 60 - 60: ooOoO0o - IiII % i1IIi
-def lisp_is_rloc_probe_reply ( lisp_type ) :
- lisp_type = struct . unpack ( "B" , lisp_type ) [ 0 ]
- return ( lisp_type == 0x28 )
- if 5 - 5: oO0o
+  if 5 - 5: oO0o
+ return ( oO00o0 )
  if 29 - 29: i1IIi . OoOoOO00 . i1IIi + oO0o . I1Ii111 + O0
  if 62 - 62: I1ii11iIi11i . IiII + OoO0O00 - OoOoOO00 * O0 + I1Ii111
  if 58 - 58: oO0o . OoO0O00 / ooOoO0o
@@ -18963,7 +18942,15 @@ def lisp_is_rloc_probe_reply ( lisp_type ) :
  if 27 - 27: ooOoO0o / i1IIi . oO0o - OoooooooOO
  if 48 - 48: ooOoO0o % ooOoO0o / OoooooooOO + i1IIi * oO0o + ooOoO0o
  if 69 - 69: iII111i . iII111i
- if 46 - 46: IiII * Oo0Ooo + I1Ii111
+def lisp_set_ttl ( lisp_socket , ttl ) :
+ try :
+  lisp_socket . setsockopt ( socket . SOL_IP , socket . IP_TTL , ttl )
+  lisp_socket . setsockopt ( socket . SOL_IP , socket . IP_MULTICAST_TTL , ttl )
+ except :
+  lprint ( "socket.setsockopt(IP_TTL) not supported" )
+  pass
+  if 46 - 46: IiII * Oo0Ooo + I1Ii111
+ return
  if 79 - 79: IiII
  if 89 - 89: IiII * I11i + I1ii11iIi11i * oO0o - II111iiii
  if 58 - 58: ooOoO0o . I1Ii111 / i1IIi % I1ii11iIi11i + o0oOOo0O0Ooo
@@ -18971,18 +18958,47 @@ def lisp_is_rloc_probe_reply ( lisp_type ) :
  if 94 - 94: i11iIiiIii - OOooOOo - O0 * OoooooooOO - ooOoO0o
  if 35 - 35: iII111i . i11iIiiIii - OOooOOo % Oo0Ooo + Ii1I . iIii1I11I1II1
  if 91 - 91: o0oOOo0O0Ooo / OoO0O00 + I1IiiI % i11iIiiIii % i1IIi
+def lisp_is_rloc_probe_request ( lisp_type ) :
+ lisp_type = struct . unpack ( "B" , lisp_type ) [ 0 ]
+ return ( lisp_type == 0x12 )
  if 22 - 22: I1Ii111 * O0 % OoO0O00 * I1ii11iIi11i
  if 47 - 47: OoO0O00 / OOooOOo / OoOoOO00 % i11iIiiIii / OoOoOO00
  if 52 - 52: ooOoO0o / I11i % i11iIiiIii - I1Ii111 % ooOoO0o - o0oOOo0O0Ooo
+ if 67 - 67: OoOoOO00 / I1Ii111 + i11iIiiIii - IiII
+ if 79 - 79: I11i . I11i - OoOoOO00
+ if 86 - 86: OoO0O00 * Oo0Ooo . iIii1I11I1II1 * O0
+ if 52 - 52: iII111i - i11iIiiIii + o0oOOo0O0Ooo + i1IIi
+def lisp_is_rloc_probe_reply ( lisp_type ) :
+ lisp_type = struct . unpack ( "B" , lisp_type ) [ 0 ]
+ return ( lisp_type == 0x28 )
+ if 58 - 58: OOooOOo - Ii1I * I1Ii111 - O0 . oO0o
+ if 72 - 72: i1IIi * iII111i * Ii1I / o0oOOo0O0Ooo . I1Ii111 + i11iIiiIii
+ if 33 - 33: I11i / OoO0O00 * ooOoO0o + iIii1I11I1II1
+ if 54 - 54: Oo0Ooo / IiII + i11iIiiIii . O0
+ if 94 - 94: OoooooooOO + iII111i * OoooooooOO / o0oOOo0O0Ooo
+ if 12 - 12: iIii1I11I1II1 / iIii1I11I1II1 / II111iiii
+ if 93 - 93: oO0o
+ if 53 - 53: OoO0O00 * i1IIi / Oo0Ooo / OoO0O00 * ooOoO0o
+ if 77 - 77: iIii1I11I1II1 % I1IiiI + o0oOOo0O0Ooo + I1Ii111 * Oo0Ooo * i1IIi
+ if 14 - 14: iIii1I11I1II1 * iIii1I11I1II1 - OOooOOo . iII111i / ooOoO0o
+ if 54 - 54: OoOoOO00 - I1IiiI - iII111i
+ if 49 - 49: i11iIiiIii * Oo0Ooo
+ if 100 - 100: Oo0Ooo * oO0o
+ if 85 - 85: OoooooooOO . IiII / IiII . ooOoO0o . IiII % II111iiii
+ if 65 - 65: oO0o - OoO0O00 / iII111i + ooOoO0o
+ if 80 - 80: o0oOOo0O0Ooo + II111iiii * Ii1I % OoOoOO00 % I1IiiI + I1ii11iIi11i
+ if 46 - 46: Oo0Ooo / Oo0Ooo % iII111i % I1IiiI
+ if 85 - 85: OoO0O00 - Ii1I / O0
+ if 45 - 45: IiII + I1Ii111 / I11i
 def lisp_is_rloc_probe ( packet , rr ) :
  O0I1II1 = ( struct . unpack ( "B" , packet [ 9 : 10 ] ) [ 0 ] == 17 )
  if ( O0I1II1 == False ) : return ( [ packet , None , None , None ] )
- if 67 - 67: OoOoOO00 / I1Ii111 + i11iIiiIii - IiII
+ if 84 - 84: iII111i % II111iiii
  oooooO0oO0ooO = struct . unpack ( "H" , packet [ 20 : 22 ] ) [ 0 ]
  iIII1IiI = struct . unpack ( "H" , packet [ 22 : 24 ] ) [ 0 ]
- o0O0O0OoO = ( socket . htons ( LISP_CTRL_PORT ) in [ oooooO0oO0ooO , iIII1IiI ] )
- if ( o0O0O0OoO == False ) : return ( [ packet , None , None , None ] )
- if 92 - 92: O0
+ O0oo0oOO0o = ( socket . htons ( LISP_CTRL_PORT ) in [ oooooO0oO0ooO , iIII1IiI ] )
+ if ( O0oo0oOO0o == False ) : return ( [ packet , None , None , None ] )
+ if 67 - 67: I1Ii111 % OoOoOO00 - I11i - i1IIi
  if ( rr == 0 ) :
   Oooooo0OOO = lisp_is_rloc_probe_request ( packet [ 28 : 29 ] )
   if ( Oooooo0OOO == False ) : return ( [ packet , None , None , None ] )
@@ -18994,94 +19010,67 @@ def lisp_is_rloc_probe ( packet , rr ) :
   if ( Oooooo0OOO == False ) :
    Oooooo0OOO = lisp_is_rloc_probe_reply ( packet [ 28 : 29 ] )
    if ( Oooooo0OOO == False ) : return ( [ packet , None , None , None ] )
-   if 52 - 52: iII111i - i11iIiiIii + o0oOOo0O0Ooo + i1IIi
-   if 58 - 58: OOooOOo - Ii1I * I1Ii111 - O0 . oO0o
-   if 72 - 72: i1IIi * iII111i * Ii1I / o0oOOo0O0Ooo . I1Ii111 + i11iIiiIii
-   if 33 - 33: I11i / OoO0O00 * ooOoO0o + iIii1I11I1II1
-   if 54 - 54: Oo0Ooo / IiII + i11iIiiIii . O0
-   if 94 - 94: OoooooooOO + iII111i * OoooooooOO / o0oOOo0O0Ooo
+   if 45 - 45: I1IiiI / Ii1I % oO0o
+   if 31 - 31: IiII . IiII + OOooOOo . I11i - O0
+   if 100 - 100: IiII % o0oOOo0O0Ooo . Ii1I + O0
+   if 73 - 73: II111iiii . Ii1I
+   if 45 - 45: I1ii11iIi11i * I11i
+   if 94 - 94: Oo0Ooo % I11i * i11iIiiIii % I1ii11iIi11i
  O0oo0OoO0oo = lisp_address ( LISP_AFI_IPV4 , "" , 32 , 0 )
  O0oo0OoO0oo . address = socket . ntohl ( struct . unpack ( "I" , packet [ 12 : 16 ] ) [ 0 ] )
- if 12 - 12: iIii1I11I1II1 / iIii1I11I1II1 / II111iiii
- if 93 - 93: oO0o
- if 53 - 53: OoO0O00 * i1IIi / Oo0Ooo / OoO0O00 * ooOoO0o
- if 77 - 77: iIii1I11I1II1 % I1IiiI + o0oOOo0O0Ooo + I1Ii111 * Oo0Ooo * i1IIi
+ if 70 - 70: II111iiii + Oo0Ooo * I11i % OoooooooOO * ooOoO0o - II111iiii
+ if 74 - 74: iIii1I11I1II1 - I1ii11iIi11i * Ii1I * I1Ii111 + i11iIiiIii
+ if 50 - 50: OoO0O00
+ if 48 - 48: Oo0Ooo
  if ( O0oo0OoO0oo . is_local ( ) ) : return ( [ None , None , None , None ] )
- if 14 - 14: iIii1I11I1II1 * iIii1I11I1II1 - OOooOOo . iII111i / ooOoO0o
- if 54 - 54: OoOoOO00 - I1IiiI - iII111i
- if 49 - 49: i11iIiiIii * Oo0Ooo
- if 100 - 100: Oo0Ooo * oO0o
+ if 99 - 99: i1IIi + II111iiii - I1Ii111
+ if 9 - 9: O0 % OOooOOo / i1IIi + II111iiii % iIii1I11I1II1
+ if 99 - 99: Ii1I * o0oOOo0O0Ooo / i11iIiiIii * OOooOOo * I1ii11iIi11i + OOooOOo
+ if 48 - 48: I1ii11iIi11i + iIii1I11I1II1 + I1Ii111 - I1Ii111 - ooOoO0o % Oo0Ooo
  O0oo0OoO0oo = O0oo0OoO0oo . print_address_no_iid ( )
  ooO0 = socket . ntohs ( struct . unpack ( "H" , packet [ 20 : 22 ] ) [ 0 ] )
  O0O00O = struct . unpack ( "B" , packet [ 8 : 9 ] ) [ 0 ] - 1
  packet = packet [ 28 : : ]
- if 85 - 85: OoooooooOO . IiII / IiII . ooOoO0o . IiII % II111iiii
+ if 69 - 69: i11iIiiIii % Ii1I * O0 / IiII + IiII
  iiiI1I = bold ( "Receive(pcap)" , False )
  o0OoO0 = bold ( "from " + O0oo0OoO0oo , False )
  iIIiiIi = lisp_format_packet ( packet )
  lprint ( "{} {} bytes {} {}, packet: {}" . format ( iiiI1I , len ( packet ) , o0OoO0 , ooO0 , iIIiiIi ) )
- if 65 - 65: oO0o - OoO0O00 / iII111i + ooOoO0o
+ if 45 - 45: O0 * Ii1I % oO0o
  return ( [ packet , O0oo0OoO0oo , ooO0 , O0O00O ] )
- if 80 - 80: o0oOOo0O0Ooo + II111iiii * Ii1I % OoOoOO00 % I1IiiI + I1ii11iIi11i
- if 46 - 46: Oo0Ooo / Oo0Ooo % iII111i % I1IiiI
- if 85 - 85: OoO0O00 - Ii1I / O0
- if 45 - 45: IiII + I1Ii111 / I11i
- if 84 - 84: iII111i % II111iiii
- if 86 - 86: IiII % II111iiii / i1IIi * I1ii11iIi11i - O0 * OOooOOo
- if 53 - 53: OOooOOo * oO0o + i1IIi % Oo0Ooo + II111iiii
- if 34 - 34: oO0o % iII111i / IiII . IiII + i11iIiiIii
- if 68 - 68: O0 % oO0o * IiII % O0
- if 55 - 55: O0 % I1IiiI % O0
- if 27 - 27: I1IiiI + I1ii11iIi11i * I1Ii111 % Ii1I - Oo0Ooo
-def lisp_ipc_write_xtr_parameters ( cp , dp ) :
- if ( lisp_ipc_dp_socket == None ) : return
- if 87 - 87: i11iIiiIii % OOooOOo - OoOoOO00 * ooOoO0o / Oo0Ooo
- OO = { "type" : "xtr-parameters" , "control-plane-logging" : cp ,
- "data-plane-logging" : dp , "rtr" : lisp_i_am_rtr }
- if 74 - 74: OoooooooOO * ooOoO0o - I11i / I1ii11iIi11i % iIii1I11I1II1
- lisp_write_to_dp_socket ( OO )
- return
- if 94 - 94: Ii1I * I1Ii111 + OoOoOO00 . iIii1I11I1II1
- if 44 - 44: Oo0Ooo . Oo0Ooo * Oo0Ooo
- if 23 - 23: I1Ii111 / iII111i . O0 % II111iiii
- if 67 - 67: I11i / iIii1I11I1II1 / ooOoO0o
- if 90 - 90: II111iiii % I1Ii111 - IiII . Oo0Ooo % OOooOOo - OoOoOO00
- if 89 - 89: Oo0Ooo - I1ii11iIi11i . I1Ii111
- if 65 - 65: ooOoO0o % OOooOOo + OOooOOo % I1Ii111 . I1IiiI % O0
- if 46 - 46: OoO0O00 * I1Ii111 + iII111i . oO0o % OOooOOo / i11iIiiIii
-def lisp_external_data_plane ( ) :
- oO00o00 = 'egrep "ipc-data-plane = yes" ./lisp.config'
- if ( getoutput ( oO00o00 ) != "" ) : return ( True )
- if 1 - 1: I1ii11iIi11i % O0 - I1ii11iIi11i / OoooooooOO / OoO0O00
- if ( os . getenv ( "LISP_RUN_LISP_XTR" ) != None ) : return ( True )
- return ( False )
- if 82 - 82: i1IIi % Ii1I
- if 85 - 85: I1Ii111 * i11iIiiIii * iIii1I11I1II1 % iIii1I11I1II1
- if 64 - 64: OoO0O00 / Ii1I
- if 79 - 79: Ii1I % OOooOOo
- if 39 - 39: I1ii11iIi11i / Ii1I - II111iiii . i1IIi
- if 59 - 59: II111iiii
+ if 18 - 18: i11iIiiIii . Ii1I % I1ii11iIi11i - OoooooooOO . I1ii11iIi11i
+ if 19 - 19: iII111i + I1IiiI
+ if 71 - 71: iII111i % o0oOOo0O0Ooo
+ if 91 - 91: i11iIiiIii * iIii1I11I1II1 % oO0o . II111iiii / Ii1I + Ii1I
+ if 32 - 32: OOooOOo % OOooOOo + I1ii11iIi11i / Ii1I - i11iIiiIii
+ if 28 - 28: iIii1I11I1II1 - II111iiii
  if 36 - 36: ooOoO0o . II111iiii - OoOoOO00 % I1ii11iIi11i * O0
  if 91 - 91: iII111i + Oo0Ooo / OoooooooOO * iIii1I11I1II1 - OoO0O00
  if 73 - 73: iIii1I11I1II1 % I1Ii111 % II111iiii * Oo0Ooo * OoO0O00
  if 48 - 48: OOooOOo * i11iIiiIii - i11iIiiIii + iIii1I11I1II1 + I1IiiI % OoooooooOO
  if 61 - 61: i1IIi
+def lisp_ipc_write_xtr_parameters ( cp , dp ) :
+ if ( lisp_ipc_dp_socket == None ) : return
  if 56 - 56: iIii1I11I1II1 / I11i * iII111i * I11i * OoooooooOO
+ OO = { "type" : "xtr-parameters" , "control-plane-logging" : cp ,
+ "data-plane-logging" : dp , "rtr" : lisp_i_am_rtr }
  if 44 - 44: I1ii11iIi11i - OOooOOo % I11i - I1Ii111 / iIii1I11I1II1 - OOooOOo
- if 38 - 38: iIii1I11I1II1 - OoooooooOO * II111iiii . OoooooooOO + OOooOOo
-def lisp_process_data_plane_restart ( do_clear = False ) :
- os . system ( "touch ./lisp.config" )
- if 59 - 59: OoooooooOO
- i11I1 = { "type" : "entire-map-cache" , "entries" : [ ] }
- if 96 - 96: I11i % o0oOOo0O0Ooo + i1IIi % II111iiii
- if ( do_clear == False ) :
-  OOo00O = i11I1 [ "entries" ]
-  lisp_map_cache . walk_cache ( lisp_ipc_walk_map_cache , OOo00O )
-  if 96 - 96: o0oOOo0O0Ooo / i1IIi
-  if 42 - 42: Oo0Ooo - Oo0Ooo % O0 - OoO0O00
- lisp_write_to_dp_socket ( i11I1 )
+ lisp_write_to_dp_socket ( OO )
  return
+ if 38 - 38: iIii1I11I1II1 - OoooooooOO * II111iiii . OoooooooOO + OOooOOo
+ if 59 - 59: OoooooooOO
+ if 22 - 22: II111iiii
+ if 85 - 85: I1Ii111 + I1ii11iIi11i * I11i % o0oOOo0O0Ooo + Ii1I
+ if 23 - 23: IiII * OoO0O00
+ if 42 - 42: IiII
+ if 83 - 83: i1IIi * o0oOOo0O0Ooo / OoO0O00 / o0oOOo0O0Ooo
+ if 55 - 55: Oo0Ooo % O0 - OoO0O00
+def lisp_external_data_plane ( ) :
+ oO00o00 = 'egrep "ipc-data-plane = yes" ./lisp.config'
+ if ( getoutput ( oO00o00 ) != "" ) : return ( True )
  if 42 - 42: OoooooooOO * OOooOOo
+ if ( os . getenv ( "LISP_RUN_LISP_XTR" ) != None ) : return ( True )
+ return ( False )
  if 93 - 93: OOooOOo + II111iiii . oO0o * Oo0Ooo - O0 + I1Ii111
  if 99 - 99: OoO0O00 * o0oOOo0O0Ooo + OoOoOO00 * iIii1I11I1II1
  if 38 - 38: I1ii11iIi11i - OOooOOo * O0 - I1ii11iIi11i
@@ -19095,440 +19084,419 @@ def lisp_process_data_plane_restart ( do_clear = False ) :
  if 7 - 7: ooOoO0o
  if 83 - 83: oO0o / I1Ii111 + I1Ii111 * I1ii11iIi11i
  if 8 - 8: I11i . I1ii11iIi11i % i1IIi + Ii1I
+ if 63 - 63: I1IiiI / OoooooooOO
+def lisp_process_data_plane_restart ( do_clear = False ) :
+ os . system ( "touch ./lisp.config" )
+ if 16 - 16: OoOoOO00
+ oo0II1I11ii1iI = { "type" : "entire-map-cache" , "entries" : [ ] }
+ if 90 - 90: oO0o * Oo0Ooo * oO0o . Ii1I * i1IIi
+ if ( do_clear == False ) :
+  iIi1i1iIi1 = oo0II1I11ii1iI [ "entries" ]
+  lisp_map_cache . walk_cache ( lisp_ipc_walk_map_cache , iIi1i1iIi1 )
+  if 60 - 60: iIii1I11I1II1 + OoooooooOO - OoO0O00
+  if 44 - 44: O0 . OOooOOo . o0oOOo0O0Ooo . I1ii11iIi11i - II111iiii
+ lisp_write_to_dp_socket ( oo0II1I11ii1iI )
+ return
+ if 71 - 71: I1ii11iIi11i + o0oOOo0O0Ooo . i11iIiiIii * oO0o . i1IIi
+ if 40 - 40: OoO0O00 - IiII
+ if 43 - 43: I1Ii111 + i11iIiiIii % iII111i % I1Ii111 - ooOoO0o
+ if 85 - 85: IiII % iIii1I11I1II1 . I1Ii111
+ if 38 - 38: iII111i - I1IiiI / ooOoO0o
+ if 46 - 46: OOooOOo . O0 / i11iIiiIii . OOooOOo
+ if 19 - 19: I11i / Oo0Ooo + I1Ii111
+ if 43 - 43: I1ii11iIi11i
+ if 18 - 18: I11i / OOooOOo % I11i - o0oOOo0O0Ooo
+ if 22 - 22: iII111i
+ if 88 - 88: I11i + OoOoOO00 % IiII % OoO0O00 * O0 / OoooooooOO
+ if 83 - 83: IiII + I1Ii111 . I1ii11iIi11i * iIii1I11I1II1
+ if 9 - 9: ooOoO0o % IiII - OoOoOO00
+ if 66 - 66: oO0o % Oo0Ooo
 def lisp_process_data_plane_stats ( msg , lisp_sockets , lisp_port ) :
  if ( "entries" not in msg ) :
   lprint ( "No 'entries' in stats IPC message" )
   return
-  if 63 - 63: I1IiiI / OoooooooOO
+  if 40 - 40: i11iIiiIii . O0 * I11i - oO0o / OOooOOo . oO0o
  if ( type ( msg [ "entries" ] ) != list ) :
   lprint ( "'entries' in stats IPC message must be an array" )
   return
-  if 16 - 16: OoOoOO00
-  if 67 - 67: O0 . I1Ii111
+  if 86 - 86: OOooOOo - I1Ii111 * IiII - i1IIi + ooOoO0o + I11i
+  if 32 - 32: IiII
  for msg in msg [ "entries" ] :
   if ( "eid-prefix" not in msg ) :
    lprint ( "No 'eid-prefix' in stats IPC message" )
    continue
-   if 42 - 42: OoOoOO00 % I1ii11iIi11i * I1Ii111 * i1IIi . i1IIi % OOooOOo
+   if 99 - 99: II111iiii
   i1iiii = msg [ "eid-prefix" ]
-  if 90 - 90: oO0o * Oo0Ooo * oO0o . Ii1I * i1IIi
+  if 34 - 34: OOooOOo + OoOoOO00 * o0oOOo0O0Ooo + I1ii11iIi11i + IiII * i1IIi
   if ( "instance-id" not in msg ) :
    lprint ( "No 'instance-id' in stats IPC message" )
    continue
-   if 47 - 47: OOooOOo
+   if 73 - 73: I1ii11iIi11i - IiII - O0 . oO0o + Oo0Ooo % iII111i
   oooo = int ( msg [ "instance-id" ] )
-  if 38 - 38: I11i
-  if 15 - 15: OoO0O00 / ooOoO0o . OoO0O00 - iIii1I11I1II1 + OoooooooOO - OoO0O00
-  if 44 - 44: O0 . OOooOOo . o0oOOo0O0Ooo . I1ii11iIi11i - II111iiii
-  if 71 - 71: I1ii11iIi11i + o0oOOo0O0Ooo . i11iIiiIii * oO0o . i1IIi
+  if 68 - 68: I1ii11iIi11i - OoooooooOO
+  if 5 - 5: I1ii11iIi11i * I1IiiI + OoooooooOO / Oo0Ooo
+  if 18 - 18: OoO0O00 * iII111i % I1IiiI . OOooOOo * o0oOOo0O0Ooo
+  if 58 - 58: iII111i . IiII + iIii1I11I1II1
   o0Ooo0Oooo0o = lisp_address ( LISP_AFI_NONE , "" , 0 , oooo )
   o0Ooo0Oooo0o . store_prefix ( i1iiii )
   I11iiI1III = lisp_map_cache_lookup ( None , o0Ooo0Oooo0o )
   if ( I11iiI1III == None ) :
    lprint ( "Map-cache entry for {} not found for stats update" . format ( i1iiii ) )
-   if 40 - 40: OoO0O00 - IiII
+   if 13 - 13: oO0o * I1Ii111 / I1Ii111 . I1IiiI
    continue
-   if 43 - 43: I1Ii111 + i11iIiiIii % iII111i % I1Ii111 - ooOoO0o
-   if 85 - 85: IiII % iIii1I11I1II1 . I1Ii111
+   if 93 - 93: I11i % OoOoOO00 - OOooOOo + iIii1I11I1II1 / OoooooooOO % i11iIiiIii
+   if 90 - 90: oO0o % iIii1I11I1II1 + o0oOOo0O0Ooo - I11i / i11iIiiIii
   if ( "rlocs" not in msg ) :
    lprint ( "No 'rlocs' in stats IPC message for {}" . format ( i1iiii ) )
-   if 38 - 38: iII111i - I1IiiI / ooOoO0o
+   if 57 - 57: I1IiiI . Oo0Ooo / I1IiiI / II111iiii - I1Ii111
    continue
-   if 46 - 46: OOooOOo . O0 / i11iIiiIii . OOooOOo
+   if 68 - 68: I1IiiI
   if ( type ( msg [ "rlocs" ] ) != list ) :
    lprint ( "'rlocs' in stats IPC message must be an array" )
    continue
-   if 19 - 19: I11i / Oo0Ooo + I1Ii111
-  iiIi111I = msg [ "rlocs" ]
-  if 72 - 72: i11iIiiIii / IiII * OoOoOO00 * I11i
-  if 83 - 83: IiII % OoO0O00 * II111iiii
-  if 7 - 7: oO0o % Oo0Ooo
-  if 88 - 88: I1Ii111
-  for OoOO0OOo0OO in iiIi111I :
-   if ( "rloc" not in OoOO0OOo0OO ) : continue
-   if 40 - 40: i11iIiiIii . O0 * I11i - oO0o / OOooOOo . oO0o
-   IIIOo0O = OoOO0OOo0OO [ "rloc" ]
+   if 97 - 97: Ii1I + o0oOOo0O0Ooo / OoO0O00
+  ooOoo0ooOo = msg [ "rlocs" ]
+  if 28 - 28: OoooooooOO + i1IIi
+  if 29 - 29: Oo0Ooo
+  if 98 - 98: OOooOOo / Oo0Ooo % Ii1I * OoooooooOO - oO0o
+  if 64 - 64: I1IiiI - I1IiiI
+  for O0OOooO0 in ooOoo0ooOo :
+   if ( "rloc" not in O0OOooO0 ) : continue
+   if 76 - 76: OoOoOO00 * OoooooooOO . I1Ii111
+   IIIOo0O = O0OOooO0 [ "rloc" ]
    if ( IIIOo0O == "no-address" ) : continue
-   if 86 - 86: OOooOOo - I1Ii111 * IiII - i1IIi + ooOoO0o + I11i
+   if 29 - 29: ooOoO0o
    iIIiI11 = lisp_address ( LISP_AFI_NONE , "" , 0 , 0 )
    iIIiI11 . store_address ( IIIOo0O )
-   if 32 - 32: IiII
+   if 11 - 11: Ii1I / ooOoO0o / i11iIiiIii - OoOoOO00 / ooOoO0o
    OOOoOoo = I11iiI1III . get_rloc ( iIIiI11 )
    if ( OOOoOoo == None ) : continue
-   if 99 - 99: II111iiii
-   if 34 - 34: OOooOOo + OoOoOO00 * o0oOOo0O0Ooo + I1ii11iIi11i + IiII * i1IIi
-   if 73 - 73: I1ii11iIi11i - IiII - O0 . oO0o + Oo0Ooo % iII111i
-   if 68 - 68: I1ii11iIi11i - OoooooooOO
-   IIIiiiIi11I1 = 0 if ( "packet-count" not in OoOO0OOo0OO ) else OoOO0OOo0OO [ "packet-count" ]
-   if 85 - 85: I1IiiI
-   i1Ii1iiii1Ii = 0 if ( "byte-count" not in OoOO0OOo0OO ) else OoOO0OOo0OO [ "byte-count" ]
-   if 97 - 97: I1ii11iIi11i - i11iIiiIii + OoOoOO00 * iIii1I11I1II1 * iIii1I11I1II1
-   i1 = 0 if ( "seconds-last-packet" not in OoOO0OOo0OO ) else OoOO0OOo0OO [ "seconds-last-packet" ]
-   if 51 - 51: i1IIi - O0 * I1IiiI * IiII * I11i % oO0o
-   if 47 - 47: i1IIi - I11i . OoooooooOO
-   OOOoOoo . stats . packet_count += IIIiiiIi11I1
+   if 11 - 11: OoO0O00 - O0 / I11i + I1ii11iIi11i + Ii1I
+   if 56 - 56: I1Ii111 * OoOoOO00 * iII111i - Oo0Ooo - I1IiiI % iIii1I11I1II1
+   if 69 - 69: I1IiiI - I11i
+   if 95 - 95: OOooOOo % OoooooooOO . OOooOOo * Ii1I
+   IiII11i1i = 0 if ( "packet-count" not in O0OOooO0 ) else O0OOooO0 [ "packet-count" ]
+   if 11 - 11: i1IIi * I1Ii111 / OoOoOO00 . I1Ii111 + OoOoOO00 % IiII
+   i1Ii1iiii1Ii = 0 if ( "byte-count" not in O0OOooO0 ) else O0OOooO0 [ "byte-count" ]
+   if 18 - 18: OoooooooOO / Ii1I / i1IIi / oO0o
+   i1 = 0 if ( "seconds-last-packet" not in O0OOooO0 ) else O0OOooO0 [ "seconds-last-packet" ]
+   if 24 - 24: OoO0O00 * iII111i - i11iIiiIii + oO0o
+   if 66 - 66: Oo0Ooo * I11i . iIii1I11I1II1 - OoO0O00
+   OOOoOoo . stats . packet_count += IiII11i1i
    OOOoOoo . stats . byte_count += i1Ii1iiii1Ii
    OOOoOoo . stats . last_increment = lisp_get_timestamp ( ) - i1
-   if 5 - 5: iII111i % Oo0Ooo - oO0o . i1IIi - i11iIiiIii % I1ii11iIi11i
-   lprint ( "Update stats {}/{}/{}s for {} RLOC {}" . format ( IIIiiiIi11I1 , i1Ii1iiii1Ii ,
+   if 11 - 11: I1Ii111 + iIii1I11I1II1 * O0 * Oo0Ooo
+   lprint ( "Update stats {}/{}/{}s for {} RLOC {}" . format ( IiII11i1i , i1Ii1iiii1Ii ,
  i1 , i1iiii , IIIOo0O ) )
-   if 79 - 79: I1IiiI
-   if 24 - 24: I1IiiI / II111iiii - I1Ii111
-   if 68 - 68: I1IiiI
-   if 97 - 97: Ii1I + o0oOOo0O0Ooo / OoO0O00
-   if 97 - 97: i11iIiiIii % iIii1I11I1II1 + II111iiii
+   if 66 - 66: OoooooooOO % OoO0O00 + i11iIiiIii + I1Ii111 % OoO0O00
+   if 80 - 80: Oo0Ooo - Ii1I
+   if 54 - 54: O0 - iIii1I11I1II1 . OoO0O00 . IiII % OoO0O00
+   if 28 - 28: O0 % i1IIi % OoO0O00 / o0oOOo0O0Ooo . iIii1I11I1II1 - iII111i
+   if 50 - 50: o0oOOo0O0Ooo + iII111i / i1IIi % II111iiii
   if ( I11iiI1III . group . is_null ( ) and I11iiI1III . has_ttl_elapsed ( ) ) :
    i1iiii = green ( I11iiI1III . print_eid_tuple ( ) , False )
    lprint ( "Refresh map-cache entry {}" . format ( i1iiii ) )
    lisp_send_map_request ( lisp_sockets , lisp_port , None , I11iiI1III . eid , None )
-   if 90 - 90: OOooOOo / I1IiiI
-   if 28 - 28: OoooooooOO + i1IIi
+   if 61 - 61: IiII
+   if 5 - 5: OOooOOo % iIii1I11I1II1 % O0 * i11iIiiIii / I1Ii111
  return
- if 29 - 29: Oo0Ooo
- if 98 - 98: OOooOOo / Oo0Ooo % Ii1I * OoooooooOO - oO0o
- if 64 - 64: I1IiiI - I1IiiI
- if 90 - 90: iII111i - I1IiiI - II111iiii / OOooOOo + Ii1I
- if 34 - 34: i11iIiiIii + I1Ii111 / O0 / iIii1I11I1II1 * OoooooooOO % Ii1I
- if 32 - 32: i11iIiiIii - OoOoOO00 / iIii1I11I1II1 * o0oOOo0O0Ooo % I1IiiI + O0
- if 36 - 36: I1ii11iIi11i + I1ii11iIi11i % I1Ii111 * ooOoO0o * OoOoOO00
- if 54 - 54: Oo0Ooo - I1IiiI % OOooOOo . I1ii11iIi11i / I1IiiI
- if 75 - 75: OOooOOo - O0 % iII111i . Ii1I % I1ii11iIi11i + I1ii11iIi11i
- if 32 - 32: Ii1I + II111iiii * IiII
- if 9 - 9: I1Ii111
- if 96 - 96: I1Ii111 / iIii1I11I1II1
- if 48 - 48: iII111i * IiII + OoooooooOO
- if 63 - 63: I1IiiI / Ii1I
- if 31 - 31: i1IIi - oO0o
- if 99 - 99: iII111i - i11iIiiIii + oO0o
- if 66 - 66: Oo0Ooo * I11i . iIii1I11I1II1 - OoO0O00
- if 11 - 11: I1Ii111 + iIii1I11I1II1 * O0 * Oo0Ooo
- if 66 - 66: OoooooooOO % OoO0O00 + i11iIiiIii + I1Ii111 % OoO0O00
- if 80 - 80: Oo0Ooo - Ii1I
- if 54 - 54: O0 - iIii1I11I1II1 . OoO0O00 . IiII % OoO0O00
- if 28 - 28: O0 % i1IIi % OoO0O00 / o0oOOo0O0Ooo . iIii1I11I1II1 - iII111i
- if 50 - 50: o0oOOo0O0Ooo + iII111i / i1IIi % II111iiii
- if 61 - 61: IiII
- if 5 - 5: OOooOOo % iIii1I11I1II1 % O0 * i11iIiiIii / I1Ii111
-def lisp_process_data_plane_decap_stats ( msg , lisp_ipc_socket ) :
  if 48 - 48: IiII * oO0o
  if 53 - 53: i1IIi * iIii1I11I1II1 . OOooOOo
  if 68 - 68: IiII % IiII - iII111i . IiII + OoooooooOO
  if 82 - 82: Ii1I . II111iiii / i1IIi * OoO0O00
  if 80 - 80: I11i
+ if 96 - 96: i1IIi - I1ii11iIi11i * iII111i . OOooOOo . OoO0O00
+ if 93 - 93: oO0o * Oo0Ooo * IiII
+ if 26 - 26: o0oOOo0O0Ooo + O0 % i11iIiiIii . ooOoO0o . I1IiiI + Oo0Ooo
+ if 90 - 90: IiII * OoooooooOO + II111iiii / iII111i + i11iIiiIii / ooOoO0o
+ if 20 - 20: II111iiii % I1ii11iIi11i - OoooooooOO * Ii1I / I11i - OoooooooOO
+ if 11 - 11: I1IiiI + Ii1I + i11iIiiIii * I1ii11iIi11i - oO0o
+ if 46 - 46: OoooooooOO - Oo0Ooo
+ if 4 - 4: II111iiii . OOooOOo - Ii1I - i11iIiiIii
+ if 27 - 27: iII111i * iII111i - OoO0O00 % o0oOOo0O0Ooo . o0oOOo0O0Ooo
+ if 64 - 64: I1ii11iIi11i * ooOoO0o - OoooooooOO - I1IiiI
+ if 59 - 59: I1ii11iIi11i . I1Ii111 - OOooOOo / Oo0Ooo + OOooOOo . I1ii11iIi11i
+ if 69 - 69: Oo0Ooo
+ if 34 - 34: I1Ii111 - ooOoO0o . o0oOOo0O0Ooo
+ if 52 - 52: o0oOOo0O0Ooo % I11i * I11i / iIii1I11I1II1
+ if 77 - 77: OoOoOO00
+ if 67 - 67: OoooooooOO / OoooooooOO + IiII - ooOoO0o
+ if 72 - 72: Ii1I
+ if 21 - 21: ooOoO0o + iII111i
+ if 39 - 39: o0oOOo0O0Ooo % I1Ii111 - o0oOOo0O0Ooo % Oo0Ooo
+ if 78 - 78: OoO0O00 / o0oOOo0O0Ooo / O0 % OOooOOo % i1IIi
+def lisp_process_data_plane_decap_stats ( msg , lisp_ipc_socket ) :
+ if 78 - 78: o0oOOo0O0Ooo - oO0o . II111iiii
+ if 67 - 67: iII111i + I11i - OoO0O00 . OOooOOo * iIii1I11I1II1
+ if 44 - 44: OoooooooOO * i1IIi % i1IIi - i11iIiiIii % OOooOOo - OoO0O00
+ if 62 - 62: OOooOOo + OoooooooOO / I1Ii111 % iIii1I11I1II1
+ if 59 - 59: i11iIiiIii . IiII
  if ( lisp_i_am_itr ) :
   lprint ( "Send decap-stats IPC message to lisp-etr process" )
   OO = "stats%{}" . format ( json . dumps ( msg ) )
   OO = lisp_command_ipc ( OO , "lisp-itr" )
   lisp_ipc ( OO , lisp_ipc_socket , "lisp-etr" )
   return
-  if 96 - 96: i1IIi - I1ii11iIi11i * iII111i . OOooOOo . OoO0O00
-  if 93 - 93: oO0o * Oo0Ooo * IiII
-  if 26 - 26: o0oOOo0O0Ooo + O0 % i11iIiiIii . ooOoO0o . I1IiiI + Oo0Ooo
-  if 90 - 90: IiII * OoooooooOO + II111iiii / iII111i + i11iIiiIii / ooOoO0o
-  if 20 - 20: II111iiii % I1ii11iIi11i - OoooooooOO * Ii1I / I11i - OoooooooOO
-  if 11 - 11: I1IiiI + Ii1I + i11iIiiIii * I1ii11iIi11i - oO0o
-  if 46 - 46: OoooooooOO - Oo0Ooo
-  if 4 - 4: II111iiii . OOooOOo - Ii1I - i11iIiiIii
+  if 91 - 91: Oo0Ooo / iII111i + I1Ii111
+  if 32 - 32: i1IIi - iII111i + o0oOOo0O0Ooo * I1Ii111 % I1ii11iIi11i / i11iIiiIii
+  if 91 - 91: IiII / OoooooooOO . OoooooooOO + OoooooooOO * I1ii11iIi11i . OoOoOO00
+  if 22 - 22: iIii1I11I1II1 - OoO0O00
+  if 77 - 77: I1IiiI + IiII - oO0o - I1ii11iIi11i * II111iiii + i1IIi
+  if 79 - 79: I1ii11iIi11i + O0 * OoooooooOO
+  if 43 - 43: I11i
+  if 29 - 29: o0oOOo0O0Ooo / I11i
  OO = bold ( "IPC" , False )
  lprint ( "Process decap-stats {} message: '{}'" . format ( OO , msg ) )
- if 27 - 27: iII111i * iII111i - OoO0O00 % o0oOOo0O0Ooo . o0oOOo0O0Ooo
+ if 88 - 88: OoOoOO00 - Ii1I . O0 % I1Ii111 % I1ii11iIi11i
  if ( lisp_i_am_etr ) : msg = json . loads ( msg )
- if 64 - 64: I1ii11iIi11i * ooOoO0o - OoooooooOO - I1IiiI
- OOO0OOo = [ "good-packets" , "ICV-error" , "checksum-error" ,
+ if 56 - 56: OoOoOO00 - iIii1I11I1II1 / I1IiiI - i1IIi / o0oOOo0O0Ooo * I11i
+ oo0000oOO0 = [ "good-packets" , "ICV-error" , "checksum-error" ,
  "lisp-header-error" , "no-decrypt-key" , "bad-inner-version" ,
  "outer-header-error" ]
- if 67 - 67: OoooooooOO % I1IiiI + o0oOOo0O0Ooo + I1Ii111
- for III1I11i in OOO0OOo :
-  IIIiiiIi11I1 = 0 if ( III1I11i not in msg ) else msg [ III1I11i ] [ "packet-count" ]
-  lisp_decap_stats [ III1I11i ] . packet_count += IIIiiiIi11I1
-  if 73 - 73: Ii1I
-  i1Ii1iiii1Ii = 0 if ( III1I11i not in msg ) else msg [ III1I11i ] [ "byte-count" ]
-  lisp_decap_stats [ III1I11i ] . byte_count += i1Ii1iiii1Ii
-  if 5 - 5: OOooOOo % OoooooooOO / Oo0Ooo
-  i1 = 0 if ( III1I11i not in msg ) else msg [ III1I11i ] [ "seconds-last-packet" ]
-  if 16 - 16: ooOoO0o * i11iIiiIii % i1IIi % i1IIi
-  lisp_decap_stats [ III1I11i ] . last_increment = lisp_get_timestamp ( ) - i1
-  if 44 - 44: Oo0Ooo % I11i - o0oOOo0O0Ooo - Ii1I * Oo0Ooo - Ii1I
+ if 67 - 67: ooOoO0o % OoOoOO00
+ for iiO0oo in oo0000oOO0 :
+  IiII11i1i = 0 if ( iiO0oo not in msg ) else msg [ iiO0oo ] [ "packet-count" ]
+  lisp_decap_stats [ iiO0oo ] . packet_count += IiII11i1i
+  if 84 - 84: o0oOOo0O0Ooo . iII111i / o0oOOo0O0Ooo + I1ii11iIi11i % OoO0O00
+  i1Ii1iiii1Ii = 0 if ( iiO0oo not in msg ) else msg [ iiO0oo ] [ "byte-count" ]
+  lisp_decap_stats [ iiO0oo ] . byte_count += i1Ii1iiii1Ii
+  if 52 - 52: OoOoOO00 / Ii1I % OoOoOO00 % i11iIiiIii + I1IiiI / o0oOOo0O0Ooo
+  i1 = 0 if ( iiO0oo not in msg ) else msg [ iiO0oo ] [ "seconds-last-packet" ]
+  if 63 - 63: I1IiiI
+  lisp_decap_stats [ iiO0oo ] . last_increment = lisp_get_timestamp ( ) - i1
+  if 20 - 20: oO0o + OoOoOO00
  return
- if 69 - 69: II111iiii + o0oOOo0O0Ooo
- if 75 - 75: OOooOOo
- if 66 - 66: Oo0Ooo % oO0o
- if 52 - 52: oO0o
- if 26 - 26: OoO0O00 % I1ii11iIi11i * O0 % OoO0O00
- if 98 - 98: OoO0O00 . ooOoO0o * I11i / i1IIi
- if 57 - 57: i11iIiiIii % OOooOOo
- if 67 - 67: oO0o - OOooOOo + II111iiii
- if 19 - 19: iIii1I11I1II1 * OoooooooOO - i11iIiiIii . I1Ii111 * OoO0O00
- if 30 - 30: iII111i + I1IiiI * ooOoO0o
- if 53 - 53: iII111i + IiII
- if 52 - 52: II111iiii * i11iIiiIii - IiII * IiII / OoooooooOO
- if 18 - 18: IiII / O0 / I1ii11iIi11i
- if 47 - 47: oO0o / iIii1I11I1II1
- if 45 - 45: OoOoOO00 * o0oOOo0O0Ooo / I1ii11iIi11i * iII111i - I1ii11iIi11i
- if 48 - 48: Ii1I / OoO0O00
- if 45 - 45: O0 * OoO0O00 / I11i . II111iiii
+ if 32 - 32: o0oOOo0O0Ooo % oO0o % I1IiiI * OoooooooOO
+ if 4 - 4: OOooOOo % oO0o
+ if 18 - 18: Ii1I * I11i
+ if 14 - 14: ooOoO0o . ooOoO0o * OoOoOO00 * o0oOOo0O0Ooo - iII111i - I1Ii111
+ if 53 - 53: Oo0Ooo * OoOoOO00 * II111iiii % IiII - I1ii11iIi11i
+ if 56 - 56: Oo0Ooo . I1ii11iIi11i - i11iIiiIii / iIii1I11I1II1 . ooOoO0o
+ if 28 - 28: OoooooooOO + I1IiiI / oO0o . iIii1I11I1II1 - oO0o
+ if 64 - 64: I1Ii111 + Oo0Ooo / iII111i
+ if 61 - 61: Ii1I * Ii1I . OoOoOO00 + OoO0O00 * i11iIiiIii * OoO0O00
+ if 4 - 4: OoooooooOO % iII111i % Oo0Ooo * IiII % o0oOOo0O0Ooo . o0oOOo0O0Ooo
+ if 66 - 66: I1IiiI . Oo0Ooo - oO0o
+ if 53 - 53: oO0o / Ii1I + oO0o + II111iiii
+ if 70 - 70: OoooooooOO - I1Ii111 + OoOoOO00
+ if 61 - 61: I1IiiI * I1Ii111 * i11iIiiIii
+ if 68 - 68: OoOoOO00 - iII111i - I1IiiI
+ if 37 - 37: iII111i - I1Ii111 + i1IIi / o0oOOo0O0Ooo % iII111i / iII111i
+ if 8 - 8: i1IIi % I11i
 def lisp_process_punt ( punt_socket , lisp_send_sockets , lisp_ephem_port ) :
- i111IIi1 , O0oo0OoO0oo = punt_socket . recvfrom ( 4000 )
- if 73 - 73: I11i
- IIII = json . loads ( i111IIi1 )
- if ( type ( IIII ) != dict ) :
+ I1Ii , O0oo0OoO0oo = punt_socket . recvfrom ( 4000 )
+ if 100 - 100: I1ii11iIi11i / i1IIi - I11i . I1ii11iIi11i / i11iIiiIii * i11iIiiIii
+ Ii1111i1iI1 = json . loads ( I1Ii )
+ if ( type ( Ii1111i1iI1 ) != dict ) :
   lprint ( "Invalid punt message from {}, not in JSON format" . format ( O0oo0OoO0oo ) )
-  if 95 - 95: IiII - OoOoOO00 - iIii1I11I1II1 / o0oOOo0O0Ooo
+  if 93 - 93: I1IiiI . O0 - I1Ii111 - OoO0O00
   return
-  if 33 - 33: IiII / o0oOOo0O0Ooo
- O0I11iII1Ii11II = bold ( "Punt" , False )
- lprint ( "{} message from '{}': '{}'" . format ( O0I11iII1Ii11II , O0oo0OoO0oo , IIII ) )
- if 24 - 24: iIii1I11I1II1
- if ( "type" not in IIII ) :
+  if 45 - 45: OoooooooOO - I11i - I1IiiI . oO0o - IiII
+ O00 = bold ( "Punt" , False )
+ lprint ( "{} message from '{}': '{}'" . format ( O00 , O0oo0OoO0oo , Ii1111i1iI1 ) )
+ if 31 - 31: I1ii11iIi11i % IiII
+ if ( "type" not in Ii1111i1iI1 ) :
   lprint ( "Punt IPC message has no 'type' key" )
   return
-  if 78 - 78: ooOoO0o / i1IIi . OOooOOo * o0oOOo0O0Ooo . I1IiiI
-  if 81 - 81: I11i - OoO0O00 - o0oOOo0O0Ooo
-  if 95 - 95: I11i + Ii1I
-  if 68 - 68: i11iIiiIii + I1IiiI / o0oOOo0O0Ooo
-  if 63 - 63: I1IiiI
- if ( IIII [ "type" ] == "statistics" ) :
-  lisp_process_data_plane_stats ( IIII , lisp_send_sockets , lisp_ephem_port )
+  if 92 - 92: ooOoO0o % OoooooooOO . Ii1I * II111iiii
+  if 4 - 4: o0oOOo0O0Ooo - I1Ii111
+  if 66 - 66: o0oOOo0O0Ooo * I1IiiI / o0oOOo0O0Ooo + I1Ii111 + iIii1I11I1II1
+  if 3 - 3: II111iiii % iII111i / IiII * ooOoO0o . OoooooooOO
+  if 56 - 56: IiII * II111iiii + Oo0Ooo - O0 - OoO0O00 . I1Ii111
+ if ( Ii1111i1iI1 [ "type" ] == "statistics" ) :
+  lisp_process_data_plane_stats ( Ii1111i1iI1 , lisp_send_sockets , lisp_ephem_port )
   return
-  if 20 - 20: oO0o + OoOoOO00
- if ( IIII [ "type" ] == "decap-statistics" ) :
-  lisp_process_data_plane_decap_stats ( IIII , punt_socket )
+  if 53 - 53: i1IIi + IiII
+ if ( Ii1111i1iI1 [ "type" ] == "decap-statistics" ) :
+  lisp_process_data_plane_decap_stats ( Ii1111i1iI1 , punt_socket )
   return
-  if 32 - 32: o0oOOo0O0Ooo % oO0o % I1IiiI * OoooooooOO
-  if 4 - 4: OOooOOo % oO0o
-  if 18 - 18: Ii1I * I11i
-  if 14 - 14: ooOoO0o . ooOoO0o * OoOoOO00 * o0oOOo0O0Ooo - iII111i - I1Ii111
-  if 53 - 53: Oo0Ooo * OoOoOO00 * II111iiii % IiII - I1ii11iIi11i
- if ( IIII [ "type" ] == "restart" ) :
+  if 90 - 90: II111iiii / oO0o / oO0o . OoOoOO00 / OoO0O00 / iIii1I11I1II1
+  if 96 - 96: iIii1I11I1II1 % I1ii11iIi11i
+  if 35 - 35: i1IIi - OoooooooOO * Ii1I / OOooOOo % I11i
+  if 72 - 72: I1Ii111 / OoO0O00 + II111iiii
+  if 40 - 40: Ii1I + O0 . i11iIiiIii % I11i / Oo0Ooo
+ if ( Ii1111i1iI1 [ "type" ] == "restart" ) :
   lisp_process_data_plane_restart ( )
   return
-  if 56 - 56: Oo0Ooo . I1ii11iIi11i - i11iIiiIii / iIii1I11I1II1 . ooOoO0o
-  if 28 - 28: OoooooooOO + I1IiiI / oO0o . iIii1I11I1II1 - oO0o
-  if 64 - 64: I1Ii111 + Oo0Ooo / iII111i
-  if 61 - 61: Ii1I * Ii1I . OoOoOO00 + OoO0O00 * i11iIiiIii * OoO0O00
-  if 4 - 4: OoooooooOO % iII111i % Oo0Ooo * IiII % o0oOOo0O0Ooo . o0oOOo0O0Ooo
- if ( IIII [ "type" ] != "discovery" ) :
+  if 25 - 25: IiII * IiII
+  if 54 - 54: I1Ii111
+  if 90 - 90: Oo0Ooo / Ii1I
+  if 66 - 66: i11iIiiIii - I11i + oO0o . OoooooooOO
+  if 77 - 77: OoO0O00 / OOooOOo
+ if ( Ii1111i1iI1 [ "type" ] != "discovery" ) :
   lprint ( "Punt IPC message has wrong format" )
   return
-  if 66 - 66: I1IiiI . Oo0Ooo - oO0o
- if ( "interface" not in IIII ) :
+  if 97 - 97: OoOoOO00 / Ii1I * I1IiiI - Oo0Ooo % O0
+ if ( "interface" not in Ii1111i1iI1 ) :
   lprint ( "Invalid punt message from {}, required keys missing" . format ( O0oo0OoO0oo ) )
-  if 53 - 53: oO0o / Ii1I + oO0o + II111iiii
+  if 66 - 66: O0 + I1IiiI % iIii1I11I1II1 . i1IIi % II111iiii - i1IIi
   return
-  if 70 - 70: OoooooooOO - I1Ii111 + OoOoOO00
-  if 61 - 61: I1IiiI * I1Ii111 * i11iIiiIii
-  if 68 - 68: OoOoOO00 - iII111i - I1IiiI
-  if 37 - 37: iII111i - I1Ii111 + i1IIi / o0oOOo0O0Ooo % iII111i / iII111i
-  if 8 - 8: i1IIi % I11i
- ooO000OO = IIII [ "interface" ]
+  if 93 - 93: O0 + OoooooooOO % IiII % oO0o % I1ii11iIi11i
+  if 36 - 36: I1IiiI - oO0o * Oo0Ooo + oO0o % iII111i - i11iIiiIii
+  if 93 - 93: O0
+  if 11 - 11: OoooooooOO . I1ii11iIi11i + I1ii11iIi11i
+  if 73 - 73: OoooooooOO
+ ooO000OO = Ii1111i1iI1 [ "interface" ]
  if ( ooO000OO == "" ) :
-  oooo = int ( IIII [ "instance-id" ] )
+  oooo = int ( Ii1111i1iI1 [ "instance-id" ] )
   if ( oooo == - 1 ) : return
  else :
   oooo = lisp_get_interface_instance_id ( ooO000OO , None )
-  if 12 - 12: ooOoO0o / II111iiii + ooOoO0o * I1ii11iIi11i / i1IIi - iIii1I11I1II1
-  if 71 - 71: IiII - i11iIiiIii
-  if 3 - 3: i11iIiiIii - o0oOOo0O0Ooo / oO0o . OoO0O00 * I11i + o0oOOo0O0Ooo
-  if 18 - 18: OoooooooOO % oO0o / IiII - ooOoO0o
-  if 80 - 80: I11i
+  if 2 - 2: o0oOOo0O0Ooo % IiII + I1ii11iIi11i - i11iIiiIii
+  if 100 - 100: II111iiii + oO0o
+  if 85 - 85: I1ii11iIi11i % I1ii11iIi11i . Ii1I
+  if 42 - 42: oO0o + OoO0O00
+  if 16 - 16: Ii1I
  OoiIii11i11i = None
- if ( "source-eid" in IIII ) :
-  iiO0OoO0OOO00 = IIII [ "source-eid" ]
+ if ( "source-eid" in Ii1111i1iI1 ) :
+  iiO0OoO0OOO00 = Ii1111i1iI1 [ "source-eid" ]
   OoiIii11i11i = lisp_address ( LISP_AFI_NONE , iiO0OoO0OOO00 , 0 , oooo )
   if ( OoiIii11i11i . is_null ( ) ) :
    lprint ( "Invalid source-EID format '{}'" . format ( iiO0OoO0OOO00 ) )
    return
-   if 98 - 98: iII111i / I1ii11iIi11i
-   if 87 - 87: iII111i - O0 * ooOoO0o / II111iiii % OoooooooOO . o0oOOo0O0Ooo
- oOOOOOo0o = None
- if ( "dest-eid" in IIII ) :
-  O00OooOOO = IIII [ "dest-eid" ]
-  oOOOOOo0o = lisp_address ( LISP_AFI_NONE , O00OooOOO , 0 , oooo )
-  if ( oOOOOOo0o . is_null ( ) ) :
-   lprint ( "Invalid dest-EID format '{}'" . format ( O00OooOOO ) )
+   if 67 - 67: I1ii11iIi11i . OoooooooOO * I1Ii111 + Ii1I * OOooOOo
+   if 84 - 84: OOooOOo
+ iIi1Iiii11Ii1 = None
+ if ( "dest-eid" in Ii1111i1iI1 ) :
+  ooo0O0Oo0o = Ii1111i1iI1 [ "dest-eid" ]
+  iIi1Iiii11Ii1 = lisp_address ( LISP_AFI_NONE , ooo0O0Oo0o , 0 , oooo )
+  if ( iIi1Iiii11Ii1 . is_null ( ) ) :
+   lprint ( "Invalid dest-EID format '{}'" . format ( ooo0O0Oo0o ) )
    return
-   if 94 - 94: i11iIiiIii
-   if 76 - 76: II111iiii / ooOoO0o % i11iIiiIii * OoooooooOO * I1ii11iIi11i
-   if 94 - 94: OoOoOO00 * o0oOOo0O0Ooo / oO0o + O0 . I1Ii111 + o0oOOo0O0Ooo
-   if 22 - 22: IiII / ooOoO0o * i1IIi
-   if 26 - 26: O0 - oO0o
-   if 30 - 30: OoO0O00 / ooOoO0o . I1IiiI
-   if 70 - 70: I1ii11iIi11i
-   if 35 - 35: i1IIi - OoooooooOO * Ii1I / OOooOOo % I11i
+   if 29 - 29: OoO0O00
+   if 26 - 26: Ii1I % iIii1I11I1II1
+   if 49 - 49: O0 + ooOoO0o % i1IIi / IiII / Oo0Ooo
+   if 90 - 90: ooOoO0o . OOooOOo - Ii1I
+   if 60 - 60: i11iIiiIii % iII111i . I1IiiI * I1ii11iIi11i
+   if 30 - 30: Ii1I + i11iIiiIii . I11i + o0oOOo0O0Ooo - OoO0O00
+   if 55 - 55: ooOoO0o - II111iiii . ooOoO0o . iII111i / OoooooooOO
+   if 51 - 51: I1IiiI * I1Ii111 - ooOoO0o + IiII
  if ( OoiIii11i11i ) :
   oO0ooOOO = green ( OoiIii11i11i . print_address ( ) , False )
   OoO0oO = lisp_db_for_lookups . lookup_cache ( OoiIii11i11i , False )
   if ( OoO0oO != None ) :
-   if 72 - 72: I1Ii111 / OoO0O00 + II111iiii
-   if 40 - 40: Ii1I + O0 . i11iIiiIii % I11i / Oo0Ooo
-   if 25 - 25: IiII * IiII
-   if 54 - 54: I1Ii111
-   if 90 - 90: Oo0Ooo / Ii1I
+   if 22 - 22: OoOoOO00 % Ii1I + iII111i
+   if 64 - 64: ooOoO0o
+   if 87 - 87: IiII - Ii1I / Oo0Ooo / I1ii11iIi11i . iII111i
+   if 49 - 49: IiII * OoooooooOO * iIii1I11I1II1 * Oo0Ooo / iII111i % oO0o
+   if 88 - 88: I1Ii111 * OOooOOo
    if ( OoO0oO . dynamic_eid_configured ( ) ) :
     i111IIiIiiI1 = lisp_allow_dynamic_eid ( ooO000OO , OoiIii11i11i )
     if ( i111IIiIiiI1 != None and lisp_i_am_itr ) :
      lisp_itr_discover_eid ( OoO0oO , OoiIii11i11i , ooO000OO , i111IIiIiiI1 )
     else :
      lprint ( ( "Disallow dynamic source-EID {} " + "on interface {}" ) . format ( oO0ooOOO , ooO000OO ) )
-     if 66 - 66: i11iIiiIii - I11i + oO0o . OoooooooOO
-     if 77 - 77: OoO0O00 / OOooOOo
-     if 97 - 97: OoOoOO00 / Ii1I * I1IiiI - Oo0Ooo % O0
+     if 38 - 38: Oo0Ooo - OoooooooOO - OoooooooOO / II111iiii
+     if 10 - 10: II111iiii - OoO0O00 / II111iiii % Ii1I - OoOoOO00
+     if 90 - 90: I11i + II111iiii - oO0o - ooOoO0o / ooOoO0o / i11iIiiIii
   else :
    lprint ( "Punt from non-EID source {}" . format ( oO0ooOOO ) )
-   if 66 - 66: O0 + I1IiiI % iIii1I11I1II1 . i1IIi % II111iiii - i1IIi
-   if 93 - 93: O0 + OoooooooOO % IiII % oO0o % I1ii11iIi11i
-   if 36 - 36: I1IiiI - oO0o * Oo0Ooo + oO0o % iII111i - i11iIiiIii
-   if 93 - 93: O0
-   if 11 - 11: OoooooooOO . I1ii11iIi11i + I1ii11iIi11i
-   if 73 - 73: OoooooooOO
- if ( oOOOOOo0o ) :
-  I11iiI1III = lisp_map_cache_lookup ( OoiIii11i11i , oOOOOOo0o )
+   if 80 - 80: I1ii11iIi11i % O0 / II111iiii + iII111i
+   if 22 - 22: Oo0Ooo + ooOoO0o . OOooOOo % Oo0Ooo . IiII
+   if 34 - 34: Ii1I . OoOoOO00 - OOooOOo * Oo0Ooo - ooOoO0o . oO0o
+   if 42 - 42: O0 + OoO0O00
+   if 47 - 47: O0 % OoOoOO00 + Ii1I * iIii1I11I1II1
+   if 55 - 55: Ii1I
+ if ( iIi1Iiii11Ii1 ) :
+  I11iiI1III = lisp_map_cache_lookup ( OoiIii11i11i , iIi1Iiii11Ii1 )
   if ( I11iiI1III == None or lisp_mr_or_pubsub ( I11iiI1III . action ) ) :
-   if 2 - 2: o0oOOo0O0Ooo % IiII + I1ii11iIi11i - i11iIiiIii
-   if 100 - 100: II111iiii + oO0o
-   if 85 - 85: I1ii11iIi11i % I1ii11iIi11i . Ii1I
-   if 42 - 42: oO0o + OoO0O00
-   if 16 - 16: Ii1I
-   if ( lisp_rate_limit_map_request ( oOOOOOo0o ) ) : return
-   if 67 - 67: I1ii11iIi11i . OoooooooOO * I1Ii111 + Ii1I * OOooOOo
+   if 93 - 93: iII111i + OOooOOo . OoooooooOO . I1Ii111 . O0
+   if 46 - 46: i11iIiiIii
+   if 26 - 26: I11i * Oo0Ooo % OoO0O00 + Oo0Ooo - I1ii11iIi11i
+   if 74 - 74: i1IIi + OoO0O00 . II111iiii + I1Ii111
+   if 59 - 59: Ii1I . i11iIiiIii . o0oOOo0O0Ooo * iIii1I11I1II1 . OoOoOO00 . II111iiii
+   if ( lisp_rate_limit_map_request ( iIi1Iiii11Ii1 ) ) : return
+   if 67 - 67: OoO0O00 - Oo0Ooo + OOooOOo / OoOoOO00 + OOooOOo
    iIiI1IIi1Ii1i = ( I11iiI1III and I11iiI1III . action == LISP_SEND_PUBSUB_ACTION )
    lisp_send_map_request ( lisp_send_sockets , lisp_ephem_port ,
- OoiIii11i11i , oOOOOOo0o , None , iIiI1IIi1Ii1i )
+ OoiIii11i11i , iIi1Iiii11Ii1 , None , iIiI1IIi1Ii1i )
   else :
-   oO0ooOOO = green ( oOOOOOo0o . print_address ( ) , False )
+   oO0ooOOO = green ( iIi1Iiii11Ii1 . print_address ( ) , False )
    lprint ( "Map-cache entry for {} already exists" . format ( oO0ooOOO ) )
-   if 84 - 84: OOooOOo
-   if 78 - 78: O0 % O0
+   if 18 - 18: Oo0Ooo % OoOoOO00 % i1IIi
+   if 66 - 66: OoOoOO00 % II111iiii
  return
- if 72 - 72: o0oOOo0O0Ooo * IiII / II111iiii / iIii1I11I1II1
- if 41 - 41: iII111i / Ii1I
- if 11 - 11: Oo0Ooo % OOooOOo . ooOoO0o
- if 24 - 24: IiII / Oo0Ooo
- if 90 - 90: ooOoO0o . OOooOOo - Ii1I
- if 60 - 60: i11iIiiIii % iII111i . I1IiiI * I1ii11iIi11i
- if 30 - 30: Ii1I + i11iIiiIii . I11i + o0oOOo0O0Ooo - OoO0O00
+ if 16 - 16: i11iIiiIii - I1IiiI + ooOoO0o * oO0o
+ if 30 - 30: II111iiii / o0oOOo0O0Ooo
+ if 57 - 57: I11i / I1ii11iIi11i . I11i
+ if 68 - 68: OoOoOO00 + O0 . I1IiiI
+ if 26 - 26: I1ii11iIi11i
+ if 98 - 98: Oo0Ooo
+ if 72 - 72: oO0o + OoooooooOO . O0 + IiII
 def lisp_ipc_map_cache_entry ( mc , jdata ) :
  oo0O00OOOOO = lisp_write_ipc_map_cache ( True , mc , dont_send = True )
  jdata . append ( oo0O00OOOOO )
  return ( [ True , jdata ] )
- if 55 - 55: ooOoO0o - II111iiii . ooOoO0o . iII111i / OoooooooOO
- if 51 - 51: I1IiiI * I1Ii111 - ooOoO0o + IiII
- if 22 - 22: OoOoOO00 % Ii1I + iII111i
- if 64 - 64: ooOoO0o
- if 87 - 87: IiII - Ii1I / Oo0Ooo / I1ii11iIi11i . iII111i
- if 49 - 49: IiII * OoooooooOO * iIii1I11I1II1 * Oo0Ooo / iII111i % oO0o
- if 88 - 88: I1Ii111 * OOooOOo
- if 38 - 38: Oo0Ooo - OoooooooOO - OoooooooOO / II111iiii
+ if 49 - 49: i1IIi - i11iIiiIii + II111iiii + Ii1I / OoO0O00
+ if 34 - 34: I1ii11iIi11i * i11iIiiIii
+ if 6 - 6: I1ii11iIi11i + I1IiiI / OoooooooOO % I11i * Oo0Ooo
+ if 20 - 20: Oo0Ooo
+ if 85 - 85: I1Ii111
+ if 98 - 98: OoO0O00 - IiII % iIii1I11I1II1 . OoOoOO00 + i1IIi + OoooooooOO
+ if 29 - 29: I1ii11iIi11i * I1Ii111 - i1IIi * i11iIiiIii * iIii1I11I1II1 % I11i
+ if 73 - 73: OoO0O00 . I1IiiI / o0oOOo0O0Ooo
 def lisp_ipc_walk_map_cache ( mc , jdata ) :
- if 10 - 10: II111iiii - OoO0O00 / II111iiii % Ii1I - OoOoOO00
- if 90 - 90: I11i + II111iiii - oO0o - ooOoO0o / ooOoO0o / i11iIiiIii
- if 80 - 80: I1ii11iIi11i % O0 / II111iiii + iII111i
- if 22 - 22: Oo0Ooo + ooOoO0o . OOooOOo % Oo0Ooo . IiII
+ if 12 - 12: I11i * i11iIiiIii - O0 * o0oOOo0O0Ooo - IiII + I1IiiI
+ if 7 - 7: oO0o + I1Ii111 . o0oOOo0O0Ooo / IiII + iIii1I11I1II1 % I1Ii111
+ if 24 - 24: i11iIiiIii + iIii1I11I1II1
+ if 22 - 22: i11iIiiIii . II111iiii / o0oOOo0O0Ooo / Ii1I . O0 . OoOoOO00
  if ( mc . group . is_null ( ) ) : return ( lisp_ipc_map_cache_entry ( mc , jdata ) )
- if 34 - 34: Ii1I . OoOoOO00 - OOooOOo * Oo0Ooo - ooOoO0o . oO0o
+ if 89 - 89: O0 * Oo0Ooo + I1Ii111 + ooOoO0o * OoOoOO00
  if ( mc . source_cache == None ) : return ( [ True , jdata ] )
- if 42 - 42: O0 + OoO0O00
- if 47 - 47: O0 % OoOoOO00 + Ii1I * iIii1I11I1II1
- if 55 - 55: Ii1I
- if 93 - 93: iII111i + OOooOOo . OoooooooOO . I1Ii111 . O0
- if 46 - 46: i11iIiiIii
+ if 20 - 20: OoO0O00 - OoOoOO00
+ if 84 - 84: iIii1I11I1II1 + ooOoO0o . o0oOOo0O0Ooo % iII111i
+ if 35 - 35: I11i - oO0o * oO0o / OoooooooOO + iII111i + OoOoOO00
+ if 48 - 48: I1Ii111 / o0oOOo0O0Ooo - OOooOOo / o0oOOo0O0Ooo % O0
+ if 38 - 38: OoO0O00 + o0oOOo0O0Ooo / OoO0O00
  jdata = mc . source_cache . walk_cache ( lisp_ipc_map_cache_entry , jdata )
  return ( [ True , jdata ] )
- if 26 - 26: I11i * Oo0Ooo % OoO0O00 + Oo0Ooo - I1ii11iIi11i
- if 74 - 74: i1IIi + OoO0O00 . II111iiii + I1Ii111
- if 59 - 59: Ii1I . i11iIiiIii . o0oOOo0O0Ooo * iIii1I11I1II1 . OoOoOO00 . II111iiii
- if 67 - 67: OoO0O00 - Oo0Ooo + OOooOOo / OoOoOO00 + OOooOOo
- if 18 - 18: Oo0Ooo % OoOoOO00 % i1IIi
- if 66 - 66: OoOoOO00 % II111iiii
- if 16 - 16: i11iIiiIii - I1IiiI + ooOoO0o * oO0o
+ if 74 - 74: oO0o - i1IIi . Oo0Ooo / I1IiiI + o0oOOo0O0Ooo . OoOoOO00
+ if 35 - 35: iII111i / Ii1I
+ if 57 - 57: ooOoO0o . I1IiiI * OOooOOo
+ if 87 - 87: I11i - I11i % iII111i - Ii1I
+ if 29 - 29: oO0o - ooOoO0o * iIii1I11I1II1 / OoOoOO00
+ if 34 - 34: I1IiiI . Oo0Ooo
+ if 4 - 4: Ii1I - II111iiii * iII111i / oO0o - I1IiiI
 def lisp_itr_discover_eid ( db , eid , input_interface , routed_interface ,
  lisp_ipc_listen_socket ) :
  i1iiii = eid . print_address ( )
  if ( i1iiii in db . dynamic_eids ) :
   db . dynamic_eids [ i1iiii ] . last_packet = lisp_get_timestamp ( )
   return
-  if 30 - 30: II111iiii / o0oOOo0O0Ooo
-  if 57 - 57: I11i / I1ii11iIi11i . I11i
-  if 68 - 68: OoOoOO00 + O0 . I1IiiI
-  if 26 - 26: I1ii11iIi11i
-  if 98 - 98: Oo0Ooo
+  if 32 - 32: iIii1I11I1II1 - I11i
+  if 49 - 49: I11i * I1Ii111 - iIii1I11I1II1 * O0
+  if 72 - 72: I1IiiI * iII111i
+  if 61 - 61: Ii1I * Oo0Ooo * I1Ii111 % I11i + iII111i % oO0o
+  if 67 - 67: IiII
  IIIII1IIiIi = lisp_dynamic_eid ( )
  IIIII1IIiIi . dynamic_eid . copy_address ( eid )
  IIIII1IIiIi . interface = routed_interface
  IIIII1IIiIi . last_packet = lisp_get_timestamp ( )
  IIIII1IIiIi . get_timeout ( routed_interface )
  db . dynamic_eids [ i1iiii ] = IIIII1IIiIi
- if 72 - 72: oO0o + OoooooooOO . O0 + IiII
- IiIiIii1I = ""
+ if 90 - 90: o0oOOo0O0Ooo
+ iIi1 = ""
  if ( input_interface != routed_interface ) :
-  IiIiIii1I = ", routed-interface " + routed_interface
-  if 34 - 34: I1ii11iIi11i * i11iIiiIii
-  if 6 - 6: I1ii11iIi11i + I1IiiI / OoooooooOO % I11i * Oo0Ooo
- i1i111 = green ( i1iiii , False ) + bold ( " discovered" , False )
- lprint ( "Dynamic-EID {} on interface {}{}, timeout {}" . format ( i1i111 , input_interface , IiIiIii1I , IIIII1IIiIi . timeout ) )
- if 54 - 54: IiII % iIii1I11I1II1 . OoO0O00
- if 47 - 47: OoooooooOO / ooOoO0o / I1Ii111
- if 58 - 58: IiII * IiII / I11i . iIii1I11I1II1
- if 73 - 73: OoooooooOO + OoooooooOO + o0oOOo0O0Ooo / IiII . ooOoO0o
- if 72 - 72: ooOoO0o . I1ii11iIi11i . Oo0Ooo - IiII
+  iIi1 = ", routed-interface " + routed_interface
+  if 46 - 46: OOooOOo / iII111i . i1IIi . i11iIiiIii . iIii1I11I1II1 % I11i
+  if 62 - 62: I11i % II111iiii % OoooooooOO * ooOoO0o / oO0o
+ iIii = green ( i1iiii , False ) + bold ( " discovered" , False )
+ lprint ( "Dynamic-EID {} on interface {}{}, timeout {}" . format ( iIii , input_interface , iIi1 , IIIII1IIiIi . timeout ) )
+ if 41 - 41: Oo0Ooo + Ii1I
+ if 79 - 79: IiII
+ if 64 - 64: i11iIiiIii + OoooooooOO . oO0o * Ii1I
+ if 49 - 49: O0
+ if 72 - 72: I1Ii111
  OO = "learn%{}%{}" . format ( i1iiii , routed_interface )
  OO = lisp_command_ipc ( OO , "lisp-itr" )
  lisp_ipc ( OO , lisp_ipc_listen_socket , "lisp-etr" )
  return
- if 35 - 35: IiII
- if 36 - 36: I1Ii111 . o0oOOo0O0Ooo / IiII + OOooOOo
- if 11 - 11: II111iiii / i11iIiiIii + i1IIi . OoooooooOO * I1IiiI . II111iiii
- if 21 - 21: Ii1I . O0 . IiII + I11i
- if 86 - 86: OoOoOO00
- if 36 - 36: ooOoO0o * OoOoOO00 * OoooooooOO
- if 22 - 22: OoOoOO00 + I1ii11iIi11i * iIii1I11I1II1 + iIii1I11I1II1
- if 100 - 100: iII111i - ooOoO0o + I11i - oO0o * i1IIi
- if 62 - 62: OoO0O00 / OoOoOO00 * OoOoOO00
- if 83 - 83: oO0o * o0oOOo0O0Ooo
- if 25 - 25: o0oOOo0O0Ooo % Oo0Ooo . Oo0Ooo + OoO0O00
- if 23 - 23: I11i + I1ii11iIi11i * iIii1I11I1II1 - i1IIi
- if 33 - 33: I1IiiI + o0oOOo0O0Ooo . OoOoOO00
-def lisp_retry_decap_keys ( addr_str , packet , iv , packet_icv ) :
- if ( lisp_search_decap_keys == False ) : return
- if 35 - 35: iII111i / Ii1I
- if 57 - 57: ooOoO0o . I1IiiI * OOooOOo
- if 87 - 87: I11i - I11i % iII111i - Ii1I
- if 29 - 29: oO0o - ooOoO0o * iIii1I11I1II1 / OoOoOO00
- if ( addr_str . find ( ":" ) != - 1 ) : return
- if 34 - 34: I1IiiI . Oo0Ooo
- O0oOoO00O = lisp_crypto_keys_by_rloc_decap [ addr_str ]
- if 4 - 4: Ii1I - II111iiii * iII111i / oO0o - I1IiiI
- for III in lisp_crypto_keys_by_rloc_decap :
-  if 32 - 32: iIii1I11I1II1 - I11i
-  if 49 - 49: I11i * I1Ii111 - iIii1I11I1II1 * O0
-  if 72 - 72: I1IiiI * iII111i
-  if 61 - 61: Ii1I * Oo0Ooo * I1Ii111 % I11i + iII111i % oO0o
-  if ( III . find ( addr_str ) == - 1 ) : continue
-  if 67 - 67: IiII
-  if 90 - 90: o0oOOo0O0Ooo
-  if 5 - 5: i1IIi
-  if 55 - 55: Ii1I
-  if ( III == addr_str ) : continue
-  if 46 - 46: OOooOOo / iII111i . i1IIi . i11iIiiIii . iIii1I11I1II1 % I11i
-  if 62 - 62: I11i % II111iiii % OoooooooOO * ooOoO0o / oO0o
-  if 29 - 29: o0oOOo0O0Ooo / O0 / OoO0O00
-  if 23 - 23: Ii1I + i11iIiiIii % IiII
-  oo0O00OOOOO = lisp_crypto_keys_by_rloc_decap [ III ]
-  if ( oo0O00OOOOO == O0oOoO00O ) : continue
-  if 64 - 64: i11iIiiIii + OoooooooOO . oO0o * Ii1I
-  if 49 - 49: O0
-  if 72 - 72: I1Ii111
-  if 96 - 96: II111iiii / OOooOOo % i1IIi / Oo0Ooo
-  ii1iI1iI11 = oo0O00OOOOO [ 1 ]
-  if ( packet_icv != ii1iI1iI11 . do_icv ( packet , iv ) ) :
-   lprint ( "Test ICV with key {} failed" . format ( red ( III , False ) ) )
-   continue
-   if 61 - 61: oO0o . I1Ii111
-   if 74 - 74: O0 . Ii1I - iII111i % IiII + II111iiii
-  lprint ( "Changing decap crypto key to {}" . format ( red ( III , False ) ) )
-  lisp_crypto_keys_by_rloc_decap [ addr_str ] = oo0O00OOOOO
-  if 71 - 71: oO0o + Ii1I % oO0o
- return
+ if 96 - 96: II111iiii / OOooOOo % i1IIi / Oo0Ooo
+ if 22 - 22: I1IiiI % iIii1I11I1II1 % I1ii11iIi11i
+ if 68 - 68: iII111i + I11i
+ if 61 - 61: oO0o . I1Ii111
+ if 74 - 74: O0 . Ii1I - iII111i % IiII + II111iiii
+ if 71 - 71: oO0o + Ii1I % oO0o
  if 17 - 17: I1Ii111 % I1Ii111 * o0oOOo0O0Ooo
  if 84 - 84: I1Ii111 + iII111i . i1IIi / O0 / I1Ii111 + o0oOOo0O0Ooo
  if 70 - 70: O0 % ooOoO0o - iII111i + oO0o
@@ -19536,69 +19504,72 @@ def lisp_retry_decap_keys ( addr_str , packet , iv , packet_icv ) :
  if 74 - 74: iII111i . OOooOOo * Ii1I / Oo0Ooo . OoO0O00 . I11i
  if 65 - 65: i11iIiiIii - OoO0O00 / OoooooooOO * I1IiiI % iII111i
  if 15 - 15: OOooOOo * Ii1I / ooOoO0o
+def lisp_retry_decap_keys ( addr_str , packet , iv , packet_icv ) :
+ if ( lisp_search_decap_keys == False ) : return
  if 70 - 70: i11iIiiIii * oO0o . I11i - OoooooooOO / I1ii11iIi11i
-def lisp_decent_pull_xtr_configured ( ) :
- return ( lisp_decent_modulus != 0 and lisp_decent_dns_suffix != None )
  if 10 - 10: IiII * OoOoOO00 . II111iiii . II111iiii * Oo0Ooo
  if 23 - 23: I1ii11iIi11i + I11i
  if 74 - 74: i1IIi % I1IiiI
+ if ( addr_str . find ( ":" ) != - 1 ) : return
  if 44 - 44: Oo0Ooo - OoooooooOO % ooOoO0o + II111iiii
+ O0oOoO00O = lisp_crypto_keys_by_rloc_decap [ addr_str ]
  if 60 - 60: o0oOOo0O0Ooo - ooOoO0o + i11iIiiIii % I1ii11iIi11i % II111iiii
- if 62 - 62: Ii1I
- if 30 - 30: iII111i % O0 + II111iiii * I1IiiI
- if 91 - 91: i11iIiiIii
+ for III in lisp_crypto_keys_by_rloc_decap :
+  if 62 - 62: Ii1I
+  if 30 - 30: iII111i % O0 + II111iiii * I1IiiI
+  if 91 - 91: i11iIiiIii
+  if 35 - 35: OoOoOO00 * I1Ii111 / Oo0Ooo - i1IIi - IiII + OOooOOo
+  if ( III . find ( addr_str ) == - 1 ) : continue
+  if 96 - 96: Oo0Ooo + I1ii11iIi11i . O0
+  if 62 - 62: i1IIi % OoooooooOO % OoooooooOO
+  if 53 - 53: O0 * oO0o
+  if 22 - 22: OOooOOo % Oo0Ooo % ooOoO0o - O0 + i1IIi
+  if ( III == addr_str ) : continue
+  if 67 - 67: OoO0O00 / I1IiiI - IiII + iII111i - iII111i
+  if 4 - 4: IiII . Ii1I . IiII % OoO0O00
+  if 12 - 12: OoOoOO00 + O0 / O0 . i1IIi
+  if 58 - 58: IiII . iII111i % O0 . Ii1I * Oo0Ooo
+  oo0O00OOOOO = lisp_crypto_keys_by_rloc_decap [ III ]
+  if ( oo0O00OOOOO == O0oOoO00O ) : continue
+  if 54 - 54: OoO0O00 % OOooOOo - OoO0O00 . Oo0Ooo % i1IIi
+  if 95 - 95: iII111i . OoooooooOO . o0oOOo0O0Ooo / II111iiii - OoooooooOO / I1Ii111
+  if 11 - 11: II111iiii / iII111i . oO0o / ooOoO0o / OOooOOo + OoO0O00
+  if 37 - 37: iIii1I11I1II1 * O0
+  O0Oo0O00O = oo0O00OOOOO [ 1 ]
+  if ( packet_icv != O0Oo0O00O . do_icv ( packet , iv ) ) :
+   lprint ( "Test ICV with key {} failed" . format ( red ( III , False ) ) )
+   continue
+   if 27 - 27: iIii1I11I1II1 - Ii1I . i11iIiiIii / IiII . I1Ii111 / i11iIiiIii
+   if 27 - 27: OoOoOO00 . I11i / OoOoOO00
+  lprint ( "Changing decap crypto key to {}" . format ( red ( III , False ) ) )
+  lisp_crypto_keys_by_rloc_decap [ addr_str ] = oo0O00OOOOO
+  if 96 - 96: OoO0O00 - I1IiiI
+ return
+ if 73 - 73: I1IiiI - o0oOOo0O0Ooo - I1Ii111
+ if 34 - 34: iIii1I11I1II1 - i1IIi + OoO0O00 % Oo0Ooo + i1IIi
+ if 46 - 46: I1IiiI
+ if 82 - 82: iII111i . i1IIi
+ if 38 - 38: Ii1I . I1IiiI . I1ii11iIi11i
+ if 26 - 26: O0 - II111iiii * I1Ii111 - OoOoOO00
+ if 96 - 96: I11i * Oo0Ooo / OOooOOo - IiII
+ if 75 - 75: OoooooooOO - O0
+def lisp_decent_pull_xtr_configured ( ) :
+ return ( lisp_decent_modulus != 0 and lisp_decent_dns_suffix != None )
+ if 39 - 39: i11iIiiIii / Ii1I / ooOoO0o
+ if 93 - 93: o0oOOo0O0Ooo - Oo0Ooo / oO0o / OoOoOO00
+ if 75 - 75: o0oOOo0O0Ooo * ooOoO0o % Ii1I
+ if 94 - 94: OoooooooOO + II111iiii / iIii1I11I1II1 * ooOoO0o
+ if 85 - 85: ooOoO0o / IiII
+ if 28 - 28: i11iIiiIii - OoOoOO00
+ if 13 - 13: O0
+ if 82 - 82: OoooooooOO
 def lisp_is_decent_dns_suffix ( dns_name ) :
  if ( lisp_decent_dns_suffix == None ) : return ( False )
  ooO0o = dns_name . split ( "." )
  ooO0o = "." . join ( ooO0o [ 1 : : ] )
  return ( ooO0o == lisp_decent_dns_suffix )
- if 35 - 35: OoOoOO00 * I1Ii111 / Oo0Ooo - i1IIi - IiII + OOooOOo
- if 96 - 96: Oo0Ooo + I1ii11iIi11i . O0
- if 62 - 62: i1IIi % OoooooooOO % OoooooooOO
- if 53 - 53: O0 * oO0o
- if 22 - 22: OOooOOo % Oo0Ooo % ooOoO0o - O0 + i1IIi
- if 67 - 67: OoO0O00 / I1IiiI - IiII + iII111i - iII111i
- if 4 - 4: IiII . Ii1I . IiII % OoO0O00
- if 12 - 12: OoOoOO00 + O0 / O0 . i1IIi
- if 58 - 58: IiII . iII111i % O0 . Ii1I * Oo0Ooo
- if 54 - 54: OoO0O00 % OOooOOo - OoO0O00 . Oo0Ooo % i1IIi
- if 95 - 95: iII111i . OoooooooOO . o0oOOo0O0Ooo / II111iiii - OoooooooOO / I1Ii111
-def lisp_get_decent_index ( eid ) :
- i1iiii = eid . print_prefix ( )
- Iii1 = hmac . new ( b"lisp-decent" , i1iiii , hashlib . sha256 ) . hexdigest ( )
- if 32 - 32: ooOoO0o / OOooOOo + Oo0Ooo + II111iiii
- if 91 - 91: O0
- if 64 - 64: I1Ii111 - II111iiii + oO0o % ooOoO0o * oO0o
- if 27 - 27: iIii1I11I1II1 - Ii1I . i11iIiiIii / IiII . I1Ii111 / i11iIiiIii
- iIiooOOo0OOoOO0O = os . getenv ( "LISP_DECENT_HASH_WIDTH" )
- if ( iIiooOOo0OOoOO0O in [ "" , None ] ) :
-  iIiooOOo0OOoOO0O = 12
- else :
-  iIiooOOo0OOoOO0O = int ( iIiooOOo0OOoOO0O )
-  if ( iIiooOOo0OOoOO0O > 32 ) :
-   iIiooOOo0OOoOO0O = 12
-  else :
-   iIiooOOo0OOoOO0O *= 2
-   if 74 - 74: OoO0O00 . iII111i / OoO0O00 + Oo0Ooo
-   if 21 - 21: I1IiiI . II111iiii % iIii1I11I1II1
-   if 81 - 81: Oo0Ooo + i11iIiiIii
- oOoOO = Iii1 [ 0 : iIiooOOo0OOoOO0O ]
- OOOooo0OooOoO = int ( oOoOO , 16 ) % lisp_decent_modulus
- if 9 - 9: I1ii11iIi11i / OoOoOO00 * o0oOOo0O0Ooo * I11i * Oo0Ooo / o0oOOo0O0Ooo
- lprint ( "LISP-Decent modulus {}, hash-width {}, mod-value {}, index {}" . format ( lisp_decent_modulus , old_div ( iIiooOOo0OOoOO0O , 2 ) , oOoOO , OOOooo0OooOoO ) )
- if 67 - 67: i1IIi % OoooooooOO - Oo0Ooo . I1IiiI + i1IIi . Ii1I
- if 98 - 98: o0oOOo0O0Ooo - OoooooooOO - OoooooooOO + OoOoOO00 - Oo0Ooo % ooOoO0o
- return ( OOOooo0OooOoO )
- if 54 - 54: Ii1I * I1ii11iIi11i * OoooooooOO + II111iiii / ooOoO0o
- if 11 - 11: OoooooooOO * ooOoO0o / II111iiii * oO0o / OoOoOO00 . iIii1I11I1II1
- if 9 - 9: iII111i
- if 13 - 13: IiII - Oo0Ooo
- if 94 - 94: I11i - iIii1I11I1II1 + oO0o
- if 72 - 72: i1IIi . OoO0O00
- if 95 - 95: OoOoOO00 + Ii1I
-def lisp_get_decent_dns_name ( eid ) :
- OOOooo0OooOoO = lisp_get_decent_index ( eid )
- return ( str ( OOOooo0OooOoO ) + "." + lisp_decent_dns_suffix )
+ if 59 - 59: I1Ii111 + I1ii11iIi11i + OoO0O00 % oO0o . i1IIi % O0
+ if 22 - 22: i1IIi * OoOoOO00 + Ii1I
  if 48 - 48: Ii1I % IiII + OoO0O00 . IiII
  if 42 - 42: Ii1I
  if 70 - 70: I11i
@@ -19607,275 +19578,320 @@ def lisp_get_decent_dns_name ( eid ) :
  if 4 - 4: i11iIiiIii + i11iIiiIii / O0
  if 46 - 46: I11i % ooOoO0o - Ii1I
  if 25 - 25: O0 / i11iIiiIii . O0
+ if 24 - 24: I1ii11iIi11i - i11iIiiIii / iII111i . Oo0Ooo / I1ii11iIi11i
+def lisp_get_decent_index ( eid ) :
+ i1iiii = eid . print_prefix ( )
+ o0ooO0o0oO0 = hmac . new ( b"lisp-decent" , i1iiii , hashlib . sha256 ) . hexdigest ( )
+ if 73 - 73: OoO0O00 % II111iiii * i11iIiiIii % iII111i / Ii1I
+ if 28 - 28: oO0o
+ if 36 - 36: IiII . I1IiiI
+ if 83 - 83: o0oOOo0O0Ooo / i1IIi
+ iII1I1i1 = os . getenv ( "LISP_DECENT_HASH_WIDTH" )
+ if ( iII1I1i1 in [ "" , None ] ) :
+  iII1I1i1 = 12
+ else :
+  iII1I1i1 = int ( iII1I1i1 )
+  if ( iII1I1i1 > 32 ) :
+   iII1I1i1 = 12
+  else :
+   iII1I1i1 *= 2
+   if 3 - 3: O0 - IiII + I1IiiI
+   if 44 - 44: OoooooooOO / i11iIiiIii + Ii1I - Oo0Ooo
+   if 73 - 73: o0oOOo0O0Ooo * I1IiiI * O0
+ OooO0O0oO0 = o0ooO0o0oO0 [ 0 : iII1I1i1 ]
+ OOOooo0OooOoO = int ( OooO0O0oO0 , 16 ) % lisp_decent_modulus
+ if 21 - 21: IiII / OoO0O00 % IiII - OoO0O00
+ lprint ( "LISP-Decent modulus {}, hash-width {}, mod-value {}, index {}" . format ( lisp_decent_modulus , old_div ( iII1I1i1 , 2 ) , OooO0O0oO0 , OOOooo0OooOoO ) )
+ if 87 - 87: II111iiii
+ if 38 - 38: I1IiiI / O0
+ return ( OOOooo0OooOoO )
+ if 92 - 92: o0oOOo0O0Ooo + OoooooooOO / ooOoO0o % oO0o
+ if 28 - 28: i1IIi . II111iiii + O0 / O0 % OoOoOO00 + OOooOOo
+ if 24 - 24: OoooooooOO
+ if 11 - 11: i11iIiiIii / iIii1I11I1II1 % ooOoO0o + OOooOOo
+ if 73 - 73: OoOoOO00 + OoooooooOO + iIii1I11I1II1 + II111iiii * iIii1I11I1II1 - OoOoOO00
+ if 71 - 71: O0 * OOooOOo . I1IiiI . I1Ii111 * I11i
+ if 45 - 45: O0 . O0 . II111iiii * ooOoO0o
+def lisp_get_decent_dns_name ( eid ) :
+ OOOooo0OooOoO = lisp_get_decent_index ( eid )
+ return ( str ( OOOooo0OooOoO ) + "." + lisp_decent_dns_suffix )
+ if 2 - 2: OoO0O00 . o0oOOo0O0Ooo
+ if 48 - 48: Ii1I
+ if 45 - 45: I1ii11iIi11i - I11i + Ii1I
+ if 82 - 82: iII111i
+ if 81 - 81: i1IIi % OOooOOo - OoO0O00 - Oo0Ooo
+ if 19 - 19: i1IIi
+ if 97 - 97: OoO0O00 + i11iIiiIii % I1IiiI * Ii1I
+ if 89 - 89: IiII % i11iIiiIii + OoO0O00 . oO0o / I1IiiI . Ii1I
 def lisp_get_decent_dns_name_from_str ( iid , eid_str ) :
  o0Ooo0Oooo0o = lisp_address ( LISP_AFI_NONE , eid_str , 0 , iid )
  OOOooo0OooOoO = lisp_get_decent_index ( o0Ooo0Oooo0o )
  return ( str ( OOOooo0OooOoO ) + "." + lisp_decent_dns_suffix )
- if 24 - 24: I1ii11iIi11i - i11iIiiIii / iII111i . Oo0Ooo / I1ii11iIi11i
- if 92 - 92: I11i % OoooooooOO
- if 14 - 14: i11iIiiIii * i11iIiiIii * OoOoOO00
- if 84 - 84: OOooOOo % I1Ii111 + I11i / I1IiiI . iII111i
- if 78 - 78: oO0o . Oo0Ooo
- if 18 - 18: IiII
- if 35 - 35: OoooooooOO / i1IIi - OoO0O00 + Oo0Ooo - o0oOOo0O0Ooo
- if 100 - 100: II111iiii % i11iIiiIii % oO0o + O0
- if 46 - 46: OoO0O00 / I1IiiI - Oo0Ooo . o0oOOo0O0Ooo . Oo0Ooo % I11i
- if 43 - 43: IiII - O0 + I1Ii111 % OoooooooOO % OoO0O00 / I1Ii111
-def lisp_trace_append ( packet , reason = None , ed = "encap" , lisp_socket = None ,
- rloc_entry = None ) :
- if 48 - 48: I1ii11iIi11i . i1IIi % i1IIi - iII111i * o0oOOo0O0Ooo + IiII
- oo00 = 28 if packet . inner_version == 4 else 48
- IiiIi1I = packet . packet [ oo00 : : ]
- o0oo0oOoo0 = lisp_trace ( )
- if ( o0oo0oOoo0 . decode ( IiiIi1I ) == False ) :
-  lprint ( "Could not decode JSON portion of a LISP-Trace packet" )
-  return ( False )
-  if 42 - 42: OoooooooOO / ooOoO0o % II111iiii - ooOoO0o
-  if 15 - 15: II111iiii + I1IiiI
- IIIiii = "?" if packet . outer_dest . is_null ( ) else packet . outer_dest . print_address_no_iid ( )
- if 53 - 53: Ii1I . iIii1I11I1II1
- if 49 - 49: I11i % OoO0O00 * I1IiiI + I1IiiI . iII111i . II111iiii
- if 60 - 60: OoOoOO00
- if 71 - 71: O0 * OOooOOo . I1IiiI . I1Ii111 * I11i
- if 45 - 45: O0 . O0 . II111iiii * ooOoO0o
- if 2 - 2: OoO0O00 . o0oOOo0O0Ooo
- if ( IIIiii != "?" and packet . encap_port != LISP_DATA_PORT ) :
-  if ( ed == "encap" ) : IIIiii += ":{}" . format ( packet . encap_port )
-  if 48 - 48: Ii1I
-  if 45 - 45: I1ii11iIi11i - I11i + Ii1I
-  if 82 - 82: iII111i
-  if 81 - 81: i1IIi % OOooOOo - OoO0O00 - Oo0Ooo
-  if 19 - 19: i1IIi
- oo0O00OOOOO = { }
- oo0O00OOOOO [ "n" ] = "ITR" if lisp_i_am_itr else "ETR" if lisp_i_am_etr else "RTR" if lisp_i_am_rtr else "?"
- if 97 - 97: OoO0O00 + i11iIiiIii % I1IiiI * Ii1I
- O0OooOoOoo0 = packet . outer_source
- if ( O0OooOoOoo0 . is_null ( ) ) : O0OooOoOoo0 = lisp_myrlocs [ 0 ]
- oo0O00OOOOO [ "sr" ] = O0OooOoOoo0 . print_address_no_iid ( )
  if 11 - 11: ooOoO0o - I1Ii111 - I11i + OoOoOO00
  if 20 - 20: I11i + O0
  if 27 - 27: Oo0Ooo
  if 12 - 12: I1ii11iIi11i . iII111i - iII111i - OOooOOo - iIii1I11I1II1
  if 50 - 50: I1IiiI - iIii1I11I1II1 . iII111i - Ii1I / I1Ii111 + iII111i
- if ( oo0O00OOOOO [ "n" ] == "ITR" and packet . inner_sport != LISP_TRACE_PORT ) :
-  oo0O00OOOOO [ "sr" ] += ":{}" . format ( packet . inner_sport )
-  if 46 - 46: OOooOOo + iII111i % Oo0Ooo * iII111i % OoooooooOO * IiII
-  if 27 - 27: I1IiiI + I1IiiI + I1ii11iIi11i - oO0o * OOooOOo
- oo0O00OOOOO [ "hn" ] = lisp_hostname
- III = ed [ 0 ] + "ts"
- oo0O00OOOOO [ III ] = lisp_get_timestamp ( )
+ if 46 - 46: OOooOOo + iII111i % Oo0Ooo * iII111i % OoooooooOO * IiII
+ if 27 - 27: I1IiiI + I1IiiI + I1ii11iIi11i - oO0o * OOooOOo
  if 53 - 53: I1ii11iIi11i / OoooooooOO * iIii1I11I1II1
  if 4 - 4: I1IiiI . iIii1I11I1II1 + OOooOOo / IiII . o0oOOo0O0Ooo . I11i
  if 52 - 52: ooOoO0o % i11iIiiIii . IiII + OoO0O00
+def lisp_trace_append ( packet , reason = None , ed = "encap" , lisp_socket = None ,
+ rloc_entry = None ) :
  if 66 - 66: II111iiii . Ii1I
- if 42 - 42: iIii1I11I1II1 * iII111i * I1IiiI
- if 66 - 66: Oo0Ooo * i1IIi / I1ii11iIi11i / OoO0O00
- if ( IIIiii == "?" and oo0O00OOOOO [ "n" ] == "ETR" ) :
-  OoO0oO = lisp_db_for_lookups . lookup_cache ( packet . inner_dest , False )
-  if ( OoO0oO != None and len ( OoO0oO . rloc_set ) >= 1 ) :
-   IIIiii = OoO0oO . rloc_set [ 0 ] . rloc . print_address_no_iid ( )
-   if 12 - 12: OOooOOo + iIii1I11I1II1 % I1Ii111 + OOooOOo
-   if 19 - 19: OoO0O00 / I1IiiI - o0oOOo0O0Ooo - i1IIi + I1ii11iIi11i * OoooooooOO
- oo0O00OOOOO [ "dr" ] = IIIiii
- if 74 - 74: I1Ii111 . I11i / Oo0Ooo
- if 88 - 88: oO0o % OoO0O00 - i11iIiiIii % I1Ii111 / O0 * IiII
- if 99 - 99: o0oOOo0O0Ooo . ooOoO0o / i11iIiiIii
- if 44 - 44: IiII + OOooOOo % OoO0O00 . OoooooooOO * O0
- if ( IIIiii == "?" and reason != None ) :
-  oo0O00OOOOO [ "dr" ] += " ({})" . format ( reason )
+ oo00 = 28 if packet . inner_version == 4 else 48
+ ii11III1Iiii = packet . packet [ oo00 : : ]
+ o0oo0oOoo0 = lisp_trace ( )
+ if ( o0oo0oOoo0 . decode ( ii11III1Iiii ) == False ) :
+  lprint ( "Could not decode JSON portion of a LISP-Trace packet" )
+  return ( False )
+  if 58 - 58: oO0o . OOooOOo + Ii1I
+  if 12 - 12: OOooOOo * ooOoO0o / II111iiii
+ IIIIi1 = "?" if packet . outer_dest . is_null ( ) else packet . outer_dest . print_address_no_iid ( )
+ if 57 - 57: OoO0O00 % O0
+ if 92 - 92: Oo0Ooo % IiII
+ if 84 - 84: o0oOOo0O0Ooo - I11i + II111iiii . I1Ii111 * O0
+ if 90 - 90: OoooooooOO + II111iiii - i11iIiiIii * I11i + IiII + OOooOOo
+ if 66 - 66: OoO0O00
+ if 94 - 94: O0
+ if ( IIIIi1 != "?" and packet . encap_port != LISP_DATA_PORT ) :
+  if ( ed == "encap" ) : IIIIi1 += ":{}" . format ( packet . encap_port )
   if 72 - 72: i1IIi - iII111i * I1IiiI % O0 - I11i * O0
   if 78 - 78: I1IiiI - OoO0O00 / Ii1I . i1IIi
   if 30 - 30: IiII
   if 21 - 21: i1IIi . iII111i - I1IiiI
   if 28 - 28: IiII / Ii1I - i1IIi - OoOoOO00
+ oo0O00OOOOO = { }
+ oo0O00OOOOO [ "n" ] = "ITR" if lisp_i_am_itr else "ETR" if lisp_i_am_etr else "RTR" if lisp_i_am_rtr else "?"
+ if 65 - 65: o0oOOo0O0Ooo * OoO0O00 / o0oOOo0O0Ooo
+ OoOOoOo0o = packet . outer_source
+ if ( OoOOoOo0o . is_null ( ) ) : OoOOoOo0o = lisp_myrlocs [ 0 ]
+ oo0O00OOOOO [ "sr" ] = OoOOoOo0o . print_address_no_iid ( )
+ if 9 - 9: II111iiii
+ if 19 - 19: O0 * Ii1I . i1IIi - Oo0Ooo - i11iIiiIii / O0
+ if 15 - 15: Ii1I . Oo0Ooo
+ if 71 - 71: i1IIi / I1IiiI % I11i - I11i
+ if 37 - 37: i11iIiiIii * OoOoOO00 * Oo0Ooo * I1IiiI / II111iiii
+ if ( oo0O00OOOOO [ "n" ] == "ITR" and packet . inner_sport != LISP_TRACE_PORT ) :
+  oo0O00OOOOO [ "sr" ] += ":{}" . format ( packet . inner_sport )
+  if 100 - 100: I1Ii111
+  if 23 - 23: Ii1I
+ oo0O00OOOOO [ "hn" ] = lisp_hostname
+ III = ed [ 0 ] + "ts"
+ oo0O00OOOOO [ III ] = lisp_get_timestamp ( )
+ if 74 - 74: OoooooooOO % I1Ii111 + OoO0O00 * i11iIiiIii - I11i - I1ii11iIi11i
+ if 98 - 98: Ii1I - Oo0Ooo - o0oOOo0O0Ooo
+ if 7 - 7: II111iiii + OoO0O00 . I1IiiI - iII111i . o0oOOo0O0Ooo
+ if 65 - 65: Ii1I + O0
+ if 30 - 30: OoOoOO00
+ if 86 - 86: II111iiii % I1ii11iIi11i
+ if ( IIIIi1 == "?" and oo0O00OOOOO [ "n" ] == "ETR" ) :
+  OoO0oO = lisp_db_for_lookups . lookup_cache ( packet . inner_dest , False )
+  if ( OoO0oO != None and len ( OoO0oO . rloc_set ) >= 1 ) :
+   IIIIi1 = OoO0oO . rloc_set [ 0 ] . rloc . print_address_no_iid ( )
+   if 88 - 88: Oo0Ooo . oO0o + OoOoOO00 % OoooooooOO
+   if 81 - 81: OoooooooOO . I1Ii111 + OoO0O00 % I1Ii111
+ oo0O00OOOOO [ "dr" ] = IIIIi1
+ if 49 - 49: oO0o . oO0o % oO0o / Oo0Ooo
+ if 62 - 62: ooOoO0o . i1IIi % OoO0O00 - I1ii11iIi11i - IiII
+ if 57 - 57: i1IIi - II111iiii - O0 . iII111i + OoO0O00
+ if 67 - 67: OOooOOo * iII111i / iIii1I11I1II1 / I1ii11iIi11i
+ if ( IIIIi1 == "?" and reason != None ) :
+  oo0O00OOOOO [ "dr" ] += " ({})" . format ( reason )
+  if 10 - 10: OoooooooOO % I1ii11iIi11i * i1IIi . iII111i
+  if 96 - 96: II111iiii % i11iIiiIii - Oo0Ooo
+  if 70 - 70: O0 * iIii1I11I1II1 - IiII * I11i / Ii1I + i11iIiiIii
+  if 26 - 26: II111iiii - I11i % I11i / ooOoO0o + Oo0Ooo
+  if 91 - 91: I1IiiI % Ii1I - OOooOOo - Oo0Ooo / I1IiiI / OoO0O00
  if ( rloc_entry != None ) :
   oo0O00OOOOO [ "rtts" ] = rloc_entry . recent_rloc_probe_rtts
   oo0O00OOOOO [ "hops" ] = rloc_entry . recent_rloc_probe_hops
   oo0O00OOOOO [ "lats" ] = rloc_entry . recent_rloc_probe_latencies
-  if 65 - 65: o0oOOo0O0Ooo * OoO0O00 / o0oOOo0O0Ooo
-  if 77 - 77: OoooooooOO - Oo0Ooo - OoOoOO00 / I11i / O0 . i11iIiiIii
-  if 27 - 27: I1Ii111 * O0
-  if 9 - 9: i1IIi - Oo0Ooo - i11iIiiIii / iIii1I11I1II1 . i1IIi
-  if 2 - 2: I11i + II111iiii - I11i / oO0o / I11i
-  if 73 - 73: IiII % I1Ii111 . OoOoOO00
- OoiIii11i11i = packet . inner_source . print_address ( )
- oOOOOOo0o = packet . inner_dest . print_address ( )
- if ( o0oo0oOoo0 . packet_json == [ ] ) :
-  o0OO0ooooO = { }
-  o0OO0ooooO [ "se" ] = OoiIii11i11i
-  o0OO0ooooO [ "de" ] = oOOOOOo0o
-  o0OO0ooooO [ "paths" ] = [ ]
-  o0oo0oOoo0 . packet_json . append ( o0OO0ooooO )
-  if 96 - 96: I1IiiI / ooOoO0o / iIii1I11I1II1
-  if 91 - 91: Ii1I . I11i
-  if 87 - 87: Oo0Ooo / IiII * OOooOOo + I1ii11iIi11i . I11i
-  if 56 - 56: oO0o + oO0o % o0oOOo0O0Ooo + OOooOOo . II111iiii + i11iIiiIii
-  if 45 - 45: iIii1I11I1II1 / o0oOOo0O0Ooo * OoooooooOO - Oo0Ooo
-  if 77 - 77: II111iiii
- for o0OO0ooooO in o0oo0oOoo0 . packet_json :
-  if ( o0OO0ooooO [ "de" ] != oOOOOOo0o ) : continue
-  o0OO0ooooO [ "paths" ] . append ( oo0O00OOOOO )
-  break
-  if 8 - 8: I1IiiI * II111iiii % I1ii11iIi11i
-  if 88 - 88: Oo0Ooo . oO0o + OoOoOO00 % OoooooooOO
-  if 81 - 81: OoooooooOO . I1Ii111 + OoO0O00 % I1Ii111
-  if 49 - 49: oO0o . oO0o % oO0o / Oo0Ooo
-  if 62 - 62: ooOoO0o . i1IIi % OoO0O00 - I1ii11iIi11i - IiII
-  if 57 - 57: i1IIi - II111iiii - O0 . iII111i + OoO0O00
-  if 67 - 67: OOooOOo * iII111i / iIii1I11I1II1 / I1ii11iIi11i
-  if 10 - 10: OoooooooOO % I1ii11iIi11i * i1IIi . iII111i
- ooOoO000oO = False
- if ( len ( o0oo0oOoo0 . packet_json ) == 1 and oo0O00OOOOO [ "n" ] == "ETR" and
- o0oo0oOoo0 . myeid ( packet . inner_dest ) ) :
-  o0OO0ooooO = { }
-  o0OO0ooooO [ "se" ] = oOOOOOo0o
-  o0OO0ooooO [ "de" ] = OoiIii11i11i
-  o0OO0ooooO [ "paths" ] = [ ]
-  o0oo0oOoo0 . packet_json . append ( o0OO0ooooO )
-  ooOoO000oO = True
-  if 13 - 13: i1IIi * Oo0Ooo % i11iIiiIii % I11i / II111iiii - Ii1I
-  if 71 - 71: OoOoOO00 % ooOoO0o
-  if 36 - 36: Ii1I * oO0o / oO0o % I1IiiI % I1IiiI + I1IiiI
-  if 41 - 41: OoooooooOO . O0 % OOooOOo
+  if 40 - 40: OoooooooOO
+  if 71 - 71: OOooOOo
   if 88 - 88: O0
   if 44 - 44: II111iiii - IiII / I1IiiI + ooOoO0o % iII111i - iII111i
- o0oo0oOoo0 . print_trace ( )
- IiiIi1I = o0oo0oOoo0 . encode ( )
- if 53 - 53: OoooooooOO
- if 41 - 41: i1IIi - oO0o
- if 41 - 41: I11i
- if 92 - 92: i11iIiiIii
- if 62 - 62: i1IIi / I1IiiI - o0oOOo0O0Ooo
- if 3 - 3: O0 * OoOoOO00 * I11i / OoOoOO00
- if 77 - 77: i1IIi
- if 3 - 3: iII111i * OoO0O00 - oO0o + iII111i . o0oOOo0O0Ooo + I1IiiI
- ooO0oii = o0oo0oOoo0 . packet_json [ 0 ] [ "paths" ] [ 0 ] [ "sr" ]
- if ( IIIiii == "?" ) :
-  lprint ( "LISP-Trace return to sender RLOC {}" . format ( ooO0oii ) )
-  o0oo0oOoo0 . return_to_sender ( lisp_socket , ooO0oii , IiiIi1I )
-  return ( False )
+  if 53 - 53: OoooooooOO
+  if 41 - 41: i1IIi - oO0o
+ OoiIii11i11i = packet . inner_source . print_address ( )
+ iIi1Iiii11Ii1 = packet . inner_dest . print_address ( )
+ if ( o0oo0oOoo0 . packet_json == [ ] ) :
+  i11i1iiI1i1 = { }
+  i11i1iiI1i1 [ "se" ] = OoiIii11i11i
+  i11i1iiI1i1 [ "de" ] = iIi1Iiii11Ii1
+  i11i1iiI1i1 [ "paths" ] = [ ]
+  o0oo0oOoo0 . packet_json . append ( i11i1iiI1i1 )
+  if 41 - 41: I11i
+  if 92 - 92: i11iIiiIii
+  if 62 - 62: i1IIi / I1IiiI - o0oOOo0O0Ooo
+  if 3 - 3: O0 * OoOoOO00 * I11i / OoOoOO00
+  if 77 - 77: i1IIi
+  if 3 - 3: iII111i * OoO0O00 - oO0o + iII111i . o0oOOo0O0Ooo + I1IiiI
+ for i11i1iiI1i1 in o0oo0oOoo0 . packet_json :
+  if ( i11i1iiI1i1 [ "de" ] != iIi1Iiii11Ii1 ) : continue
+  i11i1iiI1i1 [ "paths" ] . append ( oo0O00OOOOO )
+  break
+  if 65 - 65: O0 / OoOoOO00
+  if 77 - 77: OoO0O00
+  if 17 - 17: i1IIi
   if 35 - 35: OoOoOO00
   if 61 - 61: I1Ii111
   if 78 - 78: I1Ii111 * Ii1I % Ii1I + I1IiiI
   if 83 - 83: iIii1I11I1II1 + O0 / IiII . iIii1I11I1II1
   if 74 - 74: Oo0Ooo
-  if 60 - 60: OoooooooOO
- Ooo000O00 = o0oo0oOoo0 . packet_length ( )
- if 16 - 16: iIii1I11I1II1 - OoOoOO00 / I1ii11iIi11i % O0 % o0oOOo0O0Ooo
- if 99 - 99: ooOoO0o . o0oOOo0O0Ooo - O0 * I1Ii111 . i11iIiiIii / iIii1I11I1II1
- if 40 - 40: iIii1I11I1II1 + oO0o / iIii1I11I1II1 - i1IIi % OoO0O00
- if 22 - 22: OOooOOo
- if 65 - 65: i1IIi - oO0o . I1Ii111 . ooOoO0o % I1ii11iIi11i % I1ii11iIi11i
- if 1 - 1: I1Ii111 + I1Ii111
- O0OOOO = packet . packet [ 0 : oo00 ]
- iIIiiIi = struct . pack ( "HH" , socket . htons ( Ooo000O00 ) , 0 )
- O0OOOO = O0OOOO [ 0 : oo00 - 4 ] + iIIiiIi
- if ( packet . inner_version == 6 and oo0O00OOOOO [ "n" ] == "ETR" and
- len ( o0oo0oOoo0 . packet_json ) == 2 ) :
-  O0I1II1 = O0OOOO [ oo00 - 8 : : ] + IiiIi1I
-  O0I1II1 = lisp_udp_checksum ( OoiIii11i11i , oOOOOOo0o , O0I1II1 )
-  O0OOOO = O0OOOO [ 0 : oo00 - 8 ] + O0I1II1 [ 0 : 8 ]
-  if 77 - 77: OoooooooOO
-  if 10 - 10: I11i
-  if 22 - 22: Oo0Ooo . O0 / i1IIi - OoOoOO00
-  if 41 - 41: II111iiii - I1ii11iIi11i - I1Ii111
-  if 82 - 82: I1IiiI * I1IiiI / iIii1I11I1II1
-  if 14 - 14: I11i + Ii1I - OOooOOo % Ii1I / Ii1I
-  if 86 - 86: I1Ii111 - i11iIiiIii + Ii1I + I11i
-  if 96 - 96: Ii1I
-  if 28 - 28: i1IIi . oO0o . IiII + Oo0Ooo . Oo0Ooo . i1IIi
- if ( ooOoO000oO ) :
-  if ( packet . inner_version == 4 ) :
-   O0OOOO = O0OOOO [ 0 : 12 ] + O0OOOO [ 16 : 20 ] + O0OOOO [ 12 : 16 ] + O0OOOO [ 22 : 24 ] + O0OOOO [ 20 : 22 ] + O0OOOO [ 24 : : ]
-   if 34 - 34: Oo0Ooo + IiII / i1IIi
-  else :
-   O0OOOO = O0OOOO [ 0 : 8 ] + O0OOOO [ 24 : 40 ] + O0OOOO [ 8 : 24 ] + O0OOOO [ 42 : 44 ] + O0OOOO [ 40 : 42 ] + O0OOOO [ 44 : : ]
-   if 33 - 33: i1IIi
-   if 26 - 26: ooOoO0o - Oo0Ooo * II111iiii - Oo0Ooo
-  IiI11I111 = packet . inner_dest
-  packet . inner_dest = packet . inner_source
-  packet . inner_source = IiI11I111
+ oo0Oi1I1iI1 = False
+ if ( len ( o0oo0oOoo0 . packet_json ) == 1 and oo0O00OOOOO [ "n" ] == "ETR" and
+ o0oo0oOoo0 . myeid ( packet . inner_dest ) ) :
+  i11i1iiI1i1 = { }
+  i11i1iiI1i1 [ "se" ] = iIi1Iiii11Ii1
+  i11i1iiI1i1 [ "de" ] = OoiIii11i11i
+  i11i1iiI1i1 [ "paths" ] = [ ]
+  o0oo0oOoo0 . packet_json . append ( i11i1iiI1i1 )
+  oo0Oi1I1iI1 = True
+  if 90 - 90: ooOoO0o
+  if 53 - 53: O0 * I1Ii111 . i11iIiiIii / iIii1I11I1II1
+  if 40 - 40: iIii1I11I1II1 + oO0o / iIii1I11I1II1 - i1IIi % OoO0O00
+  if 22 - 22: OOooOOo
+  if 65 - 65: i1IIi - oO0o . I1Ii111 . ooOoO0o % I1ii11iIi11i % I1ii11iIi11i
+  if 1 - 1: I1Ii111 + I1Ii111
+ o0oo0oOoo0 . print_trace ( )
+ ii11III1Iiii = o0oo0oOoo0 . encode ( )
+ if 96 - 96: iII111i + OoOoOO00 - o0oOOo0O0Ooo + Ii1I
+ if 6 - 6: O0 . I11i
+ if 22 - 22: Oo0Ooo . O0 / i1IIi - OoOoOO00
+ if 41 - 41: II111iiii - I1ii11iIi11i - I1Ii111
+ if 82 - 82: I1IiiI * I1IiiI / iIii1I11I1II1
+ if 14 - 14: I11i + Ii1I - OOooOOo % Ii1I / Ii1I
+ if 86 - 86: I1Ii111 - i11iIiiIii + Ii1I + I11i
+ if 96 - 96: Ii1I
+ IiI1iIiIi = o0oo0oOoo0 . packet_json [ 0 ] [ "paths" ] [ 0 ] [ "sr" ]
+ if ( IIIIi1 == "?" ) :
+  lprint ( "LISP-Trace return to sender RLOC {}" . format ( IiI1iIiIi ) )
+  o0oo0oOoo0 . return_to_sender ( lisp_socket , IiI1iIiIi , ii11III1Iiii )
+  return ( False )
+  if 34 - 34: Oo0Ooo + IiII / i1IIi
+  if 33 - 33: i1IIi
+  if 26 - 26: ooOoO0o - Oo0Ooo * II111iiii - Oo0Ooo
   if 15 - 15: OoO0O00 - oO0o . OoOoOO00 / O0 * oO0o
   if 45 - 45: O0
   if 89 - 89: IiII - IiII % o0oOOo0O0Ooo * Oo0Ooo % ooOoO0o
-  if 4 - 4: OoO0O00 % II111iiii / I11i
-  if 95 - 95: I1Ii111 - I1Ii111 - iII111i + IiII . OoO0O00
-  if 5 - 5: i11iIiiIii - O0 % ooOoO0o
-  if 55 - 55: II111iiii
- oo00 = 2 if packet . inner_version == 4 else 4
- I1iIiI11iiI = 20 + Ooo000O00 if packet . inner_version == 4 else Ooo000O00
- iiI1 = struct . pack ( "H" , socket . htons ( I1iIiI11iiI ) )
- O0OOOO = O0OOOO [ 0 : oo00 ] + iiI1 + O0OOOO [ oo00 + 2 : : ]
+ Ooo000O00 = o0oo0oOoo0 . packet_length ( )
+ if 4 - 4: OoO0O00 % II111iiii / I11i
+ if 95 - 95: I1Ii111 - I1Ii111 - iII111i + IiII . OoO0O00
+ if 5 - 5: i11iIiiIii - O0 % ooOoO0o
+ if 55 - 55: II111iiii
+ if 7 - 7: I1Ii111 % o0oOOo0O0Ooo . oO0o . ooOoO0o % i1IIi / I1IiiI
  if 88 - 88: i11iIiiIii / oO0o - i1IIi / I1IiiI
- if 57 - 57: oO0o + O0 * I11i
- if 87 - 87: o0oOOo0O0Ooo % Oo0Ooo * I1ii11iIi11i / OoooooooOO / o0oOOo0O0Ooo
- if 78 - 78: Ii1I
+ oO0o000OOoOooO0o0oO0 = packet . packet [ 0 : oo00 ]
+ iIIiiIi = struct . pack ( "HH" , socket . htons ( Ooo000O00 ) , 0 )
+ oO0o000OOoOooO0o0oO0 = oO0o000OOoOooO0o0oO0 [ 0 : oo00 - 4 ] + iIIiiIi
+ if ( packet . inner_version == 6 and oo0O00OOOOO [ "n" ] == "ETR" and
+ len ( o0oo0oOoo0 . packet_json ) == 2 ) :
+  O0I1II1 = oO0o000OOoOooO0o0oO0 [ oo00 - 8 : : ] + ii11III1Iiii
+  O0I1II1 = lisp_udp_checksum ( OoiIii11i11i , iIi1Iiii11Ii1 , O0I1II1 )
+  oO0o000OOoOooO0o0oO0 = oO0o000OOoOooO0o0oO0 [ 0 : oo00 - 8 ] + O0I1II1 [ 0 : 8 ]
+  if 23 - 23: I11i * OoOoOO00
+  if 5 - 5: IiII . Oo0Ooo * I1ii11iIi11i - OoO0O00
+  if 94 - 94: OoO0O00 - I1ii11iIi11i + OoooooooOO * OOooOOo
+  if 49 - 49: i1IIi - I11i * II111iiii
+  if 4 - 4: o0oOOo0O0Ooo + o0oOOo0O0Ooo
+  if 57 - 57: I1IiiI * OOooOOo . i11iIiiIii * oO0o - OoOoOO00
+  if 35 - 35: O0
+  if 65 - 65: Oo0Ooo
+  if 100 - 100: I1Ii111 . o0oOOo0O0Ooo * OoooooooOO . o0oOOo0O0Ooo
+ if ( oo0Oi1I1iI1 ) :
+  if ( packet . inner_version == 4 ) :
+   oO0o000OOoOooO0o0oO0 = oO0o000OOoOooO0o0oO0 [ 0 : 12 ] + oO0o000OOoOooO0o0oO0 [ 16 : 20 ] + oO0o000OOoOooO0o0oO0 [ 12 : 16 ] + oO0o000OOoOooO0o0oO0 [ 22 : 24 ] + oO0o000OOoOooO0o0oO0 [ 20 : 22 ] + oO0o000OOoOooO0o0oO0 [ 24 : : ]
+   if 90 - 90: i11iIiiIii . I1IiiI + ooOoO0o * OoooooooOO * OoooooooOO + oO0o
+  else :
+   oO0o000OOoOooO0o0oO0 = oO0o000OOoOooO0o0oO0 [ 0 : 8 ] + oO0o000OOoOooO0o0oO0 [ 24 : 40 ] + oO0o000OOoOooO0o0oO0 [ 8 : 24 ] + oO0o000OOoOooO0o0oO0 [ 42 : 44 ] + oO0o000OOoOooO0o0oO0 [ 40 : 42 ] + oO0o000OOoOooO0o0oO0 [ 44 : : ]
+   if 77 - 77: OOooOOo * OoOoOO00
+   if 75 - 75: Oo0Ooo * Oo0Ooo - IiII - OoOoOO00 / i11iIiiIii + I1Ii111
+  IiI11I111 = packet . inner_dest
+  packet . inner_dest = packet . inner_source
+  packet . inner_source = IiI11I111
+  if 57 - 57: i11iIiiIii / oO0o
+  if 37 - 37: o0oOOo0O0Ooo + OoOoOO00 - i1IIi . Oo0Ooo
+  if 3 - 3: ooOoO0o % OoooooooOO / I1Ii111 + oO0o - O0
+  if 72 - 72: oO0o * OoO0O00
+  if 89 - 89: OoooooooOO . OOooOOo
+  if 96 - 96: o0oOOo0O0Ooo + OoOoOO00 / i11iIiiIii - o0oOOo0O0Ooo * i11iIiiIii + OOooOOo
+  if 16 - 16: IiII / I1Ii111 . II111iiii * I11i
+ oo00 = 2 if packet . inner_version == 4 else 4
+ iI1Ii = 20 + Ooo000O00 if packet . inner_version == 4 else Ooo000O00
+ iiI1 = struct . pack ( "H" , socket . htons ( iI1Ii ) )
+ oO0o000OOoOooO0o0oO0 = oO0o000OOoOooO0o0oO0 [ 0 : oo00 ] + iiI1 + oO0o000OOoOooO0o0oO0 [ oo00 + 2 : : ]
+ if 37 - 37: Oo0Ooo - I1Ii111 - IiII / oO0o % I1IiiI / I1Ii111
+ if 80 - 80: iII111i - oO0o % i1IIi * iIii1I11I1II1 . oO0o
+ if 86 - 86: Ii1I
+ if 36 - 36: i11iIiiIii % i11iIiiIii
  if ( packet . inner_version == 4 ) :
   I1i11i = struct . pack ( "H" , 0 )
-  O0OOOO = O0OOOO [ 0 : 10 ] + I1i11i + O0OOOO [ 12 : : ]
-  iiI1 = lisp_ip_checksum ( O0OOOO [ 0 : 20 ] )
-  O0OOOO = iiI1 + O0OOOO [ 20 : : ]
-  if 5 - 5: i1IIi * ooOoO0o / OoOoOO00 % i11iIiiIii
-  if 57 - 57: IiII
-  if 89 - 89: I1ii11iIi11i - I1Ii111 + o0oOOo0O0Ooo
-  if 62 - 62: I1ii11iIi11i + OoooooooOO * OOooOOo
-  if 49 - 49: i1IIi - I11i * II111iiii
- packet . packet = O0OOOO + IiiIi1I
+  oO0o000OOoOooO0o0oO0 = oO0o000OOoOooO0o0oO0 [ 0 : 10 ] + I1i11i + oO0o000OOoOooO0o0oO0 [ 12 : : ]
+  iiI1 = lisp_ip_checksum ( oO0o000OOoOooO0o0oO0 [ 0 : 20 ] )
+  oO0o000OOoOooO0o0oO0 = iiI1 + oO0o000OOoOooO0o0oO0 [ 20 : : ]
+  if 91 - 91: Oo0Ooo + I1Ii111 % iII111i
+  if 7 - 7: I1Ii111 + II111iiii
+  if 63 - 63: OoO0O00 - o0oOOo0O0Ooo / iII111i % II111iiii * IiII
+  if 71 - 71: IiII
+  if 34 - 34: II111iiii
+ packet . packet = oO0o000OOoOooO0o0oO0 + ii11III1Iiii
  return ( True )
- if 4 - 4: o0oOOo0O0Ooo + o0oOOo0O0Ooo
- if 57 - 57: I1IiiI * OOooOOo . i11iIiiIii * oO0o - OoOoOO00
- if 35 - 35: O0
- if 65 - 65: Oo0Ooo
- if 100 - 100: I1Ii111 . o0oOOo0O0Ooo * OoooooooOO . o0oOOo0O0Ooo
- if 90 - 90: i11iIiiIii . I1IiiI + ooOoO0o * OoooooooOO * OoooooooOO + oO0o
- if 77 - 77: OOooOOo * OoOoOO00
- if 75 - 75: Oo0Ooo * Oo0Ooo - IiII - OoOoOO00 / i11iIiiIii + I1Ii111
- if 57 - 57: i11iIiiIii / oO0o
- if 37 - 37: o0oOOo0O0Ooo + OoOoOO00 - i1IIi . Oo0Ooo
+ if 7 - 7: IiII / I1ii11iIi11i
+ if 88 - 88: iIii1I11I1II1 / o0oOOo0O0Ooo
+ if 68 - 68: OoooooooOO % Ii1I + ooOoO0o / oO0o
+ if 60 - 60: i11iIiiIii / O0 / I1IiiI
+ if 99 - 99: I1IiiI / oO0o . OoO0O00 / ooOoO0o + IiII
+ if 3 - 3: II111iiii . OOooOOo * i11iIiiIii / I11i
+ if 16 - 16: I1ii11iIi11i - ooOoO0o + OoO0O00 . I11i / O0
+ if 56 - 56: I1IiiI + Oo0Ooo * II111iiii + iIii1I11I1II1
+ if 56 - 56: o0oOOo0O0Ooo * I1IiiI - I11i * I1Ii111 - I11i
+ if 92 - 92: oO0o % iIii1I11I1II1 * o0oOOo0O0Ooo * OoooooooOO - iIii1I11I1II1
 def lisp_allow_gleaning ( eid , group , rloc ) :
  if ( lisp_glean_mappings == [ ] ) : return ( False , False , False )
- if 3 - 3: ooOoO0o % OoooooooOO / I1Ii111 + oO0o - O0
+ if 51 - 51: Ii1I - OoO0O00 + i1IIi
  for oo0O00OOOOO in lisp_glean_mappings :
   if ( "instance-id" in oo0O00OOOOO ) :
    oooo = eid . instance_id
    I1iO00O , i1iiI11 = oo0O00OOOOO [ "instance-id" ]
    if ( oooo < I1iO00O or oooo > i1iiI11 ) : continue
-   if 72 - 72: oO0o * OoO0O00
+   if 11 - 11: II111iiii - iII111i + oO0o % Oo0Ooo
   if ( "eid-prefix" in oo0O00OOOOO ) :
    oO0ooOOO = copy . deepcopy ( oo0O00OOOOO [ "eid-prefix" ] )
    oO0ooOOO . instance_id = eid . instance_id
    if ( eid . is_more_specific ( oO0ooOOO ) == False ) : continue
-   if 89 - 89: OoooooooOO . OOooOOo
+   if 56 - 56: IiII
   if ( "group-prefix" in oo0O00OOOOO ) :
    if ( group == None ) : continue
    Oo = copy . deepcopy ( oo0O00OOOOO [ "group-prefix" ] )
    Oo . instance_id = group . instance_id
    if ( group . is_more_specific ( Oo ) == False ) : continue
-   if 96 - 96: o0oOOo0O0Ooo + OoOoOO00 / i11iIiiIii - o0oOOo0O0Ooo * i11iIiiIii + OOooOOo
+   if 72 - 72: Oo0Ooo
   if ( "rloc-prefix" in oo0O00OOOOO ) :
    if ( rloc != None and rloc . is_more_specific ( oo0O00OOOOO [ "rloc-prefix" ] )
  == False ) : continue
-   if 16 - 16: IiII / I1Ii111 . II111iiii * I11i
+   if 37 - 37: i11iIiiIii * I1IiiI % ooOoO0o
   return ( True , oo0O00OOOOO [ "rloc-probe" ] , oo0O00OOOOO [ "igmp-query" ] )
-  if 33 - 33: I1ii11iIi11i / Oo0Ooo % i11iIiiIii
+  if 23 - 23: OoO0O00 + o0oOOo0O0Ooo * I1IiiI
  return ( False , False , False )
- if 37 - 37: Oo0Ooo - I1Ii111 - IiII / oO0o % I1IiiI / I1Ii111
- if 80 - 80: iII111i - oO0o % i1IIi * iIii1I11I1II1 . oO0o
- if 86 - 86: Ii1I
- if 36 - 36: i11iIiiIii % i11iIiiIii
- if 91 - 91: Oo0Ooo + I1Ii111 % iII111i
- if 7 - 7: I1Ii111 + II111iiii
- if 63 - 63: OoO0O00 - o0oOOo0O0Ooo / iII111i % II111iiii * IiII
+ if 76 - 76: i1IIi . OOooOOo
+ if 78 - 78: OoooooooOO % OoOoOO00 * oO0o . I1ii11iIi11i
+ if 79 - 79: OoooooooOO
+ if 6 - 6: i11iIiiIii / II111iiii + II111iiii + I1ii11iIi11i % IiII - I1ii11iIi11i
+ if 92 - 92: IiII
+ if 49 - 49: O0 . OoOoOO00
+ if 7 - 7: i1IIi + II111iiii
 def lisp_build_gleaned_multicast ( seid , geid , rloc , port , igmp ) :
  IIiI11I1I1i1i = geid . print_address ( )
- ooooooo0O0oo = seid . print_address_no_iid ( )
- I111 = green ( "{}" . format ( ooooooo0O0oo ) , False )
+ o0Ooo = seid . print_address_no_iid ( )
+ I111 = green ( "{}" . format ( o0Ooo ) , False )
  oO0ooOOO = green ( "(*, {})" . format ( IIiI11I1I1i1i ) , False )
  iiiI1I = red ( rloc . print_address_no_iid ( ) + ":" + str ( port ) , False )
- if 15 - 15: oO0o % OoooooooOO % Ii1I + i1IIi
- if 98 - 98: OoO0O00 - i11iIiiIii / O0 / I1IiiI
- if 99 - 99: I1IiiI / oO0o . OoO0O00 / ooOoO0o + IiII
- if 3 - 3: II111iiii . OOooOOo * i11iIiiIii / I11i
+ if 78 - 78: I1ii11iIi11i . oO0o + OoO0O00 . I1IiiI . oO0o + Ii1I
+ if 7 - 7: iII111i / Oo0Ooo - OoO0O00 + I1Ii111 * II111iiii * ooOoO0o
+ if 80 - 80: oO0o - i1IIi / I11i . II111iiii % O0 % I11i
+ if 70 - 70: iIii1I11I1II1 * i1IIi * OOooOOo - Oo0Ooo % i1IIi
  I11iiI1III = lisp_map_cache_lookup ( seid , geid )
  if ( I11iiI1III == None ) :
   I11iiI1III = lisp_mapping ( "" , "" , [ ] )
@@ -19888,149 +19904,121 @@ def lisp_build_gleaned_multicast ( seid , geid , rloc , port , igmp ) :
   I11iiI1III . gleaned = True
   I11iiI1III . add_cache ( )
   lprint ( "Add gleaned EID {} to map-cache" . format ( oO0ooOOO ) )
-  if 16 - 16: I1ii11iIi11i - ooOoO0o + OoO0O00 . I11i / O0
-  if 56 - 56: I1IiiI + Oo0Ooo * II111iiii + iIii1I11I1II1
-  if 56 - 56: o0oOOo0O0Ooo * I1IiiI - I11i * I1Ii111 - I11i
-  if 92 - 92: oO0o % iIii1I11I1II1 * o0oOOo0O0Ooo * OoooooooOO - iIii1I11I1II1
-  if 51 - 51: Ii1I - OoO0O00 + i1IIi
-  if 11 - 11: II111iiii - iII111i + oO0o % Oo0Ooo
- OOOoOoo = o0oOOO0o0o0o = iIIi = None
+  if 60 - 60: o0oOOo0O0Ooo . OOooOOo % II111iiii - I1ii11iIi11i
+  if 4 - 4: OOooOOo % ooOoO0o
+  if 39 - 39: Ii1I
+  if 67 - 67: iIii1I11I1II1 - OOooOOo
+  if 47 - 47: OOooOOo - OOooOOo * I1Ii111
+  if 24 - 24: I1ii11iIi11i
+ OOOoOoo = IiiiiIIi = iIIi = None
  if ( I11iiI1III . rloc_set != [ ] ) :
   OOOoOoo = I11iiI1III . rloc_set [ 0 ]
   if ( OOOoOoo . rle ) :
-   o0oOOO0o0o0o = OOOoOoo . rle
-   for i1Ii1ii in o0oOOO0o0o0o . rle_nodes :
-    if ( i1Ii1ii . rloc_name != ooooooo0O0oo ) : continue
-    iIIi = i1Ii1ii
+   IiiiiIIi = OOOoOoo . rle
+   for iII in IiiiiIIi . rle_nodes :
+    if ( iII . rloc_name != o0Ooo ) : continue
+    iIIi = iII
     break
-    if 24 - 24: oO0o % OoooooooOO % OoOoOO00 * i11iIiiIii
-    if 65 - 65: O0 % O0 . II111iiii * i11iIiiIii
-    if 39 - 39: II111iiii + Ii1I
-    if 60 - 60: I1ii11iIi11i * O0 * OoOoOO00 * i1IIi
-    if 6 - 6: OoOoOO00
-    if 7 - 7: i1IIi + II111iiii
-    if 96 - 96: I1Ii111 / OoO0O00
+    if 41 - 41: OoooooooOO % II111iiii * iIii1I11I1II1 % o0oOOo0O0Ooo * iIii1I11I1II1 / IiII
+    if 38 - 38: OOooOOo - I11i . I1IiiI * I1Ii111
+    if 51 - 51: iIii1I11I1II1
+    if 87 - 87: iIii1I11I1II1 * OoOoOO00
+    if 87 - 87: o0oOOo0O0Ooo . OoooooooOO - OoO0O00
+    if 39 - 39: oO0o % o0oOOo0O0Ooo
+    if 44 - 44: iII111i % o0oOOo0O0Ooo % II111iiii . OoooooooOO + I1Ii111 * OoO0O00
  if ( OOOoOoo == None ) :
   OOOoOoo = lisp_rloc ( )
   I11iiI1III . rloc_set = [ OOOoOoo ]
   OOOoOoo . priority = 253
   OOOoOoo . mpriority = 255
   I11iiI1III . build_best_rloc_set ( )
-  if 27 - 27: Ii1I
- if ( o0oOOO0o0o0o == None ) :
-  o0oOOO0o0o0o = lisp_rle ( geid . print_address ( ) )
-  OOOoOoo . rle = o0oOOO0o0o0o
-  if 90 - 90: I1ii11iIi11i
+  if 73 - 73: OOooOOo
+ if ( IiiiiIIi == None ) :
+  IiiiiIIi = lisp_rle ( geid . print_address ( ) )
+  OOOoOoo . rle = IiiiiIIi
+  if 5 - 5: Ii1I * o0oOOo0O0Ooo % II111iiii * oO0o
  if ( iIIi == None ) :
   iIIi = lisp_rle_node ( )
-  iIIi . rloc_name = ooooooo0O0oo
-  o0oOOO0o0o0o . rle_nodes . append ( iIIi )
-  o0oOOO0o0o0o . build_forwarding_list ( )
+  iIIi . rloc_name = o0Ooo
+  IiiiiIIi . rle_nodes . append ( iIIi )
+  IiiiiIIi . build_forwarding_list ( )
   lprint ( "Add RLE {} from {} for gleaned EID {}" . format ( iiiI1I , I111 , oO0ooOOO ) )
  elif ( rloc . is_exact_match ( iIIi . address ) == False or
  port != iIIi . translated_port ) :
   lprint ( "Changed RLE {} from {} for gleaned EID {}" . format ( iiiI1I , I111 , oO0ooOOO ) )
-  if 43 - 43: OoO0O00 . I1IiiI . oO0o + Ii1I
-  if 7 - 7: iII111i / Oo0Ooo - OoO0O00 + I1Ii111 * II111iiii * ooOoO0o
-  if 80 - 80: oO0o - i1IIi / I11i . II111iiii % O0 % I11i
-  if 70 - 70: iIii1I11I1II1 * i1IIi * OOooOOo - Oo0Ooo % i1IIi
-  if 60 - 60: o0oOOo0O0Ooo . OOooOOo % II111iiii - I1ii11iIi11i
+  if 88 - 88: oO0o . I11i . O0 - II111iiii - Oo0Ooo . I11i
+  if 57 - 57: I1ii11iIi11i - o0oOOo0O0Ooo / OOooOOo
+  if 47 - 47: I11i - I1IiiI - O0 + OOooOOo * IiII
+  if 3 - 3: O0 . OOooOOo
+  if 22 - 22: Ii1I . I1ii11iIi11i * I1ii11iIi11i * OoOoOO00
  iIIi . store_translated_rloc ( rloc , port )
- if 4 - 4: OOooOOo % ooOoO0o
- if 39 - 39: Ii1I
- if 67 - 67: iIii1I11I1II1 - OOooOOo
- if 47 - 47: OOooOOo - OOooOOo * I1Ii111
- if 24 - 24: I1ii11iIi11i
+ if 23 - 23: I1ii11iIi11i - OoOoOO00 + i11iIiiIii . I11i
+ if 52 - 52: iII111i . OoOoOO00 * iIii1I11I1II1 . iII111i * IiII
+ if 52 - 52: iII111i + iII111i
+ if 35 - 35: I1Ii111 * oO0o + Ii1I / I1IiiI + O0 - I11i
+ if 42 - 42: o0oOOo0O0Ooo
  if ( igmp ) :
   IiIiI11111i1i = seid . print_address ( )
   if ( IiIiI11111i1i not in lisp_gleaned_groups ) :
    lisp_gleaned_groups [ IiIiI11111i1i ] = { }
-   if 37 - 37: II111iiii - iIii1I11I1II1 / o0oOOo0O0Ooo . O0 + II111iiii
+   if 89 - 89: o0oOOo0O0Ooo
   lisp_gleaned_groups [ IiIiI11111i1i ] [ IIiI11I1I1i1i ] = lisp_get_timestamp ( )
-  if 9 - 9: o0oOOo0O0Ooo
-  if 47 - 47: Ii1I * I1Ii111 / II111iiii
-  if 73 - 73: ooOoO0o
-  if 53 - 53: IiII . Oo0Ooo
-  if 54 - 54: i11iIiiIii % ooOoO0o % I1Ii111 + o0oOOo0O0Ooo
-  if 2 - 2: IiII
-  if 25 - 25: OoOoOO00 . OoO0O00 * o0oOOo0O0Ooo . OoooooooOO - Oo0Ooo + I1IiiI
-  if 82 - 82: OoO0O00 - Ii1I * I11i * o0oOOo0O0Ooo
+  if 99 - 99: I1ii11iIi11i + Oo0Ooo
+  if 20 - 20: OoO0O00 / iII111i
+  if 62 - 62: i1IIi % iIii1I11I1II1 + OoOoOO00 - I1IiiI . I1ii11iIi11i
+  if 92 - 92: i11iIiiIii * o0oOOo0O0Ooo . Oo0Ooo
+  if 15 - 15: o0oOOo0O0Ooo * IiII . iII111i % O0 . iIii1I11I1II1
+  if 34 - 34: OOooOOo / iII111i * iIii1I11I1II1 + i11iIiiIii
+  if 37 - 37: I11i + o0oOOo0O0Ooo . o0oOOo0O0Ooo
+  if 8 - 8: Oo0Ooo * Ii1I % I11i - OoooooooOO
 def lisp_remove_gleaned_multicast ( seid , geid ) :
- if 17 - 17: OoooooooOO + I1Ii111
- if 91 - 91: iIii1I11I1II1 % i11iIiiIii - o0oOOo0O0Ooo
- if 98 - 98: o0oOOo0O0Ooo % II111iiii * IiII - i11iIiiIii * oO0o
- if 15 - 15: O0 - II111iiii - Oo0Ooo . I1ii11iIi11i % OoO0O00
+ if 11 - 11: OoO0O00 - oO0o
+ if 50 - 50: II111iiii * IiII
+ if 26 - 26: OoO0O00 . II111iiii
+ if 19 - 19: iII111i / i11iIiiIii
  I11iiI1III = lisp_map_cache_lookup ( seid , geid )
  if ( I11iiI1III == None ) : return
- if 63 - 63: o0oOOo0O0Ooo / OoOoOO00 % I1ii11iIi11i % I11i
+ if 31 - 31: I1Ii111 / I1Ii111 % IiII
  ooo0o0O = I11iiI1III . rloc_set [ 0 ] . rle
  if ( ooo0o0O == None ) : return
- if 58 - 58: O0 + iII111i
+ if 68 - 68: O0 / OOooOOo % OoOoOO00
  oOo = seid . print_address_no_iid ( )
  III11i1 = False
  for iIIi in ooo0o0O . rle_nodes :
   if ( iIIi . rloc_name == oOo ) :
    III11i1 = True
    break
-   if 66 - 66: i1IIi . O0 . i1IIi - iIii1I11I1II1 - ooOoO0o % I1ii11iIi11i
-   if 96 - 96: i1IIi + oO0o - OoOoOO00 - OoOoOO00
+   if 68 - 68: OoooooooOO - IiII + I1IiiI * IiII / I11i - OoO0O00
+   if 69 - 69: oO0o / II111iiii
  if ( III11i1 == False ) : return
- if 13 - 13: I11i
- if 52 - 52: iII111i . OoOoOO00 * iIii1I11I1II1 . iII111i * IiII
- if 52 - 52: iII111i + iII111i
- if 35 - 35: I1Ii111 * oO0o + Ii1I / I1IiiI + O0 - I11i
+ if 56 - 56: i1IIi + II111iiii + Ii1I . OoooooooOO
+ if 26 - 26: OoooooooOO % Ii1I % I11i * oO0o - i1IIi - i1IIi
+ if 76 - 76: i11iIiiIii + OoO0O00 - iII111i . OoOoOO00 * Oo0Ooo
+ if 15 - 15: II111iiii + iIii1I11I1II1
  ooo0o0O . rle_nodes . remove ( iIIi )
  ooo0o0O . build_forwarding_list ( )
- if 42 - 42: o0oOOo0O0Ooo
+ if 100 - 100: OOooOOo
  IIiI11I1I1i1i = geid . print_address ( )
  IiIiI11111i1i = seid . print_address ( )
  I111 = green ( "{}" . format ( IiIiI11111i1i ) , False )
  oO0ooOOO = green ( "(*, {})" . format ( IIiI11I1I1i1i ) , False )
  lprint ( "Gleaned EID {} RLE removed for {}" . format ( oO0ooOOO , I111 ) )
- if 89 - 89: o0oOOo0O0Ooo
- if 99 - 99: I1ii11iIi11i + Oo0Ooo
- if 20 - 20: OoO0O00 / iII111i
- if 62 - 62: i1IIi % iIii1I11I1II1 + OoOoOO00 - I1IiiI . I1ii11iIi11i
+ if 43 - 43: OoO0O00 + I1Ii111 + OoOoOO00
+ if 78 - 78: I11i
+ if 30 - 30: iIii1I11I1II1
+ if 74 - 74: I1IiiI - Oo0Ooo - i1IIi . iIii1I11I1II1 - I11i
  if ( IiIiI11111i1i in lisp_gleaned_groups ) :
   if ( IIiI11I1I1i1i in lisp_gleaned_groups [ IiIiI11111i1i ] ) :
    lisp_gleaned_groups [ IiIiI11111i1i ] . pop ( IIiI11I1I1i1i )
-   if 92 - 92: i11iIiiIii * o0oOOo0O0Ooo . Oo0Ooo
-   if 15 - 15: o0oOOo0O0Ooo * IiII . iII111i % O0 . iIii1I11I1II1
-   if 34 - 34: OOooOOo / iII111i * iIii1I11I1II1 + i11iIiiIii
-   if 37 - 37: I11i + o0oOOo0O0Ooo . o0oOOo0O0Ooo
-   if 8 - 8: Oo0Ooo * Ii1I % I11i - OoooooooOO
-   if 11 - 11: OoO0O00 - oO0o
+   if 57 - 57: I1IiiI - i11iIiiIii - I1ii11iIi11i
+   if 49 - 49: i1IIi . O0 % Ii1I * i1IIi
+   if 39 - 39: I1ii11iIi11i
+   if 74 - 74: II111iiii % oO0o * Oo0Ooo / iIii1I11I1II1
+   if 81 - 81: II111iiii + OoOoOO00 * O0
+   if 64 - 64: iIii1I11I1II1 * Ii1I
  if ( ooo0o0O . rle_nodes == [ ] ) :
   I11iiI1III . delete_cache ( )
   lprint ( "Gleaned EID {} remove, no more RLEs" . format ( oO0ooOOO ) )
-  if 50 - 50: II111iiii * IiII
-  if 26 - 26: OoO0O00 . II111iiii
-  if 19 - 19: iII111i / i11iIiiIii
-  if 31 - 31: I1Ii111 / I1Ii111 % IiII
-  if 68 - 68: O0 / OOooOOo % OoOoOO00
-  if 68 - 68: OoooooooOO - IiII + I1IiiI * IiII / I11i - OoO0O00
-  if 69 - 69: oO0o / II111iiii
-  if 56 - 56: i1IIi + II111iiii + Ii1I . OoooooooOO
-def lisp_change_gleaned_multicast ( seid , rloc , port ) :
- IiIiI11111i1i = seid . print_address ( )
- if ( IiIiI11111i1i not in lisp_gleaned_groups ) : return
- if 26 - 26: OoooooooOO % Ii1I % I11i * oO0o - i1IIi - i1IIi
- for oo0oOooo0O in lisp_gleaned_groups [ IiIiI11111i1i ] :
-  lisp_geid . store_address ( oo0oOooo0O )
-  lisp_build_gleaned_multicast ( seid , lisp_geid , rloc , port , False )
-  if 76 - 76: i11iIiiIii + OoO0O00 - iII111i . OoOoOO00 * Oo0Ooo
-  if 15 - 15: II111iiii + iIii1I11I1II1
-  if 100 - 100: OOooOOo
-  if 43 - 43: OoO0O00 + I1Ii111 + OoOoOO00
-  if 78 - 78: I11i
-  if 30 - 30: iIii1I11I1II1
-  if 74 - 74: I1IiiI - Oo0Ooo - i1IIi . iIii1I11I1II1 - I11i
-  if 57 - 57: I1IiiI - i11iIiiIii - I1ii11iIi11i
-  if 49 - 49: i1IIi . O0 % Ii1I * i1IIi
-  if 39 - 39: I1ii11iIi11i
-  if 74 - 74: II111iiii % oO0o * Oo0Ooo / iIii1I11I1II1
-  if 81 - 81: II111iiii + OoOoOO00 * O0
-  if 64 - 64: iIii1I11I1II1 * Ii1I
   if 5 - 5: I11i . I11i / i1IIi - o0oOOo0O0Ooo % Oo0Ooo
   if 85 - 85: OOooOOo
   if 32 - 32: iII111i
@@ -20039,7 +20027,13 @@ def lisp_change_gleaned_multicast ( seid , rloc , port ) :
   if 19 - 19: IiII * Oo0Ooo + I1IiiI * I1Ii111 % iIii1I11I1II1
   if 15 - 15: II111iiii % OoO0O00 % Oo0Ooo + I1Ii111
   if 54 - 54: I1Ii111 + OOooOOo
-  if 6 - 6: Ii1I
+def lisp_change_gleaned_multicast ( seid , rloc , port ) :
+ IiIiI11111i1i = seid . print_address ( )
+ if ( IiIiI11111i1i not in lisp_gleaned_groups ) : return
+ if 6 - 6: Ii1I
+ for oo0oOooo0O in lisp_gleaned_groups [ IiIiI11111i1i ] :
+  lisp_geid . store_address ( oo0oOooo0O )
+  lisp_build_gleaned_multicast ( seid , lisp_geid , rloc , port , False )
   if 8 - 8: OoO0O00
   if 91 - 91: Ii1I
   if 12 - 12: OoooooooOO + i11iIiiIii
@@ -20110,208 +20104,230 @@ def lisp_change_gleaned_multicast ( seid , rloc , port ) :
   if 98 - 98: I1IiiI
   if 85 - 85: OoooooooOO * i1IIi * O0 * OoooooooOO . IiII
   if 22 - 22: ooOoO0o
+  if 44 - 44: I1ii11iIi11i + IiII + IiII * I1ii11iIi11i - OoooooooOO / I1Ii111
+  if 3 - 3: I1ii11iIi11i + o0oOOo0O0Ooo * I11i / Oo0Ooo
+  if 31 - 31: i11iIiiIii % OoO0O00 - oO0o / o0oOOo0O0Ooo % O0
+  if 53 - 53: iIii1I11I1II1 * I1ii11iIi11i
+  if 46 - 46: OOooOOo % OoOoOO00 * iII111i
+  if 55 - 55: I1IiiI * iIii1I11I1II1 . OoOoOO00
+  if 82 - 82: iIii1I11I1II1 - iII111i % I1IiiI + I1IiiI * i1IIi % O0
+  if 63 - 63: I1IiiI + OoOoOO00
+  if 55 - 55: o0oOOo0O0Ooo
+  if 95 - 95: OoO0O00 * ooOoO0o * oO0o % Oo0Ooo
+  if 36 - 36: I1IiiI - Ii1I + oO0o . iIii1I11I1II1
+  if 47 - 47: Ii1I
+  if 12 - 12: I1IiiI / IiII + OoOoOO00 . I1Ii111 / I1Ii111
+  if 97 - 97: OOooOOo - iII111i . I1IiiI * oO0o . OoOoOO00 * IiII
+  if 29 - 29: iIii1I11I1II1
+  if 94 - 94: Ii1I - i11iIiiIii % O0 + Ii1I / O0 % I11i
+  if 42 - 42: I1ii11iIi11i . iIii1I11I1II1 % I11i
+  if 54 - 54: OoOoOO00 / Ii1I
+  if 84 - 84: Oo0Ooo / OoO0O00 . o0oOOo0O0Ooo - iII111i . iII111i - II111iiii
+  if 99 - 99: I1Ii111 % Oo0Ooo
+  if 61 - 61: OoooooooOO % i11iIiiIii + OOooOOo
+  if 53 - 53: iII111i . iIii1I11I1II1
 igmp_types = { 17 : "IGMP-query" , 18 : "IGMPv1-report" , 19 : "DVMRP" ,
  20 : "PIMv1" , 22 : "IGMPv2-report" , 23 : "IGMPv2-leave" ,
  30 : "mtrace-response" , 31 : "mtrace-request" , 34 : "IGMPv3-report" }
-if 44 - 44: I1ii11iIi11i + IiII + IiII * I1ii11iIi11i - OoooooooOO / I1Ii111
+if 59 - 59: II111iiii . II111iiii - iII111i
 lisp_igmp_record_types = { 1 : "include-mode" , 2 : "exclude-mode" ,
  3 : "change-to-include" , 4 : "change-to-exclude" , 5 : "allow-new-source" ,
  6 : "block-old-sources" }
-if 3 - 3: I1ii11iIi11i + o0oOOo0O0Ooo * I11i / Oo0Ooo
+if 46 - 46: oO0o / iIii1I11I1II1 + OoO0O00
 def lisp_process_igmp_packet ( packet ) :
  O0oo0OoO0oo = lisp_address ( LISP_AFI_IPV4 , "" , 32 , 0 )
  O0oo0OoO0oo . address = socket . ntohl ( struct . unpack ( "I" , packet [ 12 : 16 ] ) [ 0 ] )
  O0oo0OoO0oo = bold ( "from {}" . format ( O0oo0OoO0oo . print_address_no_iid ( ) ) , False )
- if 31 - 31: i11iIiiIii % OoO0O00 - oO0o / o0oOOo0O0Ooo % O0
+ if 33 - 33: Ii1I . iIii1I11I1II1 . O0 * I1ii11iIi11i . OoOoOO00 / i11iIiiIii
  iiiI1I = bold ( "Receive" , False )
  lprint ( "{} {}-byte {}, IGMP packet: {}" . format ( iiiI1I , len ( packet ) , O0oo0OoO0oo ,
  lisp_format_packet ( packet ) ) )
- if 53 - 53: iIii1I11I1II1 * I1ii11iIi11i
- if 46 - 46: OOooOOo % OoOoOO00 * iII111i
- if 55 - 55: I1IiiI * iIii1I11I1II1 . OoOoOO00
- if 82 - 82: iIii1I11I1II1 - iII111i % I1IiiI + I1IiiI * i1IIi % O0
- ooOOoO = ( struct . unpack ( "B" , packet [ 0 : 1 ] ) [ 0 ] & 0x0f ) * 4
- if 95 - 95: OoO0O00 * ooOoO0o * oO0o % Oo0Ooo
- if 36 - 36: I1IiiI - Ii1I + oO0o . iIii1I11I1II1
- if 47 - 47: Ii1I
- if 12 - 12: I1IiiI / IiII + OoOoOO00 . I1Ii111 / I1Ii111
- OOo00OoO = packet [ ooOOoO : : ]
- oooo00O00oOo = struct . unpack ( "B" , OOo00OoO [ 0 : 1 ] ) [ 0 ]
- if 31 - 31: O0 % OoO0O00 % O0 + iII111i - iIii1I11I1II1
- if 71 - 71: I1IiiI / Ii1I + IiII * OoooooooOO
- if 39 - 39: OoO0O00
- if 60 - 60: iII111i . iII111i - ooOoO0o / i1IIi
- if 68 - 68: oO0o + I11i + Oo0Ooo / OOooOOo . II111iiii - iIii1I11I1II1
+ if 85 - 85: iII111i
+ if 23 - 23: O0
+ if 83 - 83: i11iIiiIii % OoooooooOO
+ if 45 - 45: OoO0O00 + Ii1I
+ Oooo0oOOoOoO = ( struct . unpack ( "B" , packet [ 0 : 1 ] ) [ 0 ] & 0x0f ) * 4
+ if 39 - 39: IiII . iIii1I11I1II1
+ if 88 - 88: i11iIiiIii - O0 - Ii1I
+ if 90 - 90: i1IIi - I1IiiI
+ if 69 - 69: I1Ii111 * ooOoO0o * II111iiii * i11iIiiIii
+ OO0O0oOOo = packet [ Oooo0oOOoOoO : : ]
+ i1Ii1IiiiiIi = struct . unpack ( "B" , OO0O0oOOo [ 0 : 1 ] ) [ 0 ]
+ if 86 - 86: iIii1I11I1II1 / iIii1I11I1II1 + iIii1I11I1II1 . OoO0O00 * iII111i * I1ii11iIi11i
+ if 32 - 32: I1ii11iIi11i - OoO0O00
+ if 63 - 63: o0oOOo0O0Ooo . ooOoO0o
+ if 37 - 37: OoO0O00
+ if 62 - 62: i1IIi / I1Ii111 + ooOoO0o
  oo0oOooo0O = lisp_address ( LISP_AFI_IPV4 , "" , 32 , 0 )
- oo0oOooo0O . address = socket . ntohl ( struct . unpack ( "II" , OOo00OoO [ : 8 ] ) [ 1 ] )
+ oo0oOooo0O . address = socket . ntohl ( struct . unpack ( "II" , OO0O0oOOo [ : 8 ] ) [ 1 ] )
  IIiI11I1I1i1i = oo0oOooo0O . print_address_no_iid ( )
- if 81 - 81: I1ii11iIi11i
- if ( oooo00O00oOo == 17 ) :
+ if 80 - 80: iII111i + OoO0O00 % OoO0O00
+ if ( i1Ii1IiiiiIi == 17 ) :
   lprint ( "IGMP Query for group {}" . format ( IIiI11I1I1i1i ) )
   return ( True )
-  if 39 - 39: II111iiii
-  if 60 - 60: OoOoOO00 % Oo0Ooo
- IiIi1i = ( oooo00O00oOo in ( 0x12 , 0x16 , 0x17 , 0x22 ) )
- if ( IiIi1i == False ) :
-  o0oIIi1i = "{} ({})" . format ( oooo00O00oOo , igmp_types [ oooo00O00oOo ] ) if ( oooo00O00oOo in igmp_types ) else oooo00O00oOo
-  if 81 - 81: O0 . iII111i
-  lprint ( "IGMP type {} not supported" . format ( o0oIIi1i ) )
+  if 4 - 4: OoOoOO00 * I11i * O0 . OoooooooOO + Ii1I % i1IIi
+  if 11 - 11: OoOoOO00 % i11iIiiIii . OoOoOO00 % Oo0Ooo * Ii1I
+ O0oO000O0 = ( i1Ii1IiiiiIi in ( 0x12 , 0x16 , 0x17 , 0x22 ) )
+ if ( O0oO000O0 == False ) :
+  iI1111II = "{} ({})" . format ( i1Ii1IiiiiIi , igmp_types [ i1Ii1IiiiiIi ] ) if ( i1Ii1IiiiiIi in igmp_types ) else i1Ii1IiiiiIi
+  if 99 - 99: OoO0O00 % I11i + OoooooooOO . I1Ii111 + IiII + Oo0Ooo
+  lprint ( "IGMP type {} not supported" . format ( iI1111II ) )
   return ( [ ] )
-  if 27 - 27: OoooooooOO . i1IIi + OoO0O00 + IiII % ooOoO0o
-  if 88 - 88: OoooooooOO
- if ( len ( OOo00OoO ) < 8 ) :
+  if 51 - 51: O0
+  if 100 - 100: iIii1I11I1II1 / I1ii11iIi11i - o0oOOo0O0Ooo / iII111i
+ if ( len ( OO0O0oOOo ) < 8 ) :
   lprint ( "IGMP message too small" )
   return ( [ ] )
-  if 22 - 22: OoOoOO00 / i1IIi - i1IIi - Oo0Ooo - O0 / IiII
-  if 11 - 11: oO0o + oO0o . Ii1I . OoooooooOO * i1IIi - I1IiiI
-  if 69 - 69: I1Ii111 * ooOoO0o * II111iiii * i11iIiiIii
-  if 88 - 88: oO0o - o0oOOo0O0Ooo * i11iIiiIii % OoO0O00
-  if 62 - 62: OoOoOO00 / iII111i
- if ( oooo00O00oOo == 0x17 ) :
+  if 73 - 73: OoooooooOO
+  if 68 - 68: II111iiii / i11iIiiIii % i11iIiiIii % OoooooooOO
+  if 81 - 81: i1IIi + O0 . IiII . I1IiiI / ooOoO0o
+  if 75 - 75: I1ii11iIi11i / OoOoOO00
+  if 59 - 59: OoO0O00 . OoooooooOO % IiII
+ if ( i1Ii1IiiiiIi == 0x17 ) :
   lprint ( "IGMPv2 leave (*, {})" . format ( bold ( IIiI11I1I1i1i , False ) ) )
   return ( [ [ None , IIiI11I1I1i1i , False ] ] )
-  if 70 - 70: IiII / O0 - i1IIi
- if ( oooo00O00oOo in ( 0x12 , 0x16 ) ) :
-  lprint ( "IGMPv{} join (*, {})" . format ( 1 if ( oooo00O00oOo == 0x12 ) else 2 , bold ( IIiI11I1I1i1i , False ) ) )
-  if 23 - 23: OoOoOO00
-  if 2 - 2: II111iiii * OoOoOO00 . iIii1I11I1II1 . ooOoO0o . ooOoO0o + iII111i
-  if 60 - 60: I1ii11iIi11i / I1ii11iIi11i
-  if 44 - 44: i11iIiiIii / ooOoO0o - iIii1I11I1II1 + OoO0O00
-  if 62 - 62: i1IIi / I1Ii111 + ooOoO0o
+  if 35 - 35: I1ii11iIi11i + I1Ii111
+ if ( i1Ii1IiiiiIi in ( 0x12 , 0x16 ) ) :
+  lprint ( "IGMPv{} join (*, {})" . format ( 1 if ( i1Ii1IiiiiIi == 0x12 ) else 2 , bold ( IIiI11I1I1i1i , False ) ) )
+  if 25 - 25: iIii1I11I1II1 / I11i % OoooooooOO / Oo0Ooo
+  if 4 - 4: i1IIi % i1IIi % oO0o
+  if 51 - 51: o0oOOo0O0Ooo * i11iIiiIii
+  if 44 - 44: II111iiii - o0oOOo0O0Ooo + i1IIi / I1Ii111 . I11i
+  if 17 - 17: OOooOOo - O0 . II111iiii - OoooooooOO + I1ii11iIi11i
   if ( IIiI11I1I1i1i . find ( "224.0.0." ) != - 1 ) :
    lprint ( "Suppress registration for link-local groups" )
   else :
    return ( [ [ None , IIiI11I1I1i1i , True ] ] )
-   if 80 - 80: iII111i + OoO0O00 % OoO0O00
-   if 4 - 4: OoOoOO00 * I11i * O0 . OoooooooOO + Ii1I % i1IIi
-   if 11 - 11: OoOoOO00 % i11iIiiIii . OoOoOO00 % Oo0Ooo * Ii1I
-   if 67 - 67: IiII - OoOoOO00 / I1Ii111 % oO0o % OOooOOo
-   if 19 - 19: OoO0O00 - iII111i
+   if 100 - 100: OoOoOO00 * OOooOOo % i11iIiiIii / OoOoOO00
+   if 72 - 72: I1IiiI . oO0o
+   if 76 - 76: Ii1I - Oo0Ooo * II111iiii
+   if 17 - 17: I1Ii111 * O0
+   if 8 - 8: i11iIiiIii / OoO0O00 / OOooOOo
   return ( [ ] )
-  if 76 - 76: OoOoOO00 * ooOoO0o - iII111i * I1IiiI + I11i
-  if 4 - 4: Oo0Ooo
-  if 95 - 95: Oo0Ooo * i11iIiiIii - O0
-  if 100 - 100: iIii1I11I1II1 / I1ii11iIi11i - o0oOOo0O0Ooo / iII111i
-  if 73 - 73: OoooooooOO
+  if 26 - 26: I1ii11iIi11i . Ii1I - iIii1I11I1II1 . Ii1I / Ii1I % I11i
+  if 56 - 56: OOooOOo . I11i + O0 * oO0o - i11iIiiIii / i11iIiiIii
+  if 73 - 73: I1ii11iIi11i
+  if 59 - 59: iII111i % iIii1I11I1II1 * OoOoOO00
+  if 41 - 41: i1IIi * IiII - i11iIiiIii / O0 + Oo0Ooo + ooOoO0o
  oo0OOo00OOoO = oo0oOooo0O . address
- OOo00OoO = OOo00OoO [ 8 : : ]
- if 68 - 68: II111iiii / i11iIiiIii % i11iIiiIii % OoooooooOO
- Ooooo0o = "BBHI"
- IiiIIIIiI1 = struct . calcsize ( Ooooo0o )
- IiII1i = "I"
- o00iiI1i1 = struct . calcsize ( IiII1i )
+ OO0O0oOOo = OO0O0oOOo [ 8 : : ]
+ if 94 - 94: OoO0O00 . O0 + iIii1I11I1II1 . oO0o % oO0o
+ iIiII11iI1II1 = "BBHI"
+ IIii11ii = struct . calcsize ( iIiII11iI1II1 )
+ II1iOO0O0ooO0 = "I"
+ IIIIiI = struct . calcsize ( II1iOO0O0ooO0 )
  O0oo0OoO0oo = lisp_address ( LISP_AFI_IPV4 , "" , 32 , 0 )
- if 21 - 21: II111iiii - o0oOOo0O0Ooo * OoO0O00 . OOooOOo
- if 65 - 65: o0oOOo0O0Ooo + I1IiiI
- if 21 - 21: I1Ii111
- if 74 - 74: iII111i
- OoOiI1I = [ ]
+ if 21 - 21: I1IiiI * OoO0O00 / I1Ii111 - O0 - ooOoO0o - iIii1I11I1II1
+ if 37 - 37: OoOoOO00 / O0 % OoooooooOO / o0oOOo0O0Ooo
+ if 8 - 8: OOooOOo * OOooOOo - Ii1I * OoOoOO00 % OoO0O00 * O0
+ if 70 - 70: I1IiiI
+ I1I1ii1iIII = [ ]
  for iIi1iIIIiIiI in range ( oo0OOo00OOoO ) :
-  if ( len ( OOo00OoO ) < IiiIIIIiI1 ) : return
-  o0ooO0oooO0 , Oo0OoO00O , I1Iiii11iiI , I1IIIi = struct . unpack ( Ooooo0o ,
- OOo00OoO [ : IiiIIIIiI1 ] )
-  if 28 - 28: OoooooooOO
-  OOo00OoO = OOo00OoO [ IiiIIIIiI1 : : ]
-  if 45 - 45: ooOoO0o / I1ii11iIi11i . Ii1I - iIii1I11I1II1 . OoooooooOO
-  if ( o0ooO0oooO0 not in lisp_igmp_record_types ) :
-   lprint ( "Invalid record type {}" . format ( o0ooO0oooO0 ) )
+  if ( len ( OO0O0oOOo ) < IIii11ii ) : return
+  I1iooOoOoOoo00O , Oo0OoO00O , O0OOo , I1IIIi = struct . unpack ( iIiII11iI1II1 ,
+ OO0O0oOOo [ : IIii11ii ] )
+  if 26 - 26: I1IiiI
+  OO0O0oOOo = OO0O0oOOo [ IIii11ii : : ]
+  if 94 - 94: iII111i + oO0o
+  if ( I1iooOoOoOoo00O not in lisp_igmp_record_types ) :
+   lprint ( "Invalid record type {}" . format ( I1iooOoOoOoo00O ) )
    continue
-   if 80 - 80: I11i % I1Ii111 - OOooOOo . I11i + I1Ii111
-   if 9 - 9: II111iiii - i11iIiiIii . i11iIiiIii % I1ii11iIi11i
-  o00oOO00oO = lisp_igmp_record_types [ o0ooO0oooO0 ]
-  I1Iiii11iiI = socket . ntohs ( I1Iiii11iiI )
+   if 43 - 43: iIii1I11I1II1 + iIii1I11I1II1
+   if 8 - 8: iIii1I11I1II1
+  I11IIiIii = lisp_igmp_record_types [ I1iooOoOoOoo00O ]
+  O0OOo = socket . ntohs ( O0OOo )
   oo0oOooo0O . address = socket . ntohl ( I1IIIi )
   IIiI11I1I1i1i = oo0oOooo0O . print_address_no_iid ( )
-  if 88 - 88: OoOoOO00 . O0
-  lprint ( "Record type: {}, group: {}, source-count: {}" . format ( o00oOO00oO , IIiI11I1I1i1i , I1Iiii11iiI ) )
-  if 47 - 47: I1Ii111 * iIii1I11I1II1 % OoO0O00
-  if 48 - 48: i11iIiiIii
-  if 15 - 15: oO0o - OoO0O00 . I1ii11iIi11i * oO0o / OoOoOO00
-  if 89 - 89: OoO0O00 / oO0o % I11i - I1ii11iIi11i . o0oOOo0O0Ooo
-  if 46 - 46: i11iIiiIii
-  if 99 - 99: i11iIiiIii / oO0o / OoOoOO00 / O0 * I1ii11iIi11i
-  if 72 - 72: ooOoO0o - I1Ii111 - iIii1I11I1II1 . I1IiiI
-  oOOOOoOo00OoO = False
-  if ( o0ooO0oooO0 in ( 1 , 5 ) ) : oOOOOoOo00OoO = True
-  if ( o0ooO0oooO0 in ( 2 , 4 ) and I1Iiii11iiI == 0 ) : oOOOOoOo00OoO = True
-  OoO0oOOo = "join" if ( oOOOOoOo00OoO ) else "leave"
-  if 50 - 50: OoooooooOO . o0oOOo0O0Ooo . IiII . OOooOOo * I1ii11iIi11i
-  if 67 - 67: I11i % IiII + O0 + iIii1I11I1II1 % OoooooooOO / ooOoO0o
-  if 80 - 80: OOooOOo - i11iIiiIii . OoooooooOO % OoO0O00 + OoO0O00
-  if 24 - 24: Ii1I . OOooOOo . IiII / Oo0Ooo . Oo0Ooo . II111iiii
+  if 86 - 86: ooOoO0o % I1Ii111 + I1ii11iIi11i . I1ii11iIi11i * OoooooooOO
+  lprint ( "Record type: {}, group: {}, source-count: {}" . format ( I11IIiIii , IIiI11I1I1i1i , O0OOo ) )
+  if 86 - 86: iIii1I11I1II1 + Oo0Ooo + i11iIiiIii
+  if 100 - 100: i11iIiiIii % OOooOOo
+  if 71 - 71: iII111i - OoO0O00 % i11iIiiIii
+  if 28 - 28: Ii1I + Oo0Ooo / iIii1I11I1II1
+  if 57 - 57: o0oOOo0O0Ooo
+  if 23 - 23: II111iiii
+  if 88 - 88: I1IiiI / II111iiii * i11iIiiIii - oO0o - OOooOOo
+  iiIi11 = False
+  if ( I1iooOoOoOoo00O in ( 1 , 5 ) ) : iiIi11 = True
+  if ( I1iooOoOoOoo00O in ( 2 , 4 ) and O0OOo == 0 ) : iiIi11 = True
+  IiIIiiI1I = "join" if ( iiIi11 ) else "leave"
+  if 19 - 19: O0
+  if 60 - 60: I1ii11iIi11i * I1ii11iIi11i + I1Ii111 + o0oOOo0O0Ooo - OoO0O00
+  if 75 - 75: o0oOOo0O0Ooo + i11iIiiIii % I1ii11iIi11i
+  if 45 - 45: I1Ii111 % Ii1I . ooOoO0o
   if ( IIiI11I1I1i1i . find ( "224.0.0." ) != - 1 ) :
    lprint ( "Suppress registration for link-local groups" )
    continue
-   if 63 - 63: ooOoO0o . I11i
-   if 39 - 39: II111iiii % oO0o % I1IiiI - iIii1I11I1II1 / I1IiiI
-   if 94 - 94: iII111i + oO0o
-   if 43 - 43: iIii1I11I1II1 + iIii1I11I1II1
-   if 8 - 8: iIii1I11I1II1
-   if 30 - 30: OOooOOo - I1ii11iIi11i * iIii1I11I1II1 + Oo0Ooo
-   if 25 - 25: IiII
-   if 78 - 78: OoOoOO00 * iIii1I11I1II1 * ooOoO0o - OoooooooOO - IiII
-  if ( I1Iiii11iiI == 0 ) :
-   OoOiI1I . append ( [ None , IIiI11I1I1i1i , oOOOOoOo00OoO ] )
-   lprint ( "IGMPv3 {} (*, {})" . format ( bold ( OoO0oOOo , False ) ,
+   if 99 - 99: I11i - OoOoOO00 % I11i / i1IIi
+   if 55 - 55: o0oOOo0O0Ooo / ooOoO0o % I1IiiI / I1Ii111
+   if 30 - 30: I11i % OoOoOO00 * O0
+   if 32 - 32: iII111i - Oo0Ooo / Oo0Ooo + o0oOOo0O0Ooo + Ii1I + IiII
+   if 100 - 100: Oo0Ooo + o0oOOo0O0Ooo % Oo0Ooo
+   if 73 - 73: o0oOOo0O0Ooo + Ii1I
+   if 62 - 62: OOooOOo
+   if 91 - 91: iII111i . Ii1I - OoooooooOO / Ii1I / II111iiii - O0
+  if ( O0OOo == 0 ) :
+   I1I1ii1iIII . append ( [ None , IIiI11I1I1i1i , iiIi11 ] )
+   lprint ( "IGMPv3 {} (*, {})" . format ( bold ( IiIIiiI1I , False ) ,
  bold ( IIiI11I1I1i1i , False ) ) )
-   if 40 - 40: OoO0O00 . i11iIiiIii + ooOoO0o
-   if 30 - 30: OOooOOo . OoO0O00 % iII111i - OoO0O00 % i11iIiiIii
-   if 28 - 28: Ii1I + Oo0Ooo / iIii1I11I1II1
-   if 57 - 57: o0oOOo0O0Ooo
-   if 23 - 23: II111iiii
-  for I1I1II1iI in range ( I1Iiii11iiI ) :
-   if ( len ( OOo00OoO ) < o00iiI1i1 ) : return
-   I1IIIi = struct . unpack ( IiII1i , OOo00OoO [ : o00iiI1i1 ] ) [ 0 ]
+   if 67 - 67: oO0o * i11iIiiIii / I1ii11iIi11i . I11i % OOooOOo
+   if 75 - 75: ooOoO0o - OOooOOo
+   if 97 - 97: i11iIiiIii / I11i % II111iiii
+   if 20 - 20: I1Ii111 + OoooooooOO . o0oOOo0O0Ooo - ooOoO0o
+   if 61 - 61: i11iIiiIii + OoooooooOO
+  for I1I1II1iI in range ( O0OOo ) :
+   if ( len ( OO0O0oOOo ) < IIIIiI ) : return
+   I1IIIi = struct . unpack ( II1iOO0O0ooO0 , OO0O0oOOo [ : IIIIiI ] ) [ 0 ]
    O0oo0OoO0oo . address = socket . ntohl ( I1IIIi )
-   Oo0o = O0oo0OoO0oo . print_address_no_iid ( )
-   OoOiI1I . append ( [ Oo0o , IIiI11I1I1i1i , oOOOOoOo00OoO ] )
-   lprint ( "{} ({}, {})" . format ( OoO0oOOo ,
- green ( Oo0o , False ) , bold ( IIiI11I1I1i1i , False ) ) )
-   OOo00OoO = OOo00OoO [ o00iiI1i1 : : ]
-   if 53 - 53: oO0o
-   if 62 - 62: O0 + O0 . Oo0Ooo + iIii1I11I1II1 + iII111i
-   if 97 - 97: oO0o - iIii1I11I1II1
-   if 61 - 61: II111iiii / OOooOOo - oO0o
-   if 19 - 19: O0
-   if 60 - 60: I1ii11iIi11i * I1ii11iIi11i + I1Ii111 + o0oOOo0O0Ooo - OoO0O00
-   if 75 - 75: o0oOOo0O0Ooo + i11iIiiIii % I1ii11iIi11i
-   if 45 - 45: I1Ii111 % Ii1I . ooOoO0o
- return ( OoOiI1I )
- if 99 - 99: I11i - OoOoOO00 % I11i / i1IIi
- if 55 - 55: o0oOOo0O0Ooo / ooOoO0o % I1IiiI / I1Ii111
- if 30 - 30: I11i % OoOoOO00 * O0
- if 32 - 32: iII111i - Oo0Ooo / Oo0Ooo + o0oOOo0O0Ooo + Ii1I + IiII
- if 100 - 100: Oo0Ooo + o0oOOo0O0Ooo % Oo0Ooo
- if 73 - 73: o0oOOo0O0Ooo + Ii1I
- if 62 - 62: OOooOOo
- if 91 - 91: iII111i . Ii1I - OoooooooOO / Ii1I / II111iiii - O0
+   ii1IIIiI1i1II = O0oo0OoO0oo . print_address_no_iid ( )
+   I1I1ii1iIII . append ( [ ii1IIIiI1i1II , IIiI11I1I1i1i , iiIi11 ] )
+   lprint ( "{} ({}, {})" . format ( IiIIiiI1I ,
+ green ( ii1IIIiI1i1II , False ) , bold ( IIiI11I1I1i1i , False ) ) )
+   OO0O0oOOo = OO0O0oOOo [ IIIIiI : : ]
+   if 44 - 44: OOooOOo + o0oOOo0O0Ooo * I11i
+   if 8 - 8: I1Ii111
+   if 93 - 93: o0oOOo0O0Ooo - ooOoO0o - iIii1I11I1II1 . OOooOOo - o0oOOo0O0Ooo * O0
+   if 86 - 86: i1IIi
+   if 6 - 6: iII111i
+   if 25 - 25: ooOoO0o * OoooooooOO % I1ii11iIi11i + i1IIi . IiII / II111iiii
+   if 23 - 23: iII111i . ooOoO0o - OoOoOO00 + I1ii11iIi11i % iII111i
+   if 100 - 100: I1Ii111
+ return ( I1I1ii1iIII )
+ if 74 - 74: i1IIi % OoO0O00
+ if 25 - 25: Ii1I . I1IiiI * O0
+ if 22 - 22: oO0o % I1IiiI % OOooOOo * ooOoO0o
+ if 47 - 47: IiII - II111iiii / OoooooooOO * iIii1I11I1II1
+ if 52 - 52: II111iiii
+ if 66 - 66: O0 * I11i - I11i % Oo0Ooo * ooOoO0o
+ if 42 - 42: iII111i / II111iiii + I1Ii111 + I1ii11iIi11i
+ if 57 - 57: IiII + iII111i - I1IiiI
 lisp_geid = lisp_address ( LISP_AFI_IPV4 , "" , 32 , 0 )
-if 67 - 67: oO0o * i11iIiiIii / I1ii11iIi11i . I11i % OOooOOo
+if 47 - 47: iIii1I11I1II1 % O0 / o0oOOo0O0Ooo . i1IIi * IiII
 def lisp_glean_map_cache ( seid , rloc , encap_port , igmp ) :
- if 75 - 75: ooOoO0o - OOooOOo
- if 97 - 97: i11iIiiIii / I11i % II111iiii
- if 20 - 20: I1Ii111 + OoooooooOO . o0oOOo0O0Ooo - ooOoO0o
- if 61 - 61: i11iIiiIii + OoooooooOO
- if 7 - 7: I1IiiI * OoO0O00 * I1IiiI
- if 50 - 50: I1ii11iIi11i
- oOOOOO00O0oo = True
+ if 56 - 56: I1Ii111
+ if 49 - 49: i11iIiiIii . I1Ii111 / OoooooooOO * IiII
+ if 25 - 25: OoO0O00
+ if 55 - 55: I1ii11iIi11i . Ii1I - O0 * I1IiiI
+ if 32 - 32: I11i . OoooooooOO * I11i - iII111i
+ if 35 - 35: I1IiiI * I11i + I11i
+ OOOo00O0 = True
  I11iiI1III = lisp_map_cache . lookup_cache ( seid , True )
  if ( I11iiI1III and len ( I11iiI1III . rloc_set ) != 0 ) :
   I11iiI1III . last_refresh_time = lisp_get_timestamp ( )
-  if 92 - 92: I1ii11iIi11i * o0oOOo0O0Ooo - OoooooooOO * OOooOOo . IiII - o0oOOo0O0Ooo
-  Iiii1111iIIii = I11iiI1III . rloc_set [ 0 ]
-  Ii1i1 = Iiii1111iIIii . rloc
-  OO0O00Ii1iIiIi11 = Iiii1111iIIii . translated_port
-  oOOOOO00O0oo = ( Ii1i1 . is_exact_match ( rloc ) == False or
- OO0O00Ii1iIiIi11 != encap_port )
-  if 35 - 35: i1IIi
-  if ( oOOOOO00O0oo ) :
+  if 39 - 39: i11iIiiIii . IiII * i1IIi
+  ii1I1I1Iii1 = I11iiI1III . rloc_set [ 0 ]
+  ooooO0oO0oOoO = ii1I1I1Iii1 . rloc
+  i1I1I = ii1I1I1Iii1 . translated_port
+  OOOo00O0 = ( ooooO0oO0oOoO . is_exact_match ( rloc ) == False or
+ i1I1I != encap_port )
+  if 70 - 70: I1Ii111 + iII111i % Oo0Ooo + I11i
+  if ( OOOo00O0 ) :
    oO0ooOOO = green ( seid . print_address ( ) , False )
    iiiI1I = red ( rloc . print_address_no_iid ( ) + ":" + str ( encap_port ) , False )
    lprint ( "Change gleaned EID {} to RLOC {}" . format ( oO0ooOOO , iiiI1I ) )
-   Iiii1111iIIii . delete_from_rloc_probe_list ( I11iiI1III . eid , I11iiI1III . group )
+   ii1I1I1Iii1 . delete_from_rloc_probe_list ( I11iiI1III . eid , I11iiI1III . group )
    lisp_change_gleaned_multicast ( seid , rloc , encap_port )
-   if 58 - 58: Ii1I - IiII / ooOoO0o % o0oOOo0O0Ooo + I1ii11iIi11i
+   if 36 - 36: oO0o + I1IiiI
  else :
   I11iiI1III = lisp_mapping ( "" , "" , [ ] )
   I11iiI1III . eid . copy_address ( seid )
@@ -20322,12 +20338,12 @@ def lisp_glean_map_cache ( seid , rloc , encap_port , igmp ) :
   iiiI1I = red ( rloc . print_address_no_iid ( ) + ":" + str ( encap_port ) , False )
   lprint ( "Add gleaned EID {} to map-cache with RLOC {}" . format ( oO0ooOOO , iiiI1I ) )
   I11iiI1III . add_cache ( )
-  if 89 - 89: IiII / OoooooooOO
-  if 13 - 13: II111iiii . OOooOOo - O0 * oO0o
-  if 71 - 71: ooOoO0o % ooOoO0o + o0oOOo0O0Ooo + iII111i / OoOoOO00
-  if 27 - 27: I1ii11iIi11i * OoO0O00 - OoO0O00
-  if 87 - 87: I1IiiI * I11i + iIii1I11I1II1 % i1IIi
- if ( oOOOOO00O0oo ) :
+  if 44 - 44: Oo0Ooo / OoOoOO00 % O0
+  if 35 - 35: ooOoO0o % oO0o
+  if 41 - 41: Ii1I + I1IiiI
+  if 94 - 94: iIii1I11I1II1 + IiII * iIii1I11I1II1 % IiII + I1Ii111
+  if 1 - 1: i11iIiiIii * iIii1I11I1II1 - OoOoOO00 % OoO0O00 - oO0o
+ if ( OOOo00O0 ) :
   OOOoOoo = lisp_rloc ( )
   OOOoOoo . store_translated_rloc ( rloc , encap_port )
   OOOoOoo . add_to_rloc_probe_list ( I11iiI1III . eid , I11iiI1III . group )
@@ -20336,53 +20352,53 @@ def lisp_glean_map_cache ( seid , rloc , encap_port , igmp ) :
   OO00O000OOO = [ OOOoOoo ]
   I11iiI1III . rloc_set = OO00O000OOO
   I11iiI1III . build_best_rloc_set ( )
-  if 6 - 6: o0oOOo0O0Ooo
-  if 94 - 94: I1ii11iIi11i * i11iIiiIii
-  if 95 - 95: OoooooooOO - II111iiii . I1Ii111
-  if 97 - 97: i1IIi * iIii1I11I1II1
-  if 44 - 44: O0 - o0oOOo0O0Ooo - I1Ii111 % O0
+  if 30 - 30: iIii1I11I1II1 / OOooOOo % Oo0Ooo - OoooooooOO
+  if 74 - 74: I1ii11iIi11i . iII111i
+  if 69 - 69: ooOoO0o * II111iiii + i11iIiiIii / oO0o + I1Ii111 - OOooOOo
+  if 84 - 84: O0
+  if 29 - 29: I11i + o0oOOo0O0Ooo . ooOoO0o * I1Ii111 - o0oOOo0O0Ooo * O0
  if ( igmp == None ) : return
- if 31 - 31: i11iIiiIii - I11i
- if 91 - 91: I11i - iII111i
- if 35 - 35: I1IiiI * I11i + I11i
- if 67 - 67: I1ii11iIi11i - I1IiiI + Ii1I * Ii1I + Oo0Ooo
- if 41 - 41: i11iIiiIii
+ if 58 - 58: iII111i . oO0o + i11iIiiIii
+ if 2 - 2: OOooOOo * Ii1I
+ if 17 - 17: I1ii11iIi11i * O0 / OoOoOO00 + i1IIi
+ if 71 - 71: oO0o % IiII
+ if 77 - 77: i1IIi * o0oOOo0O0Ooo - Oo0Ooo / I1Ii111 - Ii1I * IiII
  lisp_geid . instance_id = seid . instance_id
- if 97 - 97: i1IIi / Ii1I / ooOoO0o . Ii1I - ooOoO0o + oO0o
- if 27 - 27: OOooOOo % O0
- if 96 - 96: OoooooooOO / OOooOOo
- if 87 - 87: IiII - OoooooooOO
- if 53 - 53: OoOoOO00 + Oo0Ooo
- OOo00O = lisp_process_igmp_packet ( igmp )
- if ( type ( OOo00O ) == bool ) : return
- if 33 - 33: I11i - OOooOOo + Oo0Ooo - iII111i * iII111i
- for O0oo0OoO0oo , oo0oOooo0O , oOOOOoOo00OoO in OOo00O :
+ if 51 - 51: OoO0O00 * IiII
+ if 36 - 36: II111iiii + I11i - O0
+ if 24 - 24: I1Ii111 / OoOoOO00
+ if 10 - 10: I11i . OoO0O00 / O0 / oO0o / o0oOOo0O0Ooo / ooOoO0o
+ if 30 - 30: Oo0Ooo
+ iIi1i1iIi1 = lisp_process_igmp_packet ( igmp )
+ if ( type ( iIi1i1iIi1 ) == bool ) : return
+ if 93 - 93: II111iiii - I1IiiI
+ for O0oo0OoO0oo , oo0oOooo0O , iiIi11 in iIi1i1iIi1 :
   if ( O0oo0OoO0oo != None ) : continue
-  if 44 - 44: Oo0Ooo % OoOoOO00 / oO0o
-  if 34 - 34: II111iiii + Ii1I + OoOoOO00
-  if 9 - 9: I11i / oO0o * OoO0O00
-  if 26 - 26: I1IiiI % OOooOOo * OoOoOO00
+  if 80 - 80: I11i . o0oOOo0O0Ooo % IiII - OoOoOO00 % OOooOOo / OoooooooOO
+  if 57 - 57: OoooooooOO % o0oOOo0O0Ooo - iIii1I11I1II1 . OoooooooOO
+  if 42 - 42: o0oOOo0O0Ooo % OoooooooOO * OoO0O00 - o0oOOo0O0Ooo
+  if 83 - 83: i1IIi . i1IIi * ooOoO0o
   lisp_geid . store_address ( oo0oOooo0O )
   iIiI1III , Oo0OoO00O , ii1I1I1iII = lisp_allow_gleaning ( seid , lisp_geid , rloc )
   if ( iIiI1III == False ) : continue
-  if 14 - 14: I11i * Oo0Ooo . I1Ii111 * Ii1I . i11iIiiIii * I1ii11iIi11i
-  if ( oOOOOoOo00OoO ) :
+  if 26 - 26: I1IiiI - IiII
+  if ( iiIi11 ) :
    lisp_build_gleaned_multicast ( seid , lisp_geid , rloc , encap_port ,
  True )
   else :
    lisp_remove_gleaned_multicast ( seid , lisp_geid )
-   if 11 - 11: oO0o + oO0o + o0oOOo0O0Ooo / iIii1I11I1II1 / I11i
-   if 68 - 68: OoooooooOO + i1IIi % I1ii11iIi11i . iII111i
-   if 69 - 69: ooOoO0o * II111iiii + i11iIiiIii / oO0o + I1Ii111 - OOooOOo
-   if 84 - 84: O0
-   if 29 - 29: I11i + o0oOOo0O0Ooo . ooOoO0o * I1Ii111 - o0oOOo0O0Ooo * O0
-   if 58 - 58: iII111i . oO0o + i11iIiiIii
-   if 2 - 2: OOooOOo * Ii1I
-   if 17 - 17: I1ii11iIi11i * O0 / OoOoOO00 + i1IIi
-   if 71 - 71: oO0o % IiII
-   if 77 - 77: i1IIi * o0oOOo0O0Ooo - Oo0Ooo / I1Ii111 - Ii1I * IiII
-   if 51 - 51: OoO0O00 * IiII
-   if 36 - 36: II111iiii + I11i - O0
+   if 99 - 99: IiII * iII111i + i1IIi * I1Ii111
+   if 88 - 88: o0oOOo0O0Ooo . IiII - Oo0Ooo
+   if 24 - 24: Oo0Ooo - OOooOOo / Ii1I / II111iiii . Oo0Ooo - Ii1I
+   if 5 - 5: IiII
+   if 66 - 66: OoO0O00 . I1ii11iIi11i . OoooooooOO
+   if 21 - 21: I11i / IiII + i1IIi . Oo0Ooo % II111iiii
+   if 8 - 8: oO0o / iIii1I11I1II1 + OoooooooOO
+   if 11 - 11: OOooOOo . O0 + IiII . i1IIi
+   if 81 - 81: OoO0O00 - I11i - OoO0O00 + oO0o
+   if 20 - 20: OoooooooOO - Oo0Ooo + I1Ii111 + OoooooooOO
+   if 66 - 66: I1ii11iIi11i / oO0o % IiII + II111iiii % iII111i
+   if 54 - 54: iII111i * O0 / I1IiiI % Ii1I
 def lisp_is_json_telemetry ( json_string ) :
  try :
   IiI111i1iI1 = json . loads ( json_string )
@@ -20390,51 +20406,17 @@ def lisp_is_json_telemetry ( json_string ) :
  except :
   lprint ( "Could not decode telemetry json: {}" . format ( json_string ) )
   return ( None )
-  if 24 - 24: I1Ii111 / OoOoOO00
-  if 10 - 10: I11i . OoO0O00 / O0 / oO0o / o0oOOo0O0Ooo / ooOoO0o
+  if 12 - 12: IiII % I1IiiI - o0oOOo0O0Ooo - I1ii11iIi11i - i11iIiiIii * i1IIi
+  if 96 - 96: II111iiii % o0oOOo0O0Ooo % oO0o * ooOoO0o
  if ( "type" not in IiI111i1iI1 ) : return ( None )
  if ( "sub-type" not in IiI111i1iI1 ) : return ( None )
  if ( IiI111i1iI1 [ "type" ] != "telemetry" ) : return ( None )
  if ( IiI111i1iI1 [ "sub-type" ] != "timestamps" ) : return ( None )
  return ( IiI111i1iI1 )
- if 30 - 30: Oo0Ooo
- if 93 - 93: II111iiii - I1IiiI
- if 80 - 80: I11i . o0oOOo0O0Ooo % IiII - OoOoOO00 % OOooOOo / OoooooooOO
- if 57 - 57: OoooooooOO % o0oOOo0O0Ooo - iIii1I11I1II1 . OoooooooOO
- if 42 - 42: o0oOOo0O0Ooo % OoooooooOO * OoO0O00 - o0oOOo0O0Ooo
- if 83 - 83: i1IIi . i1IIi * ooOoO0o
- if 26 - 26: I1IiiI - IiII
- if 99 - 99: IiII * iII111i + i1IIi * I1Ii111
- if 88 - 88: o0oOOo0O0Ooo . IiII - Oo0Ooo
- if 24 - 24: Oo0Ooo - OOooOOo / Ii1I / II111iiii . Oo0Ooo - Ii1I
- if 5 - 5: IiII
- if 66 - 66: OoO0O00 . I1ii11iIi11i . OoooooooOO
-def lisp_encode_telemetry ( json_string , ii = "?" , io = "?" , ei = "?" , eo = "?" ) :
- IiI111i1iI1 = lisp_is_json_telemetry ( json_string )
- if ( IiI111i1iI1 == None ) : return ( json_string )
- if 21 - 21: I11i / IiII + i1IIi . Oo0Ooo % II111iiii
- if ( IiI111i1iI1 [ "itr-in" ] == "?" ) : IiI111i1iI1 [ "itr-in" ] = ii
- if ( IiI111i1iI1 [ "itr-out" ] == "?" ) : IiI111i1iI1 [ "itr-out" ] = io
- if ( IiI111i1iI1 [ "etr-in" ] == "?" ) : IiI111i1iI1 [ "etr-in" ] = ei
- if ( IiI111i1iI1 [ "etr-out" ] == "?" ) : IiI111i1iI1 [ "etr-out" ] = eo
- json_string = json . dumps ( IiI111i1iI1 )
- return ( json_string )
- if 8 - 8: oO0o / iIii1I11I1II1 + OoooooooOO
- if 11 - 11: OOooOOo . O0 + IiII . i1IIi
- if 81 - 81: OoO0O00 - I11i - OoO0O00 + oO0o
- if 20 - 20: OoooooooOO - Oo0Ooo + I1Ii111 + OoooooooOO
- if 66 - 66: I1ii11iIi11i / oO0o % IiII + II111iiii % iII111i
- if 54 - 54: iII111i * O0 / I1IiiI % Ii1I
- if 12 - 12: IiII % I1IiiI - o0oOOo0O0Ooo - I1ii11iIi11i - i11iIiiIii * i1IIi
- if 96 - 96: II111iiii % o0oOOo0O0Ooo % oO0o * ooOoO0o
  if 79 - 79: iII111i
  if 74 - 74: Oo0Ooo - IiII - iII111i - IiII / IiII
  if 75 - 75: I11i - i11iIiiIii % O0 - O0 % O0
  if 93 - 93: ooOoO0o + iIii1I11I1II1
-def lisp_decode_telemetry ( json_string ) :
- IiI111i1iI1 = lisp_is_json_telemetry ( json_string )
- if ( IiI111i1iI1 == None ) : return ( { } )
- return ( IiI111i1iI1 )
  if 27 - 27: i1IIi * i11iIiiIii - OoOoOO00 * Ii1I . IiII + iII111i
  if 25 - 25: I1ii11iIi11i % o0oOOo0O0Ooo - OoO0O00
  if 28 - 28: oO0o
@@ -20443,14 +20425,18 @@ def lisp_decode_telemetry ( json_string ) :
  if 25 - 25: I11i % i1IIi + OOooOOo * Ii1I . i1IIi
  if 81 - 81: I11i % OoOoOO00 . Ii1I
  if 82 - 82: i1IIi / II111iiii
+def lisp_encode_telemetry ( json_string , ii = "?" , io = "?" , ei = "?" , eo = "?" ) :
+ IiI111i1iI1 = lisp_is_json_telemetry ( json_string )
+ if ( IiI111i1iI1 == None ) : return ( json_string )
  if 40 - 40: II111iiii - I1Ii111 + Oo0Ooo / IiII
-def lisp_telemetry_configured ( ) :
- if ( "telemetry" not in lisp_json_list ) : return ( None )
+ if ( IiI111i1iI1 [ "itr-in" ] == "?" ) : IiI111i1iI1 [ "itr-in" ] = ii
+ if ( IiI111i1iI1 [ "itr-out" ] == "?" ) : IiI111i1iI1 [ "itr-out" ] = io
+ if ( IiI111i1iI1 [ "etr-in" ] == "?" ) : IiI111i1iI1 [ "etr-in" ] = ei
+ if ( IiI111i1iI1 [ "etr-out" ] == "?" ) : IiI111i1iI1 [ "etr-out" ] = eo
+ json_string = json . dumps ( IiI111i1iI1 )
+ return ( json_string )
  if 15 - 15: I1Ii111 + ooOoO0o / II111iiii . OoOoOO00 - I1Ii111
- OoOo00OO0o00 = lisp_json_list [ "telemetry" ] . json_string
- if ( lisp_is_json_telemetry ( OoOo00OO0o00 ) == None ) : return ( None )
  if 59 - 59: Ii1I * iIii1I11I1II1 - iIii1I11I1II1 % I1Ii111 - OoO0O00 / I1IiiI
- return ( OoOo00OO0o00 )
  if 89 - 89: I1Ii111 . OoO0O00
  if 52 - 52: OoO0O00 - iIii1I11I1II1
  if 52 - 52: OOooOOo + I1IiiI * Ii1I % OoooooooOO / I1Ii111
@@ -20458,9 +20444,39 @@ def lisp_telemetry_configured ( ) :
  if 82 - 82: OOooOOo
  if 64 - 64: II111iiii
  if 48 - 48: iII111i + i11iIiiIii * I1IiiI % OoOoOO00
-def lisp_mr_or_pubsub ( action ) :
- return ( action in [ LISP_SEND_MAP_REQUEST_ACTION , LISP_SEND_PUBSUB_ACTION ] )
  if 49 - 49: Oo0Ooo
  if 67 - 67: iIii1I11I1II1 + I1Ii111 / I1Ii111 % I11i + I1Ii111
  if 7 - 7: iIii1I11I1II1 . Oo0Ooo / OoO0O00 / OoOoOO00
+def lisp_decode_telemetry ( json_string ) :
+ IiI111i1iI1 = lisp_is_json_telemetry ( json_string )
+ if ( IiI111i1iI1 == None ) : return ( { } )
+ return ( IiI111i1iI1 )
+ if 7 - 7: OoOoOO00 * I1Ii111 / Ii1I - OoO0O00 / O0 / Oo0Ooo
+ if 47 - 47: OoOoOO00
+ if 18 - 18: OoO0O00 - iIii1I11I1II1
+ if 91 - 91: iII111i / I1ii11iIi11i
+ if 19 - 19: iIii1I11I1II1
+ if 3 - 3: i11iIiiIii + Ii1I / I1Ii111
+ if 74 - 74: II111iiii + I11i
+ if 80 - 80: OOooOOo . oO0o / iIii1I11I1II1
+ if 4 - 4: iII111i + I1IiiI
+def lisp_telemetry_configured ( ) :
+ if ( "telemetry" not in lisp_json_list ) : return ( None )
+ if 95 - 95: Oo0Ooo / I1ii11iIi11i % OoO0O00
+ OoOo00OO0o00 = lisp_json_list [ "telemetry" ] . json_string
+ if ( lisp_is_json_telemetry ( OoOo00OO0o00 ) == None ) : return ( None )
+ if 47 - 47: I1IiiI + i1IIi + I1ii11iIi11i / OOooOOo * i11iIiiIii % I1Ii111
+ return ( OoOo00OO0o00 )
+ if 7 - 7: OoOoOO00 * iII111i * i11iIiiIii + OoOoOO00
+ if 20 - 20: i1IIi % Ii1I / iIii1I11I1II1 / II111iiii
+ if 16 - 16: I1IiiI % Ii1I
+ if 30 - 30: i11iIiiIii / i1IIi % O0 - OoooooooOO - OOooOOo
+ if 55 - 55: OoooooooOO % ooOoO0o % I1Ii111 - Oo0Ooo % OoooooooOO . I11i
+ if 22 - 22: i11iIiiIii
+ if 39 - 39: oO0o / OoOoOO00 % iIii1I11I1II1 - OoOoOO00
+def lisp_mr_or_pubsub ( action ) :
+ return ( action in [ LISP_SEND_MAP_REQUEST_ACTION , LISP_SEND_PUBSUB_ACTION ] )
+ if 29 - 29: I1ii11iIi11i - I11i . I1ii11iIi11i - o0oOOo0O0Ooo - OoooooooOO % OoO0O00
+ if 74 - 74: iIii1I11I1II1 / iII111i * OoO0O00 * iIii1I11I1II1 + i11iIiiIii
+ if 90 - 90: II111iiii - oO0o - oO0o + I1IiiI
 # dd678faae9ac167bc83abf78e5cb2f3f0688d3a3

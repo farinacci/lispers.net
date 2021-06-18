@@ -1128,6 +1128,7 @@ def lisp_hex_string(integer_value):
 def lisp_get_timestamp():
     return(time.time())
 #enddef
+lisp_uptime = lisp_get_timestamp()
 
 #
 # lisp_set_timestamp
@@ -16314,13 +16315,27 @@ def lisp_timeout_map_cache_entry(mc, delete_list):
     #endif
 
     now = lisp_get_timestamp()
+    last_refresh_time = mc.last_refresh_time
+
+    #
+    # If mapping system runs on this system, disregard packet activity.
+    # There could be a race condition for active sources, where destinations
+    # are not registered yet due to system restart. If the LISP subsystem
+    # is within 5 minutes of restarting, time out native-forward entries.
+    #
+    if (lisp_is_running("lisp-ms") and lisp_uptime + (5*60) >= now):
+        if (mc.action == LISP_NATIVE_FORWARD_ACTION):
+            last_refresh_time = 0
+            lprint("Remove startup-mode native-forward map-cache entry")
+        #endif
+    #endif
 
     #
     # Check refresh timers. Native-Forward entries just return if active,
     # else check for encap-port changes for NAT entries. Then return if
     # entry still active.
     #
-    if (mc.last_refresh_time + mc.map_cache_ttl > now): 
+    if (last_refresh_time + mc.map_cache_ttl > now): 
         if (mc.action == LISP_NO_ACTION): lisp_update_encap_port(mc)
         return([True, delete_list])
     #endif
@@ -16335,10 +16350,11 @@ def lisp_timeout_map_cache_entry(mc, delete_list):
     #
     # Timed out.
     #
-    elapsed = lisp_print_elapsed(mc.last_refresh_time)
+    ut = lisp_print_elapsed(mc.uptime)
+    lrt = lisp_print_elapsed(mc.last_refresh_time)
     prefix_str = mc.print_eid_tuple()
-    lprint("Map-cache entry for EID-prefix {} has {}, had uptime of {}". \
-        format(green(prefix_str, False), bold("timed out", False), elapsed))
+    lprint(("Map-cache entry {} {}, had uptime {}, last-refresh-time {}"). \
+        format(green(prefix_str, False), bold("timed out", False), ut, lrt))
 
     #
     # Add to delete-list to remove after this loop.

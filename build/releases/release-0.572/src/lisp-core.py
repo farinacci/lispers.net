@@ -2336,7 +2336,6 @@ def lisp_core_startup(bottle_port):
     lisp.lisp_i_am("core")
     lisp.lisp_set_exception()
     lisp.lisp_print_banner("core-process starting up")
-    lisp.lisp_uptime = lisp.lisp_get_timestamp()
     lisp.lisp_version = getoutput("cat lisp-version.txt")
     lisp_build_date = getoutput("cat lisp-build-date.txt")
 
