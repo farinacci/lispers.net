@@ -2336,7 +2336,6 @@ def oOO0O00o0O0 ( bottle_port ) :
  lisp . lisp_i_am ( "core" )
  lisp . lisp_set_exception ( )
  lisp . lisp_print_banner ( "core-process starting up" )
- lisp . lisp_uptime = lisp . lisp_get_timestamp ( )
  lisp . lisp_version = getoutput ( "cat lisp-version.txt" )
  o0oO0 = getoutput ( "cat lisp-build-date.txt" )
  if 13 - 13: ooOoO0o - I1IiiI
