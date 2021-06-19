@@ -1436,7 +1436,6 @@ def lisp_landing_page():
     cd = lisp.lisp_button("Command Documentation", "/lisp/show/command-doc")
     ild = lisp.lisp_button("IETF LISP WG Drafts", 
         "http://datatracker.ietf.org/wg/lisp/")
-    dr = lisp.lisp_button("ddt-root.org", "http://ddt-root.net")
     lfg = lisp.lisp_button("LISP Facebook Group", 
         "https://www.facebook.com/groups/407716795982512")
     llg = lisp.lisp_button("LISP LinkedIn Group", 
@@ -1494,8 +1493,8 @@ def lisp_landing_page():
         <center><br>{}{}{}{}{}{}
         </center>
 
-    '''.format(s, Itr, s, Rtr, s, Etr, s, s, Mr, s, Ddt, s, Ms, s, 
-        input_eid, input_eid, input_gpo, input_gpr, ad, cd, ild, dr, lfg, llg)
+    '''.format(s, Itr, s, Rtr, s, Etr, s, s, Mr, s, Ddt, s, Ms, s, input_eid,
+        input_eid, input_gpo, input_gpr, ad, cd, "<br><br>", ild, lfg, llg)
 
     return(lisp_show_wrapper(output))
 #enddef
