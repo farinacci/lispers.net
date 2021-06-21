@@ -1970,8 +1970,10 @@ class lisp_packet(object):
 
         ts = lisp_get_timestamp()
         aead = None
+        encode_ciphertext = False
         if (key.cipher_suite == LISP_CS_25519_CHACHA):
             encrypt = chacha.ChaCha(key.encrypt_key, iv).encrypt
+            encode_ciphertext = True
         elif (key.cipher_suite == LISP_CS_25519_GCM):
             k = binascii.unhexlify(key.encrypt_key)
             try:
@@ -1997,7 +1999,9 @@ class lisp_packet(object):
         # unicode-escape before proceeding, or else you can append to strings
         # generated from different sources. Do this in do_icv() too.
         #
-        ciphertext = ciphertext.encode("raw_unicode_escape")
+        if (encode_ciphertext):
+            ciphertext = ciphertext.encode("raw_unicode_escape")
+        #endif
 
         #
         # GCM requires 16 bytes of an AEAD MAC tag at the end of the
@@ -2637,12 +2641,14 @@ class lisp_packet(object):
                 if (lisp_flow_logging): self.log_flow(False)
                 return(None)
             #endif
-
+            
             #
             # Chacha produced plaintext in unicode for py2. Convert to raw-
             # unicode-escape before proceedingl Do this in do_icv() too.
             #
-            packet = packet.encode("raw_unicode_escape")
+            if (key.cipher_suite == LISP_CS_25519_CHACHA):
+                packet = packet.encode("raw_unicode_escape")
+            #endif
         #endif
 
         #
