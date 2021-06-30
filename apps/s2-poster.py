@@ -198,8 +198,12 @@ def format_json(loc8tr_json):
         print("")
         return({})
     #endtry
+    if (buf == ""):
+        print("File {} is empty".format(loc8tr_json))
+        print("")
+        return({})
+    #endif
 
-    #endtr
     json_data = json.loads(buf)
 
     #
