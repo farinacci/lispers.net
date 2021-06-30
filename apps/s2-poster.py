@@ -216,8 +216,9 @@ def format_json(loc8tr_json):
     # Get lispers.net version number from file lisp-version.txt.
     #
     version = "?"
-    if (os.path.exists("./lisp-version.txt")):
-        version = getoutput("cat ./lisp-version.txt")
+    fn = "./lispers.net/lisp-version.txt"
+    if (os.path.exists(fn)):
+        version = getoutput("cat {}".format(fn))
     #endif
     s2_data["Label"] = "lispers.net version {}".format(version)
 
