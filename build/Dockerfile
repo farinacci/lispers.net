@@ -21,9 +21,15 @@ FROM ubuntu:latest
 
 #
 # Install tools we need for a networking geek. Need the symlink so installing
-# tzdata does not prompt for timezone input.    
+# tzdata does not prompt for timezone input.
+#        
+# If "apt-get update" gets signature verification issues, run:
 #
-RUN apt-get update && apt-get install -y curl
+#    docker system prune --force
+#
+# And then rebuild.        
+#
+RUN apt-get update -y && apt-get install -y curl
 RUN ln -snf /usr/share/zoneinfo/$(curl https://ipapi.co/timezone) \
     /etc/localtime
 RUN apt-get install -y \
