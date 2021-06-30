@@ -133,6 +133,7 @@ mc_file = "loc8tr-mc.json"
 #
 # RLOC-cache dictionary array key is RLOC address and value is a n-tuple of:
 #
+#  "<rloc-name>",
 #  "<traceroute-output>",
 #  [["<tr-hop>", "<tr-ms>"], ...],
 #  [<rtt1>, <rtt2>, rtt3>],
@@ -141,12 +142,13 @@ mc_file = "loc8tr-mc.json"
 #  ["<eid>", ...]
 # 
 rloc_cache = {}
-TR_OUTPUT  = 0
-TR_HOPS    = 1
-RTTS       = 2
-HOPS       = 3
-LATS       = 4
-EIDS       = 5
+RLOC_NAME = 0
+TR_OUTPUT = 1
+TR_HOPS   = 2
+RTTS      = 3
+HOPS      = 4
+LATS      = 5
+EIDS      = 6
 
 no_dns = ("-n" in sys.argv)
 debug = ("-d" in sys.argv)
@@ -239,6 +241,10 @@ def is_v4v6(addr):
     return(False)
 #enddef
 
+def blue(string):
+    return("\033[94m" + string + "\033[0m")
+#enddef
+
 def green(string):
     return("\033[92m" + string + "\033[0m")
 #enddef
@@ -329,6 +335,7 @@ for entry in map_cache:
 
     for address in rloc_set:
         rloc = rloc_set[address]
+        rn = rloc["rloc-name"] if ("rloc-name" in rloc) else "?"
         if (is_v4v6(rloc["address"]) == False): continue
 
         if (address not in rloc_cache):
@@ -340,7 +347,7 @@ for entry in map_cache:
             for lat in rloc["recent-rloc-probe-latencies"]:
                 lats.append(str(lat))
             #endfor
-            rloc_cache[address] = [None, [], rtts, hops, lats, []]
+            rloc_cache[address] = [rn, None, [], rtts, hops, lats, []]
         #endif
         rloc_cache[address][EIDS].append(eid)
     #endfor
@@ -354,6 +361,7 @@ Print("Found {} map-cache entries with {} distinct RLOC(s):".format( \
 #
 for addr in rloc_cache:
     rloc = rloc_cache[addr]
+    rn = blue(rloc[RLOC_NAME])
     rtts = rloc[RTTS]
     hops = rloc[HOPS]
     lats = rloc[LATS]
@@ -366,8 +374,8 @@ for addr in rloc_cache:
         a = bold(addr)
     #endif
 
-    Print("RLOC {}, rtts(secs) {}, hops {}, latencies {}".format(a, rtts, hops,
-        lats))
+    Print("RLOC {} ({}), rtts(secs) {}, hops {}, latencies {}".format(a, rn,
+        rtts, hops, lats))
     Print("     EIDs: {}".format(eids))
 #endfor
 Print("")

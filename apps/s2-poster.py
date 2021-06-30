@@ -226,11 +226,12 @@ def format_json(loc8tr_json):
     # Traverse through each key in the loc8tor.py dictionary array.
     #
     for rloc in json_data:
-        entry = { "rloc" : rloc, "rloc-data" : {} }
-        entry["rloc-data"]["traceroute"] = json_data[rloc][0]
-        entry["rloc-data"]["rtts"] = json_data[rloc][2]
-        entry["rloc-data"]["hop-counts"] = json_data[rloc][3]
-        entry["rloc-data"]["latencies"] = json_data[rloc][4]
+        rn = json_data[rloc][0]
+        entry = { "rloc" : rloc, "rloc-name" : rn, "rloc-data" : {} }
+        entry["rloc-data"]["traceroute"] = json_data[rloc][1]
+        entry["rloc-data"]["rtts"] = json_data[rloc][3]
+        entry["rloc-data"]["hop-counts"] = json_data[rloc][4]
+        entry["rloc-data"]["latencies"] = json_data[rloc][5]
         s2_data["Reports"][0]["report-data"].append(entry)
     #endfor
 
