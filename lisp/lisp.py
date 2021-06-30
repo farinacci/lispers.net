@@ -13321,7 +13321,9 @@ class lisp_rloc(object):
     def store_rloc_from_record(self, rloc_record, nonce, source):
         port = LISP_DATA_PORT
         self.rloc.copy_address(rloc_record.rloc)
-        self.rloc_name = rloc_record.rloc_name
+        if (rloc_record.rloc_name != None):
+            self.rloc_name = rloc_record.rloc_name
+        #endif
 
         #
         # Store translated port if RLOC was translated by a NAT.
