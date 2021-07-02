@@ -232,8 +232,8 @@ def parse_packet(nonce, packet):
 #
 def display_packet(jd):
     for segment in jd:
-        se = segment["se"] if (jd.index(segment) == 0) else bold(segment["se"])
-        de = bold(segment["de"]) if (jd.index(segment) == 0) else segment["de"]
+        se = green(segment["se"])
+        de = green(segment["de"])
 
         print("Path from {} to {}:".format(se, de))
         for path in segment["paths"]:
@@ -247,10 +247,10 @@ def display_packet(jd):
             #endif
             hn = path["hn"]
             drloc = path["dr"]
-            if (drloc.find("?") != -1): drloc = red(drloc)
+            if (drloc.find("?") != -1): drloc = red_bold(drloc)
 
             print("  {} {}: {} -> {}, ts {}, node {}".format( \
-                path["n"], ed, path["sr"], drloc, ts, blue(hn)))
+                path["n"], ed, red(path["sr"]), red(drloc), ts, blue(hn)))
 
             if ("rtts" in path and "hops" in path and "lats" in path):
                 r = json.dumps(path["rtts"])
@@ -422,20 +422,38 @@ def bold(string):
 #enddef
 
 #
+# green
+#
+# Print hostnames in green.
+#
+def green(string):
+    return("\033[92m" + string + "\033[0m")
+#enddef
+
+#
 # blue
 #
-# Print hostnames in bold blue.
+# Print hostnames in blue.
 #
 def blue(string):
-    return("\033[94m" + bold(string) + "\033[0m")
+    return("\033[94m" + string + "\033[0m")
 #enddef
 
 #
 # red
 #
-# Print hostnames in bold red.
+# Print hostnames in red.
 #
 def red(string):
+    return("\033[91m" + string + "\033[0m")
+#enddef
+
+#
+# red_bold
+#
+# Print hostnames in bold red.
+#
+def red_bold(string):
     return("\033[91m" + bold(string) + "\033[0m")
 #enddef
 
@@ -542,8 +560,9 @@ if (nat):
     #endfor
 #endif
 
-print("Send round-trip LISP-Trace between EIDs [{}]{} and [{}]{} ...". \
-    format(siid, seid, diid, deid))
+s = bold(seid)
+d = bold(deid)
+print("Send round-trip LISP-Trace between EIDs {} and {} ...".format(s, d))
 
 dest = deid if (deid.find(":") != -1) else "::ffff:" + deid
 ts = time.time()
