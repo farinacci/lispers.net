@@ -14,6 +14,7 @@ o Add rloc-name to output for loc8tr.py. Have s2-poster pass the info to the
 o Color code EIDs and RLOCs in loc8tr.py output.
 
 -------------------------------------------------------------------------------
+    
 
                lispers.net Beta Release Version 0.573
                --------------------------------------
