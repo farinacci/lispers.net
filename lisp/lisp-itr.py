@@ -213,7 +213,22 @@ def lisp_itr_timeout_dynamic_eids(lisp_socket):
 # en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
 #
 def lisp_get_active_interfaces():
-    if (lisp.lisp_is_macos()): return(["en0", "en1", "lo0"])
+
+    #
+    # Choose only actively connected physical interfaces. Plus loopback. This
+    # is needed for a roaming MAC to do telemetry measurements and wants to
+    # connect to an ethernet. Each dongle vendor comes in with a different
+    # interface/device name. 
+    #
+    if (lisp.lisp_is_macos()):
+        lines = getoutput("netstat -rn | egrep default | egrep UGS")
+        interfaces = ["lo0"]
+        for line in lines.split("\n"):
+            intf = line.split()[-1]
+            interfaces.append(intf)
+        #endfor
+        return(interfaces)
+    #endif
 
     #
     # Linux distributions have different ifconfig output format.
@@ -467,6 +482,8 @@ def lisp_itr_get_capture_info():
     #
     interfaces = lisp_get_active_interfaces()
     pcap_list = os.getenv("LISP_PCAP_LIST")
+    lisp.lprint("User pcap-list: {}, active-interfaces: {}".format(pcap_list,
+        interfaces))
     if (pcap_list == None):
         us = ""
         rloc_interfaces = []
@@ -474,8 +491,6 @@ def lisp_itr_get_capture_info():
         eid_interfaces = list(set(pcap_list.split()) & set(interfaces))
         rloc_interfaces = list(set(pcap_list.split()) ^ set(interfaces))
         us = "user-selected "
-        lisp.lprint("User pcap-list: {}, active-interfaces: {}".format( \
-            pcap_list, interfaces))
         interfaces = eid_interfaces
     #endif
 
@@ -490,14 +505,6 @@ def lisp_itr_get_capture_info():
             lisp.lprint(("Capturing suppressed on interface {}, " + \
                 "MAC filters configured").format(device))
             continue
-        #endif
-
-        #
-        # MacOS uses one interface for the RLOC interface as well as the
-        # EID interface. We use lo0 for the IPv4 EID and en0 for the IPv6 EID.
-        #
-        if (lisp.lisp_is_macos()):
-            if (device not in ["en0", "lo0"]): continue
         #endif
 
         args = [device, pfilter, lisp_pcap_lock]
