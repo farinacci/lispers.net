@@ -19,9 +19,9 @@
 #
 # lisp-mc.py
 #
-# Usage: python -O lisp-mc.py [<user:pw@host:port>]
-#        python -O lisp-mc.py [<host:port>]
-#        python -O lisp-mc.py [<host>]
+# Usage: python -O lisp-mc.py [<user:pw@host:port>] [<eid>]
+#        python -O lisp-mc.py [<host:port>] [<eid>]
+#        python -O lisp-mc.py [<host>] [<eid>]
 #
 # Dispay the LISP map-cache using a command that displays the table as it
 # looks like on the web interface.
@@ -76,6 +76,33 @@ port = "8080"
 
 #
 # Get input from comamnd line, if any.
+
+#
+# First check if EID supplied.
+#
+eid_input = sys.argv[-1]
+for e in eid_input.split("."):
+    if (e.isdigit()): continue
+    eid_input = None
+    break
+#endfor    
+if (eid_input == None):
+    eid_input = sys.argv[-1]
+    for e in eid_input.split(":"):
+        if (e == ""): continue
+        try:
+            int(e, 16)
+            continue
+        except:
+            eid_input = None
+            break
+        #endtry
+    #endfor
+#endif
+if (eid_input != None): sys.argv = sys.argv[0:-1]
+
+#
+# Second get hostname and port number to query.
 #
 if (len(sys.argv) == 2):
     args = sys.argv[1]
@@ -127,12 +154,16 @@ print("\nLISP Map-Cache for {}, hostname {}, release {}\n".format(host,
     hostname, ver["lisp-version"]))
 
 if (len(map_cache) == 0):
-    print("Map-Cache is empty")
+    print("Map-cache is empty")
     exit(0)
 #endif    
 
+found_eid = False
 for mc in map_cache:
     eid = mc["eid-prefix"]
+    if (eid_input and eid.find(eid_input) == -1): continue
+
+    found_eid = True
     if ("group-prefix" in mc): eid = "({}, {})".format(eid, mc["group-prefix"])
     eid = green("[{}]{}".format(mc["instance-id"], eid))
     eid = "EID {},".format(eid)
@@ -162,6 +193,14 @@ for mc in map_cache:
     #endfor
     print()
 #endfor
+
+#
+# If EID specified but not found, return one line message.
+#
+if (eid_input and found_eid == False):
+    print("EID {} not in map-cache".format(green(eid_input)))
+#endif    
+
 exit(0)
 
 #------------------------------------------------------------------------------
