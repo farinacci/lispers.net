@@ -8895,7 +8895,10 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
         # cached map-cache entry.
         #
         if (multicast):
-            mc = lisp_map_cache_lookup(eid_record.eid, eid_record.group)
+            mc = lisp_map_cache.lookup_cache(eid_record.group, True)
+            if (mc):
+                mc = mc.lookup_source_cache(eid_record.eid, False)
+            #endif
         else:
             mc = lisp_map_cache.lookup_cache(eid_record.eid, True)
         #endif
@@ -17578,8 +17581,7 @@ def lisp_update_rtr_updown(rtr, updown):
 #
 # We have received a RLOC-probe Map-Reply, process it.
 #
-def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
-    mrloc):
+def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl, mrloc):
     rloc = rloc_entry.rloc
     nonce = map_reply.nonce
     hc = map_reply.hop_count

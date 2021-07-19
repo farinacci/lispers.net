@@ -161,7 +161,8 @@ if (len(map_cache) == 0):
 found_eid = False
 for mc in map_cache:
     eid = mc["eid-prefix"]
-    if (eid_input and eid.find(eid_input) == -1): continue
+    group = mc["group-prefix"] if "group-prefix" in mc else ""
+    if (eid_input and (eid + group).find(eid_input) == -1): continue
 
     found_eid = True
     if ("group-prefix" in mc): eid = "({}, {})".format(eid, mc["group-prefix"])
@@ -175,21 +176,39 @@ for mc in map_cache:
     print(eid, uptime)
 
     for r in mc["rloc-set"]:
-        uptime = "{} since {}".format(r["state"], r["uptime"])
-        state = r["state"]
-        state = green(state) if state == "up-state" else red(state)
-        rloc = r["address"]
-        if ("encap-port" in r): rloc += ":{}".format(r["encap-port"])
+        rloc_set = [r]
+        if ("multicast-rloc-set" in r): rloc_set += r["multicast-rloc-set"]
+            
+        for rr in rloc_set:
+            if (rloc_set.index(rr) == 0):
+                rlocrle = "RLOC"
+            else:
+                rlocrle = "mRLOC"
+            #endif
 
-        rloc = "  RLOC {}, state {} since {}".format(red(rloc), state,
-            r["uptime"])
-        if ("encap-crypto" in r): rloc += ", {}".format(r["encap-crypto"])
-        if ("rloc-name" in r): rloc += ", {}".format(blue(r["rloc-name"]))
+            rloc = rr["address"]
+            if ("rle" in rr):
+                rloc = rr["rle"]
+                rlocrle = "RLE"
+            #endif
+            if ("encap-port" in rr): rloc += ":{}".format(rr["encap-port"])
+            state = rr["state"]
+            state = green(state) if state == "up-state" else red(state)
 
-        print(rloc)
-        print("    {}".format(r["stats"]))
-        r, h, l = format_telemetry(r)
-        print("    rtts {}, hops {}, latencies {}".format(r, h, l))
+            rloc = "  {} {}, state {} since {}".format(rlocrle, red(rloc),
+                state, rr["uptime"])
+            if ("encap-crypto" in rr):
+                rloc += ", {}".format(rr["encap-crypto"])
+            #endif
+            if ("rloc-name" in rr):
+                rloc += ", {}".format(blue(rr["rloc-name"]))
+            #endif
+
+            print(rloc)
+            print("    {}".format(rr["stats"]))
+            rtt, hc, lat = format_telemetry(rr)
+            print("    rtts {}, hops {}, latencies {}".format(rtt, hc, lat))
+        #endfor
     #endfor
     print()
 #endfor
