@@ -110,7 +110,8 @@ lisp database-mapping {
 
 #
 # Need the rle-address to be underlay-group-rloc or we won't pcap RLOC-probe
-# request in the ETR.
+# request in the ETR. Also, touch file "join-<underlay-group-rloc>" so IGMP reports
+# go to the underlay. Or, run lisp-join.py so IGMP reports can go to underday.    
 #
 lisp group-mapping {
     group-name = multicast-probing
