@@ -46,6 +46,7 @@ lisp_ipc_listen_socket = None
 lisp_ipc_punt_socket = None
 lisp_ephem_listen_socket = None
 lisp_ephem_nat_socket = None
+lisp_rloc_probe_socket = None
 lisp_ephem_port = lisp.lisp_get_ephemeral_port()
 lisp_ephem_nat_port = lisp.lisp_get_ephemeral_port()
 lisp_raw_socket = None
@@ -262,6 +263,7 @@ def lisp_itr_startup():
     global lisp_ephem_listen_socket
     global lisp_ephem_nat_socket
     global lisp_raw_socket, lisp_raw_v6_socket
+    global lisp_rloc_probe_socket
 
     lisp.lisp_i_am("itr")
     lisp.lisp_set_exception()
@@ -285,6 +287,20 @@ def lisp_itr_startup():
     address = "0.0.0.0" if lisp.lisp_is_raspbian() else "0::0"
     lisp_ephem_listen_socket = lisp.lisp_open_listen_socket(address,
         str(lisp_ephem_port))
+
+    #
+    # Set multicsat TTL to LISP_RLOC_PROBE_TTL so we can send RLOC-probes
+    # to multicast RLOCs.
+    #
+    try:
+        s = lisp.lisp_open_send_socket("", lisp.LISP_AFI_IPV4)
+        ttl = lisp.LISP_RLOC_PROBE_TTL
+        s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+        lisp_rloc_probe_socket = s
+    except socket.error as e:
+        lisp.lprint("socket.setsockopt() failed for RLOC-probe ttl: {}". \
+            format(e))
+    #endtry
 
     #
     # Used on for listening for Info-Replies for NAT-traversal support.
@@ -545,6 +561,7 @@ def lisp_itr_shutdown():
     lisp.lisp_close_socket(lisp_send_sockets[0], "")
     lisp.lisp_close_socket(lisp_send_sockets[1], "")
     lisp.lisp_close_socket(lisp_ephem_listen_socket, "")
+    lisp.lisp_close_socket(lisp_rloc_probe_socket, "")
     lisp.lisp_close_socket(lisp_ephem_nat_socket, "")
     lisp.lisp_close_socket(lisp_ipc_listen_socket, "lisp-itr")
     lisp.lisp_close_socket(lisp_ipc_punt_socket, "lispers.net-itr")
@@ -1228,6 +1245,7 @@ def lisp_itr_database_mapping_command(kv_pair):
 #
 def lisp_itr_xtr_command(kv_pair):
     global lisp_ephem_listen_socket
+    global lisp_rloc_probe_socket
 
     #
     # Cache current state for nat-traversal and rloc-probing so we know if
@@ -1253,7 +1271,7 @@ def lisp_itr_xtr_command(kv_pair):
     if (nat_now_on): interval = 5
     
     if (interval != 0):
-        lisp_sockets = [lisp_ephem_listen_socket, lisp_ephem_listen_socket]
+        lisp_sockets = [lisp_rloc_probe_socket, lisp_ephem_listen_socket]
         lisp.lisp_start_rloc_probe_timer(interval, lisp_sockets)
     #endif
 

@@ -460,7 +460,6 @@ LISP_INFO_INTERVAL                   = 15  # In units of seconds
 LISP_MAP_REQUEST_RATE_LIMIT          = .5  # In units of seconds, 500 ms
 LISP_NO_MAP_REQUEST_RATE_LIMIT_TIME  = 60  # In units of seconds, 1 minute
 LISP_ICMP_TOO_BIG_RATE_LIMIT         = 1   # In units of seconds
-#LISP_RLOC_PROBE_TTL                 = 255
 LISP_RLOC_PROBE_TTL                  = 128
 LISP_RLOC_PROBE_INTERVAL             = 10  # In units of seconds
 LISP_RLOC_PROBE_REPLY_WAIT           = 15  # In units of seconds
@@ -6876,6 +6875,7 @@ def lisp_format_packet(packet):
 # Send packet out.
 #
 def lisp_send(lisp_sockets, dest, port, packet):
+
     lisp_socket = lisp_sockets[0] if dest.is_ipv4() else lisp_sockets[1]
 
     #
@@ -6903,24 +6903,13 @@ def lisp_send(lisp_sockets, dest, port, packet):
         lisp_format_packet(packet)))
 
     #
-    # If Map-Request/Reply RLOC-probe set TTL for outgoing packet to 255.
+    # Send on socket.
     #
-    set_ttl = (LISP_RLOC_PROBE_TTL == 128)
-    if (set_ttl):
-        lisp_type = struct.unpack("B", packet[0:1])[0]
-        set_ttl = (lisp_type in [0x12, 0x28])
-        if (set_ttl): lisp_set_ttl(lisp_socket, LISP_RLOC_PROBE_TTL)
-    #endif
-
-    try: lisp_socket.sendto(packet, (address, port))
+    try:
+        lisp_socket.sendto(packet, (address, port))
     except socket.error as e:
         lprint("socket.sendto() failed: {}".format(e))
     #endtry
-
-    #
-    # Set back to default TTL.
-    #
-    if (set_ttl): lisp_set_ttl(lisp_socket, 64)
     return
 #enddef
 
@@ -15752,8 +15741,13 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
             return
         #endif
 
-        addr_str = probe_dest.print_address_no_iid()
-        dest = lisp_convert_4to6(addr_str)
+        if (probe_dest.is_ipv4() and probe_dest.is_multicast_address()):
+            dest = probe_dest
+        else:
+            addr_str = probe_dest.print_address_no_iid()
+            dest = lisp_convert_4to6(addr_str)
+        #endif
+
         lisp_send(lisp_sockets, dest, LISP_CTRL_PORT, packet)
         return
     #endif
@@ -18945,22 +18939,6 @@ def lisp_build_crypto_decap_lookup_key(addr, port):
         return(addr)
     #endif
     return(addr_and_port)
-#enddef
-
-#
-# lisp_set_ttl
-#
-# Set send IP TTL for outgoing packet.
-#
-def lisp_set_ttl(lisp_socket, ttl):
-    try: 
-        lisp_socket.setsockopt(socket.SOL_IP, socket.IP_TTL, ttl)
-        lisp_socket.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_TTL, ttl)
-    except: 
-        lprint("socket.setsockopt(IP_TTL) not supported")
-        pass
-    #endtry
-    return
 #enddef
 
 #
