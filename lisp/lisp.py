@@ -17575,7 +17575,8 @@ def lisp_update_rtr_updown(rtr, updown):
 #
 # We have received a RLOC-probe Map-Reply, process it.
 #
-def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl, mrloc):
+def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
+    mrloc):
     rloc = rloc_entry.rloc
     nonce = map_reply.nonce
     hc = map_reply.hop_count
