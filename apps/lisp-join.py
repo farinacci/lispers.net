@@ -89,8 +89,8 @@ def cleanup(signum, frame):
 # requires it.
 #
 def get_local_ip(intf):
-    out = getoutput('ifconfig {} | egrep "inet "'.format(intf))
-    if (out == "" or out.find("error") != -1): return(None)
+    out = getoutput('sudo ifconfig {} | egrep "inet "'.format(intf))
+    if (out == "" or out.find("inet ") == -1): return(None)
     intf_addr = out.split()[1]
 
     #
