@@ -4008,6 +4008,7 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
     # IPv4 or IPv6 default EID-prefix means we are.
     #
     for db in prefix_set:
+        if (db.group.is_null() == False): continue
         if (db.eid.address == 0 and db.eid.mask_len == 0):
             if (db.eid.is_ipv4() or db.eid.is_ipv6()):
                 lisp.lisp_pitr = True

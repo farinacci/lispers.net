@@ -421,6 +421,7 @@ def lisp_itr_get_local_eid_prefixes():
     sources = []
     dyn_eids = []
     for db in lisp.lisp_db_list:
+        if (db.group.is_null() == False): continue
         if (db.eid.is_ipv4() or db.eid.is_ipv6() or db.eid.is_mac()):
             eid_str = db.eid.print_prefix_no_iid()
             if (db.dynamic_eid_configured()): dyn_eids.append(eid_str)
