@@ -1,0 +1,69 @@
+#!/bin/tcsh
+# -----------------------------------------------------------------------------
+#             
+# Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.    
+# 
+# -----------------------------------------------------------------------------
+#
+# rig
+#
+# Just a wrapper for lisp-rig where it prompts for parameters when EID is
+# is not supplied.
+# 
+# -----------------------------------------------------------------------------
+
+set EID = "$1"
+set ASK = 0
+if ("$EID" == "") then
+    set ASK = 1
+    echo -n "Enter EID name or address: "
+    set EID = "$<"
+endif
+set DDT = $2
+if ($DDT == "") then
+    echo -n "Enter DDT-Node name or RLOC address: "
+    set DDT = $<
+endif
+
+#
+# Ask for other parmeters.
+#
+set PARMS = ""
+if ($ASK == 1) then
+    echo -n "Enter debug mode (y/n): "
+    set DEBUG = $<
+    if ($DEBUG == "y") then
+        set PARMS = "$PARMS debug"
+    endif
+
+    echo -n "Follow all referrals (y/n): "
+    set FAR = $<
+    if ($FAR == "y") then
+        set PARMS = "$PARMS follow-all-referrals"
+    endif
+endif
+
+set PARMS = "to $DDT $PARMS"
+echo "rig command parameters are: $EID $PARMS"
+echo ""
+
+set FLAGS = "-W ignore -O -u"
+if (-f ./lisp-rig.pyo) then
+    sudo python $FLAGS ./lisp-rig.pyo "$EID" $PARMS
+else if (-f ./lisp-rig.pyc) then
+    sudo python3.8 $FLAGS ./lisp-rig.pyc "$EID" $PARMS
+else if (-f ./lisp-rig.py) then
+    sudo python $FLAGS ./lisp-rig.py "$EID" $PARMS
+endif
