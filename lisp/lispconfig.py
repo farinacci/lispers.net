@@ -2654,7 +2654,7 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
         ts = lisp.lisp_print_elapsed(mr.last_used)
         lnmr = lisp.lisp_print_elapsed(mr.last_reply)
         avg_rtt = 0 if mr.neg_map_replies_received == 0 else \
-            float(old_div(mr.total_rtt / mr.neg_map_replies_received))
+            float(old_div(mr.total_rtt, mr.neg_map_replies_received))
         avg_rtt = str(round(avg_rtt, 3)) + " ms"
 
         output += lisp_table_row(addr_str, ts, mr.map_requests_sent,
@@ -2807,7 +2807,12 @@ def lisp_itr_rtr_show_rloc_probe_command(itr_or_rtr):
                 rs = r.rloc.print_address_no_iid()
                 rs = lisp.bold(lisp.lisp_print_cour(rs), True)
                 if (probe_list.index(r) != 0): col2 += "<br><br>"
-                col2 += "RLOC {}:<br>".format(rs)
+                if (r.rloc.is_multicast_address()):
+                    col2 += "RLOC {}:<br>".format(rs)
+                else:
+                    rn = ", " + r.rloc_name if r.rloc_name != None else ""
+                    col2 += "mRLOC {}{}:<br>".format(rs, rn)
+                #endif
             #endif
 
             req = lisp.lisp_print_elapsed(r.last_rloc_probe)

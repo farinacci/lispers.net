@@ -7274,7 +7274,13 @@ def lisp_build_map_reply(eid, group, rloc_set, nonce, action, ttl, map_request,
             if (rloc_entry.priority == 254 and lisp_i_am_rtr):
                 rloc_record.rloc_name = "RTR"
             #endif
-            if (probing_rloc == None): probing_rloc = rloc_entry.rloc
+            if (probing_rloc == None):
+                if (rloc_entry.translated_rloc.is_null()):
+                    probing_rloc = rloc_entry.rloc 
+                else: 
+                    probing_rloc = rloc_entry.translated_rloc
+                #endif
+            #endif
         #endif
         rloc_record.store_rloc_entry(rloc_entry)
         rloc_record.reach_bit = True
@@ -8910,6 +8916,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
         #
         rloc_set = []
         mrloc = None
+        rloc_name = None
         for j in range(eid_record.rloc_count):
             rloc_record = lisp_rloc_record()
             rloc_record.keys = map_reply.keys
@@ -8956,6 +8963,13 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
             #endif
 
             #
+            # Store RLOC name for multicast RLOC members records.
+            #
+            if (rloc_name == None):
+                rloc_name = rloc.rloc_name
+            #enif
+
+            #
             # Process state for RLOC-probe reply from this specific RLOC. And
             # update RLOC state for map-cache entry. Ignore an RLOC with a
             # different address-family of the recieved packet. The ITR really
@@ -8965,7 +8979,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
             if (map_reply.rloc_probe and rloc_record.probe_bit):
                 if (rloc.rloc.afi == source.afi):
                     lisp_process_rloc_probe_reply(rloc, source, port,
-                        map_reply, ttl, mrloc)
+                        map_reply, ttl, mrloc, rloc_name)
                 #endif
                 if (rloc.rloc.is_multicast_address()): mrloc = rloc
             #endif
@@ -17576,7 +17590,7 @@ def lisp_update_rtr_updown(rtr, updown):
 # We have received a RLOC-probe Map-Reply, process it.
 #
 def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
-    mrloc):
+    mrloc, rloc_name):
     rloc = rloc_entry.rloc
     nonce = map_reply.nonce
     hc = map_reply.hop_count
@@ -17602,6 +17616,7 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
             mrloc.multicast_rloc_probe_list[map_reply_addr] = nrloc
         #endif
         nrloc = mrloc.multicast_rloc_probe_list[map_reply_addr]
+        nrloc.rloc_name = rloc_name
         nrloc.last_rloc_probe_nonce = mrloc.last_rloc_probe_nonce
         nrloc.last_rloc_probe = mrloc.last_rloc_probe
         r, eid, group = lisp_rloc_probe_list[multicast_rloc][0]
