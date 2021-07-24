@@ -13413,7 +13413,12 @@ class lisp_rloc(object):
         self.weight = rloc_record.weight
         self.mweight = rloc_record.mweight
         if (rloc_record.reach_bit and rloc_record.local_bit and 
-            rloc_record.probe_bit == False): self.state = LISP_RLOC_UP_STATE
+            rloc_record.probe_bit == False):
+            if (self.state != LISP_RLOC_UP_STATE):
+                self.last_state_change = lisp_get_timestamp()
+            #endif
+            self.state = LISP_RLOC_UP_STATE
+        #endif
 
         #
         # Store keys in RLOC lisp-crypto data structure.
@@ -16859,7 +16864,11 @@ def lisp_fill_rloc_in_json(rloc):
     if (rloc.rloc_name): r["rloc-name"] = rloc.rloc_name
     stats = rloc.stats.get_stats(False, False)
     if (stats): r["stats"] = stats
-    r["uptime"] = lisp_print_elapsed(rloc.uptime)
+    state_change = lisp_print_elapsed(rloc.last_state_change)
+    if (state_change == "never"):
+        state_change = lisp_print_elapsed(rloc.uptime)
+    #endif
+    r["uptime"] = state_change
     r["upriority"] = str(rloc.priority)
     r["uweight"] = str(rloc.weight)
     r["mpriority"] = str(rloc.mpriority)
