@@ -465,10 +465,10 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
     #endif
 
     if (lisp_etr_test_mode):
-        lisp.fprint("Build Map-Register for {} database-mapping entries". \
+        lisp.lprint("Build Map-Register for {} database-mapping entries". \
             format(db_list_len))
     else:
-        lisp.fprint("Build Map-Register for {} database-mapping entries". \
+        lisp.lprint("Build Map-Register for {} database-mapping entries". \
             format(db_list_len))
     #endif
 
