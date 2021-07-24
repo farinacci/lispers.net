@@ -294,7 +294,13 @@ if (map_cache == ""):
     exit(1)
 #endif    
 
-map_cache = json.loads(map_cache)
+try:
+    map_cache = json.loads(map_cache)
+except:
+    Print("Invalid JSON")
+    exit(1)
+#endtry
+    
 if (type(map_cache) != list):
     Print("Could not retrieve map-cache")
     exit(1)
