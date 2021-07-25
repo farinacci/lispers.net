@@ -17298,6 +17298,34 @@ def lisp_mark_rlocs_for_other_eids(eid_list):
 #enddef
 
 #
+# lisp_process_multicast_rloc
+#
+# Time-out member RLOCs for this mutlicast RLOC. Check if an RLOC-probe reply
+# has been received within the timeout interval.
+#
+def lisp_process_multicast_rloc(multicast_rloc):
+    maddr = multicast_rloc.rloc.print_address_no_iid()
+
+    now = lisp_get_timestamp()
+    for addr in multicast_rloc.multicast_rloc_probe_list:
+        mrloc = multicast_rloc.multicast_rloc_probe_list[addr]
+        if (mrloc.last_rloc_probe_reply + LISP_RLOC_PROBE_REPLY_WAIT >= now):
+            continue
+        #endif
+        if (mrloc.state == LISP_RLOC_UNREACH_STATE): continue
+
+        #
+        # It went down.
+        #
+        mrloc.state = LISP_RLOC_UNREACH_STATE
+        mrloc.last_state_change = lisp_get_timestamp()
+
+        lprint("Multicast-RLOC {} member-RLOC {} went unreachable".format( \
+            maddr, red(addr, False)))
+    #endfor
+#enddef
+
+#
 # lisp_process_rloc_probe_timer
 #
 # Periodic RLOC-probe timer has expired. Go through cached RLOCs from map-
@@ -17519,6 +17547,13 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 #
                 if (rloc.rloc.is_null()): 
                     rloc.rloc.copy_address(parent_rloc.rloc)
+                #endif
+
+                #
+                # Time-out member RLOCs for multicast RLOC probing.
+                #
+                if (rloc.multicast_rloc_probe_list != {}):
+                    lisp_process_multicast_rloc(rloc)
                 #endif
 
                 #
