@@ -36,7 +36,7 @@ RFC 7954                            - Locator/ID Separation Protocol (LISP) Endp
 RFC 8060                            - LISP Canonical Address Format (LCAF)
 RFC 8061                            - Locator/ID Separation Protocol (LISP) Data-Plane Confidentiality
 RFC 8111                            - Locator/ID Separation Protocol Delegated Database Tree (LISP-DDT)
-RFC 8112                            - Locator/ID Separation Protocol Delegated Database Tree (LISP-DDT) Referral Internet Groper (RIG)
+RFC 8112                            - LISP-DDT Referral Internet Groper (RIG)
 RFC 8378                            - Signal-Free Locator/ID Separation Protocol (LISP) Multicast
 RFC 8439                            - ChaCha20 and Poly1305 for IETF Protocols    
 draft-ietf-lisp-rfc6830bis          - The Locator/ID Separation Protocol (LISP)

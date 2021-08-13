@@ -1,4 +1,14 @@
 
+               lispers.net Beta Release Version 0.580
+               --------------------------------------
+
+o Release date:
+
+o Have loc8tr print rloc-name on "Run traceroute ..." outuput line.    
+
+-------------------------------------------------------------------------------
+    
+
                lispers.net Beta Release Version 0.579
                --------------------------------------
 
