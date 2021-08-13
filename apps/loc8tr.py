@@ -412,7 +412,8 @@ for addr in rloc_cache:
         cmd = tr_command.format(address)
     #endif
 
-    Print("Run {} ...".format(bold(cmd))) 
+    rn = blue(rloc[RLOC_NAME])
+    Print("Run {} ({}) ...".format(bold(cmd), rn)) 
     
     out = getoutput(cmd)
 
