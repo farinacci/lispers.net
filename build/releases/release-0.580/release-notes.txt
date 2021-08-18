@@ -12,7 +12,6 @@ o Change lisp.lisp_on_aws() to check for bios-version rather than bios-vendor
   is the global address. AWS will not allow the RTR to encapsulate packets
   with a global source address. We found this before and have code to support
   it but in lisp_rtr_startup(), it did not think it was running on an AWS VM.
-  Amazon changed stuff from under us!
 
 -------------------------------------------------------------------------------
     
