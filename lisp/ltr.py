@@ -505,6 +505,7 @@ check_multicast(deid, v4v6)
 #
 # Get source-EID from command-line or get it from xTR configuration.
 #
+input_err = False
 if ("-s" in sys.argv):
     index = sys.argv.index("-s") + 1
     siid, seid, no_iid = parse_eid(sys.argv[index])
@@ -517,14 +518,19 @@ if ("-s" in sys.argv):
     if (rloc == None):
         print("[{}]{} not a local EID, maybe lispers.net API pw/port wrong". \
             format(siid, seid))
-        exit(1)
+        input_err = True
     #endif
 else:
     siid, seid, rloc, nat = get_db(None, None, user, pw, http, http_port, v4v6)
     if (siid == None):
+        input_err = True
         print("Could not find local EID, maybe lispers.net API pw/port wrong?")
-        exit(1)
     #endif
+#endif
+if (input_err):
+    print("If root password configured, set env variable LISP_LTR_PW")
+    print("If LISP not started on port 8080, set env variable LISP_LTR_PORT")
+    exit(1)
 #endif
 
 #
