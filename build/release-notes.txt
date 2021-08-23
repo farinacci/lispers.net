@@ -1,4 +1,19 @@
 
+               lispers.net Beta Release Version 0.582
+               --------------------------------------
+
+o Release date:
+
+o Add generic RL file (to build directory) that configures an xTR with a
+  static EID address. And allows the EID to be used as a source address for
+  any application sending to a specific configured set of prefixes.
+
+o Add generic lisp.config.static-xtr (to docs directory) lisp.config file that
+  goes along with RL.static-xtr script. Wherever there is a "?" and angle
+  brackets, needs to be filled in by user.
+    
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.581
                --------------------------------------
 

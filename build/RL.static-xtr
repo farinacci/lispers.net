@@ -36,17 +36,26 @@
 
 set EID = 240.x.x.x
 
+if ($EID == "240.x.x.x") then
+    echo "Need configure EID in place of 240.x.x.x"
+    exit
+endif
+
 if (`uname` == "Darwin") then
     set DEVICE = "en0"
     sudo ifconfig lo0 $EID/32 alias
     sudo ifconfig lo0 mtu 1400
     sudo route delete 240.0.0.0/8 > /dev/null
     sudo route add 240.0.0.0/8 $EID > /dev/null
+    sudo route delete 224.0.0.0/8 > /dev/null
+    sudo route add 224.0.0.0/8 $EID > /dev/null
 else    
     set DEVICE = "eth0"
     sudo ip addr add $EID/32 dev lo >& /dev/null
     sudo ifconfig lo mtu 1400
+    sudo ip route delete 240.0.0.0/8 > /dev/null
     sudo ip route add 240.0.0.0/8 dev lo src $EID
+    sudo ip route delete 224.0.0.0/8 > /dev/null
     sudo ip route add 224.0.0.0/8 dev lo src $EID
 endif    
 
