@@ -1,0 +1,58 @@
+#!/bin/tcsh
+# -----------------------------------------------------------------------------
+#             
+# Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.    
+# 
+# -----------------------------------------------------------------------------
+#
+# RL - Restart LISP Wrapper Script
+#
+# This is a wrapper script for ./RESTART-LISP. You want to use it to do
+# EID address assignment on kernel created interfaces as well as setting
+# default and other static route parameters.
+#
+# Most importantly, you can tell this script where your ./RESTART-LISP script
+# is and pass parameters to the script such as the RLOC interface you use.
+#
+# Put a call to this script in /etc/rc.local so on system startup the LISP 
+# subsystem will start automatically. For example, add this line to /etc/rc.
+# local:
+#
+#    /home/<install-directory>/lispers.net/RL || exit 1
+#
+#------------------------------------------------------------------------------
+
+set EID = 240.x.x.x
+
+if (`uname` == "Darwin") then
+    set DEVICE = "en0"
+    sudo ifconfig lo0 $EID/32 alias
+    sudo ifconfig lo0 mtu 1400
+    sudo route delete 240.0.0.0/8 > /dev/null
+    sudo route add 240.0.0.0/8 $EID > /dev/null
+else    
+    set DEVICE = "eth0"
+    sudo ip addr add $EID/32 dev lo >& /dev/null
+    sudo ifconfig lo mtu 1400
+    sudo ip route add 240.0.0.0/8 dev lo src $EID
+    sudo ip route add 224.0.0.0/8 dev lo src $EID
+endif    
+
+#
+# Start LISP.
+#
+~/lispers.net/RESTART-LISP 8080 $DEVICE
+
+#------------------------------------------------------------------------------
