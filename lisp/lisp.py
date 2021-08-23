@@ -395,17 +395,18 @@ LISP_TRACE          = 9
 #
 # Map-Reply action values.
 #
-LISP_NO_ACTION               = 0
-LISP_NATIVE_FORWARD_ACTION   = 1
-LISP_SEND_MAP_REQUEST_ACTION = 2
-LISP_DROP_ACTION             = 3
-LISP_POLICY_DENIED_ACTION    = 4
-LISP_AUTH_FAILURE_ACTION     = 5
-LISP_SEND_PUBSUB_ACTION      = 6
+LISP_NO_ACTION                 = 0
+LISP_NATIVE_FORWARD_ACTION     = 1
+LISP_SEND_MAP_REQUEST_ACTION   = 2
+LISP_DROP_ACTION               = 3
+LISP_POLICY_DENIED_ACTION      = 4
+LISP_AUTH_FAILURE_ACTION       = 5
+LISP_SEND_PUBSUB_ACTION        = 6
+LISP_NOT_REGISTERED_YET_ACTION = 7
 
 lisp_map_reply_action_string = ["no-action", "native-forward", 
     "send-map-request", "drop-action", "policy-denied",
-    "auth-failure", "send-subscribe"]
+    "auth-failure", "send-subscribe", "not-registered-yet"]
 
 #
 # Various HMACs alg-ids and lengths (in bytes) used by LISP.
@@ -7928,12 +7929,13 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
         if (site_eid.force_ttl != None):
             ttl = site_eid.force_ttl | 0x80000000
         #endif
+        not_yet = (site_eid.proxy_reply_action == "not-registered-yet")
 
         #
         # Send negative Map-Reply with TTL 1 minute.
         #
         lisp_send_negative_map_reply(lisp_sockets, eid, group, nonce, itr_rloc,
-            mr_sport, ttl, xtr_id, pubsub) 
+            mr_sport, ttl, xtr_id, pubsub, not_reg_yet=not_yet)
 
         return([eid, group, LISP_DDT_ACTION_MS_NOT_REG])
     #endif
@@ -8480,7 +8482,7 @@ def lisp_ms_send_map_referral(lisp_sockets, map_request, ecm_source, port,
 # RLOCs in the locator-set.
 #
 def lisp_send_negative_map_reply(sockets, eid, group, nonce, dest, port, ttl,
-    xtr_id, pubsub):
+    xtr_id, pubsub, not_reg_yet=False):
 
     lprint("Build negative Map-Reply EID-prefix {}, nonce 0x{} to ITR {}". \
         format(lisp_print_eid_tuple(eid, group), lisp_hex_string(nonce), 
@@ -8495,6 +8497,10 @@ def lisp_send_negative_map_reply(sockets, eid, group, nonce, dest, port, ttl,
     if (lisp_get_eid_hash(eid) != None):
         action = LISP_SEND_MAP_REQUEST_ACTION
     #endif
+    if (not_reg_yet):
+        action = LISP_NOT_REGISTERED_YET_ACTION
+    #endif
+
 
     packet = lisp_build_map_reply(eid, group, [], nonce, action, ttl, None,
         None, False, False)
@@ -16359,11 +16365,17 @@ def lisp_timeout_map_cache_entry(mc, delete_list):
     #endif
 
     #
+    # If the action is not-registered-yet, time out the map-cache entry so
+    # we can test to see if it became registered.
+    #
+    do_refresh_check = (mc.action != LISP_NOT_REGISTERED_YET_ACTION)
+
+    #
     # Check refresh timers. Native-Forward entries just return if active,
     # else check for encap-port changes for NAT entries. Then return if
     # entry still active.
     #
-    if (last_refresh_time + mc.map_cache_ttl > now): 
+    if (do_refresh_check and last_refresh_time + mc.map_cache_ttl > now): 
         if (mc.action == LISP_NO_ACTION): lisp_update_encap_port(mc)
         return([True, delete_list])
     #endif
@@ -16381,8 +16393,10 @@ def lisp_timeout_map_cache_entry(mc, delete_list):
     ut = lisp_print_elapsed(mc.uptime)
     lrt = lisp_print_elapsed(mc.last_refresh_time)
     prefix_str = mc.print_eid_tuple()
-    lprint(("Map-cache entry {} {}, had uptime {}, last-refresh-time {}"). \
-        format(green(prefix_str, False), bold("timed out", False), ut, lrt))
+    lprint(("Map-cache entry {} {}, had uptime {}, last-refresh-time {}, " + \
+       "action was {}").format(green(prefix_str, False),
+        bold("timed out", False), ut, lrt,
+        lisp_map_reply_action_string[mc.action]))
 
     #
     # Add to delete-list to remove after this loop.

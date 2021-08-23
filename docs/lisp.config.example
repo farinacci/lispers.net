@@ -1339,7 +1339,7 @@ lisp site {
         force-proxy-reply = yes | no
         force-nat-proxy-reply = yes | no
         pitr-proxy-reply-drop = yes | no
-        proxy-reply-action = native-forward | drop
+        proxy-reply-action = native-forward | drop | not-registered-yet
         force-ttl = <seconds>
         echo-nonce-capable = yes | no
         require-signature = yes | no
@@ -1420,6 +1420,21 @@ Command Description:
             Configures the TTL value the Map-Server returns in EID-records
             in Map-Replies. Used with the "force ..." parameters.
     
+        proxy-reply-action = native-forward | drop | not-registered-yet
+            Configured for a negative Map-Reply that is sent by the Map-Server
+            on what action should be returned. When "native-forward" is
+            returned, the Map-Request target EID was for a non-LISP site and
+            the ITR/RTR should natively forward the packet on the underlay
+            network. When "drop" is returned, the ITR/RTR should drop packets.
+            This could be used as a hard provision denial for the Map-Request
+            target EID. When "not-registered-yet" is returned, the Map-Server
+            knows the Map-Request target EID is indeed an EID and that the
+            ITR/RTR should time out the entry and retry a new Map-Request to
+            see if the EID has become registered. The frequency is based on
+            the TTL return for the entry in the Map-Reply. The Map-Server
+            knows this when an "eid-prefix" is configured for a "allowed-
+            prefix" subcommand clause of the "lisp site" command.
+
 	    echo-nonce-capable = yes | no
             Configures the Map-Server to inform the requesting ITR the RLOC
             can support echo-noncing in the data-plane.
@@ -1527,6 +1542,26 @@ lisp site {
         instance-id = 0
         eid-prefix = fd::/8
         accept-more-specifics = yes
+    }
+}
+
+#
+# For this site, we will never native-forward. The site is provisioned for
+# a complete overlay and all addresses used for communication are EIDs. And
+# are assumed to be behind NAT devices. The EID addresses must be assigned out
+# the 240.0.0.0/8 prefix range.
+#            
+lisp site {
+    site-name = pure-overlay
+    description = All addresses used here are EIDs at LISP sites
+    authentication-key = open-overlay
+    allowed-prefix {
+        instance-id = 100
+        eid-prefix = 240.0.0.0/8
+    	accept-more-specifics = yes
+    	force-proxy-reply = yes
+     	force-nat-proxy-reply = yes
+        proxy-reply-action = not-registered-yet
     }
 }
 
