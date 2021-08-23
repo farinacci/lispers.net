@@ -1352,7 +1352,7 @@ def lisp_rtr_startup():
     # "eth0" but something like "ens5".
     #
     lisp_rtr_source_rloc = lisp.lisp_myrlocs[0]
-    if (lisp.lisp_on_aws()):
+    if (lisp.lisp_on_gcp() == False and lisp.lisp_on_aws()):
         aws = lisp.bold("AWS RTR", False)
         rloc = None
         for device in ["eth0", "ens5"]:

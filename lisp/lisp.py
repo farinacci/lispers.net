@@ -709,6 +709,10 @@ def lisp_on_aws():
 #
 def lisp_on_gcp():
     vm = getoutput("sudo dmidecode -s bios-version")
+    if (vm.find("command not found") != -1 and lisp_on_docker()):
+        aws = bold("GCP check", False)
+        lprint("{} - dmidecode not installed in docker container".format(aws))
+    #endif
     return(vm.lower().find("google") != -1)
 #enddef
 
