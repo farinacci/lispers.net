@@ -11,7 +11,12 @@ o Add generic RL file (to build directory) that configures an xTR with a
 o Add generic lisp.config.static-xtr (to docs directory) lisp.config file that
   goes along with RL.static-xtr script. Wherever there is a "?" and angle
   brackets, needs to be filled in by user.
-    
+
+o Change RUN-LISP to warn user when they have installed both python2 and
+  python3 files in the same lispers.net directory. If you want to run python2
+  there should be no *pyc files in the directory. If you want to run python3
+  there should be no *pyo files in the directory.
+
 -------------------------------------------------------------------------------
 
                lispers.net Beta Release Version 0.581

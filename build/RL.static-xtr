@@ -33,6 +33,11 @@
 #    /home/<install-directory>/lispers.net/RL || exit 1
 #
 #------------------------------------------------------------------------------
+#
+# Note, the use of 240.0.0.0/8 addresses can work on MacOS but Big Sur cannot
+# send ICMP echo-replies to such addresses. This is not a problem on Linux.
+#
+#------------------------------------------------------------------------------
 
 set EID = 240.x.x.x
 
@@ -43,6 +48,7 @@ endif
 
 if (`uname` == "Darwin") then
     set DEVICE = "en0"
+    set PATH = "~/lispers.net"
     sudo ifconfig lo0 $EID/32 alias
     sudo ifconfig lo0 mtu 1400
     sudo route delete 240.0.0.0/8 > /dev/null
@@ -51,6 +57,7 @@ if (`uname` == "Darwin") then
     sudo route add 224.0.0.0/8 $EID > /dev/null
 else    
     set DEVICE = "eth0"
+    set PATH = "/lispers.net"
     sudo ip addr add $EID/32 dev lo >& /dev/null
     sudo ifconfig lo mtu 1400
     sudo ip route delete 240.0.0.0/8 > /dev/null
@@ -62,6 +69,6 @@ endif
 #
 # Start LISP.
 #
-~/lispers.net/RESTART-LISP 8080 $DEVICE
+$PATH/RESTART-LISP 8080 $DEVICE
 
 #------------------------------------------------------------------------------
