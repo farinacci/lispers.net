@@ -112,6 +112,24 @@ setenv LISP_GEO_ZOOM_LEVEL 10
 #
 #setenv LISP_DECENT_HASH_WIDTH 32
 
+#------------------------------------------------------------------------------
+
+#
+# Check to see if both pyo and pyc files exist in this directory. If so, give
+# error to user. That means 2 builds, a python2 release and a python3 release
+# exist and this script doesn't know which to run.
+#
+ls ./lisp-core.pyo >& /dev/null
+set pyo = $status
+ls ./lisp-core.pyc >& /dev/null
+set pyc = $status
+if ($pyo == 0 && $pyc == 0) then
+    echo ""
+    echo "*** Both py2/py3 releases exist in this directory ***"
+    echo "To run py3, 'rm -f *pyo', to run py2, 'rm -f *pyc'"
+    exit
+endif
+
 #
 # If we have pyc files in the release, then it was built with python3.
 # Otherwise we have pyo files built by python2. If we don't find either,
