@@ -69,7 +69,6 @@ o Change lisp.lisp_on_aws() to check for bios-version rather than bios-vendor
   Amazon changed stuff from under us!
 
 -------------------------------------------------------------------------------
-    
 
                lispers.net Beta Release Version 0.579
                --------------------------------------
