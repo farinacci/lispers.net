@@ -16881,7 +16881,11 @@ def lisp_fill_rloc_in_json(rloc):
     if (rloc.json): r["json"] = rloc.json.print_json(False)
     if (rloc.rloc_name): r["rloc-name"] = rloc.rloc_name
     stats = rloc.stats.get_stats(False, False)
-    if (stats): r["stats"] = stats
+    if (stats):
+        r["stats"] = stats
+        r["recent-packet-sec"] = rloc.stats.recent_packet_sec()
+        r["recent-packet-min"] = rloc.stats.recent_packet_min()
+    #endif
     state_change = lisp_print_elapsed(rloc.last_state_change)
     if (state_change == "never"):
         state_change = lisp_print_elapsed(rloc.uptime)

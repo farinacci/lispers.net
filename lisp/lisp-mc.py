@@ -40,6 +40,10 @@ def green(string):
     return("\033[92m" + string + "\033[0m")
 #enddef
 
+def dark_green(string):
+    return("\033[32;1m" + string + "\033[0m")
+#enddef
+
 def red(string):
     return("\033[91m" + string + "\033[0m")
 #enddef
@@ -60,6 +64,21 @@ def format_telemetry(rloc):
     l = str(rloc["recent-rloc-probe-latencies"]).replace("u'", "")
     l = l.replace("'", "")
     return(r, h, l)
+#enddef
+
+def print_stats(rr):
+    stats = rr["stats"]
+    last_sec = ("recent-packet-sec" in rr and rr["recent-packet-sec"])
+    last_min = ("recent-packet-min" in rr and rr["recent-packet-min"])
+    if (last_sec or last_min):
+        s = stats.split(": ")
+        s1 = s[1].split(",")
+        count = dark_green(s1[0]) if last_sec else green(s1[0])
+        s1[0] = count
+        s[1] = ",".join(s1)
+        stats = ": ".join(s)
+    #endif
+    return(stats)
 #enddef
 
 #------------------------------------------------------------------------------
@@ -205,7 +224,7 @@ for mc in map_cache:
             #endif
 
             print(rloc)
-            print("    {}".format(rr["stats"]))
+            print("    {}".format(print_stats(rr)))
             rtt, hc, lat = format_telemetry(rr)
             print("    rtts {}, hops {}, latencies {}".format(rtt, hc, lat))
         #endfor
