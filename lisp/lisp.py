@@ -18344,7 +18344,15 @@ def lisp_clear_map_cache():
 def lisp_encapsulate_rloc_probe(lisp_sockets, rloc, nat_info, packet):
     if (len(lisp_sockets) != 4): return
 
+    #
+    # Check if called by RTR, use the lisp_rtr_source_rloc equivalent.
+    #
     local_addr = lisp_myrlocs[0]
+    if (lisp_i_am_rtr and lisp_on_aws()):
+        addr = lisp_get_interface_address("eth0")
+        if (addr == None): addr = lisp_get_interface_address("ens5")
+        if (addr): local_addr = addr
+    #endif
 
     #
     # Build Map-Request IP header. Source and destination addresses same as

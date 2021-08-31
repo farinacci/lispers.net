@@ -1126,6 +1126,7 @@ def lisp_rtr_pcap_thread(lisp_thread):
 # group.
 #
 def lisp_encapsulate_igmp_query(lisp_raw_socket, eid, geid, igmp):
+    global lisp_rtr_source_rloc
 
     #
     # Setup fields we need for lisp_packet.encode().
@@ -1150,7 +1151,9 @@ def lisp_encapsulate_igmp_query(lisp_raw_socket, eid, geid, igmp):
     #endfor        
     if (packet.outer_dest.is_null()): return
 
-    packet.outer_source.copy_address(lisp.lisp_myrlocs[0])
+    local_addr = lisp.lisp_myrlocs[0]
+    if (lisp_rtr_source_rloc): local_addr = lisp_rtr_source_rloc
+    packet.outer_source.copy_address(local_addr)
     packet.outer_version = packet.outer_dest.afi_to_version()
     packet.outer_ttl = 32
     packet.inner_source.copy_address(lisp.lisp_myrlocs[0])
