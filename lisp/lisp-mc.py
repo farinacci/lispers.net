@@ -156,7 +156,12 @@ if (output.find("not-auth") != -1):
     print("Authentication failed on {}".format(host))
     exit(1)
 #endif
-map_cache = json.loads(output)
+try:
+    map_cache = json.loads(output)
+except:
+    print("Curl output did not return JSON")
+    exit(1)
+#endtry    
 
 #
 # Get hostname from version info query.
