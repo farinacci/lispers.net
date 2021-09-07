@@ -15853,7 +15853,26 @@ def lisp_send_info_request(lisp_sockets, dest, port, device_name):
     #
     added_route = False
     if (device_name):
+        default_routes = lisp_get_default_route_next_hops()
+        lprint("Found default routes {}".format(default_routes))
+
+        if (len(default_routes) == 1):
+            nh = default_routes[0][0]
+            if (nh != device_name):
+                lprint("Multihoming config error, add this to your system:")
+                lprint("  'sudo ip route append default via <nh> dev {}'". \
+                       format(device_name))
+                return
+            #endif
+        #endif
+
         save_nh = lisp_get_host_route_next_hop(addr_str)
+        if (save_nh == None):
+            lprint("No host route found for MS {}".format(addr_str))
+        else:
+            lprint("Host route found for MS {}, nh {}".format(addr_str,
+                save_nh))
+        #endif
 
         #
         # If we found a host route for the map-server, then both the lisp-itr
@@ -15864,6 +15883,7 @@ def lisp_send_info_request(lisp_sockets, dest, port, device_name):
         # Requests.
         #
         if (port == LISP_CTRL_PORT and save_nh != None):
+            lprint("Waiting for host route {} to go away".format(addr_str))
             while (True):
                 time.sleep(.01)
                 save_nh = lisp_get_host_route_next_hop(addr_str)
@@ -15871,7 +15891,6 @@ def lisp_send_info_request(lisp_sockets, dest, port, device_name):
             #endwhile
         #endif
 
-        default_routes = lisp_get_default_route_next_hops()
         for device, nh in default_routes:
             if (device != device_name): continue
 
@@ -16603,6 +16622,10 @@ def lisp_build_info_requests(lisp_sockets, dest, port):
         return
     #endif
 
+    if (len(rloc_list) > 1):
+        lprint("NAT multihoming local RLOC-list {}".format(rloc_list))
+    #endif
+
     #
     # Send out Info-Requests out the NAT-traversed interfaces that have
     # addresses assigned on them.
@@ -16610,7 +16633,7 @@ def lisp_build_info_requests(lisp_sockets, dest, port):
     for addr in rloc_list:
         interface = rloc_list[addr]
         a = red(addr, False)
-        lprint("Build Info-Request for private address {} ({})".format(a,
+        lprint("Build Info-Request for private address {} on {}".format(a,
             interface))
         device = interface if len(rloc_list) > 1 else None
         for dest in dest_list:
@@ -17533,7 +17556,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 if (rloc.rloc_next_hop != None):
                     d, n = rloc.rloc_next_hop
                     lisp_install_host_route(addr_str, n, True)
-                    nh_str = ", send on nh {}({})".format(n, d)
+                    nh_str = ", send to nh {} on {}".format(n, d)
                 #endif
 
                 #
@@ -17550,18 +17573,6 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 #endif
                 lprint("Send {}{} {}, last rtt: {}{}".format(probe, reach, 
                     astr, rtt, nh_str))
-
-                #
-                # If we are doing multiple egress interfaces, check for host
-                # routes. We don't want the ones we selected for forwarding to
-                # affect the path RLOC-probes go out in the following loop. We
-                # will restore the host route while waiting for RLOC-replies. 
-                # Then we'll select a new host route based on best RTT.
-                #
-                if (rloc.rloc_next_hop != None):
-                    nh = lisp_get_host_route_next_hop(addr_str)
-                    if (nh): lisp_install_host_route(addr_str, nh, False)
-                #endif
 
                 #
                 # Might be first time and other RLOCs on the chain may not
@@ -18438,18 +18449,14 @@ def lisp_get_default_route_next_hops():
 
     next_hops = []
     for route in default_routes:
-        if (route.find(" metric ") != -1): continue
-        r = route.split(" ")
-        try: 
-            via_index = r.index("via") + 1
-            if (via_index >= len(r)): continue
-            dev_index = r.index("dev") + 1
-            if (dev_index >= len(r)): continue
-        except: 
+        r = route.split()
+        try:
+            device = r[-1]
+            nh = r[-3]
+        except:
             continue
         #endtry
-
-        next_hops.append([r[dev_index], r[via_index]])
+        next_hops.append([device, nh])
     #endfor
     return(next_hops)
 #enddef
@@ -18461,11 +18468,11 @@ def lisp_get_default_route_next_hops():
 #
 def lisp_get_host_route_next_hop(rloc):
     cmd = "ip route | egrep '{} via'".format(rloc)
-    route = getoutput(cmd).split(" ")
+    route = getoutput(cmd).split()
 
     try: index = route.index("via") + 1
     except: return(None)
-
+    
     if (index >= len(route)): return(None)
     return(route[index])
 #enddef
