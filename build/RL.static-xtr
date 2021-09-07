@@ -64,6 +64,7 @@ else
     sudo ip route add 240.0.0.0/8 dev lo src $EID
     sudo ip route delete 224.0.0.0/8 > /dev/null
     sudo ip route add 224.0.0.0/8 dev lo src $EID
+    sudo ip route append default via 172.18.0.1 dev eth1
 endif    
 
 #
