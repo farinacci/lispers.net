@@ -2414,7 +2414,14 @@ def lisp_display_map_cache(mc, output):
         #
         state = ""
         r = rloc
-        while (True):
+        while (r != None):
+            spaces = ""
+            if (r.rloc_next_hop != None):
+                d, n = r.rloc_next_hop
+                state += "next-hop {}({}), ".format(n, d)
+                spaces = lisp.lisp_space(2)
+            #endif
+
             state_change = lisp.lisp_print_elapsed(r.last_state_change)
             if (state_change == "never"):
                 state_change = lisp.lisp_print_elapsed(r.uptime)
@@ -2428,15 +2435,10 @@ def lisp_display_map_cache(mc, output):
             if (lisp.lisp_rloc_probing):
                 rtt = r.print_rloc_probe_rtt()
                 if (rtt != "none"):
-                    state += "<br>rtt: {}, hops: {}, latency: {}".format( \
-                      rtt, r.print_rloc_probe_hops(),
-                      r.print_rloc_probe_latency())
+                    state += "<br>{}rtt: {}, hops: {}, latency: {}".format( \
+                        spaces, rtt, r.print_rloc_probe_hops(),
+                        r.print_rloc_probe_latency())
                 #endif
-            #endif
-
-            if (lisp.lisp_rloc_probing and r.rloc_next_hop != None):
-                d, n = r.rloc_next_hop
-                state += "<br>{}nh {}({}) ".format(lisp.lisp_space(2), n, d)
             #endif
 
             r = r.next_rloc

@@ -1047,7 +1047,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
     # Check RLOC-probe Map-Request. We need to grab the TTL from IP header.
     #
     orig_packet = packet
-    packet, source, port, ttl = lisp.lisp_is_rloc_probe(packet, 0)
+    packet, source, port, ttl = lisp.lisp_is_rloc_probe(packet, device, 0)
     if (orig_packet != packet):
         if (source == None): return
         lisp.lisp_parse_packet(lisp_send_sockets, packet, source, port, ttl)

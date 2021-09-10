@@ -614,7 +614,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #
     if (is_lisp_packet == False):
         orig_packet = packet.packet
-        pkt, source, port, ttl = lisp.lisp_is_rloc_probe(orig_packet, -1)
+        pkt, source, port, ttl = lisp.lisp_is_rloc_probe(orig_packet, "?", -1)
         if (orig_packet != pkt):
             if (source == None): return
             lisp.lisp_parse_packet(lisp_send_sockets, pkt, source, port, ttl)

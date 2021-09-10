@@ -158,6 +158,7 @@ lisp_l2_overlay = False
 #
 lisp_rloc_probing = False
 lisp_rloc_probe_list = {}
+lisp_rloc_probe_nonce_list = {}
 
 #
 # Command "lisp xtr-parameters" register-reachabile-rtrs has opposite polarity
@@ -13339,6 +13340,15 @@ class lisp_rloc(object):
         self.rloc.copy_address(rloc_record.rloc)
         if (rloc_record.rloc_name != None):
             self.rloc_name = rloc_record.rloc_name
+
+            #
+            # Copy to all next-hops in multi-homing case.
+            #
+            nh = self.next_rloc
+            while (nh != None):
+                nh.rloc_name = self.rloc_name
+                nh = nh.next_rloc
+            #endwhile
         #endif
 
         #
@@ -13628,7 +13638,7 @@ class lisp_rloc(object):
         if (install != None):
             d, n = install.rloc_next_hop
             nh = bold("nh {}({})".format(n, d), False)
-            lprint("    Install host-route via best {}".format(nh))
+            lprint("    Install forwarding host-route via best {}".format(nh))
             lisp_install_host_route(addr_str, None, False)
             lisp_install_host_route(addr_str, n, True)
         #endif
@@ -15609,7 +15619,7 @@ def lisp_rate_limit_map_request(dest):
 #
 def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
     pubsub=False):
-    global lisp_last_map_request_sent
+    global lisp_last_map_request_sent, lisp_rloc_probe_nonce_list
 
     #
     # Set RLOC-probe parameters if caller wants Map-Request to be an 
@@ -15776,6 +15786,11 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
             addr_str = probe_dest.print_address_no_iid()
             dest = lisp_convert_4to6(addr_str)
         #endif
+
+        #
+        # For finding the probed RLOC address for multihoming cases.
+        #
+        lisp_rloc_probe_nonce_list[map_request.nonce] = addr_str
 
         lisp_send(lisp_sockets, dest, LISP_CTRL_PORT, packet)
         return
@@ -17394,8 +17409,9 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
     #
     default_next_hops = lisp_get_default_route_next_hops()
 
-    lprint("---------- Start RLOC Probing for {} entries ----------".format( \
-        len(lisp_rloc_probe_list)))
+    msg = "---------- Start RLOC Probing for {} RLOC entries ----------". \
+        format(len(lisp_rloc_probe_list))
+    lprint(bold(msg, False))
 
     #
     # Walk the list.
@@ -17459,7 +17475,20 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 #endif
             #endif
 
-            nh = None
+            #
+            # If this RLOC has a host-route stored for forwarding, get it,
+            # and save it since we need to change nex-hops now to direct
+            # RLOC-probes.
+            #
+            save_nh = None
+            if (parent_rloc.rloc_next_hop != None):
+                save_nh = lisp_get_host_route_next_hop(addr_str)
+                if (save_nh):
+                    lprint("Remove forwarding next-hop {}".format(save_nh))
+                    lisp_install_host_route(addr_str, None, False)
+                #endif
+            #endif
+
             rloc = None
             while (True):
                 rloc = parent_rloc if rloc == None else rloc.next_rloc
@@ -17471,8 +17500,8 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 #
                 if (rloc.rloc_next_hop != None):
                     if (rloc.rloc_next_hop not in default_next_hops):
+                        d, n = rloc.rloc_next_hop
                         if (rloc.up_state()):
-                            d, n = rloc.rloc_next_hop
                             rloc.state = LISP_RLOC_UNREACH_STATE
                             rloc.last_state_change = lisp_get_timestamp()
                             lisp_update_rtr_updown(rloc.rloc, False)
@@ -17549,14 +17578,23 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 # Send Map-Request RLOC-probe. We may have to send one for each
                 # egress interface to the same RLOC address. Install host 
                 # route in RLOC so we can direct the RLOC-probe on an egress 
-                # interface.
+                # interface. Save forwarding next-hop so we can reinstall
+                # after the RLOC-probe goes out directed interface.
                 #
                 nh_str = ""
-                n = None
-                if (rloc.rloc_next_hop != None):
-                    d, n = rloc.rloc_next_hop
-                    lisp_install_host_route(addr_str, n, True)
-                    nh_str = ", send to nh {} on {}".format(n, d)
+                nh = None
+#               if (rloc.rloc_next_hop != None):
+
+                #
+                # Temporarily (will fix later), do not install host routes
+                # for RLOC-probes. It causes the kernel to drop Map-Requests
+                # locally. Will look at using Netlink API for better results.
+                # The "and nh != None" disables host-route installation.
+                #
+                if (rloc.rloc_next_hop != None and nh != None):
+                    d, nh = rloc.rloc_next_hop
+                    lisp_install_host_route(addr_str, nh, True)
+                    nh_str = ", send to nh {} on {}".format(nh, bold(d, False))
                 #endif
 
                 #
@@ -17598,15 +17636,20 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 last_rloc = parent_rloc
 
                 #
-                # Remove installed host route.
+                # Remove installed host route. And install forwarding next-hop
+                # when we move to a new RLOC to test.
                 #
-                if (n): lisp_install_host_route(addr_str, n, False)
+                if (nh): lisp_install_host_route(addr_str, nh, False)
             #endwhile
 
-            # 
-            # Reisntall host route for forwarding.
             #
-            if (nh): lisp_install_host_route(addr_str, nh, True)
+            # And install forwarding next-hop for last RLOC now we are going
+            # to process a new RLOC.
+            #
+            if (save_nh):
+                lprint("Reinstall forwarding next-hop {}".format(save_nh))
+                lisp_install_host_route(addr_str, save_nh, True)
+            #endif
 
             #
             # Send 10 RLOC-probes and then sleep for 20 ms.
@@ -17616,7 +17659,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
         #endfor
     #endfor
 
-    lprint("---------- End RLOC Probing ----------")
+    lprint(bold("---------- End RLOC Probing ----------", False))
     return
 #enddef
 
@@ -17668,6 +17711,8 @@ def lisp_update_rtr_updown(rtr, updown):
 #
 def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
     mrloc, rloc_name):
+    global lisp_rloc_probe_nonce_list
+    
     rloc = rloc_entry.rloc
     nonce = map_reply.nonce
     hc = map_reply.hop_count
@@ -17719,6 +17764,21 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
                         False), port))
                 return
             #endif
+        #endif
+    #endif
+
+    #
+    # For multi-homing, the rloc address may need to be found from the nonce
+    # since the Map-Request doesn't store the probe destination address and
+    # the ETR doesn't get the destination address on the received Map-Request
+    # to reflect the probe-bit for the correct RLOC in the Map-Reply.
+    #
+    if (nonce in lisp_rloc_probe_nonce_list):
+        probed_rloc = lisp_rloc_probe_nonce_list.pop(nonce)
+        if (probed_rloc != addr):
+            addr = probed_rloc
+            lprint("    Obtain probed RLOC address {} from nonce 0x{}". \
+                format(addr, lisp_hex_string(nonce)))
         #endif
     #endif
 
@@ -18486,7 +18546,7 @@ def lisp_install_host_route(dest, nh, install):
     install = "add" if install else "delete"
     nh_str = "none" if nh == None else nh
 
-    lprint("{} host-route {}, nh {}".format(install.title(), dest, nh_str))
+    lprint("{} host-route {}/32, nh {}".format(install.title(), dest, nh_str))
 
     if (nh == None):
         ar = "ip route {} {}/32".format(install, dest)
@@ -19075,7 +19135,7 @@ def lisp_is_rloc_probe_reply(lisp_type):
 # Return packet pointer untouched if not an RLOC-probe. If it is an RLOC-probe
 # request or reply from ourselves, return packet pointer None and source None.
 #
-def lisp_is_rloc_probe(packet, rr):
+def lisp_is_rloc_probe(packet, device, rr):
     udp = (struct.unpack("B", packet[9:10])[0] == 17)
     if (udp == False): return([packet, None, None, None])
 
@@ -19117,7 +19177,7 @@ def lisp_is_rloc_probe(packet, rr):
     ttl = struct.unpack("B", packet[8:9])[0] - 1
     packet = packet[28::]
 
-    r = bold("Receive(pcap)", False)
+    r = bold("Receive(pcap-{})".format(device), False)
     f = bold("from " + source, False)
     p = lisp_format_packet(packet)
     lprint("{} {} bytes {} {}, packet: {}".format(r, len(packet), f, port, p))
