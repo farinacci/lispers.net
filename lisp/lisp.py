@@ -13630,6 +13630,7 @@ class lisp_rloc(object):
             if (rloc == None): break
             if (rloc.up_state() == False): continue
             if (rloc.rloc_probe_rtt == -1): continue
+            if (rloc.last_rloc_probe_nonce != nonce): continue
 
             if (install == None): install = rloc
             if (rloc.rloc_probe_rtt < install.rloc_probe_rtt): install = rloc
