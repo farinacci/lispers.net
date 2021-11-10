@@ -28,9 +28,11 @@ The lispers.net implementation supports the following IETF LISP Working Group
 RFCs and Internet-Drafts:
 
 RFC 6830                            - The Locator/ID Separation Protocol (LISP)
+draft-ietf-lisp-rfc6830bis          - The Locator/ID Separation Protocol (LISP)
 RFC 6831                            - The Locator/ID Separation Protocol (LISP) for Multicast Environments
 RFC 6832                            - Interworking between Locator/ID Separation Protocol (LISP) and Non-LISP Sites
 RFC 6833                            - Locator/ID Separation Protocol (LISP) Map-Server Interface
+draft-ietf-lisp-rfc6833bis          - Locator/ID Separation Protocol (LISP) Control-Plane
 RFC 6835                            - The Locator/ID Separation Protocol Internet Groper (LIG)
 RFC 7954                            - Locator/ID Separation Protocol (LISP) Endpoint Identifier (EID) Block
 RFC 8060                            - LISP Canonical Address Format (LCAF)
@@ -39,8 +41,6 @@ RFC 8111                            - Locator/ID Separation Protocol Delegated D
 RFC 8112                            - LISP-DDT Referral Internet Groper (RIG)
 RFC 8378                            - Signal-Free Locator/ID Separation Protocol (LISP) Multicast
 RFC 8439                            - ChaCha20 and Poly1305 for IETF Protocols    
-draft-ietf-lisp-rfc6830bis          - The Locator/ID Separation Protocol (LISP)
-draft-ietf-lisp-rfc6833bis          - Locator/ID Separation Protocol (LISP) Control-Plane
 draft-ietf-lisp-eid-anonymity       - LISP EID Anonymity
 draft-ietf-lisp-eid-mobility        - LISP L2/L3 EID Mobility Using a Unified Control Plane
 draft-ietf-lisp-mn                  - LISP Mobile Node
