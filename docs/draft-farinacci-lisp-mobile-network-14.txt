@@ -1,0 +1,1456 @@
+
+
+
+
+Network Working Group                                       D. Farinacci
+Internet-Draft                                               lispers.net
+Intended status: Experimental                          P. Pillay-Esnault
+Expires: September 21, 2022                                  Independent
+                                                             U. Chunduri
+                                                       Intel Corporation
+                                                          March 20, 2022
+
+
+                      LISP for the Mobile Network
+                 draft-farinacci-lisp-mobile-network-14
+
+Abstract
+
+   This specification describes how the LISP architecture and protocols
+   can be used in a LTE/5G mobile network to support session survivable
+   EID mobility.  A recommendation is provided to SDOs on how to
+   integrate LISP into the mobile network.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on September 21, 2022.
+
+Copyright Notice
+
+   Copyright (c) 2022 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (https://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+
+
+
+Farinacci, et al.      Expires September 21, 2022               [Page 1]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+   2.  Definition of Terms . . . . . . . . . . . . . . . . . . . . .   4
+   3.  Design Overview . . . . . . . . . . . . . . . . . . . . . . .   7
+   4.  Addressing and Routing  . . . . . . . . . . . . . . . . . . .  14
+   5.  gNB/eNodeB LISP Functionality . . . . . . . . . . . . . . . .  14
+   6.  UPF/pGW LISP Functionality  . . . . . . . . . . . . . . . . .  15
+   7.  Compatible Data-Plane using GTP . . . . . . . . . . . . . . .  16
+   8.  Roaming and Packet Loss . . . . . . . . . . . . . . . . . . .  16
+   9.  Mobile Network LISP Mapping System  . . . . . . . . . . . . .  16
+   10. LISP Over the 5G N3/N6/N9 Interfaces  . . . . . . . . . . . .  17
+   11. Multicast Considerations  . . . . . . . . . . . . . . . . . .  18
+   12. Security Considerations . . . . . . . . . . . . . . . . . . .  19
+   13. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  19
+   14. SDO Recommendations . . . . . . . . . . . . . . . . . . . . .  19
+   15. References  . . . . . . . . . . . . . . . . . . . . . . . . .  19
+     15.1.  Normative References . . . . . . . . . . . . . . . . . .  19
+     15.2.  Informative References . . . . . . . . . . . . . . . . .  20
+   Appendix A.  Acknowledgments  . . . . . . . . . . . . . . . . . .  23
+   Appendix B.  Document Change Log  . . . . . . . . . . . . . . . .  24
+     B.1.  Changes to draft-farinacci-lisp-mobile-network-14 . . . .  24
+     B.2.  Changes to draft-farinacci-lisp-mobile-network-13 . . . .  24
+     B.3.  Changes to draft-farinacci-lisp-mobile-network-12 . . . .  24
+     B.4.  Changes to draft-farinacci-lisp-mobile-network-11 . . . .  24
+     B.5.  Changes to draft-farinacci-lisp-mobile-network-10 . . . .  24
+     B.6.  Changes to draft-farinacci-lisp-mobile-network-09 . . . .  24
+     B.7.  Changes to draft-farinacci-lisp-mobile-network-08 . . . .  25
+     B.8.  Changes to draft-farinacci-lisp-mobile-network-07 . . . .  25
+     B.9.  Changes to draft-farinacci-lisp-mobile-network-06 . . . .  25
+     B.10. Changes to draft-farinacci-lisp-mobile-network-05 . . . .  25
+     B.11. Changes to draft-farinacci-lisp-mobile-network-04 . . . .  25
+     B.12. Changes to draft-farinacci-lisp-mobile-network-03 . . . .  25
+     B.13. Changes to draft-farinacci-lisp-mobile-network-02 . . . .  25
+     B.14. Changes to draft-farinacci-lisp-mobile-network-01 . . . .  26
+     B.15. Changes to draft-farinacci-lisp-mobile-network-00 . . . .  26
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  26
+
+1.  Introduction
+
+   The LISP architecture and protocols [I-D.ietf-lisp-rfc6830bis]
+   introduces two new numbering spaces, Endpoint Identifiers (EIDs) and
+   Routing Locators (RLOCs) which provide an architecture to build
+   overlays on top of the underlying Internet.  Mapping EIDs to RLOC-
+   sets is accomplished with a Mapping Database System.  By using a
+
+
+
+Farinacci, et al.      Expires September 21, 2022               [Page 2]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   level of indirection for routing and addressing, separating an
+   address identifier from its location can allow flexible and scalable
+   mobility.  By assigning EIDs to mobile devices and RLOCs to the
+   network nodes that support such mobile devices, LISP can provide
+   seamless mobility.
+
+   For a reading audience unfamiliar with LISP, a brief tutorial level
+   document is available at [I-D.ietf-lisp-introduction].
+
+   This specification will describe how LISP can be used to provide
+   layer-3 mobility within and across an LTE [LTE401-3GPP] [LTE402-3GPP]
+   and 5G [ARCH5G-3GPP] [PROC5G-3GPP] mobile network.
+
+   The following are the design requirements:
+
+   1.  Layer-3 address mobility is provided within a mobile network RAN
+       supported by a UPF/pGW region (intra-UPF/pGW) as well as across
+       UPF/pGW regions (inter-UPF/pGW).
+
+   2.  UE nodes can get layer-3 address mobility when roaming off the
+       mobile network to support Fixed Mobile Convergence [FMC].
+
+   3.  Transport layer session survivability exists while roaming
+       within, across, and off of the mobile network.
+
+   4.  No address management is required when UEs roam.  EID addresses
+       are assigned to UEs at subscription time.  EIDs can be reassigned
+       when UE ownership changes.
+
+   5.  The design will make efficient use of radio resources thereby not
+       adding extra headers to packets that traverse the RAN.
+
+   6.  The design can support IPv4 unicast and multicast packet delivery
+       and will support IPv6 unicast and multicast packet delivery.
+
+   7.  The design will allow use of both the GTP [GTPv1-3GPP]
+       [GTPv2-3GPP] and LISP [I-D.ietf-lisp-rfc6830bis] data-planes
+       while using the LISP control-plane and mapping system.
+
+   8.  The design can be used for either 4G/LTE and 5G mobile networks
+       and may be able to support interworking between the different
+       mobile networks.
+
+   9.  The LISP architecture provides a level of indirection for routing
+       and addressing.  From a mobile operator's perspective, these
+       mechanisms provide advantages and efficiencies for the URLLC,
+       FMC, and mMTC use cases.  See Section 2 for definitions and
+       references of these use cases.
+
+
+
+Farinacci, et al.      Expires September 21, 2022               [Page 3]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   The goal of this specification is take advantage of LISP's non-
+   disruptive incremental deployment benefits.  This can be achieved by
+   changing the fewest number of components in the mobile network.  The
+   proposal suggests adding LISP functionality only to gNB/eNodeB and
+   UPF/pGW nodes.  There are no hardware or software changes to the UE
+   devices or the RF-based RAN to realize this architecture.  The LISP
+   mapping database system is deployed as an addition to the mobile
+   network and does not require any coordination with existing
+   management and provisioning systems.
+
+   Similar ID Oriented Networking (ION) mechanisms for the 5G
+   [ARCH5G-3GPP] [PROC5G-3GPP] mobile network are also being considered
+   in other standards organizations such as ETSI [ETSI-NGP] and ITU
+   [ITU-IMT2020].  The NGMN Alliance describes Locator/ID separation as
+   an enabler to meet Key Performance Indicator Requirements [NGMN].
+
+2.  Definition of Terms
+
+   xTR:  Is a LISP node in the network that runs the LISP control-plane
+      and data-plane protocols according to [I-D.ietf-lisp-rfc6830bis]
+      and [I-D.ietf-lisp-rfc6833bis].  A formal definition of an xTR can
+      be found in [I-D.ietf-lisp-rfc6830bis].  In this specification, a
+      LISP xTR is a node that runs the LISP control-plane with the GTP
+      data-plane.
+
+   EID:  Is an Endpoint Identifier.  EIDs are assigned to UEs and other
+      Internet nodes in LISP sites.  A formal definition of an EID can
+      be found in [I-D.ietf-lisp-rfc6830bis].
+
+   UE EID:  A UE can be assigned an IPv4 and/or an IPv6 address either
+      statically, or dynamically as is the procedure in the mobile
+      network today.  These IP addresses are known as LISP EIDs and are
+      registered to the LISP mapping system.  These EIDs are used as the
+      source address in packets that the UE originates.
+
+   RLOC:  Is an Routing Locator.  RLOCs are assigned to gNB/eNodeBs and
+      UPF/pGWs and other LISP xTRs in LISP sites.  A formal definition
+      of an RLOC can be found in [I-D.ietf-lisp-rfc6830bis].
+
+   Mapping System:  Is the LISP mapping database system that stores EID-
+      to-RLOC mappings.  The mapping system is centralized for use and
+      distributed to scale and secure deployment.  LISP Map-Register
+      messages are used to publish mappings and LISP Map-Requests
+      messages are used to lookup mappings.  LISP Map-Reply messages are
+      used to return mappings.  EID-records are used as lookup keys, and
+      RLOC-records are returned as a result of the lookup.  Details can
+      be found in [RFC6833].
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022               [Page 4]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   LISP Control-Plane:  In this specification, a LISP xTR runs the LISP
+      control-plane which originates, consumes, and processes Map-
+      Request, Map-Register, Map-Reply, and Map-Notify messages.
+
+   RAN:  Radio Access Network where UE nodes connect to gNB/eNodeB nodes
+      via radios to get access to the Internet.
+
+   EPC:  Evolved Packet Core [EPS-3GPP] system is the part of the mobile
+      network that allows the RAN to connect to a data packet network.
+      The EPC is a term used for the 4G/LTE mobile network.
+
+   NGC:  Next Generation Core [EPS-3GPP] system is the part of the 5G
+      mobile network that allows the RAN to connect to a data packet
+      network.  The NGC is roughly equivalent to the 4G EPC.
+
+   GTP:  GTP [GTPv1-3GPP] [GTPv2-3GPP] is the UDP tunneling mechanism
+      used in the LTE/4G and 5G mobile network.
+
+   UE:  User Equipment as defined by [GPRS-3GPP] which is typically a
+      mobile phone.  The UE is connected to the network across the RAN
+      to gNB/eNodeB nodes.
+
+   eNodeB:  Is the device defined by [GPRS-3GPP] which borders the RAN
+      and connects UEs to the EPC in a 4G/LTE mobile network.  The
+      eNodeB nodes are termination point for a GTP tunnel and are LISP
+      xTRs.  The equivalent term in the 5G mobile network is "(R)AN" and
+      "5G-NR", or simply "gNB".  In this document, the two terms are
+      used interchangeably.
+
+   pGW:  Is the PDN-Gateway as defined by [GPRS-3GPP] which connects the
+      EPC in a 4G/LTE mobile network to the Internet.  The pGW nodes are
+      termination point for a GTP tunnel and is a LISP xTR.  The
+      equivalent user/data-plane term in the 5G mobile network is the
+      "UPF", which also has the capability to chain network functions.
+      In this document, the two terms are used interchangeably to mean
+      the border point from the EPC/NGC to the Internet.
+
+   URLLC:  Ultra-Reliable and Low-Latency provided by the 5G mobile
+      network for the shortest path between UEs [NGMN].
+
+   FMC:  Fixed Mobile Convergence [FMC] is a term used that allows a UE
+      device to move to and from the mobile network.  By assigning a
+      fixed EID to a UE device, LISP supports transport layer continuity
+      between the mobile network and a fixed infrastructure such as a
+      WiFi network.
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022               [Page 5]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   mMTC:  Massive Machine-Type Services [mMTC] is a term used to refer
+      to using the mobile network for large-scale deployment of Internet
+      of Things (IoT) applications.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022               [Page 6]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+3.  Design Overview
+
+   LISP will provide layer-3 address mobility based on the procedures in
+   [I-D.ietf-lisp-eid-mobility] where the EID and RLOCs are not co-
+   located.  In this design, the EID is assigned to the UE device and
+   the RLOC(s) are assigned to gNB/eNodeB nodes.  So any packets going
+   to a UE are always encapsulated to the gNB/eNodeB that associates
+   with the UE.  For data flow from the UE to any EIDs (or destinations
+   to non-LISP sites) that are outside of the NGC/EPC, use the RLOCs of
+   the UPF/pGW nodes so the UPF/pGW can send packets into the Internet
+   core (unencapsulated).
+
+   The following procedures are used to incorporate LISP in the NGC/EPC:
+
+   o  UEs are assigned EIDs.  They usually never change.  They identify
+      the mobile device and are used for transport connections.  If
+      privacy for EIDs is desired, refer to details in
+      [I-D.ietf-lisp-eid-anonymity].
+
+   o  gNB/eNodeB nodes are LISP xTRs.  They have GTP, and optionally
+      LISP, tunnels to the UPF/pGW nodes.  The gNB/eNodeB is the RLOC
+      for all EIDs assigned to UE devices that are attached to the gNB/
+      eNodeB.
+
+   o  UPF/pGW nodes are LISP xTRs.  They have GTP, and optionally LISP,
+      tunnels to the gNB/eNodeB nodes.  The UPF/pGW is the RLOC for all
+      traffic destined for the Internet.
+
+   o  The LISP mapping system runs in the NGC/EPC.  It maps EIDs to
+      RLOC-sets.
+
+   o  Traffic from a UE to UE within a UPF/pGW region can be
+      encapsulated from gNB/eNodeB to another gNB/eNodeB or via the UPF/
+      pGW, acting as an RTR [I-D.ietf-lisp-rfc6830bis], to provide data-
+      plane policy.
+
+   o  Traffic from a UE to UE across a UPF/pGW region have these options
+      for data flow:
+
+      1.  Encapsulation by a gNB/eNodeB in one region to a gNB/eNodeB in
+          another region.
+
+      2.  Encapsulation by a gNB/eNodeB in one region to a UPF/pGW in
+          the same region and then the UPF/pGW reencapsulates to a gNB/
+          eNodeB in another region.
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022               [Page 7]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+      3.  Encapsulation by a gNB/eNodeB in one region to a UPF/pGW in
+          another region and then the UPF/pGW reencapsulates to a gNB/
+          eNodeB in its same region
+
+      4.  Encapsulation by the gNB/eNodeB to a LISP xTR outside of the
+          mobile network.  An xTR outside of the mobile network could be
+          a router in a data-center, a router at the edge of a WAN at a
+          remote branch, or a WiFi access-point, and even a gNB/eNodeB
+          in another carrier's mobile network.  All these deployment
+          options are to be considered for future architectures.
+
+   o  Note when encapsulation happens between a gNB/eNodeB and a UPF/
+      pGW, GTP is used as the data-plane and when encapsulation between
+      two gNB/eNodeBs occur, LISP can be used as the data-plane when
+      there is no X2 interface [X2-3GPP] between the gNB/eNodeB nodes.
+
+   o  The UPF/pGW nodes register their RLOCs for a default EID-prefix to
+      the LISP mapping system.  This is done so gNB/eNodeB nodes can
+      find UPF/pGW nodes to encapsulate to.
+
+   o  The gNB/eNodeB nodes register EIDs to the mapping system for the
+      UE nodes.  The registration occurs when gNB/eNodeB nodes discover
+      the layer-3 addresses of the UEs that connect to them.  The gNB/
+      eNodeB nodes register multiple RLOCs associated with the EIDs to
+      get multi-homing and path diversity benefits from the NGC/EPC
+      network.
+
+   o  When a UE moves off a gNB/eNodeB, the gNB/eNodeB node deregisters
+      itself as an RLOC for the EID associated with the UE.
+
+   o  Optionally, and for further study for future architectures, the
+      gNB/eNodeB or UPF/pGW could encapsulate to an xTR that is outside
+      of the NGC/EPC network.  They could encapsulate to a LISP CPE
+      router at a branch office, a LISP top-of-rack router in a data
+      center, a LISP wifi access-point, LISP border routers at a hub
+      site, and even a LISP router running in a VM or container on a
+      server.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022               [Page 8]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   The following diagram illustrates the LTE mobile network topology and
+   structure [LTE401-3GPP] [LTE402-3GPP]:
+
+
+                (--------------------------------------------)
+                (                                            )
+                (                  Internet                  )
+                (                                            )
+                (--------------------------------------------)
+                          |                         |
+                          |                         |
+                (---------|---------)     (---------|---------)
+                (      UPF-pGW      )     (      UPF-pGW      )
+                (                   )     (                   )
+                (      NGC/EPC      )     (     NGC/EPC       )
+                (                   )     (                   )
+                ( gNB-eNB  gNB-eNB  )     ( gNB-eNB  gNB-eNB  )
+                (---/--\-----/--\---)     (---/--\-----/--\---)
+                   /    \   /    \           /    \   /    \
+                  /      \ /      \         /      \ /      \
+                 /                 \       /                 \
+                /        RAN        \     /        RAN        \
+               /                     \   /                     \
+              (   UE      UE      UE  ) (  UE       UE      UE  )
+
+
+                    LTE/5G Mobile Network Architecture
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022               [Page 9]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   The following diagram illustrates how LISP is used on the mobile
+   network:
+
+(1) IPv6 EIDs are assigned to UEs.
+(2) RLOCs assigned to gNB/eNodeB nodes are [a1,a2], [b1,b2], [c1,c2], [d1,d2]
+    on their uplink interfaces.
+(3) RLOCs assigned to UPF/pGW nodes are [p1,p2], [p3,p4].
+(4) RLOCs can be IPv4 or IPv6 addresses or mixed RLOC-sets.
+
+             (--------------------------------------------)
+             (                                            )
+             (                  Internet                  )
+             (                                            )
+             (--------------------------------------------)
+                       |                         |
+                       |                         |
+             (---------|---------)     (---------|---------)
+             (      UPF-pGW      )     (      UPF-pGW      )
+             (       p1 p2       )     (       p3 p4       )
+             (                   )     (                   )
+             (      NGC/EPC      )     (     NGC/EPC       )
+             (                   )     (                   )
+             (  a1  a2   b1  b2  )     (  c1  c2   d1  d2  )
+             ( gNB-eNB  gNB-eNB  )     ( gNB-eNB  gNB-eNB  )
+             (---/--\-----/--\---)     (---/--\-----/--\---)
+                /    \   /    \           /    \   /    \
+               /      \ /      \         /      \ /      \
+              /                 \       /                 \
+             /        RAN        \     /        RAN        \
+            /                     \   /                     \
+           (   UE      UE      UE  ) (  UE       UE      UE  )
+    EIDs:     a::1    b::1    c::1     x::1     y::1    z::1
+
+                  Mobile Network with EID/RLOC Assignment
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 10]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+The following table lists the EID-to-RLOC entries that reside in the LISP
+Mapping System when the above UEs are are attached to the 4 gNB/eNodeBs:
+
+EID-Record  RLOC-Record       Commentary                               Footnote
+0::/0       [p1,p2,p3 p4]     gNB/eNodeBs encap to p1-p4 for Internet    (1)
+                              destinations which are non-EIDs
+
+a::1/128    [a1,a2]           UPF/pGWs load-split traffic to [a1,a2] for (2)
+                              UE a::1 and it can move to [b1,b2]
+
+b::1/128    [a1,a2]           gNB/eNodeB tracks both UEs a::1 and b::1,  (3)
+                              it can do local routing between the UEs
+
+c::1/128    [b1,b2]           UE c::1 can roam to [c1,c2] or [d1,d2],    (4)
+                              may use UPF/pGW [p1,p2] after move
+
+x::1/128    [c1,c2]           UE x::1 can talk directly to UE y::1,      (5)
+                              gNB/eNodeBs encap to each other
+
+y::1/128    [d1,d2]           UE can talk to Internet when [d1,d2],      (6)
+                              encap to UPF/pGW [p3,p4] or use backup [p1,p2]
+
+z::1/128    [d1,d2]           UE z::1 can talk to a::1 directly          (7)
+                              where [d1,d2] encaps to [a1,a2]
+
+   (1) For packets that flow from UE nodes to destinations that are not
+   in LISP sites, the gNB/eNodeB node uses one of the RLOCs p1, p2, p3,
+   or p4 as the destination address in the outer encapsulated header.
+   Encapsulated packets are then routed by the NGC/EPC core to the UPF/
+   pGW nodes.  In turn, the UPF/pGW nodes, then route packets into the
+   Internet core.
+
+   (2) Packets that arrive to UPF/pGW nodes from the Internet destined
+   to UE nodes are encapsulated to one of the gNB/eNodeB RLOCs a1, a2,
+   b1, b2.  When UE, with EID a::1 is attached to the leftmost gNB/
+   eNodeB, the EID a::1 is registered to the mapping system with RLOCs
+   a1 and a2.  When UE with EID c::1 is attached to the rightmost gNB/
+   eNodeB (in the left region), the EID c::1 is registered to the
+   mapping system with RLOCs b1 and b2.
+
+   (3) If UE with EID a::1 and UE with EID b::1 are attached to the same
+   gNB/eNodeB node, the gNB/eNodeB node tracks what radio interface to
+   use to route packets from one UE to the other.
+
+   (4) If UE with EID c::1 roams away from gNB/eNodeB with RLOCs b1 and
+   b2, to the gNB/eNodeB with RLOCs c1 and c2 (in the rightmost region),
+   packets destined toward the Internet, can use any UPF/pGW.  Any
+   packets that flow back from the Internet can use any UPF/pGW.  In
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 11]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   either case, the UPF/pGW is informed by the mapping system that the
+   UE with EID c::1 has new RLOCs and should now encapsulate to either
+   RLOC c1 or c2.
+
+   (5) When UE with EID x::1 is attached to gNB/eNodeB with RLOCs c1 and
+   c2 and UE with EID y::1 is attached to gNB/eNodeB with RLOCs d1 and
+   d2, they can talk directly, on the shortest path to each gNB/eNodeB,
+   when each encapsulates packets to each other's RLOCs.
+
+   (6) When packets from UE with EID y::1 are destined for the Internet,
+   the gNB/eNodeB with RLOCs d1 and d2 that the UE is attached to can
+   use any exit UPF/pGWs RLOCs p1, p2, p3, or p4.
+
+   (7) UE with EID z::1 can talk directory to UE with EID a::1 by each
+   gNB/eNodeB they are attached to encapsulsates to each other's RLOCs.
+   In case (5), the two gNB/eNodeB's were in the same region.  In this
+   case, the gNB/eNodeBs are in different regions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 12]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   The following abbreviated diagram shows a topology that illustrates
+   how a UE roams with LISP across UPF/pGW regions:
+
+
+
+                (--------------------------------------------)
+                (                                            )
+                (                  Internet                  )
+                (                                            )
+                (--------------------------------------------)
+                          |                         |
+                          |                         |
+                (---------|---------)     (---------|---------)
+                (      UPF-pGW      )     (      UPF-pGW      )
+                (       p1 p2       )     (       p3 p4       )
+                (                   )     (                   )
+                (      NGC/EPC      )     (      NGC/EPC      )
+                (                   )     (                   )
+                (  a1  a2   b1  b2  )     (  c1  c2   d1  d2  )
+                ( gNB-eNB  gNB-eNB  )     ( gNB-eNB  gNB-eNB  )
+                (---/--\-----/--\---)     (---/--\-----/--\---)
+                   /    \   /    \           /    \   /    \
+                  /      \ /      \         /      \ /      \
+                 /                 \       /                 \
+                /        RAN        \     /        RAN        \
+               /                     \   /                     \
+              (   UE    ------------------------------>  UE     )
+                 a::1                                   a::1
+
+                              UE EID Mobility
+
+The contents of the LISP mapping database before UE moves:
+
+EID-Record  RLOC-Record       Commentary
+0::/0       [p1,p2,p3,p4]     gNB/eNodeB [a1,a2] encaps to p1-p4 for Internet
+                              destinations when a::1 on gNB/eNodeB [a1,a2]
+
+a::1/128    [a1,a2]           Before UE moves to other UPF/pGW region
+
+The contents of the LISP mapping database after UE moves:
+
+EID-Record  RLOC-Record       Commentary
+0::/0       [p1,p2,p3,p4]     gNB/eNodeB [d1,d2] encaps to p1-p4 for Internet
+                              destinations when a::1 moves to gNB/eNodeB
+                              [d1,d2]
+
+a::1/128    [d1,d2]           After UE moves to new UPF/pGW region
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 13]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+4.  Addressing and Routing
+
+   UE based EID addresses will be IPv6 addresses.  It will be determined
+   at a future time what length the IPv6 prefix will be to cover all UEs
+   in a mobile network.  This coarse IPv6 prefix is called an EID-prefix
+   where more-specific EID-prefixes will be allocated out of it for each
+   UPF/pGW node.  Each UPF/pGW node is responsible for advertising the
+   more-specific EID-prefix into the Internet routing system so they can
+   attract packets from non-EIDs nodes to UE EIDs.
+
+   An RLOC address will either be an IPv4 or IPv6 address depending on
+   the support for single or dual-stack address-family in the NGC/EPC
+   network.  An RLOC-set in the mapping system can have a mixed address-
+   family locator set.  There is no requirement for the NGC/EPC to
+   change to support one address-family or the other.  And there is no
+   requirement for the NGC/EPC network to support IPv4 multicast or IPv6
+   multicast.  The LISP overlay will support both.
+
+   The only requirement for RLOC addresses is that they are routable in
+   the NGC/EPC and the Internet.
+
+   The requirements of the LISP and GTP data-plane overlay is to support
+   a layer-3 overlay network only.  There is no architectural
+   requirement to support layer-2 overlays.  However, operators may want
+   to provide a layer-2 LAN service over their mobile network.  Details
+   about how LISP supports layer-2 overlays can be found in
+   [I-D.ietf-lisp-eid-mobility].
+
+5.  gNB/eNodeB LISP Functionality
+
+   The gNB/eNodeB node runs as a LISP xTR for control-plane
+   functionality and runs GTP for data-plane functionality.  Optionally,
+   the LISP data-plane can be used to establish dynamic tunnels from one
+   gNB/eNodeB node to another gNB/eNodeB node.
+
+   The gNB/eNodeB LISP xTR will follow the procedures of
+   [I-D.ietf-lisp-eid-mobility] to discover UE based EIDs, track them by
+   monitoring liveness, registering them when appear, and deregistering
+   them when they move away.  Since the gNB/eNodeB node is an xTR, it is
+   acting as a layer-3 router and the GTP tunnel from the gNB/eNodeB
+   node to the UPF/pGW node is realizing a layer-3 overlay.  This will
+   provide scaling benefits since broadcast and link-local multicast
+   packets won't have to travel across the NGC/EPC to the UPF/pGW node.
+
+   A day in the life of a UE originated packet:
+
+   1.  The UE node originates an IP packet over the RAN.
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 14]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   2.  The gNB/eNodeB receives an IPv4/IPv6 packet, it extracts the
+       source address from the packet, learns the UE based EID, stores
+       its RAN location locally and registers the EID to the mapping
+       system.
+
+   3.  The gNB/eNodeB extracts the destination address, looks up the
+       address in the mapping system.  The lookup returns the RLOC of a
+       UPF/pGW node if the destination is not an EID or an RLOC gNB/
+       eNodeB node if the destination is a UE based EID.
+
+   4.  The gNB/eNodeB node encapsulates the packet to the RLOC using GTP
+       or optionally the LISP data-plane.
+
+   It is important to note that in [I-D.ietf-lisp-eid-mobility], EID
+   discovery occurs when a LISP xTR receives an IP or ARP/ND packet.
+   However, if there are other methods to discover the EID of a device,
+   like in UE call setup, the learning and registration referenced in
+   Paragraph 2 can happen before any packet is sent.
+
+6.  UPF/pGW LISP Functionality
+
+   The UPF/pGW node runs as a LISP xTR for control-plane functionality
+   and runs GTP for data-plane functionality.  Optionally, the LISP
+   data-plane can be used to establish dynamic tunnels from one UPF/pGW
+   node to another UPF/pGW or gNB/eNodeB node.
+
+   The UPF/pGW LISP xTR does not follow the EID mobility procedures of
+   [I-D.ietf-lisp-eid-mobility] since it is not responsible for
+   discovering UE based EIDs.  A UPF/pGW LISP xTR simply follows the
+   procedures of a PxTR in [I-D.ietf-lisp-rfc6830bis] and for
+   interworking to non-EID sites in [RFC6832].
+
+   A day in the life of a UPF/pGW received packet:
+
+   1.  The UPF/pGW node receives a IP packet from the Internet core.
+
+   2.  The UPF/pGW node extracts the destination address from the packet
+       and looks it up in the LISP mapping system.  The lookup returns
+       an RLOC of a gNB/eNodeB node.  Optionally, the RLOC could be
+       another UPF/pGW node.
+
+   3.  The UPF/pGW node encapsulates the packet to the RLOC using GTP or
+       optionally the LISP data-plane.
+
+
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 15]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+7.  Compatible Data-Plane using GTP
+
+   Since GTP is a UDP based encapsulating tunnel protocol, it has the
+   same benefits as LISP encapsulation.  At this time, there appears to
+   be no urgent need to not continue to use GTP for tunnels between a
+   gNB/eNodeB nodes and between a gNB/eNodeB node and a UPF/pGW node.
+
+   There are differences between GTP tunneling and LISP tunneling.  GTP
+   tunnels are setup at call initiation time.  LISP tunnels are
+   dynamically encapsulating, used on demand, and don't need setup or
+   teardown.  The two tunneling mechanisms are a hard state versus soft
+   state tradeoff.
+
+   This specification recommends for early phases of deployment, to use
+   GTP as the data-plane so a transition for it to use the LISP control-
+   plane can be achieved more easily.  At later phases, the LISP data-
+   plane may be considered so a more dynamic way of using tunnels can be
+   achieved to support URLLC.
+
+   This specification recommends the use of procedures from
+   [I-D.ietf-lisp-eid-mobility] and NOT the use of LISP-MN
+   [I-D.ietf-lisp-mn].  Using LISP-MN states that a LISP xTR resides on
+   the mobile UE.  This is to be avoided so extra encapsulation header
+   overhead is NOT sent on the RAN.  The LISP data-plane or control-
+   plane will not run on the UE.
+
+8.  Roaming and Packet Loss
+
+   Using LISP for the data-plane has some advantages in terms of
+   providing near-zero packet loss.  In the current mobile network,
+   packets are queued on the gNB/eNodeB node the UE is roaming to or
+   rerouted on the gNB/eNodeB node the UE has left.  In the LISP
+   architecture, packets can be sent to multiple "roamed-from" and
+   "roamed-to" nodes while the UE is moving or is off the RAN.  See
+   mechanisms in [I-D.ietf-lisp-predictive-rlocs] for details.
+
+9.  Mobile Network LISP Mapping System
+
+   The LISP mapping system stores and maintains EID-to-RLOC mappings.
+   There are two mapping database transport systems that are available
+   for scale, LISP-ALT [RFC6836] and LISP-DDT [RFC8111].  The mapping
+   system will store EIDs assigned to UE nodes and the associated RLOCs
+   assigned to gNB/eNodeB nodes and UPF/pGW nodes.  The RLOC addresses
+   are routable addresses by the NGC/EPC network.
+
+   This specification recommends the use of LISP-DDT.
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 16]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+10.  LISP Over the 5G N3/N6/N9 Interfaces
+
+   So far in this specification we have described how LISP runs on the
+   gNB and UPF nodes in the mobile network.  In the 5G architecture
+   [ARCH5G-3GPP] definition, some key components are Access and Mobility
+   Management Function (AMF) and the Session Management Function (SMF).
+   These two components provide control plane functionality to off-load
+   session anchoring by distributing state and packet flow among
+   multiple nodes in the NGC.  These functions control the data-plane
+   anchors deployed in Branch Point Uplink Classifier (BP/ULCL) in UPF
+   data-plane nodes.
+
+   Here is an illustration where a BP/ULCL-UPF node would appear in the
+   mobile network:
+
+
+                (--------------------------------------------)
+                (                  Internet                  )
+        +->     (--------------------------------------------)
+        |                             |
+        N6                            |
+        |                   (---------|---------)
+        +->                 (        UPF        )         <-+
+                        NGC (      [p1,p2]      )           |
+                            (                   )           N9
+        +->                 (      BP/ULCL      )           |
+        |                   (     UPF [p3,p4]   )         <-+
+        N3                  (                   )
+        |                   (  [a1]      [a2]   )
+        +->                 (   gNB      gNB    )
+                            (---/--\-----/--\---)
+                               /    \   /    \
+                              /                \
+                             /       RAN        \
+                            /                    \
+                           (  UE      UE      UE  )
+                             a::1    a::2    a::3
+
+   The BP/ULCL-UPF node is configured as an LISP RTR and uses the
+   Traffic Engineering features of LISP specified in [I-D.ietf-lisp-te].
+   In LISP-TE an Explicit Locator Path (ELP) can be stored in the RLOC-
+   record for any given EID thereby allowing packet flow from a UE to
+   the Internet to traverse through the BP/UCLC-UPF node.  A UE
+   originated packet is encapsulated by the gNB to the BP/ULCL-UPF which
+   decapsulates and reencapsulates to the UPF at the Internet border.
+   This allows LISP to run over the 5G N3 and N9 interface with one
+   mapping entry.  And if the ELP contained an xTR outside of the mobile
+   network, LISP could also run over the N6 interface.
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 17]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+The contents of the LISP mapping database:
+
+EID-Record  RLOC-Record       Commentary
+0::/0       [ELP{a1,p3,p1},   4 RLOC-records, 2 with paths through the BP-UPF
+             ELP{a1,p4,p2},   and 2 directly to the border UPF from UEs
+             p1, p2]          connected to gNB with RLOC a1
+
+a::1/128     [a1,a2]          The UPF or BP-UPF can encap directly for UE with
+                              EID a::1 to either gNB with optimized latency
+
+a::2/128     [ELP{p1,p3,a2},  The UPF can encap to either RLOC p3 or p4 to
+              ELP{p1,p4,a2}]  forward traffic through the BP-UPF on its way
+                              toward gNB with RLOC a1
+
+a::3/128     [ELP{p1,p3,a2},  The UPF can encap to the BP-UPF or directly
+              a2]             to gNB with RLOC a2 to reach UE with EID a::3
+
+11.  Multicast Considerations
+
+   Since the mobile network runs the LISP control-plane, and the mapping
+   system is available to support EIDs for unicast packet flow, it can
+   also support multicast packet flow.  Support for multicast can be
+   provided by the LISP/GTP overlay with no changes to the NGC/EPC
+   network.
+
+   Multicast (S-EID,G) entries can be stored and maintained in the same
+   mapping database that is used to store UE based EIDs.  Both Internet
+   connected nodes, as well as UE nodes, can source multicast packets.
+   The protocol procedures from [I-D.ietf-lisp-signal-free-multicast]
+   are followed to make multicast delivery available.  Both multicast
+   packet flow and UE mobility can occur at the same time.
+
+   A day in the life of a 1-to-many multicast packet:
+
+   1.  A UE node joins an (S,G) multicast flow by using IGMPv2 or
+       IGMPv3.
+
+   2.  The gNB/eNodeB node records which UE on the RAN should get
+       packets sourced by S and destined for group G.
+
+   3.  The gNB/eNodeB node registers the (S,G) entry to the mapping
+       system with its RLOC according to the receiver site procedures in
+       [I-D.ietf-lisp-signal-free-multicast].  The gNB/eNodeB does this
+       to show interest in joining the multicast flow.
+
+   4.  When other UE nodes join the same (S,G), their associated gNB/
+       eNodeB nodes will follow the procedures in steps 1 through 3.
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 18]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   5.  The (S,G) entry stored in the mapping database has an RLOC-set
+       which contains a replication list of all the gNB/eNodeB RLOCs
+       that registered.
+
+   6.  A multicast packet from source S to destination group G arrives
+       at the UPF/pGW.  The UPF/pGW node looks up (S,G), gets returned
+       the replication list of all joined gNB/eNodeB nodes and
+       replicates the multicast packet by encapsulating the packet to
+       each of them.
+
+   7.  Each gNB/eNodeB node decapsulates the packet and delivers the
+       multicast packet to one or more IGMP-joined UEs on the RAN.
+
+12.  Security Considerations
+
+   For control-plane authentication and authorization procedures, this
+   specification recommends the mechanisms in
+   [I-D.ietf-lisp-rfc6833bis], LISP-SEC [I-D.ietf-lisp-sec] and LISP-
+   ECDSA [I-D.farinacci-lisp-ecdsa-auth].
+
+   For data-plane privacy procedures, this specification recommends the
+   mechanisms in [RFC8061] When the LISP data-plane is used.  Otherwise,
+   the NGC/EPC must provide data-plane encryption support.
+
+13.  IANA Considerations
+
+   There are no specific requests for IANA.
+
+14.  SDO Recommendations
+
+   The authors request other Standards Development Organizations to
+   consider LISP as a technology for device mobility.  It is recommended
+   to start with this specification as a basis for design and develop
+   more deployment details in the appropriate Standards Organizations.
+   The authors are willing to facilitate this activity.
+
+15.  References
+
+15.1.  Normative References
+
+   [RFC1700]  Reynolds, J. and J. Postel, "Assigned Numbers", RFC 1700,
+              DOI 10.17487/RFC1700, October 1994,
+              <https://www.rfc-editor.org/info/rfc1700>.
+
+
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 19]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   [RFC6832]  Lewis, D., Meyer, D., Farinacci, D., and V. Fuller,
+              "Interworking between Locator/ID Separation Protocol
+              (LISP) and Non-LISP Sites", RFC 6832,
+              DOI 10.17487/RFC6832, January 2013,
+              <https://www.rfc-editor.org/info/rfc6832>.
+
+   [RFC6833]  Fuller, V. and D. Farinacci, "Locator/ID Separation
+              Protocol (LISP) Map-Server Interface", RFC 6833,
+              DOI 10.17487/RFC6833, January 2013,
+              <https://www.rfc-editor.org/info/rfc6833>.
+
+   [RFC6836]  Fuller, V., Farinacci, D., Meyer, D., and D. Lewis,
+              "Locator/ID Separation Protocol Alternative Logical
+              Topology (LISP+ALT)", RFC 6836, DOI 10.17487/RFC6836,
+              January 2013, <https://www.rfc-editor.org/info/rfc6836>.
+
+   [RFC8060]  Farinacci, D., Meyer, D., and J. Snijders, "LISP Canonical
+              Address Format (LCAF)", RFC 8060, DOI 10.17487/RFC8060,
+              February 2017, <https://www.rfc-editor.org/info/rfc8060>.
+
+   [RFC8061]  Farinacci, D. and B. Weis, "Locator/ID Separation Protocol
+              (LISP) Data-Plane Confidentiality", RFC 8061,
+              DOI 10.17487/RFC8061, February 2017,
+              <https://www.rfc-editor.org/info/rfc8061>.
+
+   [RFC8111]  Fuller, V., Lewis, D., Ermagan, V., Jain, A., and A.
+              Smirnov, "Locator/ID Separation Protocol Delegated
+              Database Tree (LISP-DDT)", RFC 8111, DOI 10.17487/RFC8111,
+              May 2017, <https://www.rfc-editor.org/info/rfc8111>.
+
+15.2.  Informative References
+
+   [ARCH5G-3GPP]
+              "System Architecture for the 5G System", TS.23.501
+              https://portal.3gpp.org/desktopmodules/Specifications/
+              SpecificationDetails.aspx?specificationId=3144, December
+              2016.
+
+   [EPS-3GPP]
+              "Non-Access-Stratum (NAS) Protocol for Evolved Packet
+              System (EPS); Stage 3", TS.23.501
+              https://portal.3gpp.org/desktopmodules/specifications/
+              specificationdetails.aspx?specificationid=1072, December
+              2017.
+
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 20]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   [ETSI-NGP]
+              "NGP Evolved Architecture for mobility using Identity
+              Oriented Networks", NGP-004, version 1.1.1
+              https://portal.etsi.org/webapp/WorkProgram/
+              Report_WorkItem.asp?WKI_ID=50531, January 2018.
+
+   [FMC]      "[TS23316] 3rd Generation Partnership Project; Technical
+              Specification Group Services and System Aspects; Wireless
+              and wireline convergence access support for the 5G System
+              (5GS) (Release 16), 3GPP TS23.316", November 2018.
+
+   [GPRS-3GPP]
+              "General Packet Radio Service (GPRS) for Evolved Universal
+              Terrestrial Radio Access Network (E-UTRAN) Access",
+              TS23.401 Release 8
+              https://portal.3gpp.org/desktopmodules/specifications/
+              specificationdetails.aspx?specificationid=849, January
+              2015.
+
+   [GTPv1-3GPP]
+              "General Packet Radio System (GPRS) Tunnelling Protocol
+              User Plane (GTPv1-U)", TS.29.281
+              https://portal.3gpp.org/desktopmodules/Specifications/
+              SpecificationDetails.aspx?specificationId=1699, January
+              2015.
+
+   [GTPv2-3GPP]
+              "3GPP Evolved Packet System (EPS); Evolved General Packet
+              Radio Service (GPRS) Tunnelling Protocol for Control plane
+              (GTPv2-C); Stage 3", TS.29.274
+              https://portal.3gpp.org/desktopmodules/Specifications/
+              SpecificationDetails.aspx?specificationId=1692, January
+              2015.
+
+   [I-D.farinacci-lisp-ecdsa-auth]
+              Farinacci, D. and E. Nordmark, "LISP Control-Plane ECDSA
+              Authentication and Authorization", draft-farinacci-lisp-
+              ecdsa-auth-03 (work in progress), September 2018.
+
+   [I-D.ietf-lisp-eid-anonymity]
+              Farinacci, D., Pillay-Esnault, P., and W. Haddad, "LISP
+              EID Anonymity", draft-ietf-lisp-eid-anonymity-11 (work in
+              progress), September 2021.
+
+
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 21]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   [I-D.ietf-lisp-eid-mobility]
+              Comeras, M. P., Ashtaputre, V., Maino, F., Moreno, V., and
+              D. Farinacci, "LISP L2/L3 EID Mobility Using a Unified
+              Control Plane", draft-ietf-lisp-eid-mobility-09 (work in
+              progress), January 2022.
+
+   [I-D.ietf-lisp-introduction]
+              Cabellos, A. and D. S. (Ed.), "An Architectural
+              Introduction to the Locator/ID Separation Protocol
+              (LISP)", draft-ietf-lisp-introduction-15 (work in
+              progress), September 2021.
+
+   [I-D.ietf-lisp-mn]
+              Farinacci, D., Lewis, D., Meyer, D., and C. White, "LISP
+              Mobile Node", draft-ietf-lisp-mn-11 (work in progress),
+              January 2022.
+
+   [I-D.ietf-lisp-predictive-rlocs]
+              Farinacci, D. and P. Pillay-Esnault, "LISP Predictive
+              RLOCs", draft-ietf-lisp-predictive-rlocs-09 (work in
+              progress), October 2021.
+
+   [I-D.ietf-lisp-rfc6830bis]
+              Farinacci, D., Fuller, V., Meyer, D., Lewis, D., and A.
+              Cabellos, "The Locator/ID Separation Protocol (LISP)",
+              draft-ietf-lisp-rfc6830bis-36 (work in progress), November
+              2020.
+
+   [I-D.ietf-lisp-rfc6833bis]
+              Farinacci, D., Maino, F., Fuller, V., and A. Cabellos,
+              "Locator/ID Separation Protocol (LISP) Control-Plane",
+              draft-ietf-lisp-rfc6833bis-30 (work in progress), November
+              2020.
+
+   [I-D.ietf-lisp-sec]
+              Maino, F., Ermagan, V., Cabellos, A., and D. Saucez,
+              "LISP-Security (LISP-SEC)", draft-ietf-lisp-sec-25 (work
+              in progress), December 2021.
+
+   [I-D.ietf-lisp-signal-free-multicast]
+              Moreno, V. and D. Farinacci, "Signal-Free Locator/ID
+              Separation Protocol (LISP) Multicast", draft-ietf-lisp-
+              signal-free-multicast-09 (work in progress), March 2018.
+
+   [I-D.ietf-lisp-te]
+              Farinacci, D., Kowal, M., and P. Lahiri, "LISP Traffic
+              Engineering Use-Cases", draft-ietf-lisp-te-09 (work in
+              progress), September 2021.
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 22]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   [ITU-IMT2020]
+              "Focus Group on IMT-2020",
+              https://www.itu.int/dms_pubrec/itu-r/rec/m/R-REC-
+              M.687-2-199702-I!!PDF-E.pdf.
+
+   [LTE401-3GPP]
+              "General Packet Radio Service (GPRS) enhancements for
+              Evolved Universal Terrestrial Radio Access Network
+              (E-UTRAN) access", TS.23.401
+              https://portal.3gpp.org/desktopmodules/Specifications/
+              SpecificationDetails.aspx?specificationId=849, January
+              2015.
+
+   [LTE402-3GPP]
+              "Architecture enhancements for non-3GPP accesses",
+              TS.23.402
+              https://portal.3gpp.org/desktopmodules/Specifications/
+              SpecificationDetails.aspx?specificationId=850, January
+              2015.
+
+   [mMTC]     "NGMN KPIs and Deployment Scenarios for Consideration for
+              IMT2020",  https://www.ngmn.org/uploads/media/151204_NGMN_
+              KPIs_and_Deployment_Scenarios_for_Consideration_for_IMT_20
+              20_-_LS_Annex_V1_approved.pdf, December 2015.
+
+   [NGMN]     "5G End-to-End Architecture Framework", NGMN
+              https://www.ngmn.org/uploads/
+              media/201117-NGMN_E2EArchFramework_v4.31.pdf, November
+              2020.
+
+   [PROC5G-3GPP]
+              "Procedures for the 5G System", TS.23.502
+              https://portal.3gpp.org/desktopmodules/Specifications/
+              SpecificationDetails.aspx?specificationId=3145, December
+              2016.
+
+   [X2-3GPP]  "Evolved Universal Terrestrial Radio Access Network
+              (E-UTRAN); X2 Application Protocol (X2AP)", TS.36.423
+              https://portal.3gpp.org/desktopmodules/Specifications/
+              SpecificationDetails.aspx?specificationId=2452, June 2017.
+
+Appendix A.  Acknowledgments
+
+   The authors would like to thank Gerry Foster and Peter Ashwood Smith
+   for their expertise with 3GPP mobile networks and for their early
+   review and contributions.  The authors would also like to thank Fabio
+   Maino, Malcolm Smith, and Marc Portoles for their expertise in both
+   5G and LISP as well as for their early review comments.
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 23]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+   The authors would like to give a special thank you to Ryosuke
+   Kurebayashi from NTT Docomo and Kalyani Bogineni from Verizon for
+   their operational and practical commentary.
+
+Appendix B.  Document Change Log
+
+B.1.  Changes to draft-farinacci-lisp-mobile-network-14
+
+   o  Posted March 2022.
+
+   o  Update references and document timer.
+
+B.2.  Changes to draft-farinacci-lisp-mobile-network-13
+
+   o  Posted September 2021.
+
+   o  Updated Uma's affliation.
+
+B.3.  Changes to draft-farinacci-lisp-mobile-network-12
+
+   o  Posted September 2021.
+
+   o  Update references and document timer.
+
+B.4.  Changes to draft-farinacci-lisp-mobile-network-11
+
+   o  Posted March 2021.
+
+   o  Changes to reflect editorial comments from Dirk von-Hugo.
+
+   o  Updated ITU and 5G references (manually).
+
+B.5.  Changes to draft-farinacci-lisp-mobile-network-10
+
+   o  Posted March 2021.
+
+   o  Update references and document timer.
+
+B.6.  Changes to draft-farinacci-lisp-mobile-network-09
+
+   o  Posted September 2020.
+
+   o  Update references and document timer.
+
+
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 24]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+B.7.  Changes to draft-farinacci-lisp-mobile-network-08
+
+   o  Posted March 2020.
+
+   o  Change author affliations.
+
+B.8.  Changes to draft-farinacci-lisp-mobile-network-07
+
+   o  Posted March 2020.
+
+   o  Update references and document timer.
+
+B.9.  Changes to draft-farinacci-lisp-mobile-network-06
+
+   o  Posted September 2019.
+
+   o  Update references and document timer.
+
+B.10.  Changes to draft-farinacci-lisp-mobile-network-05
+
+   o  Posted March 2019.
+
+   o  Update references and document timer.
+
+B.11.  Changes to draft-farinacci-lisp-mobile-network-04
+
+   o  Posted September 2018.
+
+   o  Update document timer.
+
+B.12.  Changes to draft-farinacci-lisp-mobile-network-03
+
+   o  Posted March 2018.
+
+   o  Make the spec more 5G user-friendly.  That is, the design has
+      always worked for either 4G or 5G but we make it more clear about
+      5G by using some basic 5G node terminlogy.
+
+   o  Add a section how LISP can work on the N3, N6, and N9 5G spec
+      interfaces.
+
+   o  Describe how LISP-TE can allow BP-UPF offload functionality.
+
+B.13.  Changes to draft-farinacci-lisp-mobile-network-02
+
+   o  Posted mid September 2017.
+
+   o  Editorial fixes from draft -01.
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 25]
+
+Internet-Draft         LISP for the Mobile Network            March 2022
+
+
+B.14.  Changes to draft-farinacci-lisp-mobile-network-01
+
+   o  Posted September 2017.
+
+   o  Explain each EID case illustrated in the "Mobile Network with EID/
+      RLOC Assignment" diagram.
+
+   o  Make a reference to mMTC as a 3GPP use-case for 5G.
+
+   o  Add to the requirements section how mobile operators believe that
+      using Locator/ID separation mechanisms provide for more efficient
+      mobile netwowks.
+
+   o  Indicate that L2-overlays is not recommended by this specification
+      as the LISP mobile network architeture but how operators may want
+      to deploy a layer-2 overlay service.
+
+B.15.  Changes to draft-farinacci-lisp-mobile-network-00
+
+   o  Initial draft posted August 2017.
+
+Authors' Addresses
+
+   Dino Farinacci
+   lispers.net
+   San Jose, CA
+   USA
+
+   Email: farinacci@gmail.com
+
+
+   Padma Pillay-Esnault
+   Independent
+   Santa Clara, CA
+   USA
+
+   Email: padma.ietf@gmail.com
+
+
+   Uma Chunduri
+   Intel Corporation
+   Santa Clara, CA
+   USA
+
+   Email: umac.ietf@gmail.com
+
+
+
+
+
+
+Farinacci, et al.      Expires September 21, 2022              [Page 26]
