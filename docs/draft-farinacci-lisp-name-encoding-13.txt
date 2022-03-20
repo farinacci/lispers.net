@@ -1,0 +1,448 @@
+
+
+
+
+Network Working Group                                       D. Farinacci
+Internet-Draft                                               lispers.net
+Intended status: Experimental                           November 7, 2021
+Expires: May 11, 2022
+
+
+                    LISP Distinguished Name Encoding
+                 draft-farinacci-lisp-name-encoding-13
+
+Abstract
+
+   This draft defines how to use the AFI=17 Distinguished Names in LISP.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on May 11, 2022.
+
+Copyright Notice
+
+   Copyright (c) 2021 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (https://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+
+
+
+
+
+
+Farinacci                 Expires May 11, 2022                  [Page 1]
+
+Internet-Draft      LISP Distinguished Name Encoding       November 2021
+
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+   2.  Definition of Terms . . . . . . . . . . . . . . . . . . . . .   3
+   3.  Distinguished Name Format . . . . . . . . . . . . . . . . . .   4
+   4.  Example Use-Cases . . . . . . . . . . . . . . . . . . . . . .   5
+   5.  Name Collision Considerations . . . . . . . . . . . . . . . .   5
+   6.  Security Considerations . . . . . . . . . . . . . . . . . . .   5
+   7.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   5
+   8.  References  . . . . . . . . . . . . . . . . . . . . . . . . .   5
+     8.1.  Normative References  . . . . . . . . . . . . . . . . . .   5
+     8.2.  Informative References  . . . . . . . . . . . . . . . . .   6
+   Appendix A.  Acknowledgments  . . . . . . . . . . . . . . . . . .   6
+   Appendix B.  Document Change Log  . . . . . . . . . . . . . . . .   6
+     B.1.  Changes to draft-farinacci-lisp-name-encoding-13  . . . .   6
+     B.2.  Changes to draft-farinacci-lisp-name-encoding-12  . . . .   6
+     B.3.  Changes to draft-farinacci-lisp-name-encoding-11  . . . .   7
+     B.4.  Changes to draft-farinacci-lisp-name-encoding-10  . . . .   7
+     B.5.  Changes to draft-farinacci-lisp-name-encoding-09  . . . .   7
+     B.6.  Changes to draft-farinacci-lisp-name-encoding-08  . . . .   7
+     B.7.  Changes to draft-farinacci-lisp-name-encoding-07  . . . .   7
+     B.8.  Changes to draft-farinacci-lisp-name-encoding-06  . . . .   7
+     B.9.  Changes to draft-farinacci-lisp-name-encoding-05  . . . .   7
+     B.10. Changes to draft-farinacci-lisp-name-encoding-04  . . . .   8
+     B.11. Changes to draft-farinacci-lisp-name-encoding-03  . . . .   8
+     B.12. Changes to draft-farinacci-lisp-name-encoding-02  . . . .   8
+     B.13. Changes to draft-farinacci-lisp-name-encoding-01  . . . .   8
+     B.14. Changes to draft-farinacci-lisp-name-encoding-00  . . . .   8
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   8
+
+1.  Introduction
+
+   The LISP architecture and protocols [RFC6830] introduces two new
+   numbering spaces, Endpoint Identifiers (EIDs) and Routing Locators
+   (RLOCs) which are intended to replace most use of IP addresses on the
+   Internet.  To provide flexibility for current and future
+   applications, these values can be encoded in LISP control messages
+   using a general syntax that includes Address Family Identifier (AFI)
+   [RFC1700].
+
+   The length of the value field is implicit in the type of address that
+   follows.  For AFI 17, a Distinguished Name can be encoded.  A name
+   can be a variable length field so the length cannot be determined
+   solely from the AFI value 17.  This draft defines a termination
+   character, an 8-bit value of 0 to be used as a string terminator so
+   the length can be determined.
+
+
+
+
+
+Farinacci                 Expires May 11, 2022                  [Page 2]
+
+Internet-Draft      LISP Distinguished Name Encoding       November 2021
+
+
+   LISP Distinguished Names are useful when encoded either in EID-
+   records or RLOC-records in LISP control messages.  As EIDs, they can
+   be registered in the mapping system to find resources, services, or
+   simply used as a self-documenting feature that accompany other
+   address specific EIDs.  As RLOCs, Distinguished Names, along with
+   RLOC specific addresses and parameters, can be used as labels to
+   identify equipment type, location, or any self-documenting string a
+   registering device desires to convey.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2.  Definition of Terms
+
+   Address Family Identifier (AFI):  a term used to describe an address
+      encoding in a packet.  An address family currently defined for
+      IPv4 or IPv6 addresses.  See [AFI] and [RFC1700] for details on
+      other types of information that can be AFI encoded.
+
+
+
+
+
+
+Farinacci                 Expires May 11, 2022                  [Page 3]
+
+Internet-Draft      LISP Distinguished Name Encoding       November 2021
+
+
+3.  Distinguished Name Format
+
+   An AFI=17 Distinguished Name is encoded as:
+
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |            AFI = 17           |       ASCII String ...        |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |               ...  ASCII String             |       0         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   The string of characters are encoded in the ASCII character-set
+   definition [RFC0020].
+
+   When Distinguished Names are encoded for EIDs, the EID-prefix length
+   of the EIDs as they appear in EID-records for all LISP control
+   messages is the length of the string in bits (include the null 0
+   byte).  Where Distinguished Names are encoded anywhere else (i.e.
+   nested in LCAF encodings), then any length field is the length of the
+   ASCII string including the null 0 byte in units of bytes.
+
+   When Map-Requests are sent for an EID encoded in Distinguished Name
+   format, an exact match request is performed.  So the Map-Server (when
+   configured for proxy-Map-Replying) or the ETR will return a Map-Reply
+   with the same EID-prefix length.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci                 Expires May 11, 2022                  [Page 4]
+
+Internet-Draft      LISP Distinguished Name Encoding       November 2021
+
+
+4.  Example Use-Cases
+
+   This section identifies three specific use-cases for the
+   Distinguished Name format.  Two are used for an EID encoding and one
+   for a RLOC-record encoding.  When storing public keys in the mapping
+   system, as in [I-D.ietf-lisp-ecdsa-auth], a well known format for a
+   public-key hash can be encoded as a Distinguished Name.  When street
+   location to GPS coordinate mappings exist in the mapping system, as
+   in [I-D.farinacci-lisp-geo], the street location can be a free form
+   ascii representation (with whitespace characters) encoded as a
+   Distinguished Name.  An RLOC that describes an xTR behind a NAT
+   device can be identified by its router name, as in
+   [I-D.farinacci-lisp-simple-nat], uses a Distinguished Name encoding.
+   As well as identifying the router name (neither an EID or an RLOC) in
+   NAT Info-Request messages uses Distinguished Name encodings.
+
+5.  Name Collision Considerations
+
+   When a Distinguished Name encoding is used to format an EID, the
+   uniqueness and allocation concerns are no different than registering
+   IPv4 or IPv6 EIDs to the mapping system.  See
+   [I-D.ietf-lisp-rfc6833bis] for more details.  Also, the use-case
+   documents specified in Section 4 provide allocation recommendations
+   for their specific uses.
+
+6.  Security Considerations
+
+   There are no security considerations.
+
+7.  IANA Considerations
+
+   The code-point values in this specification are already allocated in
+   [AFI].
+
+8.  References
+
+8.1.  Normative References
+
+   [AFI]      "Address Family Identifier (AFIs)", ADDRESS FAMILY
+              NUMBERS http://www.iana.org/numbers.html, Febuary 2007.
+
+   [I-D.ietf-lisp-rfc6833bis]
+              Farinacci, D., Maino, F., Fuller, V., and A. Cabellos,
+              "Locator/ID Separation Protocol (LISP) Control-Plane",
+              draft-ietf-lisp-rfc6833bis-30 (work in progress), November
+              2020.
+
+
+
+
+
+Farinacci                 Expires May 11, 2022                  [Page 5]
+
+Internet-Draft      LISP Distinguished Name Encoding       November 2021
+
+
+   [RFC0020]  Cerf, V., "ASCII format for network interchange", STD 80,
+              RFC 20, DOI 10.17487/RFC0020, October 1969,
+              <https://www.rfc-editor.org/info/rfc20>.
+
+   [RFC1700]  Reynolds, J. and J. Postel, "Assigned Numbers", RFC 1700,
+              DOI 10.17487/RFC1700, October 1994,
+              <https://www.rfc-editor.org/info/rfc1700>.
+
+   [RFC6830]  Farinacci, D., Fuller, V., Meyer, D., and D. Lewis, "The
+              Locator/ID Separation Protocol (LISP)", RFC 6830,
+              DOI 10.17487/RFC6830, January 2013,
+              <https://www.rfc-editor.org/info/rfc6830>.
+
+8.2.  Informative References
+
+   [I-D.farinacci-lisp-geo]
+              Farinacci, D., "LISP Geo-Coordinate Use-Cases", draft-
+              farinacci-lisp-geo-12 (work in progress), September 2021.
+
+   [I-D.farinacci-lisp-simple-nat]
+              Farinacci, D., "A Simple LISP NAT-Traversal
+              Implementation", draft-farinacci-lisp-simple-nat-02 (work
+              in progress), May 2021.
+
+   [I-D.ietf-lisp-ecdsa-auth]
+              Farinacci, D. and E. Nordmark, "LISP Control-Plane ECDSA
+              Authentication and Authorization", draft-ietf-lisp-ecdsa-
+              auth-06 (work in progress), August 2021.
+
+Appendix A.  Acknowledgments
+
+   The author would like to thank the LISP WG for their review and
+   acceptance of this draft.
+
+Appendix B.  Document Change Log
+
+B.1.  Changes to draft-farinacci-lisp-name-encoding-13
+
+   o  Submitted November 2021.
+
+   o  Update references and document expiry timer.
+
+B.2.  Changes to draft-farinacci-lisp-name-encoding-12
+
+   o  Submitted May 2021.
+
+   o  Update references and document expiry timer.
+
+
+
+
+Farinacci                 Expires May 11, 2022                  [Page 6]
+
+Internet-Draft      LISP Distinguished Name Encoding       November 2021
+
+
+B.3.  Changes to draft-farinacci-lisp-name-encoding-11
+
+   o  Submitted November 2020.
+
+   o  Made changes to reflect working group comments.
+
+   o  Update references and document expiry timer.
+
+B.4.  Changes to draft-farinacci-lisp-name-encoding-10
+
+   o  Submitted August 2020.
+
+   o  Update references and document expiry timer.
+
+B.5.  Changes to draft-farinacci-lisp-name-encoding-09
+
+   o  Submitted March 2020.
+
+   o  Update references and document expiry timer.
+
+B.6.  Changes to draft-farinacci-lisp-name-encoding-08
+
+   o  Submitted September 2019.
+
+   o  Update references and document expiry timer.
+
+B.7.  Changes to draft-farinacci-lisp-name-encoding-07
+
+   o  Submitted March 2019.
+
+   o  Update referenes and document expiry timer.
+
+B.8.  Changes to draft-farinacci-lisp-name-encoding-06
+
+   o  Submitted September 2018.
+
+   o  Update document expiry timer.
+
+B.9.  Changes to draft-farinacci-lisp-name-encoding-05
+
+   o  Submitted March 2018.
+
+   o  Update document expiry timer.
+
+
+
+
+
+
+
+
+Farinacci                 Expires May 11, 2022                  [Page 7]
+
+Internet-Draft      LISP Distinguished Name Encoding       November 2021
+
+
+B.10.  Changes to draft-farinacci-lisp-name-encoding-04
+
+   o  Submitted September 2017.
+
+   o  Update document expiry timer.
+
+B.11.  Changes to draft-farinacci-lisp-name-encoding-03
+
+   o  Submitted March 2017.
+
+   o  Update document expiry timer.
+
+B.12.  Changes to draft-farinacci-lisp-name-encoding-02
+
+   o  Submitted October 2016.
+
+   o  Add a comment that the distinguished-name encoding is restricted
+      to ASCII character encodings only.
+
+B.13.  Changes to draft-farinacci-lisp-name-encoding-01
+
+   o  Submitted October 2016.
+
+   o  Update document timer.
+
+B.14.  Changes to draft-farinacci-lisp-name-encoding-00
+
+   o  Initial draft submitted April 2016.
+
+Author's Address
+
+   Dino Farinacci
+   lispers.net
+   San Jose, CA
+   USA
+
+   Email: farinacci@gmail.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci                 Expires May 11, 2022                  [Page 8]
