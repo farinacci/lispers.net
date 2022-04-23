@@ -29,6 +29,20 @@ ls lisp-itr >& /dev/null
 set itr = $status
 
 #
+# Check to see if python2 is installed and if symlink python is set in installed directory.
+# In recent versions of ubuntu, the command "python" has been removed. We do this check
+# in RUN-LISP too. Just in case the user issues the RUN-LISP command, but if they issue
+# the ./RL script, then STOP-LISP is called first. So we need the symlink set here.
+#
+which python > /dev/null
+if ($status != "0") then
+    set PY = `which python2`
+    set PY = `dirname $PY`
+    echo "Installing 'ln -s python2 python' in $PY"
+    pushd $PY; ln -s python2 python; popd
+endif
+
+#
 # Remove each lispers.net LISP processes. Do not continue until they are 
 # all gone.
 #

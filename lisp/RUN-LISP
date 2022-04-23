@@ -137,10 +137,17 @@ endif
 # on this system.
 #
 if (-f ./lisp-core.pyo) then
-    which python > /dev/null
+    which python2 > /dev/null
     if ($status != "0") then
         echo "Requires python version 2.7.x to be installed"
         exit(1)
+    endif
+    which python > /dev/null
+    if ($status != "0") then
+        set PY = `which python2`
+        set PY = `dirname $PY`
+        echo "Installing 'ln -s python2 python' in $PY"
+        pushd $PY; ln -s python2 python; popd
     endif
     set PY = "python"
     set SUFFIX = "pyo"
