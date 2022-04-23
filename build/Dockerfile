@@ -33,7 +33,7 @@ RUN apt-get update -y && apt-get install -y curl
 RUN ln -snf /usr/share/zoneinfo/$(curl https://ipapi.co/timezone) \
     /etc/localtime
 RUN apt-get install -y \
-    gcc libc-dev python python-dev golang libffi-dev openssl libpcap-dev \
+    gcc libc-dev python2 python2-dev golang libffi-dev openssl libpcap-dev \
     iptables iproute2 tcpdump tcsh sudo traceroute iputils-ping \
     net-tools procps emacs vim jq
 
@@ -62,8 +62,8 @@ RUN cd /lispers.net; cat `basename $LISP_TGZ` | gzip -dc | tar -xf -
 # Install python2 modules the lispers.net directory depends on.
 #
 RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py && \
-    python get-pip.py
-RUN python -m pip install cheroot bottle netifaces pcapy pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome pytun future distro
+    python2 get-pip.py
+RUN python2 -m pip install cheroot bottle netifaces pcapy pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome pytun future distro
     
 #
 # Install python3 modules the lispers.net directory depends on.
