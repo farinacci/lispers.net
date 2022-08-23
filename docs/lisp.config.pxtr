@@ -58,11 +58,16 @@ lisp xtr-parameters {
 lisp map-resolver {
     dns-name = <map-resolver-rloc>
 }
+#
+# The instance-id for this entry must be 0 or else when the non-LISP address sends to
+# an EID, that we lisp-nat'ed from, we need to do a map-cache lookup in the <vpn-iid>.
+# When starlink testing, we determined that secondary-instance-id not required.
+#
 lisp database-mapping {
     prefix {
         instance-id = 0
         eid-prefix = 0.0.0.0/0
-    	secondary-instance-id = <iid-below>
+#    	secondary-instance-id = <vpn-iid>
     }
 }
 lisp interface {
