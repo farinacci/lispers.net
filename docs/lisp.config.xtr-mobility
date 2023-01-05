@@ -24,6 +24,9 @@
 # DO NOT WRITE TO ANY OTHER PART OF THIS FILE. YOU MUST ONLY ADD, CHANGE, OR
 # REMOVE LINES BETWEEN THE FIRST PAIR OF DOTTED LINES SECTION.
 #
+# DO NOT email lisp.config files because mailers will insert \r\n rather
+# than keeping this file with \n only.
+#    
 #-----------------------------------------------------------------------------
 lisp enable {
     itr = yes

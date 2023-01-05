@@ -25,6 +25,9 @@
 #
 # DO NOT REMOVE THE LINES "#--- ... ---" and "#--- ... ---#".    
 #
+# DO NOT email lisp.config files because mailers will insert \r\n rather
+# than keeping this file with \n only.
+#    
 #-----------------------------------------------------------------------------
 lisp enable {
     itr = yes
