@@ -17,7 +17,7 @@ Step 3: Use pip to install python2 module dependencies:
     
     sudo python -m pip install cheroot bottle netifaces pcappy pcapy \
          pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa \
-         pycryptodome pytun future distro
+         pycryptodome pytun future distro cherrypy
 
 Step 4: Use pip3 to install python3 module dependencies:
 
