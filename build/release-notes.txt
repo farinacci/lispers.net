@@ -1,4 +1,13 @@
 
+               lispers.net Beta Release Version 0.587
+               --------------------------------------
+
+o Release date:
+
+o Add wget to be installed in Dockerfile.
+        
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.586
                --------------------------------------
 

@@ -29,7 +29,7 @@ FROM ubuntu:latest
 #
 # And then rebuild.        
 #
-RUN apt-get update -y && apt-get install -y curl
+RUN apt-get update -y && apt-get install -y curl wget
 RUN ln -snf /usr/share/zoneinfo/$(curl https://ipapi.co/timezone) \
     /etc/localtime
 RUN apt-get install -y \
