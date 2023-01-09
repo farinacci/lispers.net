@@ -15,6 +15,16 @@
 #   <host-dir> is directory on your host OS that maps to directory called
 #              /hostOS inside your container for easy file movement
 #
+# To build and release docker images, developer should:
+#
+#    docker save lispers.net/ubuntu > lispers.net-<ver>-ubuntu-docker-image
+#
+# And a user should import the docker image to find it with "docker images":#
+#
+#    docker load -i lispers.net-<ver>-ubuntu-docker-image
+#
+# Docker images are stored on DropBox.        
+#
 FROM ubuntu:latest
 #FROM debian:latest
 #FROM centos:latest

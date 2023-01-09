@@ -2,9 +2,19 @@
                lispers.net Beta Release Version 0.587
                --------------------------------------
 
-o Release date:
+o Release date: Mon Jan  9 13:38:44 PST 2023
 
-o Add wget to be installed in Dockerfile.
+o Add wget to be installed in Dockerfile. This allows lisp-get-bits to work.
+
+o Add cherrypy to how-to-install-macos.txt for the python2 set.
+
+o MacOS will not respond to pings using addresses in the 240.0.0.0/4 range.
+  That is if the local system has a 240 address but the source is a non-240
+  address, it will respond to pings. There is no code LISP subsystem change
+  to fix this. Just noted in the RL-template file.
+
+o Add "show" parameter to "./log-packets" so you can see current state of
+  ITR, ETR, and RTR debug logging as well as data-plane-logging.
         
 -------------------------------------------------------------------------------
 
