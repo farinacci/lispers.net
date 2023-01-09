@@ -62,7 +62,11 @@ exit
 #sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
 
 #
-# MacOS syntax for configuring addresses.
+# MacOS syntax for configuring addresses. Note 240.0.0.0/4 can be used as
+# an EID block. However, on MacOS systems, the kernel will not send packets
+# to a 240.x.x.x address. So ping responses and TCP connections won't happen.
+# Note client pings and connection initiation can happen from a 240.x.x.x
+# address to any EID not in 240.0.0.0/4.
 #
 #sudo ifconfig lo0 x.x.x.x/32 alias
 #sudo ifconfig lo0 inet6 2001:5:3::x/128 alias
