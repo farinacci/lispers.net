@@ -32,7 +32,7 @@
 # variable LISP_PW is set, the value is the password that is used to connect.
 # to the LISP API.
 #
-# Usage: python lisp-log-packets.py [force] [<api-port>] [help]
+# Usage: python lisp-log-packets.py [show] [force] [<api-port>] [help]
 #
 # Note when <api-port> is negative, it is passed into the lispapi to tell it
 # to use http versus https. This port number should be the same value as
@@ -47,11 +47,12 @@ import os
 #
 # Get command-line parameters.
 #
+show = ("show" in sys.argv)
 force = True
 api_port = 8080
 for arg in sys.argv[1::]:
     if (arg == "help"):
-        print("Usage: python log-packets.py [force] [<api-port>] [help]")
+        print("Usage: ./log-packets [show] [force] [<api-port>] [help]")
         exit(0)
     #endif
     if (arg == "force"): force = True
@@ -92,6 +93,19 @@ if (xtr_parms == None):
 #endif
 
 dp_logging = xtr_parms["data-plane-logging"] == "yes"
+
+#
+# If showing, just return values.
+#
+if (show):
+    print("ITR-logging:        {}".format("enabled" if itr else "disabled"))
+    print("ETR-logging:        {}".format("enabled" if etr else "disabled"))
+    print("RTR-logging:        {}".format("enabled" if rtr else "disabled"))
+    print("data-plane-logging: {}".format("enabled" if dp_logging else \
+        "disabled"))
+    exit(0)
+#endif    
+
 rtr_running = lisp.is_rtr_enabled()
 
 if (dp_logging):

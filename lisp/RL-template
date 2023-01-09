@@ -159,10 +159,10 @@ endif
 #
 # For example:
 # 
-#   ./RESTART 8080 eth0:3 - uses the 3rd non-link-local address on interface
-#                           eth0.
-#   ./RESTART 8080 eth0   - uses the 1st non-link-local address on interface
-#                           eth0.
+# ./RESTART-LISP 8080 eth0:3 - uses the 3rd non-link-local address on interface
+#                              eth0.
+# ./RESTART-LISP 8080 eth0   - uses the 1st non-link-local address on interface
+#                              eth0.
 #
 # The same index is used for both IPv4 and IPv6. So for this interface:
 
