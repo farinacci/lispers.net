@@ -177,6 +177,7 @@ lisp_nonce_echo_list = {}
 # xTR configuration parameters.
 #
 lisp_nat_traversal = False
+lisp_decent_nat = False
 
 #
 # xTR configuration parameters. This flag is used to indicate that when a
@@ -4244,7 +4245,7 @@ class lisp_map_notify(object):
 #        0                   1                   2                   3
 #        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 #       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#       |Type=1 |A|M|P|S|p|s|m|I|Reserved |L|D|   IRC   | Record Count  |
+#       |Type=1 |A|M|P|S|p|s|m|I|  Rsvd |N|L|D|   IRC   | Record Count  |
 #       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #       |                         Nonce . . .                           |
 #       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -4295,6 +4296,7 @@ class lisp_map_request(object):
         self.smr_invoked_bit = False
         self.mobile_node = False
         self.xtr_id_present = False
+        self.decent_nat_xtr = False
         self.local_xtr = False
         self.dont_reply_bit = False
         self.itr_rloc_count = 0
@@ -4340,6 +4342,7 @@ class lisp_map_request(object):
             "I" if self.smr_invoked_bit else "i",
             "M" if self.mobile_node else "m",
             "X" if self.xtr_id_present else "x",
+            "N" if self.decent_nat_xtr else "n",
             "L" if self.local_xtr else "l",
             "D" if self.dont_reply_bit else "d", self.itr_rloc_count,
             self.record_count, lisp_hex_string(self.nonce), 
@@ -4437,6 +4440,7 @@ class lisp_map_request(object):
         if (self.smr_invoked_bit): first_long |= 0x00400000
         if (self.mobile_node): first_long |= 0x00200000
         if (self.xtr_id_present): first_long |= 0x00100000
+        if (self.decent_nat_xtr): first_long |= 0x00008000
         if (self.local_xtr): first_long |= 0x00004000
         if (self.dont_reply_bit): first_long |= 0x00002000
 
@@ -4663,6 +4667,7 @@ class lisp_map_request(object):
         self.smr_invoked_bit = True if (first_long & 0x00400000) else False
         self.mobile_node = True if (first_long & 0x00200000) else False
         self.xtr_id_present = True if (first_long & 0x00100000) else False
+        self.decent_nat_xtr = True if (first_long & 0x00008000) else False
         self.local_xtr = True if (first_long & 0x00004000) else False
         self.dont_reply_bit = True if (first_long & 0x00002000) else False
         self.itr_rloc_count = ((first_long >> 8) & 0x1f)
@@ -7818,6 +7823,7 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
     nonce = map_request.nonce
     action = LISP_NO_ACTION
     pubsub = map_request.subscribe_bit
+    decent_nat_xtr = map_request.decent_nat_xtr
 
     #
     # Check if we are verifying Map-Request signatures. If so, do a mapping
@@ -7949,7 +7955,7 @@ def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
     check_policy = False
     if (site_eid.force_nat_proxy_reply):
         pr_str = ", nat-forced"
-        nat = True
+        nat = (decent_nat_xtr == False)
         check_policy = True
     elif (site_eid.force_proxy_reply):
         pr_str = ", forced"
@@ -9020,6 +9026,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
             new_set = []
             log_set = []
             for rloc in rloc_set:
+                rloc_str = rloc.rloc.print_address_no_iid()
 
                 #
                 # Set initial state for private RLOCs to UNREACH and test
@@ -9029,27 +9036,36 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
                     rloc.priority = 1
                     rloc.state = LISP_RLOC_UNREACH_STATE
                     new_set.append(rloc)
-                    log_set.append(rloc.rloc.print_address_no_iid())
+                    log_set.append(rloc_str)
                     continue
                 #endif
 
                 #
-                # RTR should not put RTR RLOC in map-cache. But xTRs do. None
+                # RTR should not put RTR RLOC in map-cache. But xTRs do. No
                 # RTR RLOCs should only go in the RTR map-cache.
                 #
-                if (rloc.priority == 254 and lisp_i_am_rtr == False):
+                # With decent-nat configured an ITR will put non-RTR RLOCs
+                # in the RLOC-set. We can pierce the hole built to get to
+                # the ETR directly!
+                #
+                if (lisp_i_am_rtr):
+                    if (rloc.priority != 254):
+                        new_set.append(rloc)
+                        log_set.append(rloc_str)
+                    #endif
+                elif (lisp_decent_nat):
                     new_set.append(rloc)
-                    log_set.append(rloc.rloc.print_address_no_iid())
-                #endif
-                if (rloc.priority != 254 and lisp_i_am_rtr):
+                    log_set.append(rloc_str)
+                elif (rloc.priority == 254):
                     new_set.append(rloc)
-                    log_set.append(rloc.rloc.print_address_no_iid())
+                    log_set.append(rloc_str)
                 #endif
-            #endfor
+            #endif
 
             if (log_set != []):
                 rloc_set = new_set
-                lprint("NAT-traversal optimized RLOC-set: {}".format(log_set))
+                nat_str = "Decent-NAT" if (lisp_decent_nat) else "NAT-traversal"
+                lprint("{} optimized RLOC-set: {}".format(nat_str, log_set))
             #endif
         #endif
 
@@ -9067,6 +9083,17 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
             lprint("Pruning {} no-address RLOC-records for map-cache".format( \
                 count))
             rloc_set = new_set
+        #endif
+
+        #
+        # If any RLOCs have decent-nat ports, Tell the ETR about them so they
+        # can be probed with Info-Requests.
+        #
+        if (lisp_decent_nat):
+            for rloc in rloc_set:
+                if (rloc.is_decent_nat_port() == False): continue
+                lisp_itr_nat_probe(rloc.rloc, lisp_sockets[2])
+            #endfor
         #endif
 
         #
@@ -13335,11 +13362,31 @@ class lisp_rloc(object):
         return('rloc-name: {}'.format(blue(rloc_name, cour)))
     #enddef
 
+    def is_decent_nat_port(self):
+        rn = self.rloc_name
+        if (rn == None): return(False)
+        if (rn.find("@tp-") == -1): return(False)
+        return(True)
+    #enddef        
+
+    def store_decent_nat_port(self):
+        if (self.is_decent_nat_port() == False): return
+        port = self.rloc_name.split("@tp-")[-1]
+        self.translated_port = int(port)
+    #enddef        
+
+    def normalize_decent_nat_rloc_name(self):
+        if (self.is_decent_nat_port() == False): return(self.rloc_name)
+        rn = self.rloc_name.split("@tp-")[0]
+        return(rn)
+    #enddef        
+
     def store_rloc_from_record(self, rloc_record, nonce, source):
         port = LISP_DATA_PORT
         self.rloc.copy_address(rloc_record.rloc)
         if (rloc_record.rloc_name != None):
             self.rloc_name = rloc_record.rloc_name
+            if (lisp_i_am_rtr == False): self.store_decent_nat_port()
 
             #
             # Copy to all next-hops in multi-homing case.
@@ -13356,10 +13403,11 @@ class lisp_rloc(object):
         #
         rloc = self.rloc
         if (rloc.is_null() == False):
-            nat_info = lisp_get_nat_info(rloc, self.rloc_name)
+            rn = self.normalize_decent_nat_rloc_name()
+            nat_info = lisp_get_nat_info(rloc, rn)
             if (nat_info):
                 port = nat_info.port
-                head = lisp_nat_state_info[self.rloc_name][0]
+                head = lisp_nat_state_info[rn][0]
                 addr_str = rloc.print_address_no_iid()
                 rloc_str = red(addr_str, False)
                 rloc_nstr = "" if self.rloc_name == None else \
@@ -13414,7 +13462,8 @@ class lisp_rloc(object):
         if (self.rle):
             for rle_node in self.rle.rle_nodes:
                 rloc_name = rle_node.rloc_name
-                nat_info = lisp_get_nat_info(rle_node.address, rloc_name)
+                rn = rle_node.normalize_decent_nat_rloc_name()
+                nat_info = lisp_get_nat_info(rle_node.address, rn)
                 if (nat_info == None): continue
 
                 port = nat_info.port
@@ -13462,6 +13511,7 @@ class lisp_rloc(object):
         self.rloc.copy_address(rloc)
         self.translated_rloc.copy_address(rloc)
         self.translated_port = port
+        if (lisp_i_am_rtr == False): self.rloc_name += "@tp-{}".format(str(port))
     #enddef
 
     def is_rloc_translated(self):
@@ -15652,6 +15702,7 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
     map_request.rloc_probe = (probe_dest != None)
     map_request.subscribe_bit = pubsub
     map_request.xtr_id_present = pubsub
+    map_request.decent_nat_xtr = lisp_decent_nat
 
     #
     # Hold request nonce so we can match replies from xTRs that have multiple
@@ -15765,7 +15816,8 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
     #
     if (probe_dest != None):
         if (rloc.is_rloc_translated()):
-            nat_info = lisp_get_nat_info(probe_dest, rloc.rloc_name)
+            rn = rloc.normalize_decent_nat_rloc_name()
+            nat_info = lisp_get_nat_info(probe_dest, rn)
 
             #
             # Handle gleaned RLOC case.
@@ -16353,7 +16405,8 @@ def lisp_update_local_rloc(rloc):
 #
 def lisp_update_encap_port(mc):
     for rloc in mc.rloc_set:
-        nat_info = lisp_get_nat_info(rloc.rloc, rloc.rloc_name)
+        rn = rloc.normalize_decent_nat_rloc_name()
+        nat_info = lisp_get_nat_info(rloc.rloc, rn)
         if (nat_info == None): continue
         if (rloc.translated_port == nat_info.port): continue
 
@@ -17116,6 +17169,9 @@ def lisp_process_api_database_mapping():
             tr = r.translated_rloc
             if (tr.is_null() == False):
                 rloc["translated-rloc"] = tr.print_address_no_iid()
+                if (r.translated_port != 0):
+                    rloc["translated-port"] = r.translated_port
+                #endif
             #endif
             if (rloc != {}): rlocs.append(rloc)
         #endfor
@@ -17179,6 +17235,10 @@ def lisp_gather_site_cache_data(se, data):
         r["uweight"] = str(rloc.weight)
         r["mpriority"] = str(rloc.mpriority)
         r["mweight"] = str(rloc.mweight)
+        if (rloc.translated_port != 0):
+            r["encap-port"] = str(rloc.translated_port)
+        #endif
+    #endif
 
         rloc_set.append(r)
     #endfor
@@ -19634,6 +19694,25 @@ def lisp_itr_discover_eid(db, eid, input_interface, routed_interface,
     # Tell ETR process so it can register dynamic-EID.
     #
     ipc = "learn%{}%{}".format(eid_str, routed_interface)
+    ipc = lisp_command_ipc(ipc, "lisp-itr")
+    lisp_ipc(ipc, lisp_ipc_listen_socket, "lisp-etr")
+    return
+#enddef
+
+#
+# lisp_itr_nat_probe
+#
+# Tell the lisp-etr process to send Info-Requests to this ETR RLOC. It
+# knows which socket to send from so the encapsulated data back comes
+# to the ephemeral port from well-known port 4341.
+#
+def lisp_itr_nat_probe(rloc, lisp_ipc_listen_socket):
+    rloc_str = rloc.print_address_no_iid()
+
+    #
+    # Tell ETR process so it can register dynamic-EID.
+    #
+    ipc = "nat%{}".format(rloc_str)
     ipc = lisp_command_ipc(ipc, "lisp-itr")
     lisp_ipc(ipc, lisp_ipc_listen_socket, "lisp-etr")
     return

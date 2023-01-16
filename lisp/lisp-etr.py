@@ -67,6 +67,14 @@ LISP_MAP_REGISTER_INTERVAL = 60 # In units of seconds
 lisp_etr_test_mode = (os.getenv("LISP_ETR_TEST_MODE") != None)
 lisp_seen_eid_done = False
 
+#
+# When the lisp-itr process discovers decentralized NAT map-cache entries we
+# need to send Info-Requests to them to open a hole in our local NAT device.
+#
+# Indexed by an IP address string where value is a lisp_address().
+#
+lisp_etr_nat_probe_list = {}
+
 #------------------------------------------------------------------------------
 
 #
@@ -686,6 +694,15 @@ def lisp_etr_process_info_timer(ms):
             continue
         #endif
         lisp.lisp_build_info_requests(sockets, rtr, lisp.LISP_DATA_PORT)
+    #endfor
+
+    #
+    # Build Info-Requests to decentralized-NATed ETRs.
+    #
+    for etr_str in lisp_etr_nat_probe_list:
+        etr = lisp_etr_nat_probe_list[etr_str]
+        lisp.lprint("Send NAT-Probe to ETR {}".format(etr_str))
+        lisp.lisp_send_info_request(sockets, etr, lisp.LISP_DATA_PORT, None)
     #endfor
     
     #
@@ -1798,6 +1815,37 @@ def lisp_etr_discover_eid(ipc):
 #enddef
 
 #
+# lisp_etr_nat_probe
+#
+# Process IPC message from the lisp-itr process. It will be in the form of:
+#
+#      "nat%<rloc-string>
+#
+# Variable "ipc" is a string and not a byte string. Caller converts.
+#
+# Add the RLOC to the lisp_etr_nat_probe_list.
+#
+def lisp_etr_nat_probe(ipc):
+    global lisp_etr_nat_probe_list
+    global lisp_ephem_socket
+    
+    ipc = ipc.split("%")
+    rloc = ipc[-1]
+    if (rloc in lisp_etr_nat_probe_list): return
+
+    etr = lisp.lisp_address(lisp.LISP_AFI_IPV4, rloc, 32, 0)
+    lisp_etr_nat_probe_list[rloc] = etr
+
+    #
+    # Trigger Info-Request for destination RLOC.
+    #
+    sockets = [lisp_ephem_socket, lisp_ephem_socket, lisp_ipc_listen_socket]
+    lisp.lprint("Trigger NAT-Probe to ETR {}".format(rloc))
+    lisp.lisp_send_info_request(sockets, etr, lisp.LISP_DATA_PORT, None)
+    return
+#enddef
+
+#
 # lisp_etr_process_rtr_updown
 #
 # Process IPC message from lisp-itr. It is telling the lisp-etr process if
@@ -1865,6 +1913,7 @@ lisp_etr_commands = {
         "frame-logging" : [True, "yes", "no"],
         "flow-logging" : [True, "yes", "no"],
         "nat-traversal" : [True, "yes", "no"],
+        "decentralized-nat" : [True, "yes", "no"],
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
         "decentralized-push-xtr" : [True, "yes", "no"],
@@ -2016,6 +2065,8 @@ while (True):
             packet = packet.decode()
             if (packet.find("learn%") != -1):
                 lisp_etr_discover_eid(packet)
+            elif (packet.find("nat%") != -1):
+                lisp_etr_nat_probe(packet)
             elif (packet.find("nonce%") != -1):
                 lisp_etr_process_nonce_ipc(packet)
             elif (packet.find("clear%") != -1):

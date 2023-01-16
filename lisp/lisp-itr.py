@@ -686,10 +686,10 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     # mapping commands. In this case, we need to natively forward.
     #
     if (lisp_xtr_loopback == False):
-        db = lisp.lisp_db_for_lookups.lookup_cache(packet.inner_dest, False)
-        if (db and db.dynamic_eid_configured == False):
+        d = lisp.lisp_db_for_lookups.lookup_cache(packet.inner_dest, False)
+        if (d and d.dynamic_eid_configured == False):
             lisp.dprint(("Packet destined to local EID-prefix {}, " + \
-                "natively forwarding").format(db.print_eid_tuple()))
+                "natively forwarding").format(d.print_eid_tuple()))
             packet.send_packet(lisp_raw_socket, packet.inner_dest)
             return
         #endif
@@ -707,7 +707,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     # EID-prefix. If destination EID found in secondary map-cache, use it.
     # Otherwise, send Map-Request for EID in default IID.
     #
-    secondary_iid = db.secondary_iid if (db != None) else None
+    secondary_iid = db.secondary_iid
     if (secondary_iid and mc and mc.action == lisp.LISP_NATIVE_FORWARD_ACTION):
         dest_eid = packet.inner_dest
         dest_eid.instance_id = secondary_iid
@@ -790,11 +790,23 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     # Do unicast encapsulation.
     #
     if (dest_rloc):
+        packet.encap_port = dest_port
+        if (dest_port == 0): packet.encap_port = lisp.LISP_DATA_PORT
         packet.outer_dest.copy_address(dest_rloc)
         version = packet.outer_dest.afi_to_version()
         packet.outer_version = version
         source_rloc = lisp.lisp_myrlocs[0] if (version == 4) else \
             lisp.lisp_myrlocs[1]
+
+        #
+        # If we are doing decentralized NAT, we need to source packets from
+        # a public/global translated address.
+        #
+#        if (lisp.lisp_decent_nat and version == 4):
+#            r = db.rloc_set[0].translated_rloc
+#            if (r.is_null() == False): source_rloc = r
+#        #endif
+
         packet.outer_source.copy_address(source_rloc)
 
         if (packet.is_trace()):
@@ -1365,6 +1377,7 @@ lisp_itr_commands = {
         "frame-logging" : [True, "yes", "no"],
         "flow-logging" : [True, "yes", "no"],
         "nat-traversal" : [True, "yes", "no"],
+        "decentralized-nat" : [True, "yes", "no"],
         "checkpoint-map-cache" : [True, "yes", "no"],
         "ipc-data-plane" : [True, "yes", "no"],
         "decentralized-push-xtr" : [True, "yes", "no"],
@@ -1499,7 +1512,8 @@ socket_list = [lisp_ephem_listen_socket, lisp_ipc_listen_socket,
 #
 listen_on_ipc_socket = True
 ephem_sockets = [lisp_ephem_listen_socket] * 3
-ephem_nat_sockets = [lisp_ephem_nat_socket] * 3
+ephem_nat_sockets = [lisp_ephem_nat_socket, lisp_ephem_nat_socket,
+    lisp_ipc_listen_socket]
 
 while (True):
     try: ready_list, w, x = select.select(socket_list, [], [])

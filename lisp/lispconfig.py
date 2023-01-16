@@ -628,6 +628,10 @@ def lisp_setup_kv_pairs(clause):
     if (count != 0):
         kv_pairs["nat-traversal"] = [""] * count
     #endif
+    count = clause.count("decentralized-nat =")
+    if (count != 0):
+        kv_pairs["decentralized-nat"] = [""] * count
+    #endif
     count = clause.count("rloc-probing =")
     if (count != 0):
         kv_pairs["rloc-probing"] = [""] * count
@@ -2899,6 +2903,9 @@ def lisp_xtr_command(kv_pair):
         #endif
         if (kw == "nat-traversal"):
             lisp.lisp_nat_traversal = (value == "yes")
+        #endif
+        if (kw == "decentralized-nat"):
+            lisp.lisp_decent_nat = (value == "yes")
         #endif
         if (kw == "program-hardware"):
             lisp.lisp_program_hardware = (value == "yes")
