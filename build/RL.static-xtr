@@ -23,14 +23,12 @@
 # EID address assignment on kernel created interfaces as well as setting
 # default and other static route parameters.
 #
-# Most importantly, you can tell this script where your ./RESTART-LISP script
-# is and pass parameters to the script such as the RLOC interface you use.
+# This script is used only on LISP xTR nodes.
 #
-# Put a call to this script in /etc/rc.local so on system startup the LISP 
-# subsystem will start automatically. For example, add this line to /etc/rc.
-# local:
-#
-#    /home/<install-directory>/lispers.net/RL || exit 1
+# There are two options to use this script. You can modify the "set EID
+# 240.x.x.x" line below to configure your IPv4 EID, or you can pass in the
+# EID into the docker container by supplying "-e EID4="<eid>" on the "docker
+# run" command.
 #
 #------------------------------------------------------------------------------
 #
@@ -39,7 +37,12 @@
 #
 #------------------------------------------------------------------------------
 
-set EID = 240.x.x.x
+if ($EID4 != "") then
+    set EID = $EID4
+    echo "Use EID $EID4 from env variable EID4"
+else
+    set EID = 240.x.x.x
+endif
 
 if ($EID == "240.x.x.x") then
     echo "Need configure EID in place of 240.x.x.x"
