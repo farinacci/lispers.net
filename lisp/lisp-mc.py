@@ -73,7 +73,7 @@ def print_stats(rr):
     if (last_sec or last_min):
         s = stats.split(": ")
         s1 = s[1].split(",")
-        count = dark_green(s1[0]) if last_sec else green(s1[0])
+        count = bold(s1[0]) if last_sec else dark_green(s1[0])
         s1[0] = count
         s[1] = ",".join(s1)
         stats = ": ".join(s)
