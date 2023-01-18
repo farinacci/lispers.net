@@ -4329,7 +4329,7 @@ class lisp_map_request(object):
                 self.xtr_id))
         #endif
 
-        line = ("{} -> flags: {}{}{}{}{}{}{}{}{}{}, itr-rloc-" +
+        line = ("{} -> flags: {}{}{}{}{}{}{}{}{}{}{}, itr-rloc-" +
             "count: {} (+1), record-count: {}, nonce: 0x{}, source-eid: " +
             "afi {}, {}{}, target-eid: afi {}, {}, {}ITR-RLOCs:")
 
@@ -7188,7 +7188,9 @@ def lisp_parse_packet(lisp_sockets, packet, source, udp_sport, ttl=-1):
         lisp_process_ecm(lisp_sockets, packet, source, udp_sport)
 
     else:
-        lprint("Invalid LISP control packet type {}".format(header.type))
+        lprint("Invalid LISP control packet type {}:".format(header.type))
+        lprint(lisp_format_packet(packet))
+
     #endif
     return(trigger_flag)
 #enddef
@@ -7466,10 +7468,34 @@ def lisp_etr_process_map_request(lisp_sockets, map_request, source, sport,
     # enabled.
     #
     if (map_request.rloc_probe and len(lisp_sockets) == 4):
+
         public = (itr_rloc.is_private_address() == False)
         rtr = itr_rloc.print_address_no_iid()
-        if (public and rtr in lisp_rtr_list or sport == 0):
-            lisp_encapsulate_rloc_probe(lisp_sockets, itr_rloc, None, packet)
+        if (public and rtr in lisp_rtr_list and sport == 0):
+            lisp_encap_rloc_probe(lisp_sockets, itr_rloc, None, packet)
+            return
+        #endif
+
+        #
+        # For decent-nat, an ITR will send probe request with ports
+        # 4341->ephem-etr. To get probe reply through its NAT, we the ETR
+        # need to send with ports 4341->ephem-itr. Port to use for
+        # Map-Reply was sent when lisp-itr told this lisp-etr process to
+        # NAT probe the RLOC address to open NAT. Now we will use it for
+        # RLOC-probe replies.
+        #
+        if (lisp_decent_nat):
+            ni = lisp_get_nat_info(itr_rloc, None)
+            if (ni == None):
+                ir = itr_rloc.print_address_no_iid()
+                lprint("Could not find NAT-info state for {}".format(ir))
+                return
+            #endif
+
+            #
+            # Encapsulate the RLOC-probe reply from port 4341.
+            #
+            lisp_encap_rloc_probe(lisp_sockets, itr_rloc, ni, packet)
             return
         #endif
     #endif
@@ -8946,6 +8972,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
 
             old_rloc = None
             if (mc): old_rloc = mc.get_rloc(rloc_record.rloc)
+
             if (old_rloc):
                 rloc = old_rloc
             else:
@@ -9092,7 +9119,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
         if (lisp_decent_nat):
             for rloc in rloc_set:
                 if (rloc.is_decent_nat_port() == False): continue
-                lisp_itr_nat_probe(rloc.rloc, lisp_sockets[2])
+                lisp_itr_nat_probe(rloc.rloc, rloc.rloc_name, lisp_sockets[2])
             #endfor
         #endif
 
@@ -13370,9 +13397,10 @@ class lisp_rloc(object):
     #enddef        
 
     def store_decent_nat_port(self):
-        if (self.is_decent_nat_port() == False): return
+        if (self.is_decent_nat_port() == False): return(False)
         port = self.rloc_name.split("@tp-")[-1]
         self.translated_port = int(port)
+        return(True)
     #enddef        
 
     def normalize_decent_nat_rloc_name(self):
@@ -13384,9 +13412,18 @@ class lisp_rloc(object):
     def store_rloc_from_record(self, rloc_record, nonce, source):
         port = LISP_DATA_PORT
         self.rloc.copy_address(rloc_record.rloc)
+
         if (rloc_record.rloc_name != None):
             self.rloc_name = rloc_record.rloc_name
-            if (lisp_i_am_rtr == False): self.store_decent_nat_port()
+
+            #
+            # Store translated information for a decent-nat map-cache RLOC.
+            #
+            if (lisp_i_am_rtr == False):
+                if (self.store_decent_nat_port()):
+                    self.translated_rloc.copy_address(self.rloc)
+                #endif
+            #endif
 
             #
             # Copy to all next-hops in multi-homing case.
@@ -13402,7 +13439,7 @@ class lisp_rloc(object):
         # Store translated port if RLOC was translated by a NAT.
         #
         rloc = self.rloc
-        if (rloc.is_null() == False):
+        if (rloc.is_null() == False and self.rloc_name != None):
             rn = self.normalize_decent_nat_rloc_name()
             nat_info = lisp_get_nat_info(rloc, rn)
             if (nat_info):
@@ -13511,7 +13548,9 @@ class lisp_rloc(object):
         self.rloc.copy_address(rloc)
         self.translated_rloc.copy_address(rloc)
         self.translated_port = port
-        if (lisp_i_am_rtr == False): self.rloc_name += "@tp-{}".format(str(port))
+        if (lisp_i_am_rtr == False):
+            self.rloc_name += "@tp-{}".format(str(port))
+        #endif
     #enddef
 
     def is_rloc_translated(self):
@@ -15754,8 +15793,12 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
     # RLOC-probe reply with same translated address/port pair (the same values 
     # when it encapsulates data packets).
     #
+    # For RLOC-probes from a decent-nat ITR to a decent-nat ETR, we use the
+    # local/private address. Just like we do for Info-Requests.
+    #
     if (probe_dest != None and lisp_nat_traversal and lisp_i_am_rtr == False):
-        if (probe_dest.is_private_address() == False):
+        if (lisp_decent_nat == False and
+            probe_dest.is_private_address() == False):
             itr_rloc4 = lisp_get_any_translated_rloc()
         #endif
         if (itr_rloc4 == None):
@@ -15820,16 +15863,18 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
             nat_info = lisp_get_nat_info(probe_dest, rn)
 
             #
-            # Handle gleaned RLOC case.
+            # Handle gleaned RLOC case or a decent-nat ITR case probing ETR
+            # directly through its NAT.
             #
             if (nat_info == None):
                 r = rloc.rloc.print_address_no_iid()
-                g = "gleaned-{}".format(r)
+                g = "glean-{}".format(r) if lisp_i_am_rtr else \
+                    "nat-{}".format(r)
                 p = rloc.translated_port
                 nat_info = lisp_nat_info(r, g, p)
             #endif
-            lisp_encapsulate_rloc_probe(lisp_sockets, probe_dest, nat_info,
-                packet)
+
+            lisp_encap_rloc_probe(lisp_sockets, probe_dest, nat_info, packet)
             return
         #endif
 
@@ -16322,7 +16367,7 @@ def lisp_process_info_reply(source, packet, store):
                 format(red(info.global_etr_rloc.print_address_no_iid(), False),
                 info.etr_port, rloc_str, interface, eid_str))
 
-            rloc_entry.store_translated_rloc(info.global_etr_rloc, 
+            rloc_entry.store_translated_rloc(info.global_etr_rloc,
                 info.etr_port)
         #endfor
     #endfor
@@ -16615,12 +16660,22 @@ def lisp_store_nat_info(hostname, rloc, port):
 # lisp_get_nat_info
 #
 # Do lookup to get port number to store in map-cache entry as the encapsulation
-# port.
+# port. If hostname is None, then search by RLOC IP address.
 #
 def lisp_get_nat_info(rloc, hostname):
+    addr_str = rloc.print_address_no_iid()
+
+    if (hostname == None):
+        for hostname in lisp_nat_state_info:
+            for nat_info in lisp_nat_state_info[hostname]:
+                if (nat_info.address == addr_str): return(nat_info)
+            #endfor
+        #endfor
+        return(None)
+    #endif
+
     if (hostname not in lisp_nat_state_info): return(None)
 
-    addr_str = rloc.print_address_no_iid()
     for nat_info in lisp_nat_state_info[hostname]:
         if (nat_info.address == addr_str): return(nat_info)
     #endfor
@@ -17809,6 +17864,15 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
     #endif
         
     #
+    # For decent-NAT cases, get the translated ephermal port from the
+    # rloc-name. Use it to find RLOC-probe state.
+    #
+    tp = "@tp-"
+    if (rloc_name.find(tp) != -1):
+        port = int(rloc_name.split(tp)[-1])
+    #endif
+    
+    #
     # If we can't find RLOC address from the Map-Reply in the probe-list,
     # maybe the same ETR is sending sourcing from a different address. Check
     # that address in the probe-list.
@@ -18465,7 +18529,7 @@ def lisp_clear_map_cache():
 #enddef
 
 #
-# lisp_encapsulate_rloc_probe
+# lisp_encap_rloc_probe
 #
 # Input to this function is a RLOC-probe Map-Request and the NAT-traversal
 # information for an ETR that sits behind a NAT. We need to get the RLOC-probe
@@ -18473,7 +18537,7 @@ def lisp_clear_map_cache():
 # and a destination address and port that was translated by the NAT. That
 # information is in the lisp_nat_info() class.
 #
-def lisp_encapsulate_rloc_probe(lisp_sockets, rloc, nat_info, packet):
+def lisp_encap_rloc_probe(lisp_sockets, rloc, nat_info, packet):
     if (len(lisp_sockets) != 4): return
 
     #
@@ -18495,8 +18559,9 @@ def lisp_encapsulate_rloc_probe(lisp_sockets, rloc, nat_info, packet):
         17, 0, socket.htonl(local_addr.address), socket.htonl(rloc.address))
     ip = lisp_ip_checksum(ip)
 
-    udp = struct.pack("HHHH", 0, socket.htons(LISP_CTRL_PORT), 
-        socket.htons(length - 20), 0)
+    sport = socket.htons(LISP_DATA_PORT)
+    dport = socket.htons(LISP_CTRL_PORT) 
+    udp = struct.pack("HHHH", sport, dport, socket.htons(length - 20), 0)
 
     #
     # Start data encapsulation logic.
@@ -19706,13 +19771,13 @@ def lisp_itr_discover_eid(db, eid, input_interface, routed_interface,
 # knows which socket to send from so the encapsulated data back comes
 # to the ephemeral port from well-known port 4341.
 #
-def lisp_itr_nat_probe(rloc, lisp_ipc_listen_socket):
+def lisp_itr_nat_probe(rloc, rloc_name, lisp_ipc_listen_socket):
     rloc_str = rloc.print_address_no_iid()
 
     #
     # Tell ETR process so it can register dynamic-EID.
     #
-    ipc = "nat%{}".format(rloc_str)
+    ipc = "nat%{}%{}".format(rloc_str, rloc_name)
     ipc = lisp_command_ipc(ipc, "lisp-itr")
     lisp_ipc(ipc, lisp_ipc_listen_socket, "lisp-etr")
     return

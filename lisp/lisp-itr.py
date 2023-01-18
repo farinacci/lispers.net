@@ -1257,8 +1257,8 @@ def lisp_itr_database_mapping_command(kv_pair):
 # the RLOC-probing timer if "rloc-probing = yes".
 #
 def lisp_itr_xtr_command(kv_pair):
-    global lisp_ephem_listen_socket
-    global lisp_rloc_probe_socket
+    global lisp_rloc_probe_socket, lisp_ephem_listen_socket
+    global lisp_ipc_listen_socket, lisp_raw_socket
 
     #
     # Cache current state for nat-traversal and rloc-probing so we know if
@@ -1284,7 +1284,8 @@ def lisp_itr_xtr_command(kv_pair):
     if (nat_now_on): interval = 5
     
     if (interval != 0):
-        lisp_sockets = [lisp_rloc_probe_socket, lisp_ephem_listen_socket]
+        lisp_sockets = [lisp_rloc_probe_socket, lisp_ephem_listen_socket,
+            lisp_ipc_listen_socket, lisp_raw_socket]
         lisp.lisp_start_rloc_probe_timer(interval, lisp_sockets)
     #endif
 
@@ -1561,7 +1562,8 @@ while (True):
         # lisp-crypto faster.
         #
         if (probe): 
-            lisp_sockets = [lisp_ephem_listen_socket, lisp_ephem_listen_socket]
+            lisp_sockets = [lisp_rloc_probe_socket, lisp_ephem_listen_socket,
+                lisp_ipc_listen_socket, lisp_raw_socket]
             lisp.lisp_start_rloc_probe_timer(0, lisp_sockets)
         #endif
     #endif
@@ -1593,8 +1595,16 @@ while (True):
         elif (opcode == "data-packet"):
             lisp_itr_data_plane(packet, "ipc")
         else:
-            if (lisp.lisp_is_rloc_probe_reply(packet[0:1])):
-                lisp.lprint("ITR ignoring RLOC-probe request, using pcap")
+
+            #
+            # RLOC-probe Map-Replies come to the lisp-itr process via IPC
+            # from the lisp-etr process when decent-nat ETRs send them
+            # from port 4341 to the translated port used for data packets to
+            # get through NAT devices.
+            #
+            if (int(port) != lisp.LISP_DATA_PORT and 
+                lisp.lisp_is_rloc_probe_reply(packet[0:1])):
+                lisp.lprint("ITR ignoring RLOC-probe reply, using pcap")
                 continue
             #endif
             lisp.lisp_parse_packet(lisp_send_sockets, packet, source, port)
