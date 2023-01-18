@@ -1325,6 +1325,21 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
         if (lisp.lisp_is_rloc_probe_request(inner_lisp[0:1])):
             ttl = struct.unpack("B", inner_ip[8:9])[0] - 1
         #endif
+
+        #
+        # This could be a Map-Reply that comes from port 4341 to the NAT
+        # translated port. We need to get the Map-Reply processed by the
+        # lisp-itr process. Send it a packet IPC message.
+        #
+        if (lisp.lisp_is_rloc_probe_reply(inner_lisp[0:1])):
+            sport = socket.ntohs(struct.unpack("H", packet.packet[20:22])[0])
+            if (sport == lisp.LISP_DATA_PORT):
+                packet = packet.packet[28::]
+                packet = lisp.lisp_packet_ipc(packet, source, sport)
+                lisp.lisp_ipc(packet, lisp_ipc_listen_socket, "lisp-itr")
+                return
+            #endif
+        #endif
         lisp.lisp_parse_packet(lisp_send_sockets, inner_lisp, source, 0, ttl)
         return
     #endif
@@ -1830,7 +1845,8 @@ def lisp_etr_nat_probe(ipc):
     global lisp_ephem_socket
     
     ipc = ipc.split("%")
-    rloc = ipc[-1]
+    rloc = ipc[-2]
+    rloc_name = ipc[-1]
     if (rloc in lisp_etr_nat_probe_list): return
 
     etr = lisp.lisp_address(lisp.LISP_AFI_IPV4, rloc, 32, 0)
@@ -1842,7 +1858,23 @@ def lisp_etr_nat_probe(ipc):
     sockets = [lisp_ephem_socket, lisp_ephem_socket, lisp_ipc_listen_socket]
     lisp.lprint("Trigger NAT-Probe to ETR {}".format(rloc))
     lisp.lisp_send_info_request(sockets, etr, lisp.LISP_DATA_PORT, None)
-    return
+
+    #
+    # Store port info in for Decent-NAT xTR nat-info table so we can RLOC-probe
+    # reply to it. The map-request only has the public RLOC address and not the
+    # port needed to get through its NAT.
+    #
+    hp = rloc_name.split("@tp-")
+    if (len(hp) != 2):
+        lisp.lprint("Invalid NAT IPC rloc-name {}".format(hp))
+        return
+    #endif
+
+    hostname, port = hp[0], int(hp[1])
+    if (lisp.lisp_store_nat_info(hostname, etr, port) == False):
+        lisp.lprint("Could not store NAT-info state for {}, {}".format(rloc,
+            rloc_name))
+    #endif
 #enddef
 
 #
