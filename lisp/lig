@@ -19,7 +19,10 @@
 #
 # lig
 #
-# Just a wrapper for lisp-lig.py.
+# Just a wrapper for lisp-lig.py. When supplying an EID with an instance-id
+# (with format [<iid>]<eid>), use double quotes as in "[<iid>]<eid>".
+#
+# Note when looking up a distinguished-name EID use "[<iid>]'<eid>'".
 #
 # -----------------------------------------------------------------------------
 

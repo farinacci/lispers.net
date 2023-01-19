@@ -109,10 +109,11 @@ ddt_node = ""
 #
 if (argc == 2): 
     dest_eid = sys.argv[1]
+    brackets = (dest_eid.find("[") != -1 and dest_eid.find("]") != -1)
     iid, ddt_node = find_lisp_config()
     if (iid == None):
         argc = 1
-    else:
+    elif (brackets == False):
         dest_eid = "[" + iid + "]" + dest_eid
     #endif
 #endif
@@ -148,8 +149,9 @@ if (dest_eid.find("->") != -1):
 #
 # Check if instance-ID supplied.
 #
+brackets = (dest_eid.find("[") != -1 and dest_eid.find("]") != -1)
 iid = 0
-if (dest_eid.find("[") != -1):
+if (brackets):
     iid = dest_eid.split("]")
     dest_eid = iid[1]
     iid = iid[0]
@@ -166,7 +168,7 @@ for g in geos:
     if (g in dest_eid): geo_string = True
 #endfor
 
-if (dist_name == False and geo_string == False):
+if (dist_name == False and geo_string == False and brackets == False):
     deid = lisp.lisp_gethostbyname(dest_eid)
     if (deid == ""):
         print("Cannot resolve EID name '{}'".format(dest_eid))
