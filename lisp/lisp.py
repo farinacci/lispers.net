@@ -14078,6 +14078,14 @@ class lisp_mapping(object):
         rloc = self.best_rloc_set[hashval % length]
 
         #
+        # Check decent-nat entry that is new, return RTR rloc.
+        #
+        if (lisp_decent_nat and rloc.stats.packet_count == 0):
+            r = self.find_rtr_rloc()
+            if (r != None): rloc = r
+        #endif
+
+        #
         # IF this RLOC is not in up state but was taken out of up state by
         # not receiving echoed-nonces, try requesting again after some time.
         #
@@ -14286,6 +14294,23 @@ class lisp_mapping(object):
     def add_recent_source(self, source):
         self.recent_sources[source.print_address()] = lisp_get_timestamp()
     #enddef
+
+    def find_rtr_rloc(self):
+
+        #
+        # Find RTR when a decent-nat RLOC was just created. This deals with the
+        # "you must send before you can receive". Use the RTR to get packet to
+        # the ETR so it can do a map-cache lookup on the ITR to get tranlsated
+        # addressing. Return None if no RTR found in rloc-set.
+        #
+        for rloc in self.rloc_set:
+            if (rloc.is_rtr() and rloc.up_state()):
+                if (rloc.stats.packet_count <= 4): return(rloc)
+            #endif
+        #endfor
+        return(None)
+    #enddef
+
 #endclass
 
 class lisp_dynamic_eid(object):
