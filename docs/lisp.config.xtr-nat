@@ -54,6 +54,7 @@ lisp xtr-parameters {
     rloc-probing = no
     data-plane-security = no
     nat-traversal = yes
+    decentralized-nat = no
     nonce-echoing = no
     data-plane-logging = no
     flow-logging = no
