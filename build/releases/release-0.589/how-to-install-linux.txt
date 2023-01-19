@@ -1,0 +1,138 @@
+
+                  How to Install a lispers.net Release
+                  ------------------------------------
+
+The lispers.net LISP subsystem software implements "Routing as an Application".
+It runs on Ubuntu, Fedora, CentOS, and Debian Linux distros as well as MacOS 
+and Raspbian. And can run on these platforms in Docker containers. There
+are docker images available so you can avoid doing the installation procedures
+below.
+
+This implementation is the world's richest feature set of the open IETF LISP 
+protocols and interoperates with all modern proprietary and open source 
+implementations available today. The implementation supports the data-plane 
+components ITR, ETR, and RTR and the control-plane components Map-Resolver, 
+Map-Server, and DDT-Node for 10 different EID address types and 7 different 
+RLOC address types.
+
+First time install
+------------------
+
+(1) For a first-time install, type in the following commands:
+
+    mkdir lispers.net
+    cd lispers.net
+    sudo tar zxvf <tgz-file>
+
+(2) Follow the apt-get and pip install steps from build/Dockerfile.
+
+(3) Test the install by running this python program:
+
+     python    lispers.net-test-install.pyo   (when running python2)
+     python3.8 lispers.net-test-install.pyc   (when running python3)
+
+(4) From a tcsh shell, type in "./RESTART-LISP" when you want to start or 
+    restart the LISP subsystem. You can use "sudo ./STOP-LISP" to take the 
+    LISP subsystem down. These startup and shutdown scripts require tcsh. 
+    You can also restart the LISP subsystem via the web interface.
+
+(5) Open file lisp.config in an editor and configure the LISP functionality you
+    desire. You can modify this file anytime after the LISP subsystem is up 
+    and running and the changes will be accepted. The header of the file
+    will reflect when the file is processed by the LISP subsystem and a diff
+    from the last revision will be produced and inserted into the file.
+
+All other times
+---------------
+
+(1) From landing page, click the "system status" button.
+(2) From a super-user account, click the "install LISP software" button.
+(3) Paste in lispers.net tarball URL and click the "Submit" button.
+(4) Then click the "restart LISP subsystem" button.
+
+More information
+----------------
+
+(1) Open file lisp.config in an editor and configure the LISP functionality you
+    desire. You can modify this file anytime after the LISP subsystem is up 
+    and running and the changes will be accepted. The header of the file
+    will reflect when the file is processed by the LISP subsystem and a diff
+    from the last revision will be produced in file lisp.config.diff. You can 
+    also use the API to configure functionality. Click the "API Documentation"
+    button on the landing page for more details.
+
+(2) You can manage the LISP subsystem by modifying the lisp.config file at
+    anytime. You can monitor the LISP subsystem by pointing your browser to 
+    the IP address of this system on port 8080. The URL would be:
+
+    https://<address>:8080/lisp
+
+    You will first visit an authentication page. The root user account has no
+    password by default. It is suggested you change this to your preferred
+    password. All web-based passwords you key in are sent over an SSL 
+    connection to an embedded web server. So passwords are never sent in 
+    plaintext over the network. What you do next should be self-explanatory 
+    from the landing page.
+
+-------------------------------------------------------------------------------
+
+Installation Problems?
+----------------------
+
+(1) If you have issues installing pyOpenSSL, try this first and rerun the "pip
+    install -r pip-requirements.txt" command from above:
+
+    sudo apt-get install libssl-dev
+
+(2) If you can't find Python.h, try this first and rerun the "pip install
+    -r pip-requirements.txt" command from above:
+
+    sudo apt-get install python-dev
+    sudo yum install python-devel
+
+(3) If you get this error "unable to execute 'x86_64-linux-gnu-gcc': No such 
+    file or directory", install gcc by typing in:
+
+    sudo apt-get install gcc
+
+(4) If you get this error "fatal error: ffi.h: No such file or directory", 
+    install the ffi library and development environment:
+
+    sudo apt-get install libffi-dev
+
+(5) On Debian, if RESTART-LISP/STOP-LISP doesn't seem to work, it's because 
+    the processes are not getting killed. The STOP-LISP uses "killall" which
+    is not installed by default. Install it by typing in:
+
+    sudo apt-get install psmisc
+
+(6) When lipsers.net-test-install.pyo shows that OpenSSL is not installed, do
+    the following:
+
+    sudo pip install pyOpenSSL==16.2.0
+
+(7) On an ubuntu install, if you can't install python modules 'requests' or 
+    'geopy', and get the following error when you try to import either:
+
+    File "/usr/local/lib/python2.7/dist-packages/requests/packages/urllib3/
+    contrib/pyopenssl.py", line 43, in <module>
+    ssl.PROTOCOL_SSLv3: OpenSSL.SSL.SSLv3_METHOD,
+    AttributeError: 'module' object has no attribute 'PROTOCOL_SSLv3'
+
+    Do the following:
+
+    sudo pip install requests==2.6.0
+
+(8) If you get "pcap_open_live() not found" in your logs/lisp-itr.log file,
+    do this:
+
+    sudo apt-get install libpcap-dev
+
+(9) Note that if ip6tables does not work (but is installed), you may need
+    to load the IPv6 filter kernel module. Do that with command "sudo
+    modprobe ip6table_filter". The symptom that shows when the kernel module
+    is not loaded are TCP checksum errors over IPv6.
+
+-------------------------------------------------------------------------------
+                 Last updated: Thu May 13 16:47:37 PDT 2021
+
