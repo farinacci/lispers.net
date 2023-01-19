@@ -13854,6 +13854,19 @@ class lisp_rloc(object):
             return(False)
         #endtry
     #enddef
+
+    def refresh_decent_nat_rloc(self, lisp_sockets, eid):
+        ts = self.last_state_change
+        if (ts == None): return
+        if ((time.time() - ts) <= 60): return
+
+        e = green(eid.print_address(), False)
+        r = red(self.rloc.print_address_no_iid(), False)
+        rn = blue(self.rloc_name, False)
+        lprint("Refresh map-cache for {} for RLOC {}, {}".format(e, r, rn))
+
+        lisp_send_map_request(lisp_sockets, 0, None, eid, None)
+    #enddef
 #endclass        
 
 class lisp_mapping(object):
@@ -16317,23 +16330,27 @@ def lisp_process_info_reply(source, packet, store):
     info.print_info()
 
     #
+    # Set return flag to trigger a Map-Regiser message.
+    #
+    trigger = False
+
+    #
     # Store RTR list.
     #
-    new_rtr_set = False
     for rtr in info.rtr_list:
         addr_str = rtr.print_address_no_iid()
         if (addr_str in lisp_rtr_list):
             if (lisp_register_all_rtrs == False): continue
             if (lisp_rtr_list[addr_str] != None): continue
         #endif
-        new_rtr_set = True
+        trigger = True
         lisp_rtr_list[addr_str] = rtr
     #endfor
 
     #
     # If an ITR, install default map-cache entries.
     #
-    if (lisp_i_am_itr and new_rtr_set):
+    if (lisp_i_am_itr and trigger):
         if (lisp_iid_to_interface == {}):
             lisp_update_default_routes(source, lisp_default_iid, lisp_rtr_list)
         else:
@@ -16347,7 +16364,7 @@ def lisp_process_info_reply(source, packet, store):
     # Either store in database-mapping entries or return to caller.
     #
     if (store == False): 
-        return([info.global_etr_rloc, info.etr_port, new_rtr_set])
+        return([info.global_etr_rloc, info.etr_port, trigger])
     #endif
 
     #
@@ -16400,9 +16417,11 @@ def lisp_process_info_reply(source, packet, store):
             rloc_entry.rloc_name = rloc_name
             rloc_entry.store_translated_rloc(info.global_etr_rloc,
                 info.etr_port)
+
+            trigger = True
         #endfor
     #endfor
-    return([info.global_etr_rloc, info.etr_port, new_rtr_set])
+    return([info.global_etr_rloc, info.etr_port, trigger])
 #enddef
 
 #
@@ -17781,6 +17800,15 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 deid = eid if (group.is_null()) else group
                 lisp_send_map_request(lisp_sockets, 0, seid, deid, rloc)
                 last_rloc = parent_rloc
+
+                #
+                # Check mapping system to see if a translated address or port
+                # has changed. This occurs when a decent-nat RLOC has been
+                # unreachable for 1 minute.
+                #
+                if (rloc.is_decent_nat_port() and rloc.unreach_state()):
+                    rloc.refresh_decent_nat_rloc(lisp_sockets, deid)
+                #endif
 
                 #
                 # Remove installed host route. And install forwarding next-hop
