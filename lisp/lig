@@ -19,69 +19,18 @@
 #
 # lig
 #
-# Just a wrapper for lisp-lig where it prompts for parameters when EID is
-# is not supplied.
-# 
+# Just a wrapper for lisp-lig.py.
+#
 # -----------------------------------------------------------------------------
 
-set EID = "$1"
-set ASK = 0
-if ("$EID" == "") then
-    set ASK = 1
-    echo -n "Enter EID name or address: "
-    set EID = "$<"
-endif
-set MR = $2
-if ($MR == "") then
-    echo -n "Enter Map-Resolver name or RLOC address: "
-    set MR = $<
-endif
-
-#
-# Ask for other parmeters.
-#
-set PARMS = ""
-if ($ASK == 1) then
-    echo -n "Enter source-EID (return means no source EID specified): "
-    set SEID = $<
-    if ($SEID != "") then
-        set PARMS = "source $SEID"
-    endif
-
-    echo -n "Enter request count: "
-    set COUNT = $<
-    if ($COUNT != "") then
-        set PARMS = "$PARMS count $COUNT"
-    endif
-
-    echo -n "Enter debug mode (y/n): "
-    set DEBUG = $<
-    if ($DEBUG == "y") then
-        set PARMS = "$PARMS debug"
-    endif
-
-    echo -n "Suppress Info-Requests for NAT-traversal (y/n): "
-    set NAT = $<
-    if ($NAT == "y") then
-        set PARMS = "$PARMS no-info"
-    endif
-
-    echo -n "Enter PubSub mode (y/n): "
-    set PUBSUB = $<
-    if ($PUBSUB == "y") then
-        set PARMS = "$PARMS pubsub"
-    endif
-endif
-
-set PARMS = "to $MR $PARMS"
-echo "lig command parameters are: $EID $PARMS"
-echo ""
-
+set EID="$1"
+shift
 set FLAGS = "-W ignore -O -u"
+
 if (-f ./lisp-lig.py) then
-    sudo python $FLAGS ./lisp-lig.py "$EID" $PARMS
+    sudo python $FLAGS ./lisp-lig.py "$EID" $*
 else if (-f ./lisp-lig.pyc) then
-    sudo python3.8 $FLAGS ./lisp-lig.pyc "$EID" $PARMS
+    sudo python3.8 $FLAGS ./lisp-lig.pyc "$EID" $*
 else if (-f ./lisp-lig.pyo) then
-    sudo python $FLAGS ./lisp-lig.pyo "$EID" $PARMS
+    sudo python $FLAGS ./lisp-lig.pyo "$EID" $*
 endif

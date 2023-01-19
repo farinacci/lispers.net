@@ -33,11 +33,13 @@ from __future__ import print_function
 from builtins import str
 from builtins import range
 import lisp
+import os
 import sys
 import time
 import random
 import select
 from builtins import input
+from subprocess import getoutput
 
 #------------------------------------------------------------------------------
 
@@ -49,7 +51,39 @@ lisp_ephem_listen_socket = None
 lisp_sockets = [None, None, None]
 lisp_ephem_port = lisp.lisp_get_ephemeral_port()
 
+print("parms", sys.argv)
+
 #------------------------------------------------------------------------------
+
+#
+# find_lisp_config
+#
+# Return instance-ID and map-resolver by querying the lisp.config file.
+#
+def find_lisp_config():
+    if (os.path.exists("./lisp.config") == False): return(None, None)
+
+    #
+    # Grep for instance-id.
+    #
+    iid = getoutput('egrep "instance-id = " ./lisp.config')
+    if (iid == ""): return(None, None)
+    iid = iid.split("\n")[0]
+    iid = iid.split(" = ")[-1]
+
+    #
+    # Grep for map-resolver and the DNS or address command following it.
+    #
+    mr = getoutput('egrep -A1 "lisp map-resolver {" ./lisp.config')
+    if (mr == ""): return(None, None)
+    mr = mr.split("\n")[-1]
+    if (mr.find("dns-name") == -1 and mr.find("address") == -1):
+        return(None, None)
+    #endif
+    mr = mr.split(" = ")[-1]
+
+    return(iid, mr)
+#enddef    
 
 #
 # read_sockets
@@ -158,11 +192,18 @@ pubsub = ("pubsub" in sys.argv)
 
 #
 # If <dest-eid> is not on input line, prompt for everything. Otherwise, get
-# commandl line input.
+# commandl line input. If just an EID is supplied, see if there is a lisp.
+# config file in the current directory to obtain an instance-ID and map-
+# resolver to complete the lig query.
 #
 if (argc == 2): 
     dest_eid = sys.argv[1]
-    argc = 1
+    iid, mr = find_lisp_config()
+    if (iid == None):
+        argc = 1
+    else:
+        dest_eid = "[" + iid + "]" + dest_eid
+    #endif
 #endif
 if (argc <= 1):
     while (dest_eid == ""):
@@ -177,7 +218,7 @@ if (argc <= 1):
     #endwhile
     source_eid = input("Enter optional source EID: ")
 else:
-    dest_eid = sys.argv[1]
+    if (dest_eid == ""): dest_eid = sys.argv[1]
     if ("source" in sys.argv):
         index = sys.argv.index("source")
         if (index+1 < argc): source_eid = sys.argv[index+1]

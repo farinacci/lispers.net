@@ -19,51 +19,18 @@
 #
 # rig
 #
-# Just a wrapper for lisp-rig where it prompts for parameters when EID is
-# is not supplied.
-# 
+# Just a wrapper for lisp-rig,py.
+#
 # -----------------------------------------------------------------------------
 
-set EID = "$1"
-set ASK = 0
-if ("$EID" == "") then
-    set ASK = 1
-    echo -n "Enter EID name or address: "
-    set EID = "$<"
-endif
-set DDT = $2
-if ($DDT == "") then
-    echo -n "Enter DDT-Node name or RLOC address: "
-    set DDT = $<
-endif
-
-#
-# Ask for other parmeters.
-#
-set PARMS = ""
-if ($ASK == 1) then
-    echo -n "Enter debug mode (y/n): "
-    set DEBUG = $<
-    if ($DEBUG == "y") then
-        set PARMS = "$PARMS debug"
-    endif
-
-    echo -n "Follow all referrals (y/n): "
-    set FAR = $<
-    if ($FAR == "y") then
-        set PARMS = "$PARMS follow-all-referrals"
-    endif
-endif
-
-set PARMS = "to $DDT $PARMS"
-echo "rig command parameters are: $EID $PARMS"
-echo ""
-
+set EID="$1"
+shift
 set FLAGS = "-W ignore -O -u"
+
 if (-f ./lisp-rig.pyo) then
-    sudo python $FLAGS ./lisp-rig.pyo "$EID" $PARMS
+    sudo python $FLAGS ./lisp-rig.pyo "$EID" $*
 else if (-f ./lisp-rig.pyc) then
-    sudo python3.8 $FLAGS ./lisp-rig.pyc "$EID" $PARMS
+    sudo python3.8 $FLAGS ./lisp-rig.pyc "$EID" $*
 else if (-f ./lisp-rig.py) then
-    sudo python $FLAGS ./lisp-rig.py "$EID" $PARMS
+    sudo python $FLAGS ./lisp-rig.py "$EID" $*
 endif

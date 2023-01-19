@@ -29,11 +29,13 @@ from __future__ import print_function
 from builtins import str
 from builtins import range
 import lisp
+import os
 import sys
 import time
 import random
 import select
 from builtins import input
+from subprocess import getoutput
 
 #------------------------------------------------------------------------------
 
@@ -62,6 +64,36 @@ def lisp_close_all_sockets():
     return
 #enddef
 
+#
+# find_lisp_config
+#
+# Return instance-ID and map-resolver by querying the lisp.config file.
+#
+def find_lisp_config():
+    if (os.path.exists("./lisp.config") == False): return(None, None)
+
+    #
+    # Grep for instance-id.
+    #
+    iid = getoutput('egrep "instance-id = " ./lisp.config')
+    if (iid == ""): return(None, None)
+    iid = iid.split("\n")[0]
+    iid = iid.split(" = ")[-1]
+
+    #
+    # Grep for map-resolver and the DNS or address command following it.
+    #
+    mr = getoutput('egrep -A1 "lisp map-resolver {" ./lisp.config')
+    if (mr == ""): return(None, None)
+    mr = mr.split("\n")[-1]
+    if (mr.find("dns-name") == -1 and mr.find("address") == -1):
+        return(None, None)
+    #endif
+    mr = mr.split(" = ")[-1]
+
+    return(iid, mr)
+#enddef    
+
 #------------------------------------------------------------------------------
 
 #
@@ -73,11 +105,16 @@ ddt_node = ""
 
 #
 # If <dest-eid> is not on input line, prompt for everything. Otherwise, get
-# commandl line input.
+# command line input.
 #
 if (argc == 2): 
     dest_eid = sys.argv[1]
-    argc = 1
+    iid, ddt_node = find_lisp_config()
+    if (iid == None):
+        argc = 1
+    else:
+        dest_eid = "[" + iid + "]" + dest_eid
+    #endif
 #endif
 if (argc <= 1):
     while (dest_eid == ""):
@@ -87,7 +124,7 @@ if (argc <= 1):
         ddt_node = input("Enter ddt-node address: ")
     #endwhile
 else:
-    dest_eid = sys.argv[1]
+    if (dest_eid == ""): dest_eid = sys.argv[1]
     if ("to" in sys.argv):
         index = sys.argv.index("to")        
         if (index+1 < argc): ddt_node = sys.argv[index+1]
