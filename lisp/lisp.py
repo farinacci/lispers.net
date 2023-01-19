@@ -16358,6 +16358,11 @@ def lisp_process_info_reply(source, packet, store):
         for rloc_entry in db.rloc_set:
             rloc = rloc_entry.rloc
             interface = rloc_entry.interface
+            rloc_name = rloc_entry.rloc_name
+            if (rloc_entry.is_decent_nat_port()):
+                rloc_name = rloc_name.split("@tp-")[0]
+            #endif
+
             if (interface == None):            
                 if (rloc.is_null()): continue
                 if (rloc.is_local() == False): continue
@@ -16366,8 +16371,8 @@ def lisp_process_info_reply(source, packet, store):
                     continue
                 #endif
             elif (info.private_etr_rloc.is_dist_name()):
-                rloc_name = info.private_etr_rloc.address
-                if (rloc_name != rloc_entry.rloc_name): continue
+                info_rn = info.private_etr_rloc.address
+                if (info_rn != rloc_name): continue
             #endif
 
             eid_str = green(db.eid.print_prefix(), False)
@@ -16392,6 +16397,7 @@ def lisp_process_info_reply(source, packet, store):
                 format(red(info.global_etr_rloc.print_address_no_iid(), False),
                 info.etr_port, rloc_str, interface, eid_str))
 
+            rloc_entry.rloc_name = rloc_name
             rloc_entry.store_translated_rloc(info.global_etr_rloc,
                 info.etr_port)
         #endfor
