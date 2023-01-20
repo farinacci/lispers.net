@@ -1847,17 +1847,25 @@ def lisp_etr_nat_probe(ipc):
     ipc = ipc.split("%")
     rloc = ipc[-2]
     rloc_name = ipc[-1]
-    if (rloc in lisp_etr_nat_probe_list): return
 
-    etr = lisp.lisp_address(lisp.LISP_AFI_IPV4, rloc, 32, 0)
-    lisp_etr_nat_probe_list[rloc] = etr
+    trigger = False
+    if (rloc in lisp_etr_nat_probe_list):
+        etr = lisp_etr_nat_probe_list[rloc]
+    else:
+        etr = lisp.lisp_address(lisp.LISP_AFI_IPV4, rloc, 32, 0)
+        lisp_etr_nat_probe_list[rloc] = etr
+        trigger = True
+    #endif
 
     #
     # Trigger Info-Request for destination RLOC.
     #
-    sockets = [lisp_ephem_socket, lisp_ephem_socket, lisp_ipc_listen_socket]
-    lisp.lprint("Trigger NAT-Probe to ETR {}".format(rloc))
-    lisp.lisp_send_info_request(sockets, etr, lisp.LISP_DATA_PORT, None)
+    if (trigger):
+        sockets = [lisp_ephem_socket, lisp_ephem_socket,
+            lisp_ipc_listen_socket]
+        lisp.lprint("Trigger NAT-Probe to ETR {}".format(rloc))
+        lisp.lisp_send_info_request(sockets, etr, lisp.LISP_DATA_PORT, None)
+    #endif
 
     #
     # Store port info in for Decent-NAT xTR nat-info table so we can RLOC-probe
