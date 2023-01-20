@@ -29,9 +29,9 @@ except:
     from subprocess import getoutput
 #endtry    
 
-modules = [ "bottle", "requests", "cherrypy", "pcappy", "pcapy", "netifaces", 
-    "setuptools", "Crypto.Cipher", "curve25519", "geopy", "pytun",
-    "ecdsa", "future", "builtins", "distro" ]
+modules = [ "bottle", "requests", "cheroot", "pcappy", "pcapy", "netifaces", 
+    "setuptools", "Crypto.Cipher", "curve25519", "geopy", "pytun", "urllib3",
+    "ecdsa", "future", "builtins", "distro", "future", "builtins" ]
 
 failed = []
 for module in modules:

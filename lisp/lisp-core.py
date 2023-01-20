@@ -2053,7 +2053,7 @@ def lisp_core_dispatch_packet(lisp_sockets, source, sport, packet):
 #
 # lisp_ssl_server
 #
-# Setup cherrypy server that supports SSL connections. This is so we can
+# Setup cheroot server that supports SSL connections. This is so we can
 # protect passwords that flow over an http connection.
 #
 # Used the following to create private key and cert:
