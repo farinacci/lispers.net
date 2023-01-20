@@ -4,12 +4,12 @@
 
 Network Working Group                                       D. Farinacci
 Internet-Draft                                               lispers.net
-Intended status: Informational                          November 7, 2021
-Expires: May 11, 2022
+Intended status: Informational                           20 January 2023
+Expires: 24 July 2023
 
 
-               A Simple LISP NAT-Traversal Implementation
-                   draft-farinacci-lisp-simple-nat-03
+                Simple LISP NAT-Traversal Implementation
+                   draft-farinacci-lisp-simple-nat-06
 
 Abstract
 
@@ -31,53 +31,57 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on May 11, 2022.
+   This Internet-Draft will expire on 24 July 2023.
 
 Copyright Notice
 
-   Copyright (c) 2021 IETF Trust and the persons identified as the
+   Copyright (c) 2023 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
-   Provisions Relating to IETF Documents
-   (https://trustee.ietf.org/license-info) in effect on the date of
-   publication of this document.  Please review these documents
-   carefully, as they describe your rights and restrictions with respect
-   to this document.  Code Components extracted from this document must
-   include Simplified BSD License text as described in Section 4.e of
-   the Trust Legal Provisions and are provided without warranty as
-   described in the Simplified BSD License.
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
 
 
 
 
 
 
-Farinacci                 Expires May 11, 2022                  [Page 1]
+
+Farinacci                 Expires 24 July 2023                  [Page 1]
 
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
+Internet-Draft           lispers.net Simple NAT             January 2023
 
 
 Table of Contents
 
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
-   2.  Definition of Terms . . . . . . . . . . . . . . . . . . . . .   4
-   3.  Overview  . . . . . . . . . . . . . . . . . . . . . . . . . .   6
-   4.  Protocol Messages . . . . . . . . . . . . . . . . . . . . . .   7
-   5.  xTR Map-Registering and Map-Server Proxy Map-Replying . . . .  10
-   6.  Packet Flow from ITR-behind-NAT to RTR  . . . . . . . . . . .  11
-   7.  Packet Flow from Remote ITR to RTR  . . . . . . . . . . . . .  11
-   8.  Packet Flow from RTR to ETR-behind-NAT  . . . . . . . . . . .  11
-   9.  Design Observations . . . . . . . . . . . . . . . . . . . . .  13
-   10. Security Considerations . . . . . . . . . . . . . . . . . . .  14
-   11. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  14
-   12. Normative References  . . . . . . . . . . . . . . . . . . . .  14
+   2.  Definition of Terms . . . . . . . . . . . . . . . . . . . . .   3
+   3.  Overview  . . . . . . . . . . . . . . . . . . . . . . . . . .   4
+   4.  Protocol Messages . . . . . . . . . . . . . . . . . . . . . .   5
+   5.  xTR Map-Registering and Map-Server Proxy Map-Replying . . . .   9
+   6.  Packet Flow from ITR-behind-NAT to RTR  . . . . . . . . . . .  10
+   7.  Packet Flow from Remote ITR to RTR  . . . . . . . . . . . . .  10
+   8.  Packet Flow from RTR to ETR-behind-NAT  . . . . . . . . . . .  10
+   9.  Decentralized NAT . . . . . . . . . . . . . . . . . . . . . .  11
+   10. Design Observations . . . . . . . . . . . . . . . . . . . . .  12
+   11. Security Considerations . . . . . . . . . . . . . . . . . . .  13
+   12. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  13
+   13. Normative References  . . . . . . . . . . . . . . . . . . . .  13
    Appendix A.  Acknowledgments  . . . . . . . . . . . . . . . . . .  15
    Appendix B.  Document Change Log  . . . . . . . . . . . . . . . .  15
-     B.1.  Changes to draft-farinacci-lisp-simple-nat-03 . . . . . .  15
-     B.2.  Changes to draft-farinacci-lisp-simple-nat-02 . . . . . .  15
-     B.3.  Changes to draft-farinacci-lisp-simple-nat-01 . . . . . .  15
-     B.4.  Changes to draft-farinacci-lisp-simple-nat-00 . . . . . .  16
+     B.1.  Changes to draft-farinacci-lisp-simple-nat-06 . . . . . .  15
+     B.2.  Changes to draft-farinacci-lisp-simple-nat-05 . . . . . .  15
+     B.3.  Changes to draft-farinacci-lisp-simple-nat-04 . . . . . .  15
+     B.4.  Changes to draft-farinacci-lisp-simple-nat-03 . . . . . .  15
+     B.5.  Changes to draft-farinacci-lisp-simple-nat-02 . . . . . .  15
+     B.6.  Changes to draft-farinacci-lisp-simple-nat-01 . . . . . .  15
+     B.7.  Changes to draft-farinacci-lisp-simple-nat-00 . . . . . .  16
    Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  16
 
 1.  Introduction
@@ -89,86 +93,44 @@ Table of Contents
    in the lispers.net LISP implementation dating back to January 2014.
 
    The procedures described in this document are performed by LISP
-   compliant [I-D.ietf-lisp-rfc6830bis] [I-D.ietf-lisp-rfc6833bis] xTRs
-   that reside on the private side of one or more NAT devices that
-   connect them to the public side of the network.
+   compliant [RFC9300] [RFC9301] xTRs that reside on the private side of
+   one or more NAT devices that connect them to the public side of the
+   network.
 
    The solution is applicable to the following xTR deployments:
 
-   o  A physical ITR/ETR device that is directly connected or multiple
+   *  A physical ITR/ETR device that is directly connected or multiple
       hops away from a NAT device.
 
-   o  A LISP-MN acting as an ITR/ETR device on an cellular service where
+   *  A LISP-MN acting as an ITR/ETR device on an cellular service where
       a mobile provider is providing a NAT function.
 
-   o  A logical ITR/ETR that resides in a VM that is behind a NAT device
+
+
+
+
+Farinacci                 Expires 24 July 2023                  [Page 2]
+
+Internet-Draft           lispers.net Simple NAT             January 2023
+
+
+   *  A logical ITR/ETR that resides in a VM that is behind a NAT device
       managed by a hypervisor or cloud provider.
 
-   o  A logical ITR/ETR that resides in a container where a NAT function
+   *  A logical ITR/ETR that resides in a container where a NAT function
       is provided by the container service.
 
-
-
-Farinacci                 Expires May 11, 2022                  [Page 2]
-
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
-
-
-   o  The above xTR deployments can operate through multiple levels of
+   *  The above xTR deployments can operate through multiple levels of
       NATs.
 
-   o  The above deployments are also applicable to RTR and PxTR devices
+   *  The above deployments are also applicable to RTR and PxTR devices
       that may reside behind NAT devices.
 
-   o  The lispers.net lig [RFC6835] implementation uses the protocol
+   *  The lispers.net lig [RFC6835] implementation uses the protocol
       messaging defined in this draft so any system behind a NAT (either
       running as a LISP xTR or not running LISP at all), can query the
       mapping system to obtain mappings for network maintenance and
       troubleshooting.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Farinacci                 Expires May 11, 2022                  [Page 3]
-
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
-
 
 2.  Definition of Terms
 
@@ -198,6 +160,16 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
       the public side of the network.
 
    Ephemeral Port:  is the UDP source port in a LISP data-plane or
+
+
+
+
+
+Farinacci                 Expires 24 July 2023                  [Page 3]
+
+Internet-Draft           lispers.net Simple NAT             January 2023
+
+
       control-plane message.  This address is typically translated by a
       NAT device when the packet goes from the private side of the NAT
       device to the public side of the network.
@@ -218,14 +190,6 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
       prepends a new outer header.  With respect to this NAT-Traversal
       design, an ITR (either behind a NAT device or on the public
       network) encapsulates a packet to the RTR's RLOC address.  The RTR
-
-
-
-Farinacci                 Expires May 11, 2022                  [Page 4]
-
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
-
-
       strips this ITR prepended header and then prepends a its own new
       outer header and sends packet to the RLOC address of an ETR that
       registered the EID that appears as the destination address from
@@ -242,45 +206,8 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
       messages use AFI encoded addresses.  The AFI value is 16-bits in
       length and precedes all LISP encoded addresses.  In this document,
       the design calls for AFI encodings for IPv4 and IPv6 addresses as
-      well as Distinguished-Name [I-D.farinacci-lisp-name-encoding] and
-      LCAF [RFC8060] address formats.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Farinacci                 Expires May 11, 2022                  [Page 5]
-
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
-
+      well as Distinguished-Name [I-D.ietf-lisp-name-encoding] and LCAF
+      [RFC8060] address formats.
 
 3.  Overview
 
@@ -291,6 +218,13 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
    1.   An xTR sends a Info-Request message to port 4342 to its
         configured Map-Servers so it can get a list of RTRs to be used
         for NAT-Traversal.
+
+
+
+Farinacci                 Expires 24 July 2023                  [Page 4]
+
+Internet-Draft           lispers.net Simple NAT             January 2023
+
 
    2.   The Map-Servers return an Info-Reply message with the list of
         RTRs.
@@ -327,22 +261,26 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
    10.  The xTR behind a NAT device only stores default map-cache
         entries with an RLOC-set that contain the list of RTRs the Map-
         Server supplied it with.  The xTR load-splits traffic across the
-        RTRs based on the 5-tuple hash algorithm detailed in
-        [I-D.ietf-lisp-rfc6830bis].
-
-
-
-
-Farinacci                 Expires May 11, 2022                  [Page 6]
-
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
-
+        RTRs based on the 5-tuple hash algorithm detailed in [RFC9300].
 
 4.  Protocol Messages
 
    The lispers.net implementation uses the Info-Request and Info-Reply
    messages from [I-D.ermagan-lisp-nat-traversal] as well as the NAT-
    Traversal LISP Canonical Address Format (LCAF) from [RFC8060].
+
+
+
+
+
+
+
+
+
+Farinacci                 Expires 24 July 2023                  [Page 5]
+
+Internet-Draft           lispers.net Simple NAT             January 2023
+
 
        0                   1                   2                     3
        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -366,33 +304,23 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
       |             AFI = 0           |   <Nothing Follows AFI=0>     |
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-                     LISP Info-Request Message Format
+   LISP Info-Request Message Format
 
    The lispers.net implementation will send an Info-Request message to
    each configured Map-Server.  The message is sent to UDP destination
-   port 4342 which is the control-plane port for LISP
-   [I-D.ietf-lisp-rfc6833bis] from a UDP ephemeral source port.  The
-   source address is its Private RLOC.  When the xTR is multi-homed to
-   more than one NAT device, it sends the Info-Request on all interfaces
-   facing NAT devices.
+   port 4342 which is the control-plane port for LISP [RFC9301] from a
+   UDP ephemeral source port.  The source address is its Private RLOC.
+   When the xTR is multi-homed to more than one NAT device, it sends the
+   Info-Request on all interfaces facing NAT devices.
 
    A randomized 64-bit nonce is selected for the message and no
    authentication is used.  The EID-prefix AFI is 17 according to the
-   encoding format in [I-D.farinacci-lisp-name-encoding] and the EID-
-   prefix is the hostname of the xTR encoded as a string null
-   terminated.
+   encoding format in [I-D.ietf-lisp-name-encoding] and the EID-prefix
+   is the hostname of the xTR encoded as a string null terminated.
 
    An Info-Request is sent out each outgoing interface, with the address
    of that interface as the Private RLOC, leading to a NAT device.  The
    port pair in the UDP message is the same for each outgoing interface.
-
-
-
-
-Farinacci                 Expires May 11, 2022                  [Page 7]
-
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
-
 
    When the xTR receives an Info-Reply message from the Map-Server in
    response to this control-plane Info-Request, it caches a list of RTRs
@@ -401,10 +329,20 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
    the RLOC-set for 4 default map-cache entries.  The map-cache entries
    have the following EID-prefixes:
 
+
+
+
+
+Farinacci                 Expires 24 July 2023                  [Page 6]
+
+Internet-Draft           lispers.net Simple NAT             January 2023
+
+
            IPv4 unicast:       0.0.0.0/0
            IPv4 multicast:    (0.0.0.0/0, 224.0.0.0/4)
            IPv6 unicast:       0::/0
            IPv6 multicast:    (0::/0, ff00::/8)
+
 
    Now that the xTR has a list of RTRs, it sends a data-plane Info-
    Request to each RTR to UDP destination port 4341 from a UDP ephemeral
@@ -412,46 +350,49 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
    just like the control-plane Info-Request was sent for the multi-homed
    NAT device case.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Farinacci                 Expires May 11, 2022                  [Page 8]
-
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
-
-
    When Map-Servers and RTRs return an Info-Reply message to xTRs behind
    NAT devices, the format of the Info-Reply message is the following:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci                 Expires 24 July 2023                  [Page 7]
+
+Internet-Draft           lispers.net Simple NAT             January 2023
+
 
        0                   1                   2                   3
        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -490,7 +431,7 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
    +->+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 
-                      LISP Info-Reply Message Format
+   LISP Info-Reply Message Format
 
    The information returned is the same information that was sent in the
    Info-Request message except the Info-Reply bit is set (the bit next
@@ -498,16 +439,16 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
 
    When a Map-Server returns the Info-Reply, the MS UDP Port Number and
    ETR UDP Port Number is set to 0.  All Address fields are empty by
-
-
-
-Farinacci                 Expires May 11, 2022                  [Page 9]
-
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
-
-
    using AFI equal to 0.  Except for the RTR RLOC address fields which
    the Map-Server is configured to return to xTRs behind NAT devices.
+
+
+
+
+Farinacci                 Expires 24 July 2023                  [Page 8]
+
+Internet-Draft           lispers.net Simple NAT             January 2023
+
 
    When an RTR returns the Info-Reply, the MS UDP Port Number is set to
    0 and the ETR UDP Port Number is set to the UDP source port the RTR
@@ -519,19 +460,19 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
 
    EID-prefixes registered by an xTR behind a NAT include all the global
    RLOCs and RTR RLOCs it learns.  The xTR can use the unicast priority
-   to control ingress packet flow as described in
-   [I-D.ietf-lisp-rfc6833bis].  The RTR RLOCs must be registered with a
-   unicast priority of 254 so the Map-Server can identify xTR global
-   RLOCs from RTR RLOCs when proxy Map-Replying.
+   to control ingress packet flow as described in [RFC9301].  The RTR
+   RLOCs must be registered with a unicast priority of 254 so the Map-
+   Server can identify xTR global RLOCs from RTR RLOCs when proxy Map-
+   Replying.
 
    The Global RLOCs are encoded in a RLOC-record using the AFI-List LCAF
    encoding [RFC8060].  There are two AFI encoded addresses in the list,
    one being AFI=1 which encodes the IPv4 translated NAT address and
    other being the Distinguished-Name AFI=17
-   [I-D.farinacci-lisp-name-encoding] which encodes the hostname of the
-   xTR.  When the xTR is multi-homed, the hostname is appended by a
-   unique interface name.  For example, for an xTR behind a NAT that has
-   two interfaces facing the same or two different NAT devices, the
+   [I-D.ietf-lisp-name-encoding] which encodes the hostname of the xTR.
+   When the xTR is multi-homed, the hostname is appended by a unique
+   interface name.  For example, for an xTR behind a NAT that has two
+   interfaces facing the same or two different NAT devices, the
    Distinguished-Name for each RLOC-record could be "dino-xtr-eth0" and
    "dino-xtr-eth1" for an xTR configured to be named "dino-xtr".
 
@@ -557,9 +498,12 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
 
 
 
-Farinacci                 Expires May 11, 2022                 [Page 10]
+
+
+
+Farinacci                 Expires 24 July 2023                  [Page 9]
 
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
+Internet-Draft           lispers.net Simple NAT             January 2023
 
 
 6.  Packet Flow from ITR-behind-NAT to RTR
@@ -613,9 +557,9 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
 
 
 
-Farinacci                 Expires May 11, 2022                 [Page 11]
+Farinacci                 Expires 24 July 2023                 [Page 10]
 
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
+Internet-Draft           lispers.net Simple NAT             January 2023
 
 
    The RTR can test reachability for xTRs behind NATs by encapsulating
@@ -623,114 +567,137 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
    to 4341 and the UDP destination port is set to the Translated Port.
    The outer header destination address is the Global RLOC for the xTR.
 
+9.  Decentralized NAT
+
+   A decentralized version of this design is also supported in the
+   lispers.net implementation.  See [DECENT-NAT] for an overview.  The
+   design allows direct encapsulation from an ITR to an ETR when they
+   both reside behind NAT devices.  Packets do not have to take a sub-
+   optimal path through the RTR.  The RTR does play a role in informing
+   the ETRs about their translated address and port number just as it
+   does for the centralized version.  Here are some details of the
+   design:
+
+   *  Like the centralized version, each ETR registers its global RLOC
+      address by sending a Map-Register message using an RLOC-Record
+      name of its hostname.  In addition, for Decentralized-NAT, the
+      translated port number is part of the RLOC-Record name, for
+      example "dino-macbook@tp-34265".
+
+   *  When an ITR sends a Map-Request, it sets the Decent-NAT bit so the
+      Map-Server returns the entire RLOC-set so the ITR can encapsulate
+      directly to the ETR or through the RTR for cases the ETR goes path
+      unreachable.  The Map-Request N-bit below is used for Decent-NAT:
+
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |Type=1 |A|M|P|S|p|s|m|I|  Rsvd |N|L|D|   IRC   | Record Count  |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   *  When the ITR receives a proxy Map-Reply from the Map-Server, it
+      stores the entire RLOC-set in a map-cache entry.  From the RLOC-
+      record, the global translated address and the translated port
+      number from the RLOC-record name is stored and used for
+      encapsulation.
+
+   *  The ITR will next send a NAT probe Info-Request to the global
+      translated RLOC and translated port for the remote xTR using UDP
+      source port 4341 opening up the NAT to allow packets to be
+      received through the local NAT.
+
+   *  The ITR encapsulates packets with a private source address and UDP
+      source port 4341 to a global destination address with a UDP
+      destination translated port.
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Farinacci                 Expires May 11, 2022                 [Page 12]
+Farinacci                 Expires 24 July 2023                 [Page 11]
 
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
+Internet-Draft           lispers.net Simple NAT             January 2023
 
 
-9.  Design Observations
+   *  At this point if the ITR encapsulates packets to the ETR that it
+      cannot receive.  The ETR will not receive packets because it has
+      not opened up its NAT.  It can only do this when it decides to
+      encapsulate packets back.  If bidirectional traffic begins by an
+      initiating application client which causes a response packet from
+      the application server, the response packet can not be sent
+      because the remote side has not opened up its NAT to receive the
+      client packet.  To solve this circular dependency problem, the ITR
+      will send a few packets to the RTR that can get through the NAT to
+      the ETR.  Then response packets can now be returned using the same
+      process as described above.
+
+   *  At this point, when both xTRs have map-cache entries and have sent
+      NAT Info-Request probes, packets can flow in both directions
+      directly from local ITR to remote ETR and from remote-ITR to
+      local-ETR.  This increases packet delivery performance since there
+      is no packet hair-pinning.
+
+   *  Both sides can RLOC-probe directly to obtain reachability status
+      and underlay telemetry statistics.
+
+   Your feature mileage may vary depending on the type of NAT or
+   firewall deployed.  There is an assumption that the translated port
+   for an xTR that sends to the RTR is the same translated port used for
+   other destinations.
+
+10.  Design Observations
 
    The following benefits and observations can be attributed to this
    design:
 
-   o  An ITR behind a NAT virtually runs no control-plane and a very
+   *  An ITR behind a NAT virtually runs no control-plane and a very
       simple data-plane.  All it does is RLOC-probe the RTRs in the
       common RLOC-set for each default map-cache entry.  And maintains a
       very small map-cache of 4 entries per instance-ID it supports.
 
-   o  An xTR behind a NAT can tell if another xTR is behind the same set
+   *  An xTR behind a NAT can tell if another xTR is behind the same set
       of NAT devices and use Private RLOCs to reach each other on a
       short-cut path.  It does this by comparing the Global RLOC
       returned from RTRs in Info-Reply messages.
 
-   o  An xTR behind a NAT is free to send a Map-Request to the mapping
+   *  An xTR behind a NAT is free to send a Map-Request to the mapping
       system for any EID to test to see if there is a direct path to the
       LISP site versus potentially using a sub-optimal path through an
       RTR.  This happens when xTRs exist that are not behind NAT devices
       where their RLOCs are global RLOCs.
 
-   o  By sending Info-Requests to Map-Servers, an xTR behind a NAT can
+
+
+
+
+Farinacci                 Expires 24 July 2023                 [Page 12]
+
+Internet-Draft           lispers.net Simple NAT             January 2023
+
+
+   *  By sending Info-Requests to Map-Servers, an xTR behind a NAT can
       tell if they are reachable and if those Map-Servers also act as
       Map-Resolvers, the xTR behind the NAT can avoid sending Map-
       Requests to unreachable Map-Resolvers.
 
-   o  Enhanced data-plane security can be used via LISP-Crypto
+   *  Enhanced data-plane security can be used via LISP-Crypto
       mechanisms detailed in [RFC8061] using this NAT-Traversal design
       so both unicast and multicast traffic are encrypted.
 
-   o  This design allows for the minimum amount of NAT device state
+   *  This design allows for the minimum amount of NAT device state
       since only RTRs are encapsulating to ETRs behind NAT devices.
       Therefore, the number of ITRs sending packets to EIDs behind NAT
       devices is aggregated out for scale.  Scale is also achieved when
       xTRs behind NATs roam and RLOC-set changes need to update only RTR
       map-caches.
 
-   o  The protocol procedures in this document can be used when a LISP
+   *  The protocol procedures in this document can be used when a LISP
       site has multiple xTRs each connected via separate NAT devices to
       the public network.  Each xTR registers their Global RLOCs and
       RTRs with merge semantics to the mapping system so remote ITRs can
       load-split traffic across a merged RTR set as well as RTRs across
       each xTR behind different NAT devices.
 
-
-
-
-
-
-
-
-Farinacci                 Expires May 11, 2022                 [Page 13]
-
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
-
-
-10.  Security Considerations
+11.  Security Considerations
 
    There are no security considerations at this time.
 
@@ -744,47 +711,44 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
    RTRs that can change as the xTR behind a NAT roams to other parts of
    the network and desire shorter paths to RTRs.
 
-11.  IANA Considerations
+12.  IANA Considerations
 
    The code-point values in this specification are already allocated in
    [AFI] or [RFC8060].
 
-12.  Normative References
+13.  Normative References
 
    [AFI]      "Address Family Identifier (AFIs)", ADDRESS FAMILY
-              NUMBERS http://www.iana.org/numbers.html, Febuary 2007.
+              NUMBERS http://www.iana.org/numbers.html, February 2007.
+
+
+
+
+
+Farinacci                 Expires 24 July 2023                 [Page 13]
+
+Internet-Draft           lispers.net Simple NAT             January 2023
+
+
+   [DECENT-NAT]
+              "Decentralized-NAT", Decentralized-NAT Slide: 
+              https://github.com/farinacci/lispers.net/blob/master/docs/
+              lisp-decent-nat.pdf, January 2023.
 
    [I-D.ermagan-lisp-nat-traversal]
-              Ermagan, V., Farinacci, D., Lewis, D., Maino, F., Comeras,
-              M. P., Skriver, J., White, C., Lopez, A., and A. Cabellos,
-              "NAT traversal for LISP", draft-ermagan-lisp-nat-
-              traversal-19 (work in progress), May 2021.
+              Ermagan, V., Farinacci, D., Lewis, D., Maino, F.,
+              Portoles-Comeras, M., Skriver, J., White, C., Brescó, A.
+              L., and A. Cabellos-Aparicio, "NAT traversal for LISP",
+              Work in Progress, Internet-Draft, draft-ermagan-lisp-nat-
+              traversal-19, 7 May 2021,
+              <https://www.ietf.org/archive/id/draft-ermagan-lisp-nat-
+              traversal-19.txt>.
 
-   [I-D.farinacci-lisp-name-encoding]
-              Farinacci, D., "LISP Distinguished Name Encoding", draft-
-              farinacci-lisp-name-encoding-12 (work in progress), May
-              2021.
-
-   [I-D.ietf-lisp-rfc6830bis]
-              Farinacci, D., Fuller, V., Meyer, D., Lewis, D., and A.
-              Cabellos, "The Locator/ID Separation Protocol (LISP)",
-              draft-ietf-lisp-rfc6830bis-36 (work in progress), November
-              2020.
-
-   [I-D.ietf-lisp-rfc6833bis]
-              Farinacci, D., Maino, F., Fuller, V., and A. Cabellos,
-              "Locator/ID Separation Protocol (LISP) Control-Plane",
-              draft-ietf-lisp-rfc6833bis-30 (work in progress), November
-              2020.
-
-
-
-
-
-Farinacci                 Expires May 11, 2022                 [Page 14]
-
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
-
+   [I-D.ietf-lisp-name-encoding]
+              Farinacci, D., "LISP Distinguished Name Encoding", Work in
+              Progress, Internet-Draft, draft-ietf-lisp-name-encoding-
+              00, 6 September 2022, <https://www.ietf.org/archive/id/
+              draft-ietf-lisp-name-encoding-00.txt>.
 
    [RFC1700]  Reynolds, J. and J. Postel, "Assigned Numbers", RFC 1700,
               DOI 10.17487/RFC1700, October 1994,
@@ -804,6 +768,24 @@ Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
               DOI 10.17487/RFC8061, February 2017,
               <https://www.rfc-editor.org/info/rfc8061>.
 
+   [RFC9300]  Farinacci, D., Fuller, V., Meyer, D., Lewis, D., and A.
+              Cabellos, Ed., "The Locator/ID Separation Protocol
+              (LISP)", RFC 9300, DOI 10.17487/RFC9300, October 2022,
+              <https://www.rfc-editor.org/info/rfc9300>.
+
+   [RFC9301]  Farinacci, D., Maino, F., Fuller, V., and A. Cabellos,
+              Ed., "Locator/ID Separation Protocol (LISP) Control
+              Plane", RFC 9301, DOI 10.17487/RFC9301, October 2022,
+              <https://www.rfc-editor.org/info/rfc9301>.
+
+
+
+
+Farinacci                 Expires 24 July 2023                 [Page 14]
+
+Internet-Draft           lispers.net Simple NAT             January 2023
+
+
 Appendix A.  Acknowledgments
 
    The author would like to thank the authors of the LISP NAT-Traversal
@@ -813,48 +795,65 @@ Appendix A.  Acknowledgments
 
 Appendix B.  Document Change Log
 
-B.1.  Changes to draft-farinacci-lisp-simple-nat-03
+B.1.  Changes to draft-farinacci-lisp-simple-nat-06
 
-   o  Posted November 2021.
+   *  Posted January 2023.
 
-   o  Update document timer.
+   *  Add section on how Decentralized-NAT works.
 
-B.2.  Changes to draft-farinacci-lisp-simple-nat-02
+   *  Update references for RFC9300 and RFC9301.
 
-   o  Posted May 2021.
+B.2.  Changes to draft-farinacci-lisp-simple-nat-05
 
-   o  Update document timer.
+   *  Posted September 2022.
 
-B.3.  Changes to draft-farinacci-lisp-simple-nat-01
+   *  Update draft-ietf-lisp-name-encdoing reference.
 
-   o  Posted November 2020.
+B.3.  Changes to draft-farinacci-lisp-simple-nat-04
 
-   o  Update document timer.
+   *  Posted May 2022.
+
+   *  Update document timer.
+
+B.4.  Changes to draft-farinacci-lisp-simple-nat-03
+
+   *  Posted November 2021.
+
+   *  Update document timer.
+
+B.5.  Changes to draft-farinacci-lisp-simple-nat-02
+
+   *  Posted May 2021.
+
+   *  Update document timer.
+
+B.6.  Changes to draft-farinacci-lisp-simple-nat-01
+
+   *  Posted November 2020.
+
+   *  Update document timer.
 
 
 
 
 
-
-
-Farinacci                 Expires May 11, 2022                 [Page 15]
+Farinacci                 Expires 24 July 2023                 [Page 15]
 
-Internet-Draft A Simple LISP NAT-Traversal Implementation  November 2021
+Internet-Draft           lispers.net Simple NAT             January 2023
 
 
-B.4.  Changes to draft-farinacci-lisp-simple-nat-00
+B.7.  Changes to draft-farinacci-lisp-simple-nat-00
 
-   o  Posted May 2020.
+   *  Posted May 2020.
 
-   o  Initial posting.
+   *  Initial posting.
 
 Author's Address
 
    Dino Farinacci
    lispers.net
    San Jose, CA
-   USA
-
+   United States of America
    Email: farinacci@gmail.com
 
 
@@ -893,4 +892,5 @@ Author's Address
 
 
 
-Farinacci                 Expires May 11, 2022                 [Page 16]
+
+Farinacci                 Expires 24 July 2023                 [Page 16]
