@@ -178,6 +178,7 @@ lisp_nonce_echo_list = {}
 #
 lisp_nat_traversal = False
 lisp_decent_nat = False
+LISP_TP = "@tp-"
 
 #
 # xTR configuration parameters. This flag is used to indicate that when a
@@ -13392,20 +13393,20 @@ class lisp_rloc(object):
     def is_decent_nat_port(self):
         rn = self.rloc_name
         if (rn == None): return(False)
-        if (rn.find("@tp-") == -1): return(False)
+        if (rn.find(LISP_TP) == -1): return(False)
         return(True)
     #enddef        
 
     def store_decent_nat_port(self):
         if (self.is_decent_nat_port() == False): return(False)
-        port = self.rloc_name.split("@tp-")[-1]
+        port = self.rloc_name.split(LISP_TP)[-1]
         self.translated_port = int(port)
         return(True)
     #enddef        
 
     def normalize_decent_nat_rloc_name(self):
         if (self.is_decent_nat_port() == False): return(self.rloc_name)
-        rn = self.rloc_name.split("@tp-")[0]
+        rn = self.rloc_name.split(LISP_TP)[0]
         return(rn)
     #enddef        
 
@@ -13549,7 +13550,7 @@ class lisp_rloc(object):
         self.translated_rloc.copy_address(rloc)
         self.translated_port = port
         if (lisp_i_am_rtr == False):
-            self.rloc_name += "@tp-{}".format(str(port))
+            self.rloc_name += LISP_TP + str(port)
         #endif
     #enddef
 
@@ -16377,7 +16378,7 @@ def lisp_process_info_reply(source, packet, store):
             interface = rloc_entry.interface
             rloc_name = rloc_entry.rloc_name
             if (rloc_entry.is_decent_nat_port()):
-                rloc_name = rloc_name.split("@tp-")[0]
+                rloc_name = rloc_name.split(LISP_TP)[0]
             #endif
 
             if (interface == None):            
@@ -17926,9 +17927,8 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
     # For decent-NAT cases, get the translated ephermal port from the
     # rloc-name. Use it to find RLOC-probe state.
     #
-    tp = "@tp-"
-    if (rloc_name.find(tp) != -1):
-        port = int(rloc_name.split(tp)[-1])
+    if (rloc_name.find(LISP_TP) != -1):
+        port = int(rloc_name.split(LISP_TP)[-1])
     #endif
     
     #

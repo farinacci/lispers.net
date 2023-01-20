@@ -1872,7 +1872,7 @@ def lisp_etr_nat_probe(ipc):
     # reply to it. The map-request only has the public RLOC address and not the
     # port needed to get through its NAT.
     #
-    hp = rloc_name.split("@tp-")
+    hp = rloc_name.split(lisp.LISP_TP)
     if (len(hp) != 2):
         lisp.lprint("Invalid NAT IPC rloc-name {}".format(hp))
         return
