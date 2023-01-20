@@ -18625,6 +18625,7 @@ def lisp_encap_rloc_probe(lisp_sockets, rloc, nat_info, packet):
     #
     # Start data encapsulation logic.
     #
+    packet_type = packet[0:1]
     packet = lisp_packet(ip + udp + packet)
 
     #
@@ -18643,9 +18644,12 @@ def lisp_encap_rloc_probe(lisp_sockets, rloc, nat_info, packet):
     rloc_str = red(rloc.print_address_no_iid(), False)
     if (nat_info): 
         hostname = " {}".format(blue(nat_info.hostname, False))
-        probe = bold("RLOC-probe request", False)
     else:
         hostname = ""
+    #endif
+    if (lisp_is_rloc_probe_request(packet_type)):
+        probe = bold("RLOC-probe request", False)
+    else:
         probe = bold("RLOC-probe reply", False)
     #endif
 
