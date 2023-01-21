@@ -90,6 +90,14 @@ and simply type:
 
 Modify your -v parameters to your liking or leave it off all together.
 
+For distribuing lispers.net docker images do:
+
+    > docker save -o lispers-net-<release>-ubuntu-docker-image lispers.net/ubuntu
+
+And for loading a docker image built using "docker save" do:
+
+    > sudo docker load -i lispers-net-<release>-ubuntu-docker-image
+
 -------------------------------------------------------------------------------
 
 Building LISP Application Releases
