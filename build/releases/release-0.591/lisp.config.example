@@ -1,0 +1,68 @@
+#
+# lispers.net lisp.config file, last changed: <sample>
+#
+# Hostname: <sample>
+#
+# (1) Only commands between the first pair of dotted lines will be processed. 
+#
+# (2) Any lines you find prepended with "#>>>" are errors found during command 
+#     processing.
+#
+# (3) You may comment out lines by placing a "#" in the first column of any 
+#     line between the section between the first pair of dotted lines.
+#
+# (4) Note the hostname and modification timestamp above are auto generated
+#     after you have saved this file and it has been processed.
+#
+# (5) Deleting configuration can be achieved by deleting lines and restarting
+#     the LISP component or by use of the LISP API.
+#
+# (6) The landing web page on any device provides detailed Command and API
+#     documentation. Just click on those buttons.
+#
+# (7) Any name references must follow their definitions. Examples are 
+#     elp-names and rle-names when referred to in static map-cache entries.
+#
+# DO NOT REMOVE THE LINES "#--- ... ---" and "#--- ... ---#".
+#
+# DO NOT email lisp.config files because mailers will insert \r\n rather
+# than keeping this file with \n only.    
+#
+#-----------------------------------------------------------------------------
+lisp enable {
+    itr = no
+    etr = no
+    rtr = no
+    map-server = no
+    map-resolver = no
+    ddt-node = no
+}
+lisp debug {
+    core = no
+    itr = no
+    etr = no
+    rtr = no
+    map-server = no
+    map-resolver = no
+    ddt-node = no
+}
+lisp user-account {
+    username = root
+    password =
+    super-user = yes
+}
+lisp xtr-parameters {
+    rloc-probing = no
+    data-plane-security = no
+    nat-traversal = no
+    decentralized-nat = no
+    nonce-echoing = no
+    checkpoint-map-cache = no
+    ipc-data-plane = no
+    decentralized-push-xtr = no
+    register-reachable-rtrs = no
+    frame-logging = no
+    flow-logging = no
+    data-plane-logging = no
+}
+#-----------------------------------------------------------------------------#
