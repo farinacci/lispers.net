@@ -228,7 +228,8 @@ def lisp_fix_rloc_encap_state_entry(mc, parms):
     for rloc_entry in mc.rloc_set:
         if (rloc_entry.rle):
             for rle_node in rloc_entry.rle.rle_nodes:
-                if (rle_node.rloc_name != hostname): continue
+                rn = rle_node.normalize_decent_nat_rle_name()
+                if (rn != hostname): continue
                 rle_node.store_translated_rloc(rloc, port)
                 old_addr = rle_node.address.print_address_no_iid() + ":" + \
                     str(rle_node.translated_port)
@@ -236,7 +237,8 @@ def lisp_fix_rloc_encap_state_entry(mc, parms):
             #endfor
         #endif
 
-        if (rloc_entry.rloc_name != hostname): continue
+        rn = rloc_entry.normalize_decent_nat_rloc_name()
+        if (rn != hostname): continue
 
         #
         # Update lisp-crypto encap array. Put keys in new dictionary array

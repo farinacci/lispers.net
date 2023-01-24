@@ -12978,6 +12978,11 @@ class lisp_rle_node(object):
             return(None, None)
         #endtry
     #enddef
+
+    def normalize_decent_nat_rle_name(self):
+        if (self.rloc_name == None): return(None)
+        return(self.rloc_name.split(LISP_TP)[0])
+    #enddef
 #endclass
 
 class lisp_rle(object):
