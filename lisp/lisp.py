@@ -9092,7 +9092,8 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
 
             if (log_set != []):
                 rloc_set = new_set
-                nat_str = "Decent-NAT" if (lisp_decent_nat) else "NAT-traversal"
+                nat_str = "NAT-decent" if (lisp_decent_nat) else \
+                    "NAT-traversal"
                 lprint("{} optimized RLOC-set: {}".format(nat_str, log_set))
             #endif
         #endif
@@ -9146,7 +9147,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
         # Add to map-cache. If this is a replace, save uptime.
         #
         uptime = mc.uptime if (mc) else None
-        if (mc == None):
+        if (mc == None or rloc_set_change):
             mc = lisp_mapping(eid_record.eid, eid_record.group, rloc_set)
             mc.mapping_source = source
 
@@ -17781,7 +17782,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 if (rloc.rloc_name != None):
                     astr += " (" + blue(rloc.rloc_name, False) + ")"
                 #endif
-                lprint("Send {}{} {}, last rtt: {}{}".format(probe, reach, 
+                lprint("Send {}{} to {}, last rtt: {}{}".format(probe, reach, 
                     astr, rtt, nh_str))
 
                 #
