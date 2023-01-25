@@ -1879,10 +1879,7 @@ def lisp_etr_nat_probe(ipc):
     #endif
 
     hostname, port = hp[0], int(hp[1])
-    if (lisp.lisp_store_nat_info(hostname, etr, port) == False):
-        lisp.lprint("Could not store NAT-info state for {}, {}".format(rloc,
-            rloc_name))
-    #endif
+    lisp.lisp_store_nat_info(hostname, etr, port)
 #enddef
 
 #
