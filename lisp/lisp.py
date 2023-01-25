@@ -17782,7 +17782,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 if (rloc.rloc_name != None):
                     astr += " (" + blue(rloc.rloc_name, False) + ")"
                 #endif
-                lprint("Send {}{} to {}, last rtt: {}{}".format(probe, reach, 
+                lprint("Send {} to{} {}, last rtt: {}{}".format(probe, reach, 
                     astr, rtt, nh_str))
 
                 #
