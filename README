@@ -24,18 +24,23 @@ And the implementation has been tested on these vendor platforms;
 
     Arista EOS (Linux Fedora), cisco IOS-XE guestshell (Linux CentOS)
 
+There is a detailed and comprehensive configuration command description
+of syntax and functionality in:
+
+    docs/lisp-config-commands.txt    
+
 The lispers.net implementation supports the following IETF LISP Working Group
 RFCs and Internet-Drafts:
 
 RFC 9299                               - An Architectural Introduction to the Locator/ID Separation Protocol (LISP)
 RFC 6830                               - The Locator/ID Separation Protocol (LISP)
 draft-ietf-lisp-rfc6830bis             - The Locator/ID Separation Protocol (LISP)
-RFC 9300                               - The Locator/ID Separation Protocol (LISP)
+RFC 9300                               - The Locator/ID Separation Protocol (LISP) Proposed Standard
 RFC 6831                               - The Locator/ID Separation Protocol (LISP) for Multicast Environments
 RFC 6832                               - Interworking between Locator/ID Separation Protocol (LISP) and Non-LISP Sites
 RFC 6833                               - Locator/ID Separation Protocol (LISP) Map-Server Interface
 draft-ietf-lisp-rfc6833bis             - Locator/ID Separation Protocol (LISP) Control-Plane
-RFC 9301                               - Locator/ID Separation Protocol (LISP) Control Plane
+RFC 9301                               - Locator/ID Separation Protocol (LISP) Control Plane Proposed Standard
 RFC 6835                               - The Locator/ID Separation Protocol Internet Groper (LIG)
 RFC 7954                               - Locator/ID Separation Protocol (LISP) Endpoint Identifier (EID) Block
 RFC 8060                               - LISP Canonical Address Format (LCAF)
