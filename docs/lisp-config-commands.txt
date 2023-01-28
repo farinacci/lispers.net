@@ -431,6 +431,8 @@ Command Description:
         When private addresses are in "rloc" clauses for the "lisp database-
         mapping" commands, they can be used by other xTRs behind the same
         NATs for local encapsulation (packets do not hair-pin through the RTR).
+        See informational RFC in docs/draft-farinacci-lisp-lispers-net-nat-00
+        for details.
 
     decentralized-nat
         Allows xTRs, which reside behind NAT devices, to encapsulate packets to
@@ -441,11 +443,12 @@ Command Description:
         "lisp enable" command clause. This command requires nat-traversal=yes
         to be use with it. Your mileage may vary with this feature depending
         how strict your NAT devices are. See docs/lisp-decent-nat.pdf for a
-        snap-shot description on how it works. Note a send-map-request
-        static map-cache entry must be configured for the EID range you
-        want to use. Otherwise, the default map-cache entry 0.0.0.0/0 will
-        be used which causes packets to be sent to the RTR. See example
-        in docs/lisp.config.xtr-nat.
+        snap-shot description on how it works. See informational RFC in
+        docs/draft-farinacci-lisp-lispers-net-nat-00 for details. Note a
+        send-map-request static map-cache entry must be configured for the
+        EID range you want to use. Otherwise, the default map-cache entry
+        0.0.0.0/0 will be used which causes packets to be sent to the RTR.
+        See example in docs/lisp.config.xtr-nat.
 
     checkpoint-map-cache
         Write map-cache entries to a checkpoint file periodically. And when
