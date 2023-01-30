@@ -4,8 +4,8 @@
 
 There are periodic releases built by support@lispers.net. When they are built
 the repo is tagged with the release name and the release tarball is put
-in this releases/ directory. Symlinks "stable" and "latest" are set so you
-can get the flavor of stability you prefer.        
+in this build/releases/ directory. Symlinks "stable" and "latest" are set so
+you can get the flavor of stability you prefer.        
 
 Users are informed about new releases by subscribing to beta@lispers.net.
 Send email to request to subscribe, and we will add you.
