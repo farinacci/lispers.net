@@ -1,0 +1,41 @@
+
+           How to Download and Install a lispers.net Release
+           -------------------------------------------------
+
+There are periodic releases built by support@lispers.net. When they are built
+the repo is tagged with the release name and the release tarball is put
+in this releases/ directory. Symlinks "stable" and "latest" are set so you
+can get the flavor of stability you prefer.        
+
+Users are informed about new releases by subscribing to beta@lispers.net.
+Send email to request to subscribe, and we will add you.
+
+The release is a single tarball file that you download and untar in your
+lispers.net directory. Use this command to untar the release:
+
+    tar zxvf <downloaded-url-file>
+    ./RESTART-LISP or ./RL
+
+Note make sure you set an RLOC interface when you call ./RESTART-LISP. For
+example on MacOS:
+
+    ./RESTART-LISP 8080 en0
+
+And for example inside of a docker container:
+
+    ./RESTART-LISP 8080 eth0
+
+You can build a wrapper script called RL (see lisp/RL-template to use as
+an example for you to copy and modify) so you can tailor it to your system's
+physical device interfaces.
+
+You can also use the following script which will download and install the
+new release:
+
+    python lisp-get-bits.pyo <url>
+    ./RESTART-LISP or ./RL
+
+Make sure there is no "?dl=0", which Dropbox adds, at the end of the URL
+before using the script.
+
+-------------------------------------------------------------------------------
