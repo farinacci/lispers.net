@@ -89,12 +89,14 @@ def cleanup(signum, frame):
 # requires it.
 #
 def get_local_ip(intf):
-    out = getoutput("ifconfig {} | egrep inet".format(intf))
-    if (out == ""):
-        print("Cannot find interface address for {}".format(intf))
-        return(None)
-    #endif
+    out = getoutput('sudo ifconfig {} | egrep "inet "'.format(intf))
+    if (out == "" or out.find("inet ") == -1): return(None)
     intf_addr = out.split()[1]
+
+    #
+    # In some OSes, second field is "addr:100.127.27.76".
+    #
+    intf_addr = intf_addr.split(":")[-1]
     return(intf_addr)
 #enddef    
 
@@ -180,7 +182,7 @@ if (getoutput(cat) == "1"):
 # Open socket and join group.
 #
 msocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-print("Joining group {} on {}...".format(group, intf), end=" ")
+print("Joining group {} on {} ...".format(group, intf), end=" ")
 if (join_socket(msocket, group, intf)):
     print("done")
 else:

@@ -294,7 +294,13 @@ if (map_cache == ""):
     exit(1)
 #endif    
 
-map_cache = json.loads(map_cache)
+try:
+    map_cache = json.loads(map_cache)
+except:
+    Print("Invalid JSON")
+    exit(1)
+#endtry
+    
 if (type(map_cache) != list):
     Print("Could not retrieve map-cache")
     exit(1)
@@ -406,7 +412,8 @@ for addr in rloc_cache:
         cmd = tr_command.format(address)
     #endif
 
-    Print("Run {} ...".format(bold(cmd))) 
+    rn = blue(rloc[RLOC_NAME])
+    Print("Run {} ({}) ...".format(bold(cmd), rn)) 
     
     out = getoutput(cmd)
 

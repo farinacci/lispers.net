@@ -294,65 +294,71 @@ if ( oOoooo0O0Oo == "" ) :
  exit ( 1 )
  if 34 - 34: Oo0Ooo
  if 89 - 89: Oo0Ooo * OoOoOO00 * I1Ii111 + iII111i - I11i
-oOoooo0O0Oo = json . loads ( oOoooo0O0Oo )
+try :
+ oOoooo0O0Oo = json . loads ( oOoooo0O0Oo )
+except :
+ o0o00OO0 ( "Invalid JSON" )
+ exit ( 1 )
+ if 8 - 8: o0oOOo0O0Ooo % O0 / I1IiiI - oO0o
+ if 43 - 43: i11iIiiIii + Oo0Ooo * II111iiii * I1Ii111 * O0
 if ( type ( oOoooo0O0Oo ) != list ) :
  o0o00OO0 ( "Could not retrieve map-cache" )
  exit ( 1 )
- if 8 - 8: o0oOOo0O0Ooo % O0 / I1IiiI - oO0o
+ if 64 - 64: OOooOOo % iIii1I11I1II1 * oO0o
 if ( oOoooo0O0Oo == [ ] ) :
  o0o00OO0 ( "No map-cache entries returned" )
  exit ( 1 )
- if 43 - 43: i11iIiiIii + Oo0Ooo * II111iiii * I1Ii111 * O0
+ if 79 - 79: O0
 if ( len ( oOoooo0O0Oo ) == 1 and "?" in oOoooo0O0Oo [ 0 ] ) :
  o0o00OO0 ( "Authentication failed while retrieving map-cache" )
  exit ( 1 )
- if 64 - 64: OOooOOo % iIii1I11I1II1 * oO0o
- if 79 - 79: O0
  if 78 - 78: I1ii11iIi11i + OOooOOo - I1Ii111
  if 38 - 38: o0oOOo0O0Ooo - oO0o + iIii1I11I1II1 / OoOoOO00 % Oo0Ooo
  if 57 - 57: OoO0O00 / ooOoO0o
-for Ii1I1Ii in oOoooo0O0Oo :
- OOoO0 = "[{}]" . format ( Ii1I1Ii [ "instance-id" ] )
- if ( "group-prefix" in Ii1I1Ii ) :
-  OOoO0 += "({}, {})" . format ( Ii1I1Ii [ "eid-prefix" ] , Ii1I1Ii [ "group-prefix" ] )
+ if 29 - 29: iIii1I11I1II1 + OoOoOO00 * OoO0O00 * OOooOOo . I1IiiI * I1IiiI
+ if 7 - 7: IiII * I1Ii111 % Ii1I - o0oOOo0O0Ooo
+for i1i in oOoooo0O0Oo :
+ oOOoo00O00o = "[{}]" . format ( i1i [ "instance-id" ] )
+ if ( "group-prefix" in i1i ) :
+  oOOoo00O00o += "({}, {})" . format ( i1i [ "eid-prefix" ] , i1i [ "group-prefix" ] )
  else :
-  OOoO0 += "{}" . format ( Ii1I1Ii [ "eid-prefix" ] )
-  if 86 - 86: oO0o * o0oOOo0O0Ooo % i1IIi . Ii1I . i11iIiiIii
-  if 56 - 56: I1ii11iIi11i % O0 - I1IiiI
- O00o0OO0 = { }
- for IIi1I1iiiii in Ii1I1Ii [ "rloc-set" ] :
-  o00oOOooOOo0o = IIi1I1iiiii [ "address" ]
-  if ( o0oOIIiIi1iI ( o00oOOooOOo0o ) == False ) : continue
-  if 66 - 66: iII111i - iII111i - i11iIiiIii . I1ii11iIi11i - OOooOOo
-  O00o0OO0 [ o00oOOooOOo0o ] = IIi1I1iiiii
-  if ( "multicast-rloc-set" in IIi1I1iiiii ) :
-   for oOOo0O00o in IIi1I1iiiii [ "multicast-rloc-set" ] :
-    I1I1I = oOOo0O00o [ "address" ] + "%" + o00oOOooOOo0o
-    O00o0OO0 [ I1I1I ] = oOOo0O00o
-    if 8 - 8: OoO0O00
-    if 49 - 49: I1IiiI - I11i
+  oOOoo00O00o += "{}" . format ( i1i [ "eid-prefix" ] )
+  if 98 - 98: OOooOOo + IiII + oO0o % OoooooooOO
+  if 97 - 97: O0 * OoooooooOO . OoooooooOO
+ I111iI = { }
+ for oOOo0 in i1i [ "rloc-set" ] :
+  II1I1iiIII = oOOo0 [ "address" ]
+  if ( o0oOIIiIi1iI ( II1I1iiIII ) == False ) : continue
+  if 77 - 77: OoOoOO00 - II111iiii - ooOoO0o
+  I111iI [ II1I1iiIII ] = oOOo0
+  if ( "multicast-rloc-set" in oOOo0 ) :
+   for IiiiIIiIi1 in oOOo0 [ "multicast-rloc-set" ] :
+    I1I1I = IiiiIIiIi1 [ "address" ] + "%" + II1I1iiIII
+    I111iI [ I1I1I ] = IiiiIIiIi1
     if 74 - 74: iIii1I11I1II1 * I1ii11iIi11i + OoOoOO00 / i1IIi / II111iiii . Oo0Ooo
     if 62 - 62: OoooooooOO * I1IiiI
- for o00oOOooOOo0o in O00o0OO0 :
-  IIi1I1iiiii = O00o0OO0 [ o00oOOooOOo0o ]
-  oOOOoo0O0oO = IIi1I1iiiii [ "rloc-name" ] if ( "rloc-name" in IIi1I1iiiii ) else "?"
-  if ( o0oOIIiIi1iI ( IIi1I1iiiii [ "address" ] ) == False ) : continue
-  if 6 - 6: OOooOOo * o0oOOo0O0Ooo + iII111i
-  if ( o00oOOooOOo0o not in o0o0oOOOo0oo ) :
-   I1IIIiIiI1 = [ ]
-   for Ii1I1I11iI in IIi1I1iiiii [ "recent-rloc-probe-rtts" ] : I1IIIiIiI1 . append ( float ( Ii1I1I11iI ) )
+    if 58 - 58: OoOoOO00 % o0oOOo0O0Ooo
+    if 50 - 50: I1Ii111 . o0oOOo0O0Ooo
+ for II1I1iiIII in I111iI :
+  oOOo0 = I111iI [ II1I1iiIII ]
+  ooO0OO = oOOo0 [ "rloc-name" ] if ( "rloc-name" in oOOo0 ) else "?"
+  if ( o0oOIIiIi1iI ( oOOo0 [ "address" ] ) == False ) : continue
+  if 54 - 54: IiII + Ii1I % OoO0O00 + OoooooooOO - O0 - o0oOOo0O0Ooo
+  if ( II1I1iiIII not in o0o0oOOOo0oo ) :
+   o0o0O0O00oOOo = [ ]
+   for iIIIiIi in oOOo0 [ "recent-rloc-probe-rtts" ] : o0o0O0O00oOOo . append ( float ( iIIIiIi ) )
    O0o0 = [ ]
-   for ooO in IIi1I1iiiii [ "recent-rloc-hop-counts" ] : O0o0 . append ( str ( ooO ) )
-   IiIi11iI = [ ]
-   for Oo0O00O000 in IIi1I1iiiii [ "recent-rloc-probe-latencies" ] :
-    IiIi11iI . append ( str ( Oo0O00O000 ) )
-    if 3 - 3: Ii1I * I1ii11iIi11i % I11i
-   o0o0oOOOo0oo [ o00oOOooOOo0o ] = [ oOOOoo0O0oO , None , [ ] , I1IIIiIiI1 , O0o0 , IiIi11iI , [ ] ]
-   if 59 - 59: oO0o - iII111i
-  o0o0oOOOo0oo [ o00oOOooOOo0o ] [ IiIiiI ] . append ( OOoO0 )
-  if 15 - 15: I1Ii111 . i11iIiiIii . OoooooooOO / OoO0O00 % Ii1I
-  if 93 - 93: O0 % i1IIi . OOooOOo / I1IiiI - I1Ii111 / I1IiiI
-  if 36 - 36: oO0o % oO0o % i1IIi / i1IIi - ooOoO0o
+   for OO0O0 in oOOo0 [ "recent-rloc-hop-counts" ] : O0o0 . append ( str ( OO0O0 ) )
+   I11I11 = [ ]
+   for o000O0O in oOOo0 [ "recent-rloc-probe-latencies" ] :
+    I11I11 . append ( str ( o000O0O ) )
+    if 18 - 18: iII111i - OOooOOo . I1Ii111 . iIii1I11I1II1
+   o0o0oOOOo0oo [ II1I1iiIII ] = [ ooO0OO , None , [ ] , o0o0O0O00oOOo , O0o0 , I11I11 , [ ] ]
+   if 2 - 2: OOooOOo . OoO0O00
+  o0o0oOOOo0oo [ II1I1iiIII ] [ IiIiiI ] . append ( oOOoo00O00o )
+  if 78 - 78: I11i * iIii1I11I1II1 . I1IiiI / o0oOOo0O0Ooo - OoooooooOO / I1Ii111
+  if 35 - 35: I11i % OOooOOo - oO0o
+  if 20 - 20: i1IIi - ooOoO0o
 o0o00OO0 ( "Found {} map-cache entries with {} distinct RLOC(s):" . format ( len ( oOoooo0O0Oo ) , len ( o0o0oOOOo0oo ) ) )
 if 30 - 30: I11i / I1IiiI
 if 35 - 35: II111iiii % OOooOOo . ooOoO0o + ooOoO0o % II111iiii % II111iiii
@@ -360,12 +366,12 @@ if 72 - 72: II111iiii + i1IIi + o0oOOo0O0Ooo
 if 94 - 94: oO0o . i1IIi - o0oOOo0O0Ooo % O0 - OoO0O00
 if 72 - 72: Ii1I
 for I1I1I in o0o0oOOOo0oo :
- IIi1I1iiiii = o0o0oOOOo0oo [ I1I1I ]
- oOOOoo0O0oO = IIiIiiIi ( IIi1I1iiiii [ o0oo0o0O00OO ] )
- I1IIIiIiI1 = IIi1I1iiiii [ i1iiI11I ]
- O0o0 = IIi1I1iiiii [ iiii ]
- IiIi11iI = IIi1I1iiiii [ oO0o0O0OOOoo0 ]
- II11Ii1iI1iII = IIi1I1iiiii [ IiIiiI ]
+ oOOo0 = o0o0oOOOo0oo [ I1I1I ]
+ ooO0OO = IIiIiiIi ( oOOo0 [ o0oo0o0O00OO ] )
+ o0o0O0O00oOOo = oOOo0 [ i1iiI11I ]
+ O0o0 = oOOo0 [ iiii ]
+ I11I11 = oOOo0 [ oO0o0O0OOOoo0 ]
+ II11Ii1iI1iII = oOOo0 [ IiIiiI ]
  if 73 - 73: OoooooooOO * OoooooooOO * ooOoO0o * OoOoOO00 + ooOoO0o * I1Ii111
  i1IiiiI1iI = I1I1I . split ( "%" )
  if ( len ( i1IiiiI1iI ) == 2 ) :
@@ -374,8 +380,8 @@ for I1I1I in o0o0oOOOo0oo :
   i1IiiiI1iI = iI1Iii ( I1I1I )
   if 88 - 88: I1ii11iIi11i
   if 11 - 11: ooOoO0o / OoOoOO00 - IiII * OoooooooOO + OoooooooOO . OoOoOO00
- o0o00OO0 ( "RLOC {} ({}), rtts(secs) {}, hops {}, latencies {}" . format ( i1IiiiI1iI , oOOOoo0O0oO ,
- I1IIIiIiI1 , O0o0 , IiIi11iI ) )
+ o0o00OO0 ( "RLOC {} ({}), rtts(secs) {}, hops {}, latencies {}" . format ( i1IiiiI1iI , ooO0OO ,
+ o0o0O0O00oOOo , O0o0 , I11I11 ) )
  o0o00OO0 ( "     EIDs: {}" . format ( II11Ii1iI1iII ) )
  if 26 - 26: Ii1I % I1ii11iIi11i
 o0o00OO0 ( "" )
@@ -385,15 +391,15 @@ if 19 - 19: I1IiiI
 if 25 - 25: Ii1I / ooOoO0o
 for I1I1I in o0o0oOOOo0oo :
  if ( IIi1 ( I1I1I ) ) :
-  IIi1I1iiiii [ o0oO ] = ""
-  IIi1I1iiiii [ I1i1iii ] = [ ]
+  oOOo0 [ o0oO ] = ""
+  oOOo0 [ I1i1iii ] = [ ]
   o0o00OO0 ( "Suppress traceroute to multicast RLOC {}" . format ( I1I1I ) )
   o0o00OO0 ( "" )
   continue
   if 31 - 31: OOooOOo . O0 % I1IiiI . o0oOOo0O0Ooo + IiII
   if 71 - 71: I1Ii111 . II111iiii
- o00oOOooOOo0o = I1I1I . split ( "%" )
- o00oOOooOOo0o = o00oOOooOOo0o [ 1 ] if ( len ( i1IiiiI1iI ) == 2 ) else o00oOOooOOo0o [ 0 ]
+ II1I1iiIII = I1I1I . split ( "%" )
+ II1I1iiIII = II1I1iiIII [ 1 ] if ( len ( i1IiiiI1iI ) == 2 ) else II1I1iiIII [ 0 ]
  if 62 - 62: OoooooooOO . I11i
  if 61 - 61: OoOoOO00 - OOooOOo - i1IIi
  if 25 - 25: O0 * I11i + I1ii11iIi11i . o0oOOo0O0Ooo . o0oOOo0O0Ooo
@@ -401,39 +407,40 @@ for I1I1I in o0o0oOOOo0oo :
  if 53 - 53: i1IIi
  o0OOOoO0 = os . path . exists ( "/cisco/guestshell" )
  if ( o0OOOoO0 ) :
-  o0OoOo00o0o = i1iiIII111ii . format ( o00oOOooOOo0o )
+  o0OoOo00o0o = i1iiIII111ii . format ( II1I1iiIII )
  else :
-  o0OoOo00o0o = i11IiIiiIIIII . format ( o00oOOooOOo0o )
+  o0OoOo00o0o = i11IiIiiIIIII . format ( II1I1iiIII )
   if 41 - 41: ooOoO0o % OoO0O00 - Oo0Ooo * I1Ii111 * Oo0Ooo
   if 69 - 69: OOooOOo - OoooooooOO + o0oOOo0O0Ooo - I11i
- o0o00OO0 ( "Run {} ..." . format ( iI1Iii ( o0OoOo00o0o ) ) )
+ ooO0OO = IIiIiiIi ( oOOo0 [ o0oo0o0O00OO ] )
+ o0o00OO0 ( "Run {} ({}) ..." . format ( iI1Iii ( o0OoOo00o0o ) , ooO0OO ) )
  if 23 - 23: i11iIiiIii
  II1iIi11 = getoutput ( o0OoOo00o0o )
  if 12 - 12: Ii1I + i11iIiiIii * iIii1I11I1II1 / I1ii11iIi11i . I11i
- IIi1I1iiiii = o0o0oOOOo0oo [ I1I1I ]
- IIi1I1iiiii [ o0oO ] = II1iIi11
- IIi1I1iiiii [ I1i1iii ] = IIIIii ( IIi1I1iiiii [ o0oO ] , o0OOOoO0 )
+ oOOo0 = o0o0oOOOo0oo [ I1I1I ]
+ oOOo0 [ o0oO ] = II1iIi11
+ oOOo0 [ I1i1iii ] = IIIIii ( oOOo0 [ o0oO ] , o0OOOoO0 )
  if ( O0ooOooooO ) : Iii1iI = "-"
  if 29 - 29: I1IiiI % OOooOOo - I1IiiI / OOooOOo . i1IIi
- for ooO in IIi1I1iiiii [ I1i1iii ] :
-  i11III1111iIi = str ( IIi1I1iiiii [ I1i1iii ] . index ( ooO ) + 1 ) . rjust ( 2 )
-  if ( ooO [ 0 ] == "?" ) :
-   ooO [ 0 ] = ooO [ 1 ] = Iii1iI = "?"
+ for OO0O0 in oOOo0 [ I1i1iii ] :
+  i11III1111iIi = str ( oOOo0 [ I1i1iii ] . index ( OO0O0 ) + 1 ) . rjust ( 2 )
+  if ( OO0O0 [ 0 ] == "?" ) :
+   OO0O0 [ 0 ] = OO0O0 [ 1 ] = Iii1iI = "?"
    if 38 - 38: iII111i + I11i / I1Ii111 % ooOoO0o - I1ii11iIi11i
   if ( O0ooOooooO == False ) :
-   try : Iii1iI = socket . gethostbyaddr ( ooO [ 0 ] ) [ 0 ]
+   try : Iii1iI = socket . gethostbyaddr ( OO0O0 [ 0 ] ) [ 0 ]
    except : Iii1iI = "?"
    if 14 - 14: oO0o / I1Ii111
    if 85 - 85: I11i
-  iI1i11II1i = "" if ( ooO != IIi1I1iiiii [ I1i1iii ] [ - 1 ] ) else iI1Iii ( OOooOoooOoOo ( "!" ) ) if ( ooO [ 0 ] == o00oOOooOOo0o ) else iI1Iii ( oooo0O0 ( "X" ) )
+  iI1i11II1i = "" if ( OO0O0 != oOOo0 [ I1i1iii ] [ - 1 ] ) else iI1Iii ( OOooOoooOoOo ( "!" ) ) if ( OO0O0 [ 0 ] == II1I1iiIII ) else iI1Iii ( oooo0O0 ( "X" ) )
   if 96 - 96: I1Ii111
   if 97 - 97: ooOoO0o
-  if ( ooO [ 0 ] == "*" ) :
+  if ( OO0O0 [ 0 ] == "*" ) :
    o0o00OO0 ( "{}  * {}" . format ( i11III1111iIi , iI1i11II1i ) )
    continue
    if 48 - 48: i1IIi - I1Ii111
    if 56 - 56: o0oOOo0O0Ooo + II111iiii + OoOoOO00 - ooOoO0o . OoOoOO00
-  o0o00OO0 ( "{}  {} ({}), rtt {} ms {}" . format ( i11III1111iIi , ooO [ 0 ] , Iii1iI , ooO [ 1 ] ,
+  o0o00OO0 ( "{}  {} ({}), rtt {} ms {}" . format ( i11III1111iIi , OO0O0 [ 0 ] , Iii1iI , OO0O0 [ 1 ] ,
  iI1i11II1i ) )
   if 84 - 84: OoO0O00 + i1IIi - II111iiii . I1ii11iIi11i * OoooooooOO + I1IiiI
  o0o00OO0 ( "" )
