@@ -4246,6 +4246,8 @@ def lisp_interface_command(kv_pair):
     if (instance_id != None): 
         if (instance_id.isdigit() == False): instance_id = "0"
         interface.instance_id = int(instance_id)
+    else:
+        interface.instance_id = 0
     #endif
     if (dynamic_eid != None): 
         interface.dynamic_eid.store_prefix(dynamic_eid)
