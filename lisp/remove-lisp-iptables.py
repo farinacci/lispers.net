@@ -104,7 +104,7 @@ for arp in arps:
 # Check if there are dynamic-EID prefixes configured. If so, remove the
 # configured prefixes as well as all learned more-specifics.
 #
-grep = "pcregrep -M 'eid-prefix = .*\n.*dynamic-eid = yes' lisp.config"
+grep = "egrep 'eid-prefix = .*\n.*dynamic-eid = yes' lisp.config"
 grep = getoutput(grep)
 if (grep == ""): exit(0)
 if (grep[0] in ["<", ">", "#"]): exit(0)
