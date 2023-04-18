@@ -5874,7 +5874,7 @@ class lisp_rloc_record(object):
             #
             # Process RLE LCAF.
             #
-            rle = lisp_rle(None)
+            rle = lisp_rle("")
             rle.rle_nodes = []
             while (lcaf_len > 0):
                 x, y, level, afi = struct.unpack("HBBH", packet[:6])
@@ -12979,11 +12979,6 @@ class lisp_rle_node(object):
             return(None, None)
         #endtry
     #enddef
-
-    def normalize_decent_nat_rle_name(self):
-        if (self.rloc_name == None): return(None)
-        return(self.rloc_name.split(LISP_TP)[0])
-    #enddef
 #endclass
 
 class lisp_rle(object):
@@ -13506,7 +13501,7 @@ class lisp_rloc(object):
         if (self.rle):
             for rle_node in self.rle.rle_nodes:
                 rloc_name = rle_node.rloc_name
-                rn = rle_node.normalize_decent_nat_rloc_name()
+                rn = self.normalize_decent_nat_rloc_name()
                 nat_info = lisp_get_nat_info(rle_node.address, rn)
                 if (nat_info == None): continue
 

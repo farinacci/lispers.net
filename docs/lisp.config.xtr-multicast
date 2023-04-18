@@ -82,11 +82,17 @@ lisp group-mapping {
     group-name = ipv4-multicast
     group-prefix = 224.0.0.0/4
     instance-id = <0 - 4294967295>
+    sources {
+        address = 0.0.0.0
+    }
 }
 lisp group-mapping {
     group-name = ipv6-multicast
     group-prefix = ff00::/8
     instance-id = <0 - 4294967295>
+    sources {
+        address = 0::0
+    }
 }
 
 #-----------------------------------------------------------------------------#
