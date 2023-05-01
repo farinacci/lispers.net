@@ -13501,8 +13501,7 @@ class lisp_rloc(object):
         if (self.rle):
             for rle_node in self.rle.rle_nodes:
                 rloc_name = rle_node.rloc_name
-                rn = self.normalize_decent_nat_rloc_name()
-                nat_info = lisp_get_nat_info(rle_node.address, rn)
+                nat_info = lisp_get_nat_info(rle_node.address, rloc_name)
                 if (nat_info == None): continue
 
                 port = nat_info.port
@@ -14556,7 +14555,9 @@ class lisp_site_eid(object):
 
         #
         # Remove duplicate RLOC addresses if multiple ETRs registered with
-        # the same RTR-set.
+        # the same RTR-set. Two RLOCs with same IP address can be separate
+        # entries if they have different registered RLOC-names (when they
+        # are both behind the same NAT).
         #
         new_list = []
         for rloc_entry in self.registered_rlocs:
@@ -14566,7 +14567,9 @@ class lisp_site_eid(object):
             #endif
             for re in new_list:
                 if (re.rloc.is_null()): continue
-                if (rloc_entry.rloc.is_exact_match(re.rloc)): break
+                if (rloc_entry.rloc.is_exact_match(re.rloc)):
+                    if (rloc_entry.rloc_name == re.rloc_name): break
+                #endif
             #endfor
             if (re == new_list[-1]): new_list.append(rloc_entry)
         #endfor
@@ -14588,7 +14591,8 @@ class lisp_site_eid(object):
         for rloc_entry in self.registered_rlocs:
             if (rloc_entry.rle == None): continue
             for rle_node in rloc_entry.rle.rle_nodes:
-                addr = rle_node.address.print_address_no_iid()
+                addr = rle_node.address.print_address_no_iid() + \
+                    rle_node.rloc_name
                 old_rle[addr] = rle_node.address
             #endfor
             break
@@ -14632,7 +14636,7 @@ class lisp_site_eid(object):
 
             rloc_name = site_eid.registered_rlocs[0].rloc_name
             for irle_node in irle.rle_nodes:
-                addr = irle_node.address.print_address_no_iid()
+                addr = irle_node.address.print_address_no_iid() + rloc_name
                 if (addr in new_rle): break
 
                 rle_node = lisp_rle_node()

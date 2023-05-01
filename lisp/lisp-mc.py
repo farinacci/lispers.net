@@ -219,7 +219,24 @@ for mc in map_cache:
             state = rr["state"]
             state = green(state) if state == "up-state" else red(state)
 
-            rloc = "  {} {}, state {} since {}".format(rlocrle, red(rloc),
+            #
+            # For RLE strings, print RLOCs in red but hostnames in blue.
+            #
+            if (rlocrle == "RLE"):
+                rloc_str = ""
+                rles = rloc.split(",")
+                for rle in rles:
+                    parms = rle.split("(")
+                    rloc_str += red(parms[0])
+                    name = parms[1].replace(")", "")
+                    rloc_str += "(" + blue(name) + "), "
+                #endfor
+                rloc_str = rloc_str[0:-2]
+            else:
+                rloc_str = red(rloc)
+            #endif
+
+            rloc = "  {} {}, state {} since {}".format(rlocrle, rloc_str,
                 state, rr["uptime"])
             if ("encap-crypto" in rr):
                 rloc += ", {}".format(rr["encap-crypto"])
