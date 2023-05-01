@@ -49,18 +49,31 @@ if ($EID == "240.x.x.x") then
     exit
 endif
 
+#
+# To get multicast source address selection to work for multicast packets on
+# MacOS we need to add the EID on en0 and then add the multicast route. Then
+# move the EID to lo0 so the EID routes are set for unicast.
+#
 if (`uname` == "Darwin") then
     set DEVICE = "en0"
     set PATH = "~/lispers.net"
+
+    sudo ifconfig lo0 $EID/32 -alias
+    sudo ifconfig en0 $EID/32 -alias
+    sudo route delete 224.0.0.0/8 > /dev/null
+    sudo route delete 240.0.0.0/8 > /dev/null
+
+    sudo ifconfig en0 $EID/32 alias
+    sudo route add 224.0.0.0/8 $EID > /dev/null
+    sudo ifconfig en0 $EID/32 -alias
+
     sudo ifconfig lo0 $EID/32 alias
     sudo ifconfig lo0 mtu 1400
-    sudo route delete 240.0.0.0/8 > /dev/null
     sudo route add 240.0.0.0/8 $EID > /dev/null
-    sudo route delete 224.0.0.0/8 > /dev/null
-    sudo route add 224.0.0.0/8 $EID > /dev/null
 else    
     set DEVICE = "eth0"
     set PATH = "/lispers.net"
+
     sudo ip addr add $EID/32 dev lo >& /dev/null
     sudo ifconfig lo mtu 1400
     sudo ip route delete 240.0.0.0/8 > /dev/null
