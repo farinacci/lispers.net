@@ -9537,11 +9537,10 @@ def lisp_send_multicast_map_notify(lisp_sockets, site_eid, eid_list, xtr):
 
     #
     # Determine if there are any RTRs in the RLOC-set for this (S,G).
+    # If RTRs exist in the RLOC-set, they need to be informed of RLOC-set
+    # changes as group membership changes.
     #
     rtrs_exist = site_eid.rtrs_in_rloc_set()
-    if (rtrs_exist): 
-        if (site_eid.is_rtr_in_rloc_set(xtr)): rtrs_exist = False
-    #endif
 
     #
     # Build EID-record.
@@ -9566,8 +9565,18 @@ def lisp_send_multicast_map_notify(lisp_sockets, site_eid, eid_list, xtr):
     #
     # Build locator-set with only RTR RLOCs if they exist.
     #
+    rtr_list = []
     for rloc_entry in site_eid.registered_rlocs: 
-        if (rtrs_exist ^ rloc_entry.is_rtr()): continue
+        if (rtrs_exist):
+            if (rloc_entry.is_rtr()):
+                rtr_list.append(rloc_entry.rloc)
+                continue
+            #endif
+        #endif
+
+        #
+        # Build RLOC record with xTR membership.
+        #
         rloc_record = lisp_rloc_record()
         rloc_record.store_rloc_entry(rloc_entry)
         rloc_record.local_bit = True
@@ -9586,7 +9595,13 @@ def lisp_send_multicast_map_notify(lisp_sockets, site_eid, eid_list, xtr):
     #
     # Send Map-Notify to xTR.
     #
-    lisp_send_map_notify(lisp_sockets, packet, xtr, LISP_CTRL_PORT)
+    if (rtr_list != []):
+        for rtr in rtr_list:
+            lisp_send_map_notify(lisp_sockets, packet, rtr, LISP_CTRL_PORT)
+        #endfor
+    else:
+        lisp_send_map_notify(lisp_sockets, packet, xtr, LISP_CTRL_PORT)
+    #endif
 
     #
     # Set retransmit timer.
@@ -9682,8 +9697,7 @@ def lisp_queue_multicast_map_notify(lisp_sockets, rle_list):
         # Send multicast Map-Notify to either ITR-list or RTR-list.
         #
         for xtr in notify:
-            lprint("Build Map-Notify to {}TR {} for {}".format("R" if \
-                found_rtrs else "x", red(xtr.print_address_no_iid(), False), 
+            lprint("Build Map-Notify for {}".format(
                 green(sg_site_eid.print_eid_tuple(), False)))
             
             el = [sg_site_eid.print_eid_tuple()]
@@ -10605,10 +10619,12 @@ def lisp_process_multicast_map_notify(packet, source):
         # Get or create map-cache entry for (S,G).
         #
         mc = lisp_map_cache_lookup(eid_record.eid, eid_record.group)
-        if (mc == None):
-            allow, x, y = lisp_allow_gleaning(eid_record.eid, eid_record.group,
-                None)
-            if (allow == False): continue
+        if (mc == None or mc.action == LISP_SEND_PUBSUB_ACTION):
+            if (mc == None):
+                allow, x, y = lisp_allow_gleaning(eid_record.eid,
+                    eid_record.group, None)
+                if (allow == False): continue
+            #endif
 
             mc = lisp_mapping(eid_record.eid, eid_record.group, [])
             mc.add_cache()
