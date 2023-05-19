@@ -272,6 +272,7 @@ else:
 os.system('cd ./{}; echo "{}" > lisp-version.txt'.format(dir, version))
 os.system('cd ./{}; echo "{}" > lisp-build-date.txt'.format(dir, build_date))
 os.system('cp ../docs/lisp.config.example ./{}/.'.format(dir))
+os.system('cp ../docs/lisp-config-commands.txt ./{}/.'.format(dir))
 os.system('cp ../docs/how-to-install*.txt ./{}/.'.format(dir))
 
 #
@@ -281,9 +282,9 @@ os.system('cp ../docs/how-to-install*.txt ./{}/.'.format(dir))
 tar_file = "lispers.net-" + cpu + "-release-" + version + ".tgz"
 print("Build tgz file {} ... ".format(tar_file), end=" ")
 files = "*.pyo " if pycache == None else "*.pyc "
-files += "*.txt lisp.config.example lisp-cert.pem.default *-LISP " + \
-    "RL-* pslisp lig rig ltr mc log-packets lispers.net-geo.html {}".format( \
-    lisp_xtr)
+files += "*.txt lisp.config.example lisp-config-commands.txt " + \
+    "lisp-cert.pem.default *-LISP RL-* pslisp lig rig ltr mc log-packets " + \
+    "lispers.net-geo.html {}".format(lisp_xtr)
 command = "cd {}; export COPYFILE_DISABLE=true; tar czf {} {}".format(dir,
     tar_file, files)
 status = os.system(command)

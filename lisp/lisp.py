@@ -623,7 +623,7 @@ def lisp_is_centos():
 # Return True if this system is running Debian Jessie.
 #
 def lisp_is_debian():
-    return(distro.linux_distribution()[0] == "debian")
+    return(platform.linux_distribution()[0] == "debian")
 #enddef
 
 #

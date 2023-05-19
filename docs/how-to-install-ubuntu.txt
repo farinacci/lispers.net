@@ -1,0 +1,54 @@
+
+       How to Install a lispers.net Release on Ubuntu (on AWS)
+       -------------------------------------------------------
+
+#
+# Get popular use tools.
+#
+sudo apt-get update
+sudo apt-get install -y \
+    gcc libc-dev python2 python2-dev golang libffi-dev openssl libpcap-dev \
+    iptables iproute2 tcpdump tcsh sudo traceroute iputils-ping \
+    net-tools procps emacs vim jq python-pip
+
+#
+# After python2 install symlink to point 'python' to 'python2'.
+#
+cd /usr/bin
+sudo ln -sf python2 python        
+
+#
+# Get lispers.net tarball and put it in its own directory.
+#
+mkdir lispers.net
+cd lispers.net
+wget <tarball-url>
+tar zxvf lispers.net-x86-release-0.<version>.tgz
+
+#
+# Load lispers.net library dependencies.
+#
+python -m pip install cheroot bottle netifaces pcapy pcappy pyOpenSSL \
+    pycrypto requests curve25519-donna geopy ecdsa pycryptodome pytun \
+    future distro
+    
+#
+# Test if install successful.
+#
+python lispers.net-test-install.pyo
+
+#
+# Configure lisp.config and point copy your own custom RL by copying
+# RL-template
+#
+cp RL-template RL
+chmod 755 RL
+<modify RL file>
+<modify lisp.config file>
+
+#
+# Start lispers.net LISP subsystem.
+#
+./RL    
+
+-------------------------------------------------------------------------------
