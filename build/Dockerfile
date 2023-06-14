@@ -73,7 +73,7 @@ RUN cd /lispers.net; cat `basename $LISP_TGZ` | gzip -dc | tar -xf -
 #
 RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py && \
     python2 get-pip.py
-RUN python2 -m pip install cheroot bottle netifaces pcapy pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome pytun future distro
+RUN python2 -m pip install cheroot bottle netifaces pcapy pcappy pycrypto requests curve25519-donna geopy ecdsa pycryptodome pytun future distro
     
 #
 # Install python3 modules the lispers.net directory depends on.
