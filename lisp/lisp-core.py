@@ -338,7 +338,7 @@ def lisp_show_api_doc():
 #
 @bottle.route('/lisp/show/command-doc', method="get")
 def lisp_show_comamnd_doc():
-    return(bottle.static_file("lisp.config.example", root="./", 
+    return(bottle.static_file("lisp-config-commands.txt", root="./", 
         mimetype="text/plain"))
 #enddef
 
