@@ -23,8 +23,8 @@
 #        python -O lisp-sc.py [<host:port>] [<eid>]
 #        python -O lisp-sc.py [<host>] [<eid>]
 #
-# Dispay the LISP registered mappings in the map-server a command that displays the table as it
-# looks like on the web interface.
+# Dispay the LISP registered mappings in the map-server a command that
+# displays the table as it looks like on the web interface.
 #
 #------------------------------------------------------------------------------
 from __future__ import print_function
@@ -157,8 +157,8 @@ if (output == None or output == ""):
 ver = json.loads(output)
 hostname = blue(ver["hostname"])
 
-print("\nLISP Map-Server Site-Cache for {}, hostname {}, release {}\n".format(host,
-    hostname, ver["lisp-version"]))
+print("\nLISP Map-Server Site-Cache for {}, hostname {}, release {}\n". \
+    format(host, hostname, ver["lisp-version"]))
 
 if (len(site_cache) == 0):
     print("Site-cache is empty")
@@ -187,7 +187,8 @@ for sc in site_cache:
 
     for r in sc["registered-rlocs"]:
         rloc = red(r["address"])
-        up = r["upriority"]; uw = r["uweight"]; mp = r["mpriority"]; mw = r["mweight"]
+        up = r["upriority"]; uw = r["uweight"]
+        mp = r["mpriority"]; mw = r["mweight"]
         p = "up/uw {}/{} mp/mw {}/{}".format(up, uw, mp, mw)
         rn = ", " + blue(r["rloc-name"]) if "rloc-name" in r else ""
         rloc_line = "  {}, uptime {}, {}{}".format(rloc, r["uptime"], p, rn)
