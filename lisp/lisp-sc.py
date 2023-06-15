@@ -124,6 +124,8 @@ if (len(sys.argv) == 2):
 
 curl = ("curl --silent --insecure -u {}:{} https://{}:{}/lisp/" + \
     "api/data/site-cache").format(user, pw, host, port)
+curl_sum = ("curl --silent --insecure -u {}:{} https://{}:{}/lisp/" + \
+    "api/data/site-cache-summary").format(user, pw, host, port)
 ver = ("curl --silent --insecure -u {}:{} https://{}:{}/lisp/" + \
     "api/data/system").format(user, pw, host, port)
 
@@ -144,7 +146,20 @@ try:
 except:
     print("Curl output did not return JSON")
     exit(1)
-#endtry    
+#endtry
+
+#
+# Get site summary info to title each EID set.
+#
+output = getoutput(curl_sum)
+sc_summary = json.loads(output)
+
+sites = {}
+for sc in sc_summary:
+    c = sc["registrations"][0]["count"]
+    r = sc["registrations"][0]["registered-count"]
+    sites[sc["site"]] = (c, r)
+#endfor    
 
 #
 # Get hostname from version info query.
@@ -166,35 +181,48 @@ if (len(site_cache) == 0):
 #endif    
 
 found_eid = False
-for sc in site_cache:
-    if (sc["registered-rlocs"] == []): continue
+for site in sites:
+    s = bold(site)
+    c = sites[site][0]
+    r = sites[site][1]
+    r = bold(str(r))
+    print("Site {}, {} EID entries, EIDs registered {}:".format(s, c, r))
+    print("")
+    
+    for sc in site_cache:
+        if (sc["registered-rlocs"] == []): continue
 
-    eid = sc["eid-prefix"]
-    group = sc["group-prefix"] if "group-prefix" in sc else ""
-    if (eid_input and (eid + group).find(eid_input) == -1): continue
+        eid = sc["eid-prefix"]
+        group = sc["group-prefix"] if "group-prefix" in sc else ""
+        if (eid_input and (eid + group).find(eid_input) == -1): continue
 
-    found_eid = True
-    if ("group-prefix" in sc): eid = "({}, {})".format(eid, sc["group-prefix"])
-    eid = green("[{}]{}".format(sc["instance-id"], eid))
-    eid = "EID {},".format(eid)
-    ttl = sc["last-registered"]
-    yn = dark_green("yes") if sc["registered"] == "yes" else red("no")
-    uptime = "uptime {}, registered {}".format(sc["first-registered"], yn)
-    site = bold(sc["site-name"])
-    lr = timed_out(sc["last-registered"])
-    uptime += " since {}, site {}".format(lr, site)
-    print(eid, uptime)
+        found_eid = True
+        if ("group-prefix" in sc):
+            eid = "({}, {})".format(eid, sc["group-prefix"])
+        #endif
+        eid = green("[{}]{}".format(sc["instance-id"], eid))
+        eid = "  EID {},".format(eid)
+        ttl = sc["last-registered"]
+        yn = green("registered") if sc["registered"] == "yes" else \
+            red("registered")
+        uptime = "uptime {}, {}".format(sc["first-registered"], yn)
+        site = bold(sc["site-name"])
+        lr = timed_out(sc["last-registered"])
+        uptime += " since {}".format(lr)
+        print(eid, uptime)
 
-    for r in sc["registered-rlocs"]:
-        rloc = red(r["address"])
-        up = r["upriority"]; uw = r["uweight"]
-        mp = r["mpriority"]; mw = r["mweight"]
-        p = "up/uw {}/{} mp/mw {}/{}".format(up, uw, mp, mw)
-        rn = ", " + blue(r["rloc-name"]) if "rloc-name" in r else ""
-        rloc_line = "  {}, uptime {}, {}{}".format(rloc, r["uptime"], p, rn)
-        print(rloc_line)
+        for r in sc["registered-rlocs"]:
+            rloc = red(r["address"])
+            up = r["upriority"]; uw = r["uweight"]
+            mp = r["mpriority"]; mw = r["mweight"]
+            p = "up/uw {}/{} mp/mw {}/{}".format(up, uw, mp, mw)
+            rn = ", " + blue(r["rloc-name"]) if "rloc-name" in r else ""
+            rloc_line = "    {}, uptime {}, {}{}".format(rloc, r["uptime"], p,
+                rn)
+            print(rloc_line)
+        #endfor
+        print()
     #endfor
-    print()
 #endfor
 
 #
