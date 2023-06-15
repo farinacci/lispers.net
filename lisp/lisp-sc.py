@@ -19,7 +19,7 @@
 #
 # lisp-sc.py
 #
-# Usage: python -O lisp-sc.py [<user:pw@host:port>] [<eid>]
+# Usage: python -O lisp-sc.py [<user:pw@host:port>] [<eid>] | [<site>]
 #        python -O lisp-sc.py [<host:port>] [<eid>]
 #        python -O lisp-sc.py [<host>] [<eid>]
 #
@@ -77,7 +77,11 @@ host = "localhost"
 port = "8080"
 
 #
-# Get input from comamnd line, if any.
+# Get input from comamnd line, if any. Check site name supplied.
+#
+site_input = sys.argv[-1]
+if (site_input.count(".") == 3): site_input = None
+if (site_input != None): sys.argv = sys.argv[0:-1]
 
 #
 # First check if EID supplied.
@@ -182,12 +186,13 @@ if (len(site_cache) == 0):
 
 found_eid = False
 for site in sites:
+    if (site_input and site_input != site): continue
+
     s = bold(site)
     c = sites[site][0]
     r = sites[site][1]
     r = bold(str(r))
     print("Site {}, {} EID entries, EIDs registered {}:".format(s, c, r))
-    print("")
     
     for sc in site_cache:
         if (sc["registered-rlocs"] == []): continue
