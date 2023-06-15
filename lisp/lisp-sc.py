@@ -80,7 +80,9 @@ port = "8080"
 # Get input from comamnd line, if any. Check site name supplied.
 #
 site_input = sys.argv[-1]
-if (site_input.count(".") == 3): site_input = None
+if (site_input.count(".") == 3 or site_input.count(":") == 2):
+    site_input = None
+#endif
 if (site_input != None): sys.argv = sys.argv[0:-1]
 
 #
