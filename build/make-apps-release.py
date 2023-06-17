@@ -68,19 +68,6 @@ if (os.path.exists("../docs") == False):
     exit(1)
 #endif
 
-#
-# Second check if we can build on this machine.
-#
-machine = platform.machine()
-if (machine.find("x86") != -1):
-    cpu = "x86"
-elif (machine.find("mips") != -1):
-    cpu = "mips"
-else:
-    print("Build does not support cpu type {}".format(machine))
-    exit(1)
-#endif
-
 start_time = time.time()
 build_date = getoutput("date")
 
@@ -133,7 +120,7 @@ else:
 #
 # Do the compile.
 #
-print("{} ompiling for machine '{}'".format(PYTHON, machine))
+print("{} compiling".format(PYTHON))
 status = os.system("cd ./{}; {} -O -m compileall *py".format(dir, PYTHON))
 if (status != 0):
     print("Compilation failed")
@@ -157,7 +144,7 @@ os.system('cp ../docs/how-to-use-apps.txt ./{}/.'.format(dir))
 #
 # Now tar and gzip files for release.
 #
-tar_file = "lispers.net-" + cpu + "-apps-release-" + version + ".tgz"
+tar_file = "lispers.net" + "-apps-release-" + version + ".tgz"
 print("Build tgz file {} ... ".format(tar_file), end=" ")
 files = '''*.pyo *.txt'''
 command = "cd {}; tar czf {} {}".format(dir, tar_file, files)

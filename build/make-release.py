@@ -95,19 +95,6 @@ if (os.path.exists("../docs") == False):
     exit(1)
 #endif
 
-#
-# Second check if we can build on this machine.
-#
-machine = platform.machine()
-if (machine.find("x86") != -1):
-    cpu = "x86"
-elif (machine.find("mips") != -1):
-    cpu = "mips"
-else:
-    print("Build does not support cpu type {}".format(machine))
-    exit(1)
-#endif
-
 start_time = time.time()
 build_date = getoutput("date")
 
@@ -196,7 +183,7 @@ else:
 #
 # Do the compile.
 #
-print("{} compiling for machine '{}'".format(PYTHON, machine))
+print("{} compiling".format(PYTHON))
 status = os.system("cd ./{}; {} -O -m compileall *py".format(dir, PYTHON))
 if (status != 0):
     print("Compilation failed")
@@ -279,7 +266,7 @@ os.system('cp ../docs/how-to-install*.txt ./{}/.'.format(dir))
 # Now tar and gzip files for release. COPYFILE is so MacOs does not put in
 # ._<foo> files.
 #
-tar_file = "lispers.net-" + cpu + "-release-" + version + ".tgz"
+tar_file = "lispers.net" + "-release-" + version + ".tgz"
 print("Build tgz file {} ... ".format(tar_file), end=" ")
 files = "*.pyo " if pycache == None else "*.pyc "
 files += "*.txt lisp.config.example lisp-config-commands.txt " + \

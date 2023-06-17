@@ -7,7 +7,7 @@ This directory is used to build lispers.net images. The script:
     > python make-release.py <release-number>
 
 builds a compressed tarball with obfuscated pyo files. The name of the
-tarball file is lispers.net-x86-release-<release-number>.tgz. For a
+tarball file is lispers.net-release-<release-number>.tgz. For a
 description of the lispers.net code and release journey, refer to     
 lispers.net/docs/release-history.pdf.
 

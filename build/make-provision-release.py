@@ -80,7 +80,7 @@ if (os.path.exists(release) == False):
     print("Could not find directory {}".format(release))
     exit(1)
 #endif
-tgz = "lispers.net-x86-release-{}.tgz".format(version)
+tgz = "lispers.net-release-{}.tgz".format(version)
 tmp = "/tmp/{}".format(tgz)
 
 #
@@ -111,7 +111,7 @@ print("done")
 #
 # Create new "provisioned release" tarball.
 #
-ptgz = "lispers.net-x86-release-{}-iid-{}-{}.tgz".format(version, iid, tag)
+ptgz = "lispers.net-release-{}-iid-{}-{}.tgz".format(version, iid, tag)
 print("Creating provisioned tarball for release {}, instance-ID {} ...". \
       format(bold(version), bold(iid)), end= " ")
 cmd = "cd {}; export COPYFILE_DISABLE=true; tar czf {} *".format(tmp, ptgz)

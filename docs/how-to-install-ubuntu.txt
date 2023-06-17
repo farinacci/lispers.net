@@ -23,7 +23,7 @@ sudo ln -sf python2 python
 mkdir lispers.net
 cd lispers.net
 wget <tarball-url>
-tar zxvf lispers.net-x86-release-0.<version>.tgz
+tar zxvf lispers.net-release-0.<version>.tgz
 
 #
 # Load lispers.net library dependencies.

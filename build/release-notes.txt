@@ -1,4 +1,18 @@
 
+               lispers.net Beta Release Version 0.600
+               --------------------------------------
+
+o Release date:
+
+o In this milestone release, change name of lispers.net tarball file name
+  from lispers.net-x86-release* to lispers.net-release*. There is no need
+  to indicate CPU type in the release. The code runs on all kinds of
+  processors (x86, AMD, M1, M2, and ARM).
+
+o Fix bug found with "sc" when no parameters supplied on command-line.    
+
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.599
                --------------------------------------
 
