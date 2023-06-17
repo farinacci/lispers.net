@@ -198,6 +198,7 @@ for site in sites:
     
     for sc in site_cache:
         if (sc["registered-rlocs"] == []): continue
+        if (sc["site-name"] != site): continue
 
         eid = sc["eid-prefix"]
         group = sc["group-prefix"] if "group-prefix" in sc else ""
@@ -213,7 +214,6 @@ for site in sites:
         yn = green("registered") if sc["registered"] == "yes" else \
             red("registered")
         uptime = "uptime {}, {}".format(sc["first-registered"], yn)
-        site = bold(sc["site-name"])
         lr = timed_out(sc["last-registered"])
         uptime += " since {}".format(lr)
         print(eid, uptime)
