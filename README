@@ -58,12 +58,12 @@ draft-ietf-lisp-vpn                    - LISP Virtual Private Networks (VPNs)
 draft-ietf-lisp-pubsub                 - Publish/Subscribe Functionality for LISP
 draft-ietf-lisp-ecdsa-auth             - LISP Control-Plane ECDSA Authentication and Authorization
 draft-ietf-lisp-name-encoding          - LISP Distinguished Name Encoding
+draft-ietf-lisp-geo                    - LISP Geo-Coordinate Use-Cases
+draft-farinacci-lisp-decent            - A Decent LISP Mapping System (LISP-Decent)
+draft-farinacci-lisp-satellite-network - LISP for Satellite Networks
+draft-farinacci-lisp-mobile-network    - LISP for the Mobile Network
 draft-ermagan-lisp-nat-traversal       - NAT traversal for LISP
 draft-farinacci-lisp-lispers-net-nat   - Simple NAT traversal for LISP
-draft-farinacci-lisp-geo               - LISP Geo-Coordinate Use-Cases
-draft-farinacci-lisp-mobile-network    - LISP for the Mobile Network
-draft-farinacci-lisp-decent            - A Decent LISP Mapping System (LISP-Decent)
 draft-farinacci-lisp-telemetry         - LISP Data-Plane Telemetry
-draft-farinacci-lisp-satellite-network - LISP for Satellite Networks
 
 -------------------------------------------------------------------------------
