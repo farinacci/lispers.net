@@ -77,37 +77,44 @@ host = "localhost"
 port = "8080"
 
 #
-# Get input from comamnd line, if any. Check site name supplied.
+# Get input from comamnd line, if any. Check site name supplied. That is not
+# the URL parameter or an IPv4 or IPv6 EID.
 #
-site_input = sys.argv[-1]
-if (site_input.count(".") == 3 or site_input.count(":") == 2):
-    site_input = None
+site_input = None
+if (len(sys.argv) == 3):
+    site_input = sys.argv[-1]
+    if (site_input.count(".") == 3 or site_input.count(":") == 2):
+        site_input = None
+    #endif
+    if (site_input != None): sys.argv = sys.argv[0:-1]
 #endif
-if (site_input != None): sys.argv = sys.argv[0:-1]
 
 #
 # First check if EID supplied.
 #
-eid_input = sys.argv[-1]
-for e in eid_input.split("."):
-    if (e.isdigit()): continue
-    eid_input = None
-    break
-#endfor    
-if (eid_input == None):
+eid_input = None
+if (len(sys.argv) == 3):
     eid_input = sys.argv[-1]
-    for e in eid_input.split(":"):
-        if (e == ""): continue
-        try:
-            int(e, 16)
-            continue
-        except:
-            eid_input = None
-            break
-        #endtry
-    #endfor
+    for e in eid_input.split("."):
+        if (e.isdigit()): continue
+        eid_input = None
+        break
+    #endfor    
+    if (eid_input == None):
+        eid_input = sys.argv[-1]
+        for e in eid_input.split(":"):
+            if (e == ""): continue
+            try:
+                int(e, 16)
+                continue
+            except:
+                eid_input = None
+                break
+            #endtry
+        #endfor
+    #endif
+    if (eid_input != None): sys.argv = sys.argv[0:-1]
 #endif
-if (eid_input != None): sys.argv = sys.argv[0:-1]
 
 #
 # Second get hostname and port number to query.
