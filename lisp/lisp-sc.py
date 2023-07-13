@@ -52,8 +52,26 @@ def blue(string):
     return("\033[94m" + string + "\033[0m")
 #enddef
 
+def unblue(string):
+    s = string.replace("\033[94m", "")
+    s = s.replace("\033[0m", "")
+    return(s)
+#enddef
+
 def bold(string):
     return("\033[1m" + string + "\033[0m")
+#enddef
+
+def unbold(string):
+    s = string.replace("\033[1m", "")
+    s = s.replace("\033[0m", "")
+    return(s)
+#enddef
+
+def uncolor(string):
+    s = unblue(string)
+    s = unbold(s)
+    return(s)
 #enddef
 
 def timed_out(ts):
@@ -62,6 +80,21 @@ def timed_out(ts):
     if (int(h) != 0): return(bold(red(ts)))
     if (int(m) >= 3): return(bold(red(ts)))
     return(ts)
+#enddef
+
+def color_rles(rles):
+    rles = uncolor(rles)
+    rles = rles.split(",")
+    rle = ""
+    for entry in rles:
+        i = entry.find("(")
+        rle += red(entry[0:i])
+        j = entry.find(")")
+        rn = blue(entry[i+1:j])
+        rle += "({}),".format(rn)
+    #endfor
+    rle = rle[0:-1]
+    return(rle)
 #enddef
 
 #------------------------------------------------------------------------------
@@ -225,8 +258,15 @@ for site in sites:
         uptime += " since {}".format(lr)
         print(eid, uptime)
 
+        #
+        # For RLEs, put RLOC address in red and RLOC name in blue.
+        #
         for r in sc["registered-rlocs"]:
-            rloc = red(r["address"])
+            if ("rle" in r):
+                rloc = "RLEs: " + color_rles(r["rle"])
+            else:
+                rloc = "RLOC: " + red(r["address"])
+            #endif
             up = r["upriority"]; uw = r["uweight"]
             mp = r["mpriority"]; mw = r["mweight"]
             p = "up/uw {}/{} mp/mw {}/{}".format(up, uw, mp, mw)
