@@ -234,7 +234,7 @@ for site in sites:
     c = sites[site][0]
     r = sites[site][1]
     r = bold(str(r))
-    print("Site {}, {} EID entries, EIDs registered {}:".format(s, c, r))
+    print("Site {}, {} EID entries, {} EIDs registered:".format(s, c, r))
     
     for sc in site_cache:
         if (sc["registered-rlocs"] == []): continue
