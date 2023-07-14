@@ -1046,6 +1046,8 @@ def lisp_etr_data_plane(parms, not_used, packet):
     if (lisp.lisp_is_macos() == False):
         offset = 4 if device == "lo0" else 16
         packet = packet[offset::]
+    elif (device == "en0"):
+        packet = packet[14::]
     #endif
 
     #
@@ -1543,8 +1545,8 @@ def lisp_etr_process():
     #
     # We need to listen on en0 when doing IGMP testing on MacOS.
     #
-    device = "any"
-#   device = "en0" if lisp.lisp_is_macos() else "any"
+#   device = "any"
+    device = "en0" if lisp.lisp_is_macos() else "any"
 #   device = "lo0" if lisp.lisp_is_macos() else "any"
 
     pfilter = "(proto 2) or "
