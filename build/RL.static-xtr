@@ -37,15 +37,15 @@
 #
 #------------------------------------------------------------------------------
 
+set EID = 240.x.x.x
+
 if ($EID4 != "") then
     set EID = $EID4
     echo "Use EID $EID4 from env variable EID4"
-else
-    set EID = 240.x.x.x
 endif
 
 if ($EID == "240.x.x.x") then
-    echo "Need configure EID in place of 240.x.x.x"
+    echo "You need to configure EID in place of 240.x.x.x"
     exit
 endif
 
@@ -53,6 +53,10 @@ endif
 # To get multicast source address selection to work for multicast packets on
 # MacOS we need to add the EID on en0 and then add the multicast route. Then
 # move the EID to lo0 so the EID routes are set for unicast.
+#
+# Also use the sysctl commands below to keep IGMPv3 running. Sometimes MacOS
+# just gives up sending IGMPv2/v3 reports while the application keeps the
+# multicast socket open (and keeps joining).
 #
 if (`uname` == "Darwin") then
     set DEVICE = "en0"
@@ -70,6 +74,8 @@ if (`uname` == "Darwin") then
     sudo ifconfig lo0 $EID/32 alias
     sudo ifconfig lo0 mtu 1400
     sudo route add 240.0.0.0/8 $EID > /dev/null
+    sudo sysctl net.inet.igmp.default_version=2
+    sudo sysctl net.inet.igmp.sendra=0
 else    
     set DEVICE = "eth0"
     set PATH = "/lispers.net"
