@@ -656,7 +656,7 @@ def lisp_is_alpine():
 #
 # lisp_is_x86
 #
-# Return True if this process is an x86 little-endian machine.
+# Return True if this processor is an x86 little-endian machine.
 #
 def lisp_is_x86():
     cpu = platform.machine()
@@ -666,7 +666,7 @@ def lisp_is_x86():
 #
 # lisp_is_apple_m
 #
-# Return True if this process is an Apple M1/M2 little-endian processor.
+# Return True if this processor is an Apple M1/M2 little-endian processor.
 #
 def lisp_is_apple_m():
     cpu = platform.machine()
