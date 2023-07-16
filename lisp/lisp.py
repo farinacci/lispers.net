@@ -664,6 +664,16 @@ def lisp_is_x86():
 #enddef
 
 #
+# lisp_is_apple_m
+#
+# Return True if this process is an Apple M1/M2 little-endian processor.
+#
+def lisp_is_apple_m():
+    cpu = platform.machine()
+    return(cpu == "aarch64")
+#enddef
+
+#
 # lisp_is_linux
 #
 # Return True if this is a ubuntu or fedora system.
@@ -3983,7 +3993,6 @@ class lisp_map_register(object):
         self.nonce, self.key_id, self.alg_id, self.auth_len = \
             struct.unpack(packet_format, packet[:format_size])
 
-        self.nonce = byte_swap_64(self.nonce)
         self.auth_len = socket.ntohs(self.auth_len)
         self.proxy_reply_requested = True if (first_long & 0x08000000) \
             else False
@@ -4048,7 +4057,7 @@ class lisp_map_register(object):
                 return([None, None])
             #endif
             self.auth_data = lisp_concat_auth_data(self.alg_id, auth1, auth2, 
-                auth3, auth4)                       
+                auth3, auth4)
             orig_packet = self.zero_auth(orig_packet)
             packet = packet[self.auth_len::]
         #endif
@@ -4208,6 +4217,7 @@ class lisp_map_notify(object):
 
         self.nonce, self.key_id, self.alg_id, self.auth_len = \
             struct.unpack(packet_format, packet[:format_size])
+
         self.nonce_key = lisp_hex_string(self.nonce)
         self.auth_len = socket.ntohs(self.auth_len)
         packet = packet[format_size::]
@@ -6628,7 +6638,7 @@ class lisp_info_source(object):
 #
 def lisp_concat_auth_data(alg_id, auth1, auth2, auth3, auth4):
 
-    if (lisp_is_x86()):
+    if (lisp_is_x86() or lisp_is_apple_m()):
         if (auth1 != ""): auth1 = byte_swap_64(auth1)
         if (auth2 != ""): auth2 = byte_swap_64(auth2)
         if (auth3 != ""): 
@@ -9487,6 +9497,7 @@ def lisp_send_map_notify_ack(lisp_sockets, eid_records, map_notify, ms):
     #
     # Build packet and copy EID records from Map-Register.
     #
+    map_notify.record_count = 0
     packet = map_notify.encode(eid_records, ms.password)
     map_notify.print_notify()
 
@@ -10456,6 +10467,7 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
     if (map_notify.record_count == 0): return
 
     eid_records = map_notify.eid_records
+    rloc_record = lisp_rloc_record()
 
     for i in range(map_notify.record_count):
         eid_record = lisp_eid_record()
@@ -10463,6 +10475,7 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
         if (packet == None): return
         eid_record.print_record("  ", False)
         eid_str = eid_record.print_eid_tuple()
+        rloc_count = eid_record.rloc_count
 
         #
         # If no map-cache entry exists or does not have action LISP_SEND_
@@ -10473,6 +10486,7 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
             e = green(eid_str, False)
             lprint("Ignoring Map-Notify EID {}, no subscribe-request entry". \
                 format(e))
+            eid_records = rloc_record.end_of_rlocs(eid_records, rloc_count)
             continue
         #endif
 
@@ -10486,6 +10500,7 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
                 e = green(eid_str, False)
                 lprint("Ignoring Map-Notify for non-subscribed EID {}". \
                     format(e))
+                eid_records = rloc_record.end_of_rlocs(eid_records, rloc_count)
                 continue
             #endif
         #endif
@@ -10526,6 +10541,7 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
             lisp_write_ipc_map_cache(True, mc)
             lprint("Update {} map-cache entry with no RLOC-set".format( \
                 green(eid_str, False)))
+            eid_records = rloc_record.end_of_rlocs(eid_records, rloc_count)
             continue
         #endif
 
@@ -10535,7 +10551,7 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
         # probe data in the new entry with the same RLOC address.
         #
         new = replaced = 0
-        for j in range(eid_record.rloc_count):
+        for j in range(rloc_count):
             rloc_record = lisp_rloc_record()
             eid_records = rloc_record.decode(eid_records, None)
             rloc_record.print_record("    ")
