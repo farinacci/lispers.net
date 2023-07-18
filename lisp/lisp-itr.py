@@ -624,9 +624,19 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         return
     #endif
 
+    multicast = packet.inner_dest.is_multicast_address()
+
+    #
+    # Multicast on MacOS is only accepted on interface lo0.
+    #
+    if (multicast and device == "en0"):
+        lisp.dprint("Drop MacOS packet for {} received on en0".format( \
+            packet.inner_dest.print_address_no_iid()))
+        return
+    #endif
+
     lisp_decent = lisp.lisp_decent_push_configured
     if (lisp_decent):
-        multicast = packet.inner_dest.is_multicast_address()
         local = packet.inner_source.is_local()
         lisp_decent = (local and multicast)
     #endif
