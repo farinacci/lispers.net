@@ -192,8 +192,20 @@ for mc in map_cache:
     if ("group-prefix" in mc): eid = "({}, {})".format(eid, mc["group-prefix"])
     eid = green("[{}]{}".format(mc["instance-id"], eid))
     eid = "EID {},".format(eid)
+
     ttl = mc["ttl"]
-    ttl = "never" if (ttl == "--") else ttl.split(".")[0] + "m"
+    if (ttl == "--"):
+        ttl = "never"
+    else:
+        ttlm, ttls = ttl.split(".")
+        if (int(ttlm) != 0):
+            ttl = ttlm + "m"
+        else:
+            ttl = float(ttls)/100*60
+            ttl = str(int(ttl)) + "s"
+        #endif
+    #endif
+
     uptime = "uptime {}, ttl {}".format(mc["uptime"], ttl)
     a = mc["action"]
     uptime += ", action {}".format(bold(a)) if a != "no-action" else ""
