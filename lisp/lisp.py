@@ -14400,10 +14400,11 @@ class lisp_group_mapping(object):
 # mask-length, otherwise return -1.
 #
 def lisp_is_group_more_specific(group_str, group_mapping):
-    iid = group_mapping.group_prefix.instance_id
-    mask_len = group_mapping.group_prefix.mask_len
-    group = lisp_address(LISP_AFI_IPV4, group_str, 32, iid)
-    if (group.is_more_specific(group_mapping.group_prefix)): return(mask_len)
+    gp = group_mapping.group_prefix
+    group = lisp_address(LISP_AFI_NONE, group_str, 0, gp.instance_id)
+    if (group.afi != gp.afi): return(-1)
+
+    if (group.is_more_specific(gp)): return(gp.mask_len)
     return(-1)
 #enddef
 
@@ -14623,6 +14624,7 @@ class lisp_site_eid(object):
         for rloc_entry in self.registered_rlocs:
             if (rloc_entry.rle == None): continue
             for rle_node in rloc_entry.rle.rle_nodes:
+                if (rle_node.rloc_name == None): continue
                 addr = rle_node.address.print_address_no_iid() + \
                     rle_node.rloc_name
                 old_rle[addr] = rle_node.address
