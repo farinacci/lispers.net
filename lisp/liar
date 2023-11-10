@@ -1,0 +1,13 @@
+#!/bin/bash
+#------------------------------------------------------------------------------
+#
+# liar
+#    
+# Wrapper script to call "python3 liar.py" which resides in the same directory
+# as this script.
+#
+# Usage: ./liar [-quic] <eid> <rloc> <ms> <ms-key>
+#
+#------------------------------------------------------------------------------
+
+python3 -Wignore -u ./liar.py $*
