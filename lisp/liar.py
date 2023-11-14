@@ -194,9 +194,9 @@ def build_map_register(afe, iid, eid, ml, afl, rloc, ms, ms_key):
 
     #
     # Build rest of Map-Register with zeroed auth-data and append EID-record
-    # to it.
+    # to it. Set T-bit so we can use our own TTL.
     #
-    pkt = struct.pack("I", sl(0x30000001))
+    pkt = struct.pack("I", sl(0x30000801))
     nonce = random.randint(0, 0xffffffffffffffff)
     pkt += struct.pack("QBBH", nonce, 0, 2, ss(32))
     pkt += struct.pack("QQQQ", 0, 0, 0, 0)
