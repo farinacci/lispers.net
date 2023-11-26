@@ -36,7 +36,7 @@ import hashlib
 
 #------------------------------------------------------------------------------
 
-usage = "Usage: python3 liar.py [-quic] <eid> <rloc> <ms> <ms-key>"
+usage = 'Usage: python3 liar.py [-quic] "[[<iid>]]<eid>" <rloc> <ms> <ms-key>'
 
 IPV4_AFI = 1
 IPV6_AFI = 2
