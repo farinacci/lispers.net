@@ -1,4 +1,24 @@
 
+               lispers.net Beta Release Version 0.606
+               --------------------------------------
+
+o Release date: Sun Nov 26 13:17:57 PST 2023
+
+o Build stand-alone tool "liar" which sends a single Map-Register for a
+  user supplied EID-to-RLOC mapping to a map-server. The tool does not
+  required a lispers.net install on the system the tool is used on.
+
+o 'liar" stands for "LISP Interactive Map-Register Agent" and has usage:
+
+    python3 liar.py [-quic] "[[<iid>]]<eid>" <rloc> <ms> <ms-key>
+
+  Note "[<iid>]" is optional.    
+
+o Building and releasing the liar tool with a lispers.net release. It can,
+  and will, be released seperately in the future.
+
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.605
                --------------------------------------
 

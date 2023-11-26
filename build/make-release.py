@@ -137,7 +137,7 @@ os.system("rm latest; ln -sf {} latest".format(dir))
 
 print("Copying files from ../lisp to " + dir + " build directory ...", end=" ")
 command = '''
-cp ../lisp/lispapi.txt ../lisp/*py ../lisp/*-LISP ../lisp/RL-* ../lisp/*.pem.default ../build/release-notes.txt ../build/provision-lisp.py ../lisp/pslisp ../lisp/log-packets ../lisp/lispers.net-geo.html ../lisp/lig ../lisp/rig ../lisp/ltr ../lisp/mc ../lisp/sc ./{}/.
+cp ../lisp/lispapi.txt ../lisp/*py ../lisp/*-LISP ../lisp/RL-* ../lisp/*.pem.default ../build/release-notes.txt ../build/provision-lisp.py ../lisp/pslisp ../lisp/log-packets ../lisp/lispers.net-geo.html ../lisp/lig ../lisp/rig ../lisp/ltr ../lisp/mc ../lisp/sc ../lisp/liar ./{}/.
 '''.format(dir)
 
 status = os.system(command)
@@ -270,7 +270,7 @@ tar_file = "lispers.net" + "-release-" + version + ".tgz"
 print("Build tgz file {} ... ".format(tar_file), end=" ")
 files = "*.pyo " if pycache == None else "*.pyc "
 files += "*.txt lisp.config.example lisp-config-commands.txt " + \
-    "lisp-cert.pem.default *-LISP RL-* pslisp lig rig ltr mc sc " + \
+    "lisp-cert.pem.default *-LISP RL-* pslisp lig rig ltr mc sc liar " + \
     "log-packets lispers.net-geo.html {}".format(lisp_xtr)
 command = "cd {}; export COPYFILE_DISABLE=true; tar czf {} {}".format(dir,
     tar_file, files)
