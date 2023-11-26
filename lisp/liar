@@ -10,4 +10,19 @@
 #
 #------------------------------------------------------------------------------
 
-python3 -Wignore -u ./liar.py $*
+FILE=""
+if [ -f ./liar.py ]; then
+    python3 -Wignore -u ./liar.py $*
+    exit
+fi
+if [ -f ./liar.pyo ]; then
+    python -Wignore -u -O ./liar.pyo $*
+    exit
+fi
+if [ -f ./liar.pyc ]; then
+    python3.8 -O ./lisp-mc.pyc $*
+    exit
+fi
+
+echo "Cannot find liar.py* executable"
+
