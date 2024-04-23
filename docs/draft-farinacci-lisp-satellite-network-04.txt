@@ -1,0 +1,1064 @@
+
+
+
+
+Network Working Group                                       D. Farinacci
+Internet-Draft                                               lispers.net
+Intended status: Experimental                                  V. Moreno
+Expires: 7 August 2024                                 P. Pillay-Esnault
+                                                             Independent
+                                                         4 February 2024
+
+
+                      LISP for Satellite Networks
+               draft-farinacci-lisp-satellite-network-04
+
+Abstract
+
+   This specification describes how the LISP architecture and protocols
+   can be used over satellite network systems.  The LISP overlay runs on
+   earth using the satellite network system in space as the underlay.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 7 August 2024.
+
+Copyright Notice
+
+   Copyright (c) 2024 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                 [Page 1]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+   2.  Definition of Terms . . . . . . . . . . . . . . . . . . . . .   4
+   3.  Overview  . . . . . . . . . . . . . . . . . . . . . . . . . .   5
+   4.  Mapping System  . . . . . . . . . . . . . . . . . . . . . . .   6
+   5.  EID Mobility  . . . . . . . . . . . . . . . . . . . . . . . .   7
+   6.  Satellite RLOCs and Underlay Routing  . . . . . . . . . . . .   7
+   7.  Satellite Opportunistic Forwarding  . . . . . . . . . . . . .   7
+   8.  Underlay Performance  . . . . . . . . . . . . . . . . . . . .   8
+   9.  Security Considerations . . . . . . . . . . . . . . . . . . .   8
+   10. IANA Considerations . . . . . . . . . . . . . . . . . . . . .   8
+   11. Test and Deployment Experience  . . . . . . . . . . . . . . .   8
+     11.1.  GS-xTRs Direct (non-NAT) . . . . . . . . . . . . . . . .   9
+     11.2.  GS-xTRs Direct (NAT) . . . . . . . . . . . . . . . . . .   9
+     11.3.  GS-xTR to LISP-xTR (NAT) . . . . . . . . . . . . . . . .  10
+     11.4.  GS-xTR Direct to non-LISP Host (NAT and Interwork) . . .  11
+     11.5.  GS-xTR to non-LISP Host (NAT and Interwork)  . . . . . .  11
+     11.6.  EID-Mobility Direct (non-NAT)  . . . . . . . . . . . . .  12
+     11.7.  GS-xTRs Direct ISLs  . . . . . . . . . . . . . . . . . .  13
+     11.8.  GS-xTR Laptop on Overlay and Underlay (NAT no
+            Interwork) . . . . . . . . . . . . . . . . . . . . . . .  14
+   12. References  . . . . . . . . . . . . . . . . . . . . . . . . .  15
+     12.1.  Normative References . . . . . . . . . . . . . . . . . .  15
+     12.2.  Informative References . . . . . . . . . . . . . . . . .  16
+   Appendix A.  Acknowledgments  . . . . . . . . . . . . . . . . . .  17
+   Appendix B.  Document Change Log  . . . . . . . . . . . . . . . .  18
+     B.1.  Changes to draft-farinacci-lisp-satellite-network-04  . .  18
+     B.2.  Changes to draft-farinacci-lisp-satellite-network-03  . .  18
+     B.3.  Changes to draft-farinacci-lisp-satellite-network-02  . .  18
+     B.4.  Changes to draft-farinacci-lisp-satellite-network-01  . .  18
+     B.5.  Changes to draft-farinacci-lisp-satellite-network-00  . .  18
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  18
+
+1.  Introduction
+
+   This specification describes how a LISP overlay structure can run on
+   top of a satellite network underlay.  The approach is similar to how
+   [I-D.haindl-lisp-gb-atn] is used in Aeronautical Telecommunications
+   Networks and [I-D.farinacci-lisp-mobile-network] is used in cellular
+   networks.
+
+   This satellite deployment use-case requires no changes to the LISP
+   architecture or standard protocol specifications.  In addition, any
+   LISP implementations that run on a device with an existing satellite
+   interface does not need to be upgraded.
+
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                 [Page 2]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+   Even though an overlay should not concern itself with the operation
+   of an underlay, the requirements from
+   [I-D.lhan-problems-requirements-satellite-net] are considered but
+   outside the scope of this document.
+
+   The LISP overlay requirements are:
+
+   1.  There will be no EID state in the satellite network underlay.
+
+   2.  The satellite underlay is completely unaware of the overlay
+       running over it.
+
+   3.  The overlay requires the underlay network to deliver packets to
+       RLOC addresses.
+
+   4.  The underlay network can transport IPv4 or IPv6 packets and can
+       be dual-stack.
+
+   5.  When path optimization in the underlay is available, an RLOC-
+       record can be a source route of satellite hops.
+
+
+   The diagram below illustrates a 4 satellite system where each have
+   Inter-Satellite-Links (ISLs) for connectivity between them and edge
+   satellites with RF links to Ground Stations.  The EID connectivity to
+   the xTRs is achieved via typical IP network connectivity where EIDs
+   can be directly connected, one or more switch hops away, one or more
+   router hops away, or any combination.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                 [Page 3]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+                             in space (underlay)
+       +--------------------------------------------------------------+
+       |                                                              |
+       |     sat     ISL     sat     ISL     sat     ISL     sat      |
+       |    ))*((  -------  ))*((  -------  ))*((  -------  ))*((     |
+       |      |                                               |       |
+       |      |                                               |       |
+       |      |up/down RF-link                 up/down RF-link|       |
+       |      |                                               |       |
+       |      |                                               |       |
+       +------|-----------------------------------------------|-------+
+              |                                               |
+              |                                               |
+              |               on earth (overlay)              |
+       +------|-----------------------------------------------|-------+
+       |      |                                               |       |
+       |    GS-xTR             [mapping system]            GS-xTR     |
+       |     /  \                                           /  \      |
+       |    /    \                                         /    \     |
+       |   /      \                                       /      \    |
+       |  /        \                                     /        \   |
+       | EIDs ... EIDs                                  EIDs ... EIDs |
+       |                                                              |
+       +--------------------------------------------------------------+
+
+               Figure 1: Overlay on Earth, Underlay in Space
+
+   The LISP mapping system runs on the earth-resident Internet and
+   requires reachability by xTRs before LISP encapsulation can occur
+   over the satellite network underlay.
+
+   EIDs are known only to the overlay xTR nodes.  EIDs are not routable
+   or require state in the satellite network.  This provides great value
+   for scaling and EID mobility.
+
+
+2.  Definition of Terms
+
+   Inter-Satellite-Links (ISLs):  are phased-array laser wireless links
+      that transmit within or across orbits in space to other
+      satellites.  They are different than satellite downlinks which are
+      RF links to Ground-Stations.
+
+   xTR:  is a LISP data-plane device. xTR is the general term for ITR,
+      ETR, or RTR.  The formal and authoritative definition is in
+      [RFC9300].  When a LISP xTR runs on a ground station device, it is
+      called a GS-xTR.
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                 [Page 4]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+   Ground-Station (GS):  is a device on the ground that has wireless
+      links to a satellite node in space
+      [I-D.lhan-problems-requirements-satellite-net].  When a Ground-
+      Station is an LISP xTR, it encapsulates and decapsulates packets
+      sent and received on satellite links according to the forwarding
+      procedures in [RFC9300] and [RFC9301].  A GS can also be part of
+      the satellite network system but isn't deployed as a GS-xTR.  In
+      this scenario, the GS is part of the underlay and assumes the
+      satellite network system, with its attached ground stations,
+      deliver RLOC addressed packets.  When a satellite is in relay mode
+      (not using ISLs), a LISP RTR can be used to support traffic
+      engineering where a GS-ITR encapsulates through a single satellite
+      hop to a GS-RTR which decapsulates and re-encapsulates through
+      another single satellite hop to a GS-ETR.  See [I-D.ietf-lisp-te]
+      for details, and how LISP-TE can also be used with multiple
+      satellite hops.
+
+   source-GS-xTR:  is the LISP ITR which does a mapping system lookup to
+      obtain and cache the destination-RLOC for the destination-EID.  It
+      then encapsulates the packet and sends it on the uplink whatever
+      satellite that is in coverage range.
+
+   destination-GS-xTR:  is the LISP ETR which receives a LISP
+      encapsulated packet on the downlink from the satellite that is in
+      coverage range over it.  The outer header is stripped and packet
+      is delivered to local EID on the ground.
+
+   EID:  defined as an Endpoint-ID in [RFC9300].  An EID is assigned to
+      devices that reside behind GS-xTRs and are registered to the LISP
+      mapping system with a satellite network address which is used as
+      an RLOC.
+
+   RLOC:  defined as a Routing Locator in [RFC9300].  Within the scope
+      of this specification, the RLOC is the satellite network address
+      of a GS-xTR where the satellite network knows how to forward
+      packets to this RLOC address.
+
+
+3.  Overview
+
+   Here is how a packet flow sequence occurs from a source-EID to a
+   destination-EID when the underlay is a satellite network:
+
+   1.  source-EID originates an IP packet to a destination-EID.  The
+       addresses in the packet are EIDs.
+
+   2.  The packet travels to the GS-xTR (source-GS-xTR) via traditional
+       IP routing.
+
+
+
+Farinacci, et al.         Expires 7 August 2024                 [Page 5]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+   3.  The source-GS-xTR does a map-cache lookup for destination-EID to
+       obtain the RLOC for the destination-GS-xTR.
+
+   4.  If map-cache lookup fails, a mapping system lookup is performed
+       for destination-EID.
+
+   5.  The source-GS-xTR LISP encapsulates the packet and sends it on
+       the uplink to the satellite.  The RLOC addresses in the outer
+       header are source-GS-xTR and destination-GS-xTR.
+
+   6.  The satellite network delivers the packet to Ground-Station
+       addressed as destination-GS-xTR.
+
+   7.  The destination-GS-xTR decapsulates the LISP packet by stripping
+       the outer header and delivering the packet to the destination-EID
+       on the ground.
+
+
+4.  Mapping System
+
+   The LISP mapping system holds EID-to-RLOC-set mappings.  They are
+   kept up to date by GS-xTRs and all the mechanisms from [RFC9301] are
+   available for use.  The mappings can contain RLOCs that are not GS-
+   xTRs thereby allowing load-splitting between both satellite and
+   terrestrial paths.  The RLOC-set can also contain multicast RLOCs
+   that can be reachable via satellite or terrestrial paths.
+
+   All of IPv4, IPv6, and MAC EIDs can be registered to the mapping
+   system to create multi-address-family L3 overlays as well as L2
+   overlays on the satellite underlay.  That is, GS-xTR RLOCs can be
+   used with these EID address types.
+
+   Even though the satellite network is deployed to offer global
+   Internet services, it may just carry routes and connectivity to GS-
+   xTR addresses (their RLOC addresses).  If this is the case, the LISP
+   critical infrastructure may not be reachable by the satellite network
+   or the satellite nodes themselves.  Therefore, the mapping system can
+   be deployed in GS-xTRs which can be reached by the satellite network.
+
+   This specification recommends the mapping system reside on earth and
+   if the satellite network does offer global Internet connectivity, the
+   mapping system can reside anywhere on earth.  So even for rural based
+   deployments of GS-xTRs, where the only connectivity is through a
+   satellite interface link, the LISP critical infrastructure is always
+   reachable.
+
+
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                 [Page 6]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+   When satellite connectivity changes from a GS-xTR within its coverage
+   range, the RLOC of the GS-xTR does not change.  Therefore, there is
+   no need to update the mapping system when this happens.  This
+   provides more scale to the total system since the LISP overlay is
+   providing a level of indirection.
+
+5.  EID Mobility
+
+   EID-mobility [I-D.ietf-lisp-eid-mobility] is supported so devices can
+   roam to other xTRs and are found by mapping system updates for remote
+   xTRs encapsulating to the EID.  GS-xTRs learn EIDs on the ground
+   dynamically via the mechanisms in [I-D.ietf-lisp-eid-mobility].
+
+6.  Satellite RLOCs and Underlay Routing
+
+   The address format of a GS-xTR RLOC depends on the design of the
+   satellite network system.  The LISP RLOC formatting is flexible to
+   accommodate new address types such as GPS coordinate based addressing
+   or other forms of satellite addressing such as described in
+   Section 7.  The only requirement is that they are routable by the
+   satellite network system.
+
+   If the satellite network supports IP forwarding and IP addresses are
+   assigned to the RF-links on the GS-xTRs, then the satellite network
+   just needs to make these "attachment point addresses" routable in the
+   satellite network routing system.  And if the satellite network
+   desires to scale the route state in its routing system, it can use
+   prefix aggregation, a local design matter to the satellite network
+   routing system.  When this is the case, the RLOC is a standard AFI
+   encoded IPv4 or IPv6 address.
+
+   If the satellite network underlay supports a source-routing
+   mechanism, the same approach can be used as a LISP overlay on a
+   terrestrial underlay running Segment Routing [RFC8754].  The source-
+   route is encoded in an RLOC-record stored in the mapping system that
+   is formatted as a list of satellite hop addresses.
+
+7.  Satellite Opportunistic Forwarding
+
+   A satellite constellation network could perform packet forwarding
+   with little or no control-plane.  Using GPS (lat, long, alt)
+   coordinate addressing, a satellte router could route packets
+   physically closer to a destination GS-xTR.  This technique uses
+   opportunistic forwarding where decisions are made at the instant a
+   satellite router receives a packet and needs to choose an ISL
+   interface to get the packet closer to the destination.
+
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                 [Page 7]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+   The satellite router uses a packet header that contains the
+   destination GPS address for the GS-xTR.  The source GS-xTR prepends
+   this header on the packet before it sends it on the RF uplink to the
+   nearest satellite overhead.  The satellte router can decide to send
+   the packet to a next-hop satellite in the same orbit or to a next-hop
+   satellite in an adjacent orbit, as long as the packet is getting
+   closer to the destination GPS address.  A satellite router decides
+   the proximity of adjacent orbits to determine if the packet is
+   actually getting closer to the destination GPS address.
+
+   For a given implementation, satellite routers in the same orbit or in
+   adjacent orbits, which have good signal quality, exchange hello
+   messages to advertise their position with a GPS address (lat, long,
+   alt).  These messages are very small in size and are sent
+   periodically with second-granular frequency.  This indicates to a
+   satellite router, which direction to send the packet to get it closer
+   to its GPS address location.
+
+8.  Underlay Performance
+
+   The RLOC probing procedures in [RFC9301] can provide underlay
+   telemetry measurement [I-D.farinacci-lisp-telemetry] so the overlay
+   can tell how well the satellite network is performing.  And if the
+   underlay under performs or telemetry metrics change, the GS-xTR can
+   select another RLOC, possibly to a terrestrial RLOC.
+
+9.  Security Considerations
+
+   There are no specific security considerations at this time for this
+   use-case.  However, existing LISP security functionality documented
+   in [RFC9301], [RFC9303], [I-D.ietf-lisp-eid-anonymity], and
+   [I-D.farinacci-lisp-ecdsa-auth] can be used when the LISP overlay
+   runs over a satellite network underlay.
+
+   Data-plane encryption can be used to make the satellite underlay more
+   secure.  See LISP Data-Plane Confidentiality [RFC8061] for more
+   details.  This solution can work when packets take multiple satellite
+   hops and/or Ground-Station hops.
+
+10.  IANA Considerations
+
+   There are no requests for IANA at this time.
+
+11.  Test and Deployment Experience
+
+   This section will describe the various LISP deployment combinations
+   as well as progress updates of testing LISP over SpaceX's Starlink
+   satellite network [STARLINK].
+
+
+
+Farinacci, et al.         Expires 7 August 2024                 [Page 8]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+   In the following sections, the mapping system is running in a cloud
+   provider VM and is accessible by all LISP xTRs in all the testing
+   scenarios.  The LISP RTR also runs in the VM which is providing NAT-
+   traversal services as well as LISP to non-LISP connectivity [RFC6832]
+   via LISP-NAT.
+
+11.1.  GS-xTRs Direct (non-NAT)
+
+                               satellite(s)
+                                  /   \
+                                 /     \
+                                /       \
+                               /         \
+                           dish           dish
+                            |               |
+                            |               |
+                        wifi-router      wifi-router
+                            ^                ^
+                           / \              / \
+                         GS-xTR            GS-xTR
+
+           Figure 2: Each GS-xTR is one-hop away on WiFi Network
+
+   This test has not been performed at this time since we are seeking
+   more Starlink participants.  This section will be updated in the next
+   document revision.  We are not sure we will be able to test this case
+   since the Starlink provided wifi-routers are doing NAT translation.
+
+11.2.  GS-xTRs Direct (NAT)
+
+                               satellite(s)
+                               /    |      \
+                              /     |       \
+                             /      |        \
+                            /       |         \
+                        dish       dish        dish
+                         /          |             \
+                        /           |              \
+              wifi-router       colo-pop           wifi-router
+                  ^                 |                  ^
+                 / \                |                 / \
+                GS-xTR          LISP-RTR            GS-xTR
+
+           Figure 3: Each GS-xTR is one-hop away on WiFi Network
+
+   This test has not been performed at this time since we are seeking
+   more Starlink participants.  This section will be updated in the next
+   document revision.  When this occurs, packets will flow from GS-xTR
+
+
+
+Farinacci, et al.         Expires 7 August 2024                 [Page 9]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+   to RTR to GS-xTR since NAT-traversal is occurring in the wifi-
+   routers.  The LISP-RTR is many hops away from the colocation-pop
+   router, which has a direct connection to the satellite dish.
+
+   Starlink only supports a carrier-grade NAT (CGNAT) solution so the
+   Decentralized-NAT procedures in [I-D.farinacci-lisp-lispers-net-nat]
+   have been challenging to get the above configuration to work.
+
+11.3.  GS-xTR to LISP-xTR (NAT)
+
+              satellite(s)
+                 /   \
+                /     \
+               /       \                      LISP-RTR
+              /         \                         |
+          dish           dish                     |
+            |             |                +-------------+
+            |             |                | Terrestrial |
+        wifi-router    colocation-pop ---- |  Internet   | ---- LISP-xTR
+            ^                              +-------------+
+           / \
+          GS-xTR
+
+          Figure 4: GS-xTR on WiFi Network to LISP-xTR in VM
+
+   In this deployment scenario, the GS-xTR is a laptop, assigned an EID
+   and communicating with the EID assigned to an xTR running in a cloud
+   VM.  Since NAT-traversal is used on the wifi-routers, packets flow
+   through the LISP-RTR.
+
+   There are cases where Decentralized-NAT
+   [I-D.farinacci-lisp-lispers-net-nat] can work from GS-xTR to LISP-xTR
+   so packet flow does not traverse a third-party device like a LISP-
+   RTR.  Testing experience has revealed that Cloud Providers implement
+   more standard NAT functionality versus limited translation
+   functionality of a CGNAT.
+
+   The laptop is assigned EID 240.1.1.1 and LISP-xTR is assigned EID
+   240.11.11.11.  Here is ping output initiated from the laptop:
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                [Page 10]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+      laptop -> ping -c 5 240.11.11.11
+      PING 240.11.11.11 (240.11.11.11): 56 data bytes
+      64 bytes from 240.11.11.11: icmp_seq=0 ttl=62 time=xx ms
+      64 bytes from 240.11.11.11: icmp_seq=1 ttl=62 time=xx ms
+      64 bytes from 240.11.11.11: icmp_seq=2 ttl=62 time=xx ms
+      64 bytes from 240.11.11.11: icmp_seq=3 ttl=62 time=xx ms
+      64 bytes from 240.11.11.11: icmp_seq=4 ttl=62 time=xx ms
+
+      --- 240.11.11.11 ping statistics ---
+      5 packets transmitted, 5 packets received, 0.0% packet loss
+
+11.4.  GS-xTR Direct to non-LISP Host (NAT and Interwork)
+
+                               satellite(s)
+                               /    |     \
+                              /     |      \
+                             /      |       \
+                            /       |        \
+                        dish       dish      dish
+                         /          |           \
+                        /           |            \
+              wifi-router       colo-pop         wifi-router
+                  ^                 |                ^
+                 / \                |               / \
+                GS-xTR          LISP-RTR        non-LISP-Host
+
+           Figure 5: GS-xTR and Host one-hop away on WiFi Network
+
+   This test has not been performed at this time since we are seeking
+   more Starlink participants.  This section will be updated in the next
+   document revision.  When this occurs, packets will flow from GS-xTR
+   to RTR to non-LISP-Host since both NAT-traversal and LISP-NAT support
+   is required.  The LISP-RTR is many hops away from the colo-pop
+   router, which has a direct connection to the satellite dish.
+
+11.5.  GS-xTR to non-LISP Host (NAT and Interwork)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                [Page 11]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+            satellite(s)
+               /   \
+              /     \
+             /       \                      LISP-RTR
+            /         \                         |
+        dish           dish                     |
+          |             |                +-------------+
+          |             |                | Terrestrial |
+      wifi-router    colocation-pop ---- |  Internet   | ---- non-LISP-Host
+          ^                              +-------------+
+         / \
+        GS-xTR
+
+           Figure 6: GS-xTR on WiFi to non-LISP-Host in VM
+
+   In this deployment scenario, the GS-xTR is a laptop, assigned an EID
+   and communicating with the non-EID assigned to non-LISP Host running
+   in a cloud VM.  When this occurs, packets will flow from GS-xTR to
+   RTR to non-LISP-Host since both NAT-traversal and LISP-NAT support is
+   required.
+
+   The laptop is assigned EID 240.1.1.1 and non-LISP-Host is the Google
+   DNS server 8.8.8.8.  Here is ping output initiated from the laptop:
+
+      laptop -> ping -c 5 -S 240.1.1.1 8.8.8.8
+      PING 8.8.8.8 (8.8.8.8) from 240.1.1.1: 56 data bytes
+      64 bytes from 8.8.8.8: icmp_seq=0 ttl=43 time=xx ms
+      64 bytes from 8.8.8.8: icmp_seq=1 ttl=43 time=xx ms
+      64 bytes from 8.8.8.8: icmp_seq=2 ttl=43 time=xx ms
+      64 bytes from 8.8.8.8: icmp_seq=3 ttl=43 time=xx ms
+      64 bytes from 8.8.8.8: icmp_seq=4 ttl=43 time=xx ms
+
+      --- 8.8.8.8 ping statistics ---
+      5 packets transmitted, 5 packets received, 0.0% packet loss
+
+   This may be a likely connectivity option since not all equipment
+   connected to the satellite network will be LISP GS-xTRs.
+
+11.6.  EID-Mobility Direct (non-NAT)
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                [Page 12]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+                               satellite(s)
+                                  /   \
+                                 /     \
+                                /       \
+                               /         \
+                           dish           dish
+                            |               |
+                            |               |
+                        wifi-router      wifi-router
+                            ^                ^
+                           / \              / \
+                         GS-xTR            GS-xTR
+                          |  |              |  |
+                       EID1  EID2  ...   EID2  EID3
+
+           Figure 7: Each GS-xTR is one-hop away on WiFi Network
+
+   This test has not been performed yet.  In this test a device assigned
+   with EID2 will be able to roam across GS-xTRs and keep connections up
+   and running between EID1 and EID3.  This can also happen when EID2
+   talks to a non-LISP host (via an RTR running LISP-NAT interworking
+   services).
+
+   In this test scenario, EIDs are assigned to devices that reside
+   behind GS-xTRs (via wireless or wired links) and do not run LISP.
+   The GS-xTRs, which run LISP, encapsulate/decapsulate packets on
+   behalf of the host devices.  The GS-xTR RLOC addresses are routable
+   by the satellite network (like in the previous test scenarios)
+   allowing for the host devices to communicate while the satellite
+   network keeps no state about EID addresses.
+
+11.7.  GS-xTRs Direct ISLs
+
+          satellite ---(ISL)--- satellite ---(ISL)--- satellite
+              |                     |                     |
+              |                     |                     |
+              |                     |                     |
+              |                     |                     |
+             dish                  dish                  dish
+              |                     |                     |
+              |                     |                     |
+          wifi-router           colo-pop              wifi-router
+              ^                     |                     ^
+             / \                    |                    / \
+           GS-xTR               LISP-RTR               GS-xTR
+
+           Figure 8: Each GS-xTR is one-hop away on WiFi Network
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                [Page 13]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+   This test has not been performed.  It will be tested when the
+   satellite network has proven it can support ISL links and satellite
+   routing reliably.
+
+11.8.  GS-xTR Laptop on Overlay and Underlay (NAT no Interwork)
+
+            satellite(s)
+               /   \                                     overlay
+              /     \                                  +-----------+
+             /       \                        xTR ---- | LISP site | (240.11.11.11)
+        dish           dish                    |       +-----------+
+          |             |                      |
+          |             |                +-------------+
+      wifi-router    colocation-pop ---- |  Internet   | ---- non-LISP-Host
+          ^                              +-------------+        underlay
+         / \                                                    (8.8.8.8)
+        GS-xTR
+
+                Figure 9: GS-xTR on WiFi dual function
+
+   The GS-xTR sends packet natively for non-EID destination 8.8.8.8:
+
+   dino-macbook -> ping -c 5 8.8.8.8
+   PING 8.8.8.8 (8.8.8.8): 56 data bytes
+   64 bytes from 8.8.8.8: icmp_seq=0 ttl=56 time=25.741 ms
+   64 bytes from 8.8.8.8: icmp_seq=1 ttl=56 time=17.197 ms
+   64 bytes from 8.8.8.8: icmp_seq=2 ttl=56 time=17.870 ms
+   64 bytes from 8.8.8.8: icmp_seq=3 ttl=56 time=21.806 ms
+   64 bytes from 8.8.8.8: icmp_seq=4 ttl=56 time=16.966 ms
+
+   --- 8.8.8.8 ping statistics ---
+   5 packets transmitted, 5 packets received, 0.0% packet loss
+   round-trip min/avg/max/stddev = 16.966/19.916/25.741/3.400 ms
+
+   The GS-xTR sends encapsulated packets for EID destination
+   240.11.11.11:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                [Page 14]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+dino-macbook -> ping -c 5 240.11.11.11
+PING 240.11.11.11 (240.11.11.11): 56 data bytes
+64 bytes from 240.11.11.11: icmp_seq=0 ttl=62 time=288.063 ms
+64 bytes from 240.11.11.11: icmp_seq=1 ttl=62 time=325.043 ms
+64 bytes from 240.11.11.11: icmp_seq=2 ttl=62 time=152.507 ms
+64 bytes from 240.11.11.11: icmp_seq=3 ttl=62 time=191.567 ms
+64 bytes from 240.11.11.11: icmp_seq=4 ttl=62 time=231.620 ms
+
+--- 240.11.11.11 ping statistics ---
+5 packets transmitted, 5 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 152.507/237.760/325.043/62.591 ms
+
+dino-macbook -> mc 240.11.11.11
+
+LISP Map-Cache for localhost:8080, hostname dino-macbook.lan, release 0.593
+
+EID [1]240.11.11.11/32, uptime 0:00:39, ttl 1440m
+  RLOC 18.237.14.154:43799, state unreach-state since 0:00:22, a-xtr1@tp-43799
+    packet-count: 2, packet-rate: 0 pps, byte-count: 168, bit-rate: 0.0 mbps
+    rtts [-1, -1, -1], hops [?/?, ?/?, ?/?], latencies [?/?, ?/?, ?/?]
+  RLOC 34.217.110.112, state up-state since 0:00:39, RTR
+    packet-count: 17, packet-rate: 0 pps, byte-count: 1428, bit-rate: 0.0 mbps
+    rtts [0.121, -1, -1], hops [26/22, ?/?, ?/?], latencies [0.083/0.034, ?/?, ?/?]
+
+12.  References
+
+12.1.  Normative References
+
+   [RFC1700]  Reynolds, J. and J. Postel, "Assigned Numbers", RFC 1700,
+              DOI 10.17487/RFC1700, October 1994,
+              <https://www.rfc-editor.org/info/rfc1700>.
+
+   [RFC6832]  Lewis, D., Meyer, D., Farinacci, D., and V. Fuller,
+              "Interworking between Locator/ID Separation Protocol
+              (LISP) and Non-LISP Sites", RFC 6832,
+              DOI 10.17487/RFC6832, January 2013,
+              <https://www.rfc-editor.org/info/rfc6832>.
+
+   [RFC8061]  Farinacci, D. and B. Weis, "Locator/ID Separation Protocol
+              (LISP) Data-Plane Confidentiality", RFC 8061,
+              DOI 10.17487/RFC8061, February 2017,
+              <https://www.rfc-editor.org/info/rfc8061>.
+
+   [RFC8754]  Filsfils, C., Ed., Dukes, D., Ed., Previdi, S., Leddy, J.,
+              Matsushima, S., and D. Voyer, "IPv6 Segment Routing Header
+              (SRH)", RFC 8754, DOI 10.17487/RFC8754, March 2020,
+              <https://www.rfc-editor.org/info/rfc8754>.
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                [Page 15]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+   [RFC9300]  Farinacci, D., Fuller, V., Meyer, D., Lewis, D., and A.
+              Cabellos, Ed., "The Locator/ID Separation Protocol
+              (LISP)", RFC 9300, DOI 10.17487/RFC9300, October 2022,
+              <https://www.rfc-editor.org/info/rfc9300>.
+
+   [RFC9301]  Farinacci, D., Maino, F., Fuller, V., and A. Cabellos,
+              Ed., "Locator/ID Separation Protocol (LISP) Control
+              Plane", RFC 9301, DOI 10.17487/RFC9301, October 2022,
+              <https://www.rfc-editor.org/info/rfc9301>.
+
+   [RFC9303]  Maino, F., Ermagan, V., Cabellos, A., and D. Saucez,
+              "Locator/ID Separation Protocol Security (LISP-SEC)",
+              RFC 9303, DOI 10.17487/RFC9303, October 2022,
+              <https://www.rfc-editor.org/info/rfc9303>.
+
+12.2.  Informative References
+
+   [I-D.farinacci-lisp-ecdsa-auth]
+              Farinacci, D. and E. Nordmark, "LISP Control-Plane ECDSA
+              Authentication and Authorization", Work in Progress,
+              Internet-Draft, draft-farinacci-lisp-ecdsa-auth-03, 4
+              September 2018, <https://datatracker.ietf.org/doc/html/
+              draft-farinacci-lisp-ecdsa-auth-03>.
+
+   [I-D.farinacci-lisp-lispers-net-nat]
+              Farinacci, D., "lispers.net LISP NAT-Traversal
+              Implementation Report", Work in Progress, Internet-Draft,
+              draft-farinacci-lisp-lispers-net-nat-07, 22 December 2023,
+              <https://datatracker.ietf.org/doc/html/draft-farinacci-
+              lisp-lispers-net-nat-07>.
+
+   [I-D.farinacci-lisp-mobile-network]
+              Farinacci, D., Pillay-Esnault, P., and U. Chunduri, "LISP
+              for the Mobile Network", Work in Progress, Internet-Draft,
+              draft-farinacci-lisp-mobile-network-17, 28 August 2023,
+              <https://datatracker.ietf.org/doc/html/draft-farinacci-
+              lisp-mobile-network-17>.
+
+   [I-D.farinacci-lisp-telemetry]
+              Farinacci, D., Ouissal, S., and E. Nordmark, "LISP Data-
+              Plane Telemetry", Work in Progress, Internet-Draft, draft-
+              farinacci-lisp-telemetry-11, 23 October 2023,
+              <https://datatracker.ietf.org/doc/html/draft-farinacci-
+              lisp-telemetry-11>.
+
+   [I-D.haindl-lisp-gb-atn]
+              Haindl, B., Lindner, M., Moreno, V., Portoles-Comeras, M.,
+              Maino, F., and B. Venkatachalapathy, "Ground-Based LISP
+
+
+
+Farinacci, et al.         Expires 7 August 2024                [Page 16]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+              for the Aeronautical Telecommunications Network", Work in
+              Progress, Internet-Draft, draft-haindl-lisp-gb-atn-09, 27
+              March 2023, <https://datatracker.ietf.org/doc/html/draft-
+              haindl-lisp-gb-atn-09>.
+
+   [I-D.ietf-lisp-eid-anonymity]
+              Farinacci, D., Pillay-Esnault, P., and W. Haddad, "LISP
+              EID Anonymity", Work in Progress, Internet-Draft, draft-
+              ietf-lisp-eid-anonymity-15, 28 August 2023,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-lisp-
+              eid-anonymity-15>.
+
+   [I-D.ietf-lisp-eid-mobility]
+              Portoles-Comeras, M., Ashtaputre, V., Maino, F., Moreno,
+              V., and D. Farinacci, "LISP L2/L3 EID Mobility Using a
+              Unified Control Plane", Work in Progress, Internet-Draft,
+              draft-ietf-lisp-eid-mobility-13, 6 November 2023,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-lisp-
+              eid-mobility-13>.
+
+   [I-D.ietf-lisp-te]
+              Farinacci, D., Kowal, M., and P. Lahiri, "LISP Traffic
+              Engineering Use-Cases", Work in Progress, Internet-Draft,
+              draft-ietf-lisp-te-13, 28 August 2023,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-lisp-te-
+              13>.
+
+   [I-D.lhan-problems-requirements-satellite-net]
+              Han, L., Li, R., Retana, A., Chen, M., Su, L., and T.
+              Jiang, "Problems and Requirements of Satellite
+              Constellation for Internet", Work in Progress, Internet-
+              Draft, draft-lhan-problems-requirements-satellite-net-06,
+              4 January 2024, <https://datatracker.ietf.org/doc/html/
+              draft-lhan-problems-requirements-satellite-net-06>.
+
+   [STARLINK] "High-Level SpaceX Starlink Technology
+              Description",  https://www.starlink.com/technology,
+              September 2022.
+
+Appendix A.  Acknowledgments
+
+   The authors would like to thank the LISP working group for their
+   review of this specification.  A special thank you goes to Lin Han
+   for email discussions on this topic.
+
+
+
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                [Page 17]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+Appendix B.  Document Change Log
+
+B.1.  Changes to draft-farinacci-lisp-satellite-network-04
+
+   *  Submitted February 2024.
+
+   *  Update references and docment timer.
+
+B.2.  Changes to draft-farinacci-lisp-satellite-network-03
+
+   *  Submitted August 2023.
+
+   *  Add section about how an overlay interacts with a satellite
+      underlay when it provides packet routing on ISLs using
+      opportunitic forwarding with GPS addressing.
+
+B.3.  Changes to draft-farinacci-lisp-satellite-network-02
+
+   *  Submitted February 2023.
+
+   *  Add references to proposed standard documents.
+
+   *  Refer to lispsers.net Decentralized-NAT for testing direct xTR to
+      xTR.
+
+   *  Added test case where the GS-xTR is both on the underlay and the
+      LISP overlay.
+
+B.4.  Changes to draft-farinacci-lisp-satellite-network-01
+
+   *  Submitted September 2022.
+
+   *  Added text about how the mapping system is used in a rural
+      location when the only Internet link available is the satellite
+      link.
+
+   *  Added the Test and Deployment Experience section to document what
+      has been tested so far.
+
+B.5.  Changes to draft-farinacci-lisp-satellite-network-00
+
+   *  Initial posting April 2022.
+
+Authors' Addresses
+
+
+
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                [Page 18]
+
+Internet-Draft         LISP for Satellite Networks         February 2024
+
+
+   Dino Farinacci
+   lispers.net
+   San Jose, CA
+   United States of America
+   Email: farinacci@gmail.com
+
+
+   Victor Moreno
+   Independent
+   Mountain View, CA
+   United States of America
+   Email: victor@magooit.com
+
+
+   Padma Pillay-Esnault
+   Independent
+   Santa Clara, CA
+   United States of America
+   Email: padma.ietf@gmail.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Farinacci, et al.         Expires 7 August 2024                [Page 19]
