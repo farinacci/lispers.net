@@ -17966,7 +17966,7 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
     # For decent-NAT cases, get the translated ephermal port from the
     # rloc-name. Use it to find RLOC-probe state.
     #
-    if (rloc_name.find(LISP_TP) != -1):
+    if (rloc_name and rloc_name.find(LISP_TP) != -1):
         port = int(rloc_name.split(LISP_TP)[-1])
     #endif
     
