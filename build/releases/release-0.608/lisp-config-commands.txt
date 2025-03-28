@@ -1,0 +1,1867 @@
+===============================================================================
+
+                    lispers.net LISP Command Guide
+                    ------------------------------
+              Last updated: Wed Jun 21 09:58:05 PDT 2023
+
+This document contains the command syntax defintions that go into configuration
+file lisp.config. You can copy, paste, and edit the clauses below into your
+customized lisp.config file.
+
+See details in the header of the lisp.config file on how to interact with
+the LISP subsystem configuration system.
+
+Note where you see "..." below means the clause or sub-clause can be repeated.
+And where you see angle brackets, user provided data must be supplied.
+
+-------------------------------------------------------------------------------
+
+                            Shell Commands
+                            --------------
+
+Run from the lispers.net directory:
+
+RUN-LISP
+    This command starts the lispers.net LISP subsystem when it has not been
+    previously started and is called from RESTART-LISP.
+    
+STOP-LISP
+    This command stops the LISP subsystem and is called from RESTART-LISP.
+
+RESTART-LISP
+    This command will stop and run the lispers.net LISP subsystem. It first
+    calls script STOP-LISP then script RUN-LISP.
+    
+RL
+    This command is a wrapper script to RESTART-LISP. It is used to tailor
+    where the lispers.net directory is installed and how to configure the
+    kernel for any EID addresses local to the system. The user creates their
+    own copy and can find a template in RL-template.
+    
+pslisp
+    Displays each running lispers.net LISP process running as part of the
+    LISP subsystem.
+
+lig
+    This command is a wrapper script that runs lisp-lig.pyo and prompts for
+    parameters. lig lookups an EID in the mapping system and returns the
+    EID-to-RLOC-set mapping.
+
+rig
+    This command is a wrapper script that runs lisp-rig.pyo and prompts for
+    parameters. rig lookkups an EID in a LISP-DDT mapping system and can
+    return the referral path to find out which map-server the EID is
+    registered to.
+
+ltr
+    Runs ltr.pyo and prompts for parameters. ltr traces an entire
+    encapsulation path. Very useful tool. I suggest you always use it.
+
+mc
+    Runs lisp-mc.pyo to display the map-cache for the system the command
+    is sent to. The first parameter comes in multiple forms of supplying
+    username/password and host/port <user>:<pw>@<host>:<port>. <user> defaults
+    to "root", <pw> defaults to no password, <host> is required input and
+    <port> defaults to 8080. All innovations use https to curl the system
+    using the lispers.net API.
+
+sc
+    Runs lisp-sc.pyo to display the site-cache for the map-server system the
+    command is sent to. The first parameter comes in multiple forms of
+    supplying username/password and host/port <user>:<pw>@<host>:<port>.
+    <user> defaults to "root", <pw> defaults to no password, <host> is
+    required input and <port> defaults to 8080. All innovations use https to
+    curl the system using the lispers.net API.
+
+log-packets [force]
+    Toggles "itr = yes|no", "etr = yes|no", "rtr = yes|no" from the "lisp
+    debug" command clause as well as toggle "data-plane-logging = yes|no"
+    from the "lisp xtr-parameters" command clause. Use "force" keyword to do
+    the  toggle if control-plane logging was previously turned on (meaning
+    "data-plane-logging" was set to "no").
+
+more show-xtr
+    When the GO data-plane is running, the show-xtr file displays state that
+    is required to run the LISP data-plane. This file can be displayed from the
+    web interface by clicking on either the "LISP ITR Map-Cache" or "LISP RTR
+    Map-Cache" title. The GO data-plane is a faster less feature-rich LISP
+    data-plane compared to the Python data-plane. To enable the GO data-plane
+    uncomment the LISP_RUN_XTR env variable line in the RUN-LISP script.
+
+-------------------------------------------------------------------------------
+
+                   Enabling LISP Network Components
+                  ---------------------------------
+
+Command syntax:
+
+lisp enable {
+    itr = yes | no
+    etr = yes | no
+    rtr = yes | no
+    map-server = yes | no
+    map-resolver = yes | no
+    ddt-node = yes | no
+}
+
+Command Description:
+    The "lisp enable" command will run the different components of the LISP
+    protocol. When they are not included in the command clause, it is the same
+    as configuring it to "no".
+
+Example:
+
+lisp enable {
+    map-server = yes
+    map-resolver = yes
+}
+
+-------------------------------------------------------------------------------
+
+                        Enabling Debug Logging
+                        ----------------------
+
+Command syntax:
+
+lisp debug {
+    itr = yes | no
+    etr = yes | no
+    rtr = yes | no
+    map-server = yes | no
+    map-resolver = yes | no
+    ddt-node = yes | no
+}
+
+Command Description:
+    The "lisp debug" enables very detail debugging for each component of the
+    LISP subsystem.
+
+Example:
+
+lisp debug {
+    itr = no
+    etr = no
+    rtr = no
+    map-server = yes
+    map-resolver = yes
+    ddt-node = yes
+}
+
+-------------------------------------------------------------------------------
+
+              Configuring Account for Web and API Access
+              ------------------------------------------
+
+Command syntax:
+
+lisp user-account {
+    username = <user>
+    password = <user-password>
+    super-user = yes | no
+}
+...
+
+Command Description:
+   Configures a username/password combination that allows the user to use
+   the LISP subsystem web interface. A null password is allowed (see example
+   below). When super-user is set to "yes", you can add user accounts from
+   the lispers.net API management interface.
+
+Example:
+
+lisp user-account {
+    username = root
+    password = super-user-password
+    super-user = yes
+}
+lisp user-account {
+    username = admin
+    password = 
+    super-user = no
+}
+
+-------------------------------------------------------------------------------
+
+                  Configuring LISP Specific Policies
+                  ----------------------------------
+
+Command syntax:
+
+lisp policy {
+    policy-name = <policy-name>
+    match {
+        instance-id = <iid>
+        source-eid = <prefix>
+        destination-eid = <prefix> | <source-prefix>-><group-prefix>
+        source-rloc = <prefix>
+        destination-rloc = <prefix>
+        rloc-record-name = <name>
+        geo-name = <geo-name>
+        elp-name = <elp-name>
+        rle-name = <rle-name>
+        json-name = <json-name>
+        datetime-range = <yyyy-mm-dd-hh:mm:ss> <yyyy-mm-dd-hh:mm:ss>
+    }
+    ...
+    set-action = process | drop
+    set-record-ttl = <ttl>
+    set-instance-id = <iid>
+    set-source-eid = <prefix>
+    set-destination-eid = <prefix> | <source-prefix>-><group-prefix>
+    set-rloc-address = <address>
+    set-rloc-record-name = <name>
+    set-geo-name = <geo-name>
+    set-elp-name = <elp-name>
+    set-rle-name = <rle-name>
+    set-json-name = <json-name>
+}
+
+Description:
+    Match all the parameters configured in any 'match' subclause and the 
+    actions configured in the 'set' subclause will be taken with the values
+    configured in the subclause.
+
+Example:
+
+lisp policy {
+    policy-name = filter-private-addresses
+    match {
+        source-eid = 192.168.0.0/16
+    }
+    match {
+        source-eid = 10.0.0.0/8
+    }
+    set-action = drop
+}
+
+-------------------------------------------------------------------------------
+
+              Configuring Interface Specific Parameters
+              -----------------------------------------
+
+
+Command syntax:
+
+lisp interface {
+    interface-name = <interface-name>
+    device = <device-name>
+    instance-id = <iid>
+    dynamic-eid = <prefix>
+    dynamic-eid-device = <route-device-name>
+    dynamic-eid-timeout = <timeout-in-seconds>
+    multi-tenant-eid = <prefix>
+    lisp-nat = yes | no
+}
+
+Description:
+    Configures interface specific LISP parameters for unix device with name
+    <interface-name>.
+
+    When "instance-id = <iid>" is specified, any packets that arrive or are
+    delivered on the interface will be associated with instance-ID <iid>. On
+    an ITR, any packets arriving on the interface will cause the source to
+    be associated with instance-id <iid> and the destination address will
+    be an EID lookup associated with instance-id <iid>. On an ETR, during
+    decapsulation, the packet is forwarded using the kernel routing table
+    associated with the configured <iid>.
+
+    When "dynamic-eid = <prefix>" is specified, only sources that match the
+    <prefix> will be accepted as dynamically discovered EIDs. For specifying
+    which EID-prefixes are dynamic versus static, use the "dynamic-eid = yes" 
+    sub-clause in the "lisp database-mapping" command. When a dynamic-EID is
+    discovered then a route for it will be added to the kernel routing tables
+    with a next-hop interface <device-name>, unless "dynamic-eid-device" is 
+    configured in which case the next-hop interface for the route is 
+    <route-device-name>.
+
+    When "dynamic-eid = 0000-0000-0000/0" is used and "dynamic-eid = yes"
+    is configured in the "lisp database-mapping" command clause for 
+    "eid-prefix = 0000-0000-0000/0", the xTR will act as a L2-overlay node
+    and dynamically discover and register MAC addresses (as EIDs).
+
+    The default inactivity timer is 15 seconds. Unless "dynamic-eid-timeout"
+    is configured. The units are in seconds.
+
+    When "multi-tenant-eid" is configured, there can be multiple tenants
+    on a single xTR interface. Based on the EID-prefix configured, an
+    instance-ID can be assigned to each tenant. See last example below 
+    where one tenant has EIDs out of 10.0.0.0/8 and is on interface eth0
+    and the other tenant, also on interface eth0, has EIDs out of 11.0.0.0/8.
+    The first is assigned and registered to the mapping system with instance-ID
+    10 and the other with instance-ID 11, respectively.
+
+    When "lisp-nat = yes" is configured, a LISP xTR will do the LISP-NAT
+    functionality of RFC6832 "Interworking between Locator/ID Separation 
+    Protocol (LISP) and Non-LISP Sites". That means any packets that have
+    EIDs embedded will be replaced with a routable address. This is an
+    alternative to "route injected PxTRs" but has simpler properties where no 
+    additional route injection is advertised into the core underlay. For xTRs 
+    to attract such packets (acting as a PETR) from LISP sites, they must 
+    register an EID-prefix that makes up the address space of non-LISP sites. 
+
+Example:
+
+#
+# Assigning instance-ID of 1 to each EID on interface eth0.
+#
+lisp interface {
+    interface-name = customer-1
+    device = eth0
+    instance-id = 1
+}
+
+#
+# EIDs on interface eth1 get instance-ID 2 assigned and are discovered
+# dynamically and registered when in range 10.0.0.0/8. When no packets
+# are received from the dynamic-EIDS for 60 seconds are timed out and
+# deregistered from the mapping system.
+#
+lisp interface {
+    interface-name = customer-2
+    device = eth1
+    instance-id = 2
+    dynamic-eid = 10.0.0.0/8
+    dynamic-eid-timeout = 60
+}
+
+#
+# EIDs on interface eth1 are associated with interface vlan1. Only EID
+# 1.1.1.1 is discovered dynamcially and registered to the mapping system.
+#
+lisp interface {
+    interface-name = customer-3
+    device = eth1
+    dynamic-eid = 1.1.1.1/32
+    dynamic-eid-device = vlan1
+    dynamic-eid-timeout = 1
+}
+
+#
+# Assign instance-ID 10 and 11 to different tenants on the same interface 
+# eth0 based on the source EID.
+#
+lisp interface {
+    interface-name = tenant-1
+    device = eth0
+    instance-id = 10
+    multi-tenant-eid = 10.0.0.0/8
+}
+lisp interface {
+    interface-name = tenant-2
+    device = eth0
+    instance-id = 11
+    multi-tenant-eid = 11.0.0.0/8
+}
+
+-------------------------------------------------------------------------------
+
+               Configuring ITR, ETR, or RTR Parameters
+               ---------------------------------------
+
+Command syntax:
+
+lisp xtr-parameters {
+    rloc-probing = yes | no
+    nonce-echoing = yes | no
+    data-plane-security = yes | no
+    data-plane-logging = yes | no
+    frame-logging = yes | no
+    flow-logging = yes | no
+    nat-traversal = yes | no
+    decentralized-nat = yes | no
+    checkpoint-map-cache = yes | no
+    ipc-data-plane = yes | no
+    register-reachable-rtrs = yes | no
+    decentralized-push-xtr = yes | no
+    decentralized-pull-xtr-modulus = <modulus-1-255>
+    decentralized-pull-xtr-dns-suffix = <dns-name-suffix>
+}
+
+Command Description:
+    Configures specific parameters for ITR, RTR, and ETR LISP components. 
+    Here is a description of each parameter:
+
+    rloc-probing
+        Turns on sending of RLOC-Probe Map-Requests in ITRs and RTRs. When
+        RLOC-probing is enabled and there are no RLOC-Probe Map-Replies 
+        returned, the RLOC is put in "unreach-state" and is not used for
+        encapsulating packets. The default setting is "no". RLOC-probing
+        has underlay telemetry features built in. Round-trip times and
+        forward and reverse underlay hop-count is computed. If you would
+        like one-way latency measurements, use the "lisp json" command
+        with "json-name" equal to "telemetry" to enable forward and reverse
+        latency measurements. See the "lisp json" command description below
+        for specific details.    
+
+    nonce-echoing
+        Turns on data nonce-echoing requests in an ITR/RTR and echoing of data 
+        nonces in an ETR/RTR. An ETR/RTR will set the E-bit in a Map-Reply 
+        indicating it is Nonce-Echo capable so an ITR/RTR will periodically 
+        set the N and E bits in encapsulated packets requesting an ETR/RTR
+        to echo the nonce. This allows the ITR/RTR to verify it has 
+        reachability to the RLOC of the ETR/RTR via the underlay network.
+
+    data-plane-secuirty
+        Turns on encrpytion for any encapsulated packets the ITR or RTR sends.
+        The ETR will decrypt by default as long as the security parameters
+        are set in Map-Requests and in the LISP encapsulation header. The
+        default setting is "no".
+
+    data-plane-logging
+        Turns on logging of data packets, all of received for forwarding,
+        encapsulation, and decapsulation on xTRs and RTRs. The default 
+        setting is "no". When set to "yes", data-plane logging is only 
+        enabled when turned on via the "lisp debug" command clause or
+        the "manage logging" button on the landing web page.
+
+    frame-logging
+        Turns on logging of MAC frame-level data packets. The default 
+        setting is "no". When set to "yes", data-plane logging is only 
+        enabled when turned on via the "lisp debug" command clause or
+        the "manage logging" button on the landing web page.
+
+    flow-logging
+        Turns on logging of encapsulated flows in an ITR, ETR, and RTR.
+        The default setting is "no". This can only be set by changing the
+        lisp.config configuration file.
+
+    nat-traversal
+        Turns on xTR nat-traversal support. That means before an ETR sends
+        Map-Register messages to its configured Map-Servers, it will send
+        an Info-Request message so it can obtain the translated port and
+        global/public address of itself. When an ITR/ETR reside behind a NAT
+        device, it is assigned an private IP RLOC address. This address cannot
+        be registered to the mapping system so a global/public address needs
+        to be obtained. That is what "nat-traversal = yes" achieves. If there
+        is no NAT on path, the ETR will register its local RLOCs (which are
+        public addresses) but keep sending Info-Request messages to anticipate
+        a NAT being placed in between the xTR and the Internet at a later time.
+        When private addresses are in "rloc" clauses for the "lisp database-
+        mapping" commands, they can be used by other xTRs behind the same
+        NATs for local encapsulation (packets do not hair-pin through the RTR).
+        See informational RFC in docs/draft-farinacci-lisp-lispers-net-nat-00
+        for details.
+
+    decentralized-nat
+        Allows xTRs, which reside behind NAT devices, to encapsulate packets to
+        each other. To traverse NAT devices, typcailly an RTR is used but
+        this future avoids hair-pinning traffic to an RTR, that is typically
+        deployed in the core of the network and/or a cloud provider. This
+        command is only used in xTRs. That is, itr=yes and etr=yes in the
+        "lisp enable" command clause. This command requires nat-traversal=yes
+        to be use with it. Your mileage may vary with this feature depending
+        how strict your NAT devices are. See docs/lisp-decent-nat.pdf for a
+        snap-shot description on how it works. See informational RFC in
+        docs/draft-farinacci-lisp-lispers-net-nat-00 for details. Note a
+        send-map-request static map-cache entry must be configured for the
+        EID range you want to use. Otherwise, the default map-cache entry
+        0.0.0.0/0 will be used which causes packets to be sent to the RTR.
+        See example in docs/lisp.config.xtr-nat.
+
+    checkpoint-map-cache
+        Write map-cache entries to a checkpoint file periodically. And when
+        the ITR/RTR restarts, it populates its map-cache with the entries from
+        the checkpoint file. This parameter defaults to "no".
+
+    ipc-data-plane
+        When this is set to "yes", the lispers.net control-plane will program
+        a external data-plane that may use any packet encapsulation it sees
+        fit. This allows the lispers.net control-plane to be used with faster
+        software forwarding or hardware forwarding implementations. When this
+        feature is used, the lispers.net data-plane does not execute.
+
+    register-reachable-rtrs
+        When this is set to "yes" and NAT-traversal is in use, an xTR will
+        register reachabile RTRs. Only reachable RTRs determine by RLOC-probing
+        will be registered to the mapping system. The default setting is "no",
+        which means all RTRs learned via Info-Reply messages from Map-Servers
+        will be registered to the mapping system regardless of their
+        reachability status.
+
+    decentralized-push-xtr
+        When this is set to "yes", an xTR will run a pushed-based Decentrailzed
+        Mapping System (DMS). That is an xTR is configured as an ITR, ETR, Map-
+        Resolver and Map-Server. The "lisp map-server" command must supply a
+        group address for the peer-group. Details of the design can be found
+        in the Internet Draft draft-farinacci-lisp-decent. All xTRs will have a
+        synchronized mapping system realized by draft-ietf-lisp-signal-free-
+        multicast. There is no dependence on a third-party mapping system. The
+        xTRs contribute to maintaining a mapping system for their own use. For 
+        initial testing, you must create a file "join-<group-address>" in the 
+        lispers.net directory. The <group-address> must match the group
+        address in the "lisp map-server" command and the "lisp group-mapping"
+        command. There is a template file called lisp.config.decent-xtr
+        available for use. The default setting for this sub-command is "no".
+
+    decentralized-pull-xtr-modulus
+    decentralized-pull-xtr-dns-suffix
+        When specified, implements the use of the pull-based LISP-Decentralized
+        Mapping System. The LISP-Decent pull-based mapping system is a cluster
+        of map-servers being configured as the entire mapping system. The
+        cluster is made up of many map-server sets that are indexed based on a
+        hash of the EID being lookup up in a Map-Request or being registered
+        in a Map-Register. The index is part of a DNS name used to identify
+        the set  The index is calculated by using the hash of the EID modulo
+        the "<modulus-1-255>" value and prepended to DNS name "<dns-name-
+        suffix>". So if an EID [200]1.1.1.1 is hashed modulo <modulus-1-255>
+        is 3 then the DNS name "3.<dns-name-suffix>" will be used for a DNS
+        lookup to obtain the addresses of the map-resolver/map-server set. For
+        Map-Requests, an ITR round-robin requests to each Map-Resolver in the
+        set. For Map-Registers, the ETR sends to each address in the set. The
+        "lisp map-server" commands are required with "dns-name" for each
+        map-server set DNS name constructed.
+
+Example:
+
+lisp xtr-parameters {
+    rloc-probing = yes
+    nonce-echoing = yes
+    data-plane-security = yes
+    data-plane-logging = no
+    nat-traversal = no
+}
+
+#
+# Configure to use 2 map-server sets in an xTR with DNS suffix name of
+# map-server.lispers.net.
+#
+lisp xtr-parameters {
+    decentralized-pull-xtr-modulus = 2
+    decentralized-pull-xtr-dns-suffix = map-server.lispers.net
+}
+lisp map-resolver {
+    dns-name = 0.map-server.lispers.net
+}
+lisp map-server {
+    dns-name = 0.map-server.lispers.net
+    authentication-key = <key1>
+}
+lisp map-resolver {
+    dns-name = 1.map-server.lispers.net
+}
+lisp map-server {
+    dns-name = 1.map-server.lispers.net
+    authentication-key = <key2>
+}
+
+-------------------------------------------------------------------------------
+
+         Configure the Map-Resolver address on an ITR and RTR
+         ----------------------------------------------------
+
+Command syntax:
+
+lisp map-resolver {
+    mr-name = <map-resolver-name>
+    address = x.x.x.x | xxxx:yyyy::zzzz
+    dns-name = <dns-name>
+    ...
+}
+...
+
+Command Description:
+    Configures one or more Map-Resolver addresses in an ITR or RTR. Each 
+    command clause configures an additional Map-Resolver.
+
+Example:
+
+lisp map-resolver {
+    mr-name = my-nearest-map-resolver
+    address = 1.1.1.1
+}
+lisp map-resolver {
+    address = 2001:1:1:1::1
+    address = 2.2.2.2
+}
+lisp map-resolver {
+    dns-name = mr1.lispers.net
+    dns-name = mr2.lispers.net
+}
+
+-------------------------------------------------------------------------------
+
+                  Configure a Static Map-Cache Entry
+                  ----------------------------------
+
+Command syntax:
+
+lisp map-cache {
+    prefix {
+        instance-id = <0 - 4294967295>
+        eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+        group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+        send-map-request = yes | no
+        subscribe-request = yes | no
+    }
+    rloc {
+        address = x.x.x.x | xxxx:yyyy::zzzz | xxxx-xxxx-xxxx
+        rloc-record-name = <name>
+        elp-name = <elp-name>
+        rle-name = <rle-name>
+        priority = <0 - 255>
+        weight = <0 - 100>
+    }
+    ...
+}
+...
+
+Command Description:
+    Configures a static map-cache entry in an ITR or RTR. Each command clause
+    configures an additional map-cache entry. Typically, map-cache entries are
+    learned dynamically and on-demand via the Mapping Database System so this
+    command is only required in special circumstances.
+
+    When "send-map-request" is set to "yes", an "rloc" clause is not required.
+    The entry will cause any destination EID that matches the eid-prefix to
+    send a Map-Request to the mapping system.
+
+    When "subscribe-request" is set to "yes", an "rloc" clause is not required.
+    The entry will cause any destination EID that matches the eid-prefix to
+    send a Map-Request with the subscribe-bit set. That means the xTR will
+    get Map-Notify messages from the mapping system when an RLOC-set changes.
+    This implements the LISP PubSub design in an xTR.
+
+Example:
+
+lisp map-cache {
+    prefix {
+        eid-prefix = 8.0.0.0/8
+    }
+    rloc {
+        address = 1.1.1.1
+        priority = 1
+        weight = 50
+    }
+    rloc {
+        address = 2.2.2.2
+        priority = 1
+        weight = 50
+    }
+    rloc {
+        address = 2001:1::1
+        priority = 2
+        weight = 50
+    }
+    rloc {
+        address = 2001:2::2
+        priority = 2
+        weight = 50
+    }
+}
+lisp map-cache {
+    prefix {
+        eid-prefix = fd00::/8
+        send-map-request = yes
+    }
+}
+
+-------------------------------------------------------------------------------
+
+       Configure a Database-Mapping for Registration in an ETR
+       -------------------------------------------------------
+
+lisp database-mapping {
+    prefix {
+        mr-name = <map-resolver-name>
+        ms-name = <map-server-name>
+        instance-id = <0 - 4294967295> | <iid1> <iid2> ... <iidn>
+        eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml |
+                     '<distinguished-name>' | +<E.164-number> | <geo-prefix>
+        group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+        dynamic-eid = yes | no
+        secondary-instance-id = <0 - 4294967295>
+        signature-eid = yes | no
+        register-ttl = <1 - 4294967295>
+    }
+    rloc {
+        address = x.x.x.x | xxxx:yyyy::zzzz | xxxx-xxxx-xxxx
+        interface = <device-name>
+        rloc-record-name = <name>
+        geo-name = <geo-name>
+        elp-name = <elp-name>
+        rle-name = <rle-name>
+        json-name = <json-name>
+        priority = <0 - 255>
+        weight = <0 - 100>
+    }
+    ...
+}
+...
+
+Command Description:
+    Configures a database-mapping entry in the ETR. These are the entries the
+    ETR registers to the Mapping Database System. All ETRs that reside at a
+    LISP site must configure all RLOCs (all ETRs). "<elp-name>" references
+    a configured "lisp explicit-locator-path" command. "<geo-name>" references
+    a configured "lisp geo-coordinates" command. "<json-name>" references
+    a configured "lisp json" command.
+
+    The format for an EID-prefix is self documenting. That is, a value with
+    a dot is an IPv4 address, a colon an IPv6 address, dashes is a MAC
+    address, a leading plus sign is a E.164 number, single quotes is a
+    distinguished name, and dashes with N, S, W, E is a geo-prefix. See
+    the "lisp geo-coordinates" command description for the format details
+    for geo-prefixes. E.164 address prefixes must start with a "+" sign,
+    may be <= 16 digits with values 0-9, and end with /64.
+
+    The "instance-id" parameter scopes the eid-prefix within a VPN context for
+    closed user group connectivity. If the "instance-id" is configured with
+    an IID list "<iid1> <iid2> ... <iidn>" then the eid-prefix belongs to more
+    than one VPN and is "extra-netting". Extra-netting is allowing EIDs in one
+    VPN to talk to EIDs in other VPNs. Typically, an EID in a VPN will also 
+    want to talk to services in the default Internet (EIDs registered in 
+    instance-ID 0), so one would configure "instance-id = <vpn-iid> 0". 
+
+    To interwork with a PETR or a LISP-NAT gateway, they may be registered in 
+    another VPN. To allow LISP-site to LISP-site to talk to each other as well
+    as have a LISP-site in a VPN talk to the interworking gateways, a lookup 
+    in the <vpn-iid> map-cache must be performed first and if not found or a 
+    negative Map-Reply is returned, then a loolup is performed in the next iid
+    in the IID list "<iid1> <iid2> ... <iidn>" (in the example above it would 
+    be iid 0). This functionality is performed when "secondary-instance-id" is
+    configured.
+
+    When 'interface' is used to describe an RLOC instead of "address", the
+    system will obtain the first private local address assigned to the 
+    device <device-name>. It will typically be translated by a NAT to a global
+    address which will be registered to the mapping system. When NAT-traversal
+    is not used ("nat-traversal = no"), then the interface address for the
+    interface <device-name> will be used as the RLOC. You can have multiple
+    "rloc" clauses each referring to a different interface RLOC address.
+
+    When "dynamic-eid" is configured to "yes", the EID-prefix is used to 
+    accept the discovery of more-specific EIDs within this prefix range. 
+    The configured prefix range is not registered to the mapping system. As 
+    more-specific EIDs are discovered, they are registered to the mapping 
+    system.
+
+    Note, when the "lisp database-mapping" command clause is used on RTRs
+    with no "rloc" clause, the RTR can use different mapping systems based on 
+    source-EID and instance-ID. When you use "mr-name" for the prefix entries
+    in the "lisp database-mapping" command clause you can direct Map-Requests
+    to be sent to the map-resolver that belongs to a specific mapping system.
+
+    When "lisp eid-crypto-hash" is used and IPv6 EIDs are being authenticated,
+    an xTR is sending Map-Requests to the mapping system, a "lisp database-
+    mapping" command with "signature-eid = yes" is required with a 
+    lisp-sig.pem file in the lispers.net directory. This is for xTR originated
+    Map-Requests can be signed and verified by the Map-Servers. Note, on an
+    RTR, this signature-EID database-mapping does not need to be registered 
+    to the mapping system and does not need for this IPv6 EID to be assigned 
+    to an system interface device.
+
+    When "register-ttl" is configured, the value in minutes will be used in
+    the Map-Register EID-record for the EID being registered to the mapping
+    system. The default value is 3 minutes.
+
+Example:
+
+#
+# Configuring 1 EID-prefix to be registered in instance-ID 1. With two
+# active-active RLOCs, each with an RLOC reocrd name to describe where they
+# are, topologically. The second database-mapping configures the same RLOC
+# policy but puts another 10.0.0.0/8 EID-prefix in instance-ID 2.
+#
+lisp database-mapping {
+    prefix {
+        instance-id = 1
+        eid-prefix = 10.0.0.0/8
+    }
+    rloc {
+    	rloc-record-name = west-coast
+        address = 1.1.1.1
+        priority = 1
+        weight = 50
+    }
+    rloc {
+    	rloc-record-name = east-coast
+        address = 2.2.2.2
+        priority = 1
+        weight = 50
+    }
+}
+lisp database-mapping {
+    prefix {
+        instance-id = 2
+        eid-prefix = 10.0.0.0/8
+    }
+    rloc {
+        address = 1.1.1.1
+        priority = 1
+        weight = 50
+    }
+    rloc {
+        address = 2.2.2.2
+        priority = 1
+        weight = 50
+    }
+}
+
+#
+# Configures a Geo-prefix as an EID-prefix centered at the GPS coordiantes
+# with a 100 km radius. Also confiugres a distinguished-name 'san-jose' as
+# an EID-prefix with a single RLOC that has an RLOC-record name of "san-jose".
+#
+lisp database-mapping {
+    prefix {
+        eid-prefix = 37-11-41-N-121-49-0-W/100
+    }
+    prefix {
+        eid-prefix = 'san-jose'
+    }
+    rloc {
+    	rloc-record-name = san-jose
+    }
+}
+
+#
+# When RTRs want to use different database mapping systems. You need a prefix
+# clause for each instance-ID the RTR is to support. Below there is two 
+# specifically for EID-prefix 10.0.0.0/8. The second database-mapping is
+# for all IPv4 and IPv6 EID-prefixes in instance-ID 100. Note no "rloc" clauses
+# are required since RTRs do not register mappings but just look them up.
+#
+lisp database-mapping {
+    prefix {
+        mr-name = use-att-map-resolver
+        instance-id = 2
+        eid-prefix = 10.0.0.0/8
+    }
+    prefix {
+        mr-name = use-verizon-map-resolver
+        instance-id = 3
+        eid-prefix = 10.0.0.0/8
+    }
+}
+lisp database-mapping {
+    prefix {
+        instance-id = 100
+        eid-prefix = 0.0.0.0/0
+    }
+    prefix {
+        instance-id = 100
+        eid-prefix = 0::/0
+    }
+}
+
+#
+# Configuring a database-mapping without explicitly referring to any RLOC
+# addresses in the configuratiion file (regardless if you are traversing
+# a NAT or not). We want to active-active multi-home across the two local
+# interfaces for incoming packets.
+#
+lisp database-mapping {
+    prefix {
+        eid-prefix = 10.0.0.0/8
+    }
+    rloc {
+     	interface = eth0
+        priority = 1
+        weight = 50
+    }
+    rloc {
+     	interface = eth1
+        priority = 1
+        weight = 50
+    }
+}
+
+#
+# Configuring a database-mapping for an xTR that signs Map-Requests. Make sure
+# a lisp-sig.pem file exists in the lispers.net directory.
+#
+lisp database-mapping {
+    prefix {
+        instance-id = 1000
+        eid-prefix = fdf6:ffe:7d6c:743a:9ca2:7e91:29a1:59fc/128
+        signature-eid = yes
+    }
+    rloc {
+        rloc-record-name = rtr
+        priority = 255
+    }
+}
+
+-------------------------------------------------------------------------------
+
+           Configure the Address of a Map-Server in an ETR
+           -----------------------------------------------
+
+lisp map-server {
+    ms-name = <map-server-name>
+    address = x.x.x.x | xxxx:yyyy::zzzz
+    ...
+    dns-name = <dns-name>
+    ...
+    authentication-type = sha1 | sha2
+    authentication-key = [<key-id-0-255>]<string>
+    encryption-key = [<key-id-0-255>]<string>
+    proxy-reply = yes | no
+    merge-registrations = yes | no
+    refresh-registrations = yes | no
+    want-map-notify = yes | no
+    site-id = <number>
+}
+...
+
+Command Description:
+    Configures one or more Map-Servers in an ETR. Each command clause  
+    configures an additional Map-Server. One clause can configure multiple
+    map-server addresses that share all the attributes that follow for the
+    clause.
+Example:
+
+lisp map-server {
+    ms-name = east-coast-map-servers
+    address = 1.1.1.1
+    address = 2.2.2.2
+    authentication-type = sha2
+    authentication-key = the-overlay-is-the-only-way
+}
+lisp map-server {
+    address = 2001:1:1:1::1
+    authentication-type = sha1
+    authentication-key = subnets-suck
+}
+
+#
+# Encrypt Map-Register message with key-id 3 sent to map-server 3.3.3.3. The
+# "lisp encryption-keys" command must have "map-register-key" equal to
+#  "[3]differnt-from-auth-key".   
+#        
+lisp map-server {
+    address = 3.3.3.3
+    encryption-key = [3]differnt-from-auth-key
+}
+
+-------------------------------------------------------------------------------
+
+     Configure an Explicit Locator Path to be used as an RLOC in the ETR
+     -------------------------------------------------------------------
+
+lisp explicit-locator-path {
+    elp-name = <name>
+    elp-node {
+        address = <address>
+    	eid = yes | no
+    	strict = yes | no
+    	probe = yes | no
+    }
+    ...
+}
+...
+
+Command Description:
+    This configures an Explicit Locator Path that can be used whatever there
+    is a RLOC reference in other configuration commands. The order of the
+    "elp-path" sub-clauses is the sequence of the encapsulation path in the
+    network. It is required that all 4 commands for the elp-node subclause
+    are specified.
+
+Example:
+
+lisp explicit-locator-path {
+    elp-name = west-to-east
+    elp-node {
+        address = 1.1.1.1
+        strict = no
+        probe = no
+        eid = no
+    }
+    elp-node {
+        address = 2.2.2.2
+        strict = no
+        probe = no
+        eid = no
+    }
+    elp-node {
+        address = 10.1.1.1
+        strict = no
+        probe = no
+        eid = yes
+    }
+}
+
+-------------------------------------------------------------------------------
+
+      Configure a Replication List Entry to be used as an RLOC in an ETR
+      ------------------------------------------------------------------
+
+lisp replication-list-entry {
+    rle-name = <name>
+    rle-node {
+        address = <address>
+        level = <0-255>
+    }
+    ...
+}
+...
+
+Command Description:
+    This configures a hierarchical level of multicast RTRs. ITRs will 
+    multicast replicate and encapsulate to level-0 RTRs. Level-0 RTRs will
+    multicast replicate and encapsulate to level-1 RTRs and so on. The
+    highest level RTR will encapsulate to ETRs that join them. This 
+    configuration builds a hierarchy or replicating routers but does not
+    build a distribution tree. The distribution tree is built with protocol
+    signalling.
+
+Example:
+
+lisp replication-list-entry {
+    rle-name = att
+    rle-node {
+        address = 1.1.1.1
+        level = 0
+    }
+    rle-node {
+        address = 2.2.2.2
+        level = 0
+    }
+    rle-node {
+        address = 11.11.11.11
+        level = 1
+    }
+    rle-node {
+        address = 22.22.22.22
+        level = 1
+    }
+}
+
+-------------------------------------------------------------------------------
+
+         Configure Geo Coordinates to be used as an RLOC in an ETR
+         ---------------------------------------------------------
+
+lisp geo-coordinates {
+    geo-name = <geo-name>
+    geo-tag = <d-m-s-northsouth>-<d-m-s-eastwest>-[<altitude>][/<km>]
+}
+
+Command Description: 
+    This command configures either a geo-prefix or a geo-point for a  given 
+    name. The name is referenced whenever an "rloc" sub-command is used and 
+    creates a multi-tuple RLOC to be registered and used in the mapping 
+    database system.  The format is in geo-coordinate "DMS" (degrees, minutes,
+    seconds, with compass direction) format with a specification for latitude,
+    longitude and altitude. When configuring a geo-prefix, the slash format 
+    is used as a raduis where the value <km> is in kilometers. So a geo-prefix
+    with a geo-coordinate and a radius draws a circle (or sphere when altitude
+    is used) for a physical location on earth. So a valid geo coordinate 
+    format for Latitude would be "37-11-41-N" and for Longitude would be 
+    "121-49-0-W" would be encoded in a "geo-tag" value as "geo-tag = 
+    37-11-41-N-121-49-0-W".  The parameter <altitude> is optional and is an 
+    integer in units of meters above sea-level. Geo Coordinates encoded as 
+    geo-points or geo-prefixes are in LISP LCAF Geo-Coordinate Type format. 
+    Note that when this command is configured an ETR will do merge-semantics. 
+    Use the parameter "merge-registrations = yes" in the "lisp map-server"
+    command.
+
+Example:
+
+lisp geo-coordinates {
+    geo-name = a-house-in-san-jose
+    geo-tag = 37-11-41-N-121-49-0-W 
+}
+lisp geo-coordinates {
+    geo-name = san-jose
+    geo-tag = 37-11-41-N-121-49-0-W/100
+}
+
+-------------------------------------------------------------------------------
+
+   Configure a JSON dictionary array to be used as an RLOC-record in an ETR
+   ------------------------------------------------------------------------
+
+lisp json {
+    json-name = <json-name>
+    json-string = <free-form-json-with-no-delimiters>
+}
+
+Command Description: 
+
+Example:
+
+lisp json {
+    json-name = contact-info
+    json-info = { "name" : "lispers.net", "age" : "old" }
+}
+lisp database-mapping {
+    prefix {
+        eid-prefix = 'my-company'
+    }
+    rloc {
+        json-name = contact-info
+    }
+}
+
+#
+# This is specific JSON configuration to enable one-way latency telemetry
+# measurements. When configured in the lisp.config file, timestamps are
+# inserted for the "?" when an ITR sends an RLOC-probe request, when the ETR
+# receives the RLOC-probe request, when the ETR sends the RLOC-probe reply,
+# and when the ITR receives the RLOC-probe reply. Timestamps inserted are
+# in UTC Linux format and assumes a synchronized clock between xTRs.
+#
+# Note, that telemetry is not supported on an RTR. Meaning that the RTR
+# does not capture telemetry state from itself to an ETR. However, in the
+# direction from ITR to RTR, telemetry is supported in the ITR.    
+#            
+lisp json {
+    json-name = telemetry
+    json-string = { "type" : "telemetry", "sub-type" : "timestamps", "itr-out" : "?", "etr-in" : "?", "etr-out" : "?", "itr-in" : "?" }
+}
+
+-------------------------------------------------------------------------------
+
+    Configure a Group Mapping so Source/Group pairs are Registered by an ETR
+    ------------------------------------------------------------------------
+
+lisp group-mapping {
+    group-name = <group-name>
+    ms-name = <map-server-name>
+    group-prefix = <group-prefix>
+    instance-id = <0 - 4294967295>
+    rle-address = <rloc-address>
+    sources {
+        address = <source>
+        ...
+    }
+}
+
+Command Description:
+    This command configures what sources should be registered to the mapping
+    system for groups contained in <group-prefix> are IGMP/MLD joined. Multiple
+    sources can be configured. For the example below, when IGMP joins 
+    224.1.1.1, the ETR will register (1.1.1.1, 224.1.1.1) and (2.2.2.2,
+    224.1.1.1) to the mapping database system. When no source command clause
+    is configured, then a (*,G) entry is registered as (0.0.0.0/0, G) or
+    (0::0/0, G).
+
+Example:
+
+lisp group-mapping {
+    group-name = 2-sources
+    group-prefix = 224.1.1.1/32
+    sources {
+        address = 1.1.1.1
+        address = 2.2.2.2
+    }
+}
+lisp group-mapping {
+    group-name = join-star-g
+    group-prefix = 224.1.1.1/32
+}
+
+-------------------------------------------------------------------------------
+
+                 Configure Gleaning in an RTR
+                 ----------------------------
+
+lisp glean-mapping {
+    instance-id = <0 - 4294967295> | <low-range-iid>-<high-range-iid>
+    eid-prefix = <eid-prefix>
+    group-prefix = <group-prefix>
+    rloc-prefix = <rloc-prefix>
+    rloc-probe = yes | no
+    igmp-query = yes | no
+}
+
+Command Description:
+    This command configures gleaning in an RTR. An RTR will add the source-EID
+    and source-RLOC to the map-cache so return packets to the EID can be
+    encapsulated to the RLOC. This allows for a xTR to be configured with the
+    RTR and not require a control-plane to receive packets. The xTR can be
+    behind a NAT or in public space configures 1 or more RTRs to send
+    encapsulated packets to and those RTRs will return packets to the xTRs 
+    RLOC used in those packets. The RTR will only glean for configured 
+    EID-prefixes from RLOCs that are more specific than configured 
+    RLOC-prefixes. The "instance-id" parameter can be a range and defaults to 
+    0. The parameters "eid-prefix", "group-prefix" and "rloc-prefix" can be
+    omitted which defaults to accepting from all. If you configure
+    "rloc-probe" then RLOC-probes are sent to the gleaned entry. The default
+    value is set to "no". If you configure igmp-query, then EIDs that join
+    groups will be IGMP queried so they can stay joinied. The default value
+    is set to "no".
+
+Example:
+
+#
+# When configured on an RTR, the RTR will add any EID that is more specific
+# to 35.0.0.0/8 if and only if the source RLOC from received encapsulated
+# packets with instance-ID 1000 is more specific than 10.0.0.0/8.
+#
+lisp glean-mapping {
+    instance-id = 1000
+    eid-prefix = 10.0.0.0/8
+    rloc-prefix = 35.0.0.0/8
+}
+
+#
+# Glean any EID that has been encapsulated with an instance-id between 1000
+# and 2000.
+#
+lisp glean-mapping {
+    instance-id = 1000-2000
+    rloc-probe = yes
+    igmp-query = yes
+}
+
+#
+# Source RLOC is gleaned when IGMP reports groups in the /16 224.1.0.0 prefix.
+#    
+lisp glean-mapping {
+    instance-id = 1000
+    group-prefix = 224.1.0.0/16
+}
+
+-------------------------------------------------------------------------------
+
+        Configure the Address of the DDT root node for a Map-Resolver
+        -------------------------------------------------------------
+
+lisp ddt-root {
+    address = x.x.x.x | xxxx:yyyy::zzzz
+    public-key = <string>
+    priority = <0 - 255>
+    weight = <0 - 100>
+}
+...
+
+Command Description:
+    Configures the root DDT-node in a Map-Resolver. Multiple command clauses 
+    can be used to point to multiple roots.
+
+Example:
+
+lisp ddt-root {
+    address = 1.1.1.1
+    priority = 1
+    weight = 50
+}
+lisp ddt-root {
+    address = 2.2.2.2
+    priority = 1
+    weight = 50
+}
+
+-------------------------------------------------------------------------------
+
+          Configure a Static Referral-Cache Entry in a Map-Resolver
+          ---------------------------------------------------------
+
+lisp referral-cache {
+    prefix {
+        instance-id = <0 - 4294967295>
+        eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+        group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+    }
+    referral {
+        address = x.x.x.x | xxxx:yyyy::zzzz
+        priority = <0 - 255>
+        weight = <0 - 100>
+    }
+    ...
+}
+...
+
+Command Description:
+    Configures a static referral-cache entry in the Map-Resolver. This is used
+    to override referrals received from the DDT system.
+
+Example:
+
+lisp referral-cache {
+    prefix {
+        eid-prefix = 10.1.0.0/16
+    }
+    referral {
+        address = 1.1.1.1
+    }
+    referral {
+        address = 2.2.2.2
+    }
+}
+
+-------------------------------------------------------------------------------
+
+         Configure a LISP Site to Accept Registrations in a Map-Server
+         -------------------------------------------------------------
+
+lisp site {
+    site-name = <string>
+    description = <string>
+    shutdown = yes | no
+    authentication-key = [<key-id-0-255>]<string> ... [<key-id-0-255>]<string>
+    allowed-prefix {
+        instance-id = <0 - 4294967295> | <iid>-<iid>
+        eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+        group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+        accept-more-specifics = yes | no
+        force-proxy-reply = yes | no
+        force-nat-proxy-reply = yes | no
+        pitr-proxy-reply-drop = yes | no
+        proxy-reply-action = native-forward | drop | not-registered-yet
+        force-ttl = <seconds>
+        echo-nonce-capable = yes | no
+        require-signature = yes | no
+        encrypt-json = yes | no
+        policy-name = <policy-name>
+    }
+    ... 
+    allowed-rloc {
+        address = x.x.x.x | xxxx:yyyy::zzzz | xxxx-xxxx-xxxx
+        priority = <0 - 255>
+        weight = <0 - 100>
+    }
+    ...
+}
+...
+
+Command Description:
+    Configures a LISP site in a Map-Server. This creates policy in the 
+    Map-Server to determine what EID-prefixes can be registered by from which 
+    sites with what specific RLOCs.
+
+    Here is a description of each parameter:
+
+    site-name
+        Configures a site name for the LISP site entry in a Map-Server.
+    
+    description
+        Configures a free-form string that provides documentation about the
+        LISP site.
+    
+    shutdown
+        Configures a single control to determine if the LISP site entry
+        is activated or pending operation.
+    
+    authentication-key = [<key-id-0-255>]<string> ... [<key-id-0-255>]<string>
+        Configures one or more keys that must match the authentication-key
+        in a Map-Register message. On an ETR, the "authentication-key" command
+        of the "lisp map-server" clause must match one of the strings above.
+        When multiple keys are used a key-id is require to be specified in
+        square brackets.
+    
+    allowed-prefix
+        Multiple allowed-prefix clauses are accepted so parameters can be
+        configured differently on a per EID-prefix basis.
+    
+        instance-id = <0 - 4294967295> | <iid>-<iid>
+            Configures either a specific instance-ID that the EID belongs to.
+            EIDs that are scoped to instance-IDs are part of the same VPN.
+            An instance-ID range can also be specificed and used with the
+            "accept-more-specifics" command.
+           
+ 	    eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+            Configures any of the lispers.net supported EID types.
+    
+	    group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+            Conifgures a multicast group address prefix that can be used with
+            the "eid-prefix" command to specific (S,G) multicast state.
+    
+    	accept-more-specifics = yes | no
+            Allows for any Map-Register EID to be accepted for this LISP site
+            when it is more specific than the "eid-prefix"/"group-prefix". Or
+            when only instance-ID range is specified.
+    
+	    force-proxy-reply = yes | no
+            Configures the Map-Server to send a Map-Reply for this entry rather
+            than forwarding the Map-Request to registered RLOCs.
+    
+ 	    force-nat-proxy-reply = yes | no
+            Configures the Map-Server to send a Map-Reply for this entry rather
+            than forwarding the Map-Request to registered RLOCs when the RLOCs
+            are behind NAT devices. When this parameter is configured, a
+            conditional Map-Reply is sent. That is, when an ITR sends the
+            Map-Request, a list of RTRs is returned. When one of the RTRs
+            in the registered RLOC-set sends a Map-Request, then the global
+            translated RLOC of the ETR is returned.
+
+        force-ttl = <seconds>
+            Configures the TTL value the Map-Server returns in EID-records
+            in Map-Replies. Used with the "force ..." parameters.
+    
+        proxy-reply-action = native-forward | drop | not-registered-yet
+            Configured for a negative Map-Reply that is sent by the Map-Server
+            on what action should be returned. When "native-forward" is
+            returned, the Map-Request target EID was for a non-LISP site and
+            the ITR/RTR should natively forward the packet on the underlay
+            network. When "drop" is returned, the ITR/RTR should drop packets.
+            This could be used as a hard provision denial for the Map-Request
+            target EID. When "not-registered-yet" is returned, the Map-Server
+            knows the Map-Request target EID is indeed an EID and that the
+            ITR/RTR should time out the entry and retry a new Map-Request to
+            see if the EID has become registered. The frequency is based on
+            the TTL return for the entry in the Map-Reply. The Map-Server
+            knows this when an "eid-prefix" is configured for a "allowed-
+            prefix" subcommand clause of the "lisp site" command.
+
+	    echo-nonce-capable = yes | no
+            Configures the Map-Server to inform the requesting ITR the RLOC
+            can support echo-noncing in the data-plane.
+
+        require-signature = yes | no
+            Configures the "allowed-prefix" to have signatures in both
+            Map-Register and Map-Request messages for any EID that is being
+            registered or requested. Only when signatures are verified that
+            the messages are accepted. This is used with the "eid-crypto-hash"
+            command. See the command for more details on how to register
+            hash->pubkey mappings used for signature verification.
+    
+        encrypt-json = yes | no
+            If the EID-prefix is registered with an RLOC-set that has JSON
+            encoded RLOC-records, than the value fields will be encrypted
+            when stored in the mapping system. The key used to encrypt is
+            configured by the "json-key" parameter in the "lisp encryption-
+            keys" command clause. This setting is ignored if no JSON key is
+            configured.
+        
+	    policy-name = <policy-name>
+            Configures the policy defined in the "lisp policy" command clause.
+
+    allowed-rloc
+        Multiple allowed-rloc clauses can be configured so EID registrations
+        can be further contstrained based on the RLOC which is sending the
+        Map-Register message. 
+    
+        address = x.x.x.x | xxxx:yyyy::zzzz | xxxx-xxxx-xxxx
+            Configures the IPv4, IPv6, or MAC address that is used and routed
+            by the underlay core network. This is a required parameter.
+    
+        priority = <0 - 255>
+            The priority value that must be in the RLOC-record field of the
+            Map-Register. This is an optional parameter.
+            
+        weight = <0 - 100>
+            The weight value that must be in the RLOC-record field of the
+            Map-Register. This is an optional parameter.
+    
+Example:
+
+lisp site {
+    site-name = cisco-us
+    description = EID-prefixes that reside in Cisco US
+    authentication-key = us-makes-bad-beer
+    allowed-prefix {
+        eid-prefix = 10.0.0.0/8
+        accept-more-specifics = yes
+    }
+    allowed-prefix {
+        eid-prefix = 20.0.0.0/8
+    }
+}
+lisp site {
+    site-name = cisco-euro 
+    description = EID-prefixes that reside in Cisco Europe
+    authentication-key = euro-makes-better-cheese
+    allowed-prefix {
+        eid-prefix = 20.0.0.0/8
+    }
+    allowed-prefix {
+        eid-prefix = 30.0.0.0/8
+    }
+    allowed-rloc {
+        address = 1.1.1.1
+    }
+    allowed-rloc {
+        address = 2.2.2.2
+    }
+}
+lisp site {
+    site-name = an-open-map-server
+    description = Accept all registrations that have a common auth-key
+    authentication-key = open-secret
+    allowed-prefix {
+        instance-id = 0
+        accept-more-specifics = yes
+    }
+}
+
+lisp site {
+    site-name = multicast
+    description = This configuration for supporting signal free multicast
+    authentication-key = [0]open-secret [1]closed-secret
+    allowed-prefix {
+        instance-id = 0
+        eid-prefix = 0.0.0.0/0
+        group-prefix = 224.0.0.0/4
+        accept-more-specifics = yes
+    }
+    allowed-prefix {
+        instance-id = 0
+        eid-prefix = 0::/0
+        group-prefix = ff::/8
+        accept-more-specifics = yes
+    }
+}
+
+lisp site {
+    site-name = crypto-addresses
+    description = Authenticate crypto hash based IPv6 EIDs
+    authentication-key = open-secret
+    allowed-prefix {
+        instance-id = 0
+        eid-prefix = fd::/8
+        accept-more-specifics = yes
+    }
+}
+
+#
+# For this site, we will never native-forward. The site is provisioned for
+# a complete overlay and all addresses used for communication are EIDs. And
+# are assumed to be behind NAT devices. The EID addresses must be assigned out
+# the 240.0.0.0/8 prefix range.
+#            
+lisp site {
+    site-name = pure-overlay
+    description = All addresses used here are EIDs at LISP sites
+    authentication-key = open-overlay
+    allowed-prefix {
+        instance-id = 100
+        eid-prefix = 240.0.0.0/8
+    	accept-more-specifics = yes
+    	force-proxy-reply = yes
+     	force-nat-proxy-reply = yes
+        proxy-reply-action = not-registered-yet
+    }
+}
+
+-------------------------------------------------------------------------------
+
+         Configure a Map-Server-Peer in Map-Servers that run LISP-DDT
+         ------------------------------------------------------------
+
+lisp map-server-peer {
+    prefix {
+        instance-id = <0 - 4294967295> | <iid>-<iid>
+        eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+        group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+    }
+    ...
+    peer {
+        address = x.x.x.x | xxxx:yyyy::zzzz
+        priority = <0 - 255>
+        weight = <0 - 100>
+    }
+    ...
+}
+...
+
+Command Description:
+    This command is configured in each Map-Server so when any of them send
+    a Map-Referral they can include the complete set of Map-Servers that is
+    being registered to for a given EID-prefix. This allows a complete ms-ack 
+    based Map-Referral to be built and returned to the Map-Resolver.
+
+Example:
+
+lisp map-server-peer {
+    prefix {
+        instance-id = 0
+        eid-prefix = 10.1.1.0/24
+    }
+    peer {
+        address = 1.1.1.1
+        priority = 1
+        weight = 50
+    }
+    peer {
+        address = 2.2.2.2
+        priority = 1
+        weight = 50
+    }
+}
+
+-------------------------------------------------------------------------------
+
+      Configure an Authoritative Prefix in Map-Servers that run LISP-DDT
+      ------------------------------------------------------------------
+
+lisp ms-authoritative-prefix {
+    instance-id = <0 - 4294967295> | <iid>-<iid>
+    eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml
+    group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+}
+...
+
+Command Description:
+    Configures an authoritative prefix for a Map-Server running LISP-DDT. 
+    Any parent delegation configuration must be within this prefix. Multiple 
+    command clauses can be entered for additional authoriative-prefixes.
+
+Example:
+
+lisp ms-authoritative-prefix {
+    eid-prefix = 10.0.0.0/8
+}
+lisp ms-authoritative-prefix {
+    eid-prefix = 2001:0001::/32
+}
+
+-------------------------------------------------------------------------------
+
+      Configure a RTR List that Map-Servers provide to ETRs behind NATs
+      -----------------------------------------------------------------
+
+lisp rtr-list {
+    address = <rtr-rloc>
+    ...
+}
+
+Command Description:
+    Configures a list of RTRs that a Map-Server returns in Info-Reply
+    messages. This is part of the NAT-traversal mechanism used by
+    infrastructure LISP components. The RTRs is used by ETRs behind NATs
+    to create the necessary state in NAT devices so RTRs can encapsulate
+    LISP packets to the ETR.
+
+Example:
+
+lisp rtr-list {
+    address = 1.1.1.1     
+    address = 2.2.2.2
+}
+
+-------------------------------------------------------------------------------
+        
+       Configure Crypto Hash Values for Authenticated IPv6 EID Support
+       ---------------------------------------------------------------
+
+lisp eid-crypto-hash {
+    instance-id = <0 - 4294967295> | *
+    eid-prefix = xxxx:yyyy::/<ml>
+}
+
+Command Description:
+    Configures the crypto address hash length for any IPv6 EID per instance-ID
+    or all instance-IDs when "*" is specified. The value configure is 128
+    minus <ml>. The IPv6 "fd::" prefix below will use a 120-bit crypto hash
+    and the "2001:5:3::" prefix will use a 80-bit crypto hash. This command is
+    required for authenticating both Map-Request and Map-Register message
+    signatures. It is required that the mask-length be a multiple of 4 (4-bits
+    or 1 nibble) or the command is not accepted.
+
+    Note when signing Map-Requests either originated by an ITR or an RTR, a
+    'lisp-sig.pem' file (that contains a private-key) must be present in the
+    lispers.net directory and the distinguished-name EID 'hash-<eid-hash>' 
+    must be registered to the mapping system with a public-key RLOC-record. 
+    When Map-Requests are generated by a lig command, then a lisp-lig.pem file
+    must exist. If the same source-EID is being used for lig, then a symbolic
+    link for lisp-lig.pem can point to lisp-sig.pem.
+
+Example:
+
+lisp eid-crypto-hash {
+    instance-id = 1000
+    eid-prefix = fd00::/8
+}
+lisp eid-crypto-hash {
+    eid-prefix = 2001:5:3::/48
+}
+
+-------------------------------------------------------------------------------
+
+        Conifgure Map-Register Encryption Keys on a Map-Server
+        ------------------------------------------------------
+
+lisp encryption-keys {
+    map-register-key = [<key-id-0-7>]<string> ... [<key-id-0-7>]<string>
+    json-key = [<key-id-0-7>]<string> ... [<key-id-0-7>]<string>
+}    
+
+Command Description:
+    Configures what keys to be used to decrypt a Map-Register message. The
+    first bytes of the Map-Register contains a key-id and is not encrypted.
+    The rest of the payload is encrypted by a sending ETR. The same key-id
+    and password string on this command must match what is configured on the
+    "encryption-key" subcommand of the "lisp map-server" command in the ETR.
+
+    By allowing multiple encryption keys, a mapping system can deprovision
+    a group of ETRs when it believes it needs to do so. If a packet is
+    decrypted incorrectly, it cannot be process and is dropped. A log message
+    will be issued in this case.
+
+    The "json-key" will allow the map-server to encrypt value fields from a
+    JSON string. This is so data at rest, in the mapping database not be
+    in plaintext. When a Map-Request is sent to the mapping system and
+    encrypted JSON value fields are returned, the requester can decrypt
+    if it sets an environment variable LISP_JSON_KEY with the shared password
+    key and key-id. The format of the env variable is "<key>" or
+    "[<key-id>]<key>".
+
+Example:
+
+#
+# Configure 4 key-ids 0 through 4, each with their own decryption password.
+# When a Map-Register is received by the Map-Server, the Map-Register key-id
+# encoded will determine which configured password should be used.
+#        
+lisp encryption-keys {
+    map-register-key = [0]foo [1]bar [2]group3 [3]group4
+}    
+
+#
+# Map-server side.
+#            
+lisp encryption-keys {
+    json-key = [1]foo
+}
+
+#
+# Lig client side.
+#            
+setenv LISP_JSON_KEY "[1]foo"
+    
+-------------------------------------------------------------------------------
+
+           Configure an Authoritative Prefix in a LISP-DDT Node
+           ----------------------------------------------------
+
+lisp ddt-authoritative-prefix {
+    instance-id = <0 - 4294967295> | <iid>-<iid>
+    eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml
+    group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+}
+...
+
+Command Description:
+    Configures an authoritative prefix for a DDT-node running
+    LISP-DDT. Any parent delegation configuration must be within this prefix. 
+    Multiple command clauses can be entered for additional authoriative-
+    prefixes.
+
+Example:
+
+lisp ddt-authoritative-prefix {
+    eid-prefix = 10.0.0.0/8
+}
+lisp ddt-authoritative-prefix {
+    eid-prefix = 2001:0001::/32
+}
+
+-------------------------------------------------------------------------------
+
+           Configure a EID-Prefix Delegation in a LISP-DDT Node
+           ----------------------------------------------------
+    
+lisp delegation {
+    prefix {
+        instance-id = <0 - 4294967295> | <iid>-<iid>
+        eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+        group-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml | xxxx-xxxx-xxxx/ml
+    }
+    ...
+    delegate {
+        address = x.x.x.x | xxxx:yyyy::zzzz
+        node-type = ddt-child | map-server-child
+        public-key = <string>
+        priority = <0 - 255>
+        weight = <0 - 100>
+    }
+    ...
+}
+...
+
+Command Description:
+    Configures a child delegation in the LISP-DDT hierarchy. This command is
+    entered in a DDT-root node or a DDT-node that is in the middle of the DDT
+    hierarchy. This command is not used in a DDT Map-Server. The EID-prefix in 
+    this command clause must be more specific than the authoritative-prefix 
+    configured on the same system but must be less specific than the 
+    authoriative-prefix configured in the child delegation node.
+
+Example:
+
+In parent DDT-node configure:
+
+lisp ddt-authoritative-prefix {
+    eid-prefix = 10.0.0.0/8    
+}
+lisp delegation {
+    prefix {
+        eid-prefix = 10.1.0.0/16
+    }
+    prefix {
+        eid-prefix = 10.2.0.0/16
+    }
+    prefix {
+        eid-prefix = 10.3.0.0/16
+    }
+    delegate {
+        address = 1.1.1.1
+        node-type = ddt-child
+    }
+    delegate {
+        address = 2.2.2.2
+        node-type = ddt-child
+    }
+}
+lisp delegation {
+     prefix {
+        eid-prefix = 10.22.0.0/16
+    }
+    delegate {
+        address = 3.3.3.3
+        node-type = map-server-child
+        priority = 1
+        weight = 100
+    }
+    delegate {
+        address = 4.4.4.4
+        node-type = map-server-child
+        priority = 1
+        weight = 100
+    }
+}
+
+In child delegation (Map-Server 1.1.1.1) for 10.22.0.0/16:
+
+lisp ms-authortiative-prefix {
+    eid-prefix = 10.22.0.0/16
+}
+lisp map-server-peer {
+    prefix {
+        eid-prefix = 10.22.0.0/16
+    }
+    peer {
+        address = 1.1.1.1
+        priority = 1
+        weight = 100
+    }
+    peer {
+        address = 2.2.2.2
+        priority = 1
+        weight = 100
+    }
+}
+lisp site {
+    site-name = customer1
+    authentication-key = customer-private
+    allowed-prefix {
+        eid-prefix = 10.22.1.0/24
+    }    
+}
+lisp site {
+    site-name = customer2
+    authentication-key = customer-private
+    allowed-prefix {
+        eid-prefix = 10.22.2.0/24
+    }    
+}
+lisp site {
+    site-name = customer3
+    authentication-key = customer-private
+    allowed-prefix {
+        eid-prefix = 10.22.3.0/24
+    }    
+}
+lisp site {
+    site-name = customer4
+    authentication-key = customer-private
+    allowed-prefix {
+        eid-prefix = 10.22.4.0/24
+    }    
+}
+
+===============================================================================
