@@ -1,4 +1,15 @@
 
+               lispers.net Beta Release Version 0.608
+               --------------------------------------
+
+o Release date:
+
+o Fix lisp.lisp_on_aws() to not use a specific call to dmidecode(). Grep for "amazon".
+
+o Change "python" to "python2" in make-release.py. Also for now, turn off pyobfuscsate.    
+
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.607
                --------------------------------------
 

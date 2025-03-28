@@ -49,7 +49,7 @@ if (use_python3):
     PYTHON = "python3"
     PYFLAKES = "python3.7 -m pyflakes"
 else:
-    PYTHON = "python"
+    PYTHON = "python2"
     PYFLAKES = "pyflakes"
 #endif
 
@@ -58,7 +58,7 @@ else:
 #
 include_lisp_xtr = os.getenv("LISP_XTR_INCLUDE") != None
 
-obfuscate_on = True
+obfuscate_on = False
 root = "./.."
 
 #
