@@ -43,7 +43,7 @@ print("This build is using python{}".format("3.8" if use_python3 else "2.7"))
 
 #
 # Decide which version of python to build with. "python3" command call must
-# point to Python version 3.8. 
+# point to Python version 3.8.
 #
 if (use_python3):
     PYTHON = "python3"
@@ -58,7 +58,7 @@ else:
 #
 include_lisp_xtr = os.getenv("LISP_XTR_INCLUDE") != None
 
-obfuscate_on = False
+obfuscate_on = True
 root = "./.."
 
 #
@@ -169,10 +169,10 @@ if (obfuscate_on):
     py_files = getoutput("cd {}/src; ls *py".format(dir)).split("\n")
     libraries = ["lisp.py", "lispconfig.py", "lispapi.py", "chacha.py",
         "poly1305.py"]
-    print("Obfuscating py files ...", end= " ")
+    print("Obfuscating files ...", end= " ")
     for py_file in py_files:
         dash_a = "-a" if py_file in libraries else ""
-        os.system("pyobfuscate {} {}/src/{} > {}/{}".format(dash_a, dir, 
+        os.system("{} `which pyobfuscate` {} {}/src/{} > {}/{}".format(PYTHON, dash_a, dir, 
             py_file, dir, py_file))
     #endfor
     print("done")

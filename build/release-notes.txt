@@ -6,7 +6,10 @@ o Release date:
 
 o Fix lisp.lisp_on_aws() to not use a specific call to dmidecode(). Grep for "amazon".
 
-o Change "python" to "python2" in make-release.py. Also for now, turn off pyobfuscsate.    
+o Change "python" to "python2" in make-release.py.
+
+o Use python2 to call pyobfuscate for a python2 build and python3 for obfuscate for a python3
+  build.
 
 -------------------------------------------------------------------------------
 
