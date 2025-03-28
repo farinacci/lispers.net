@@ -708,7 +708,7 @@ def lisp_is_python3():
 # Return True if this node is running in an Amazon VM on AWS.
 #
 def lisp_on_aws():
-    vm = getoutput("sudo dmidecode -s bios-version")
+    vm = getoutput("sudo dmidecode | grep -i amazon")
     if (vm.find("command not found") != -1 and lisp_on_docker()):
         aws = bold("AWS check", False)
         lprint("{} - dmidecode not installed in docker container".format(aws))
