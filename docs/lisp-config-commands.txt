@@ -1607,6 +1607,8 @@ lisp ms-authoritative-prefix {
 lisp rtr-list {
     address = <rtr-rloc>
     ...
+    dns-name = <dns-name>
+    ...
 }
 
 Command Description:
@@ -1621,6 +1623,10 @@ Example:
 lisp rtr-list {
     address = 1.1.1.1     
     address = 2.2.2.2
+}
+lisp rtr-list {
+    dns-name = rtr.gcp.com
+    dns-name = rtr.aws.com
 }
 
 -------------------------------------------------------------------------------
