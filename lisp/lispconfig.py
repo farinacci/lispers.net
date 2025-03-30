@@ -121,7 +121,8 @@ lisp_core_commands = {
         "super-user" : [False, "yes", "no"] } ],
 
     "lisp rtr-list" : ["", {
-        "address" : [True] }]
+        "address" : [True],
+        "dns-name" : [True] } ]
 }
 
 #------------------------------------------------------------------------------
@@ -673,16 +674,25 @@ def lisp_setup_kv_pairs(clause):
     # There is a special case here where there are no sub-clauses but
     # "address" appears multiple times in a command clause. Let's allocate
     # enough array space to store all of them. This is referring to the
-    # "lisp map-server" command.
+    # "lisp map-server" where "address" or "dns-name" can be used. For the
+    # "lisp rtr-list" command, a collection of "address" and "dns-name"
+    # lines is supported.
     #
     if (kv_pairs == {}):
-        count = max(clause.count("address ="), clause.count("dns-name ="))
-        if (count != 0): kv_pairs["address"] = [""] * count
-        if (count != 0): kv_pairs["dns-name"] = [""] * count
-        count = clause.count("mr-name =")
-        if (count != 0): kv_pairs["mr-name"] = [""] * count
-        count = clause.count("ms-name =")
-        if (count != 0): kv_pairs["ms-name"] = [""] * count
+        if (clause.find("lisp rtr-list") != -1):
+            count = clause.count("address =") + clause.count("dns-name =")
+            if (count != 0): kv_pairs["address"] = [""] * count
+            if (count != 0): kv_pairs["dns-name"] = [""] * count
+        else:
+            count = max(clause.count("address ="), clause.count("dns-name ="))
+            if (count != 0): kv_pairs["address"] = [""] * count
+            if (count != 0): kv_pairs["dns-name"] = [""] * count
+            count = clause.count("mr-name =")
+            if (count != 0): kv_pairs["mr-name"] = [""] * count
+            count = clause.count("ms-name =")
+            if (count != 0): kv_pairs["ms-name"] = [""] * count
+            if (count != 0): kv_pairs["ms-name"] = [""] * count
+        #endif
     #endif
     return(kv_pairs)
 #enddef
@@ -1828,9 +1838,22 @@ def lisp_rtr_list_command(clause):
     lisp.lisp_ms_rtr_list = []
     if ("address" in kv_pairs):
         for addr_str in kv_pairs["address"]:
+            if (addr_str == ""): continue
             addr = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
             addr.store_address(addr_str)
             lisp.lisp_ms_rtr_list.append(addr)
+        #endfor
+    #endif
+    if ("dns-name" in kv_pairs):
+        for name_str in kv_pairs["dns-name"]:
+            if (name_str == ""): continue
+            addresses = socket.gethostbyname_ex(name_str)
+            a_records = addresses[2]
+            for a in a_records:
+                addr = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
+                addr.store_address(a)
+                lisp.lisp_ms_rtr_list.append(addr)
+            #endfor
         #endfor
     #endif
     return(new_clause)
