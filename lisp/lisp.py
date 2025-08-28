@@ -14669,6 +14669,7 @@ class lisp_site_eid(object):
             if (irle == None): continue
 
             rloc_name = site_eid.registered_rlocs[0].rloc_name
+            if (rloc_name == None): rloc_name = ""
             for irle_node in irle.rle_nodes:
                 addr = irle_node.address.print_address_no_iid() + rloc_name
                 if (addr in new_rle): break
