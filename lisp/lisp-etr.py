@@ -862,9 +862,6 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         #endfor
     #endif
 
-    rloc_name = None
-    if (lisp.lisp_nat_traversal): rloc_name = lisp.lisp_hostname
-
     #
     # Count number of RTRs reachable so we know allocation count.
     #
@@ -917,7 +914,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         # Build our RLOC entry.
         #
         rloc_record = lisp.lisp_rloc_record()
-        rloc_record.rloc_name = rloc_name
+        rloc_record.rloc_name = lisp.lisp_hostname
 
         #
         # Decide on RLE address. Have NAT-traversal take precedent, otherwise

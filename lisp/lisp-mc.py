@@ -240,7 +240,11 @@ for mc in map_cache:
                 for rle in rles:
                     parms = rle.split("(")
                     rloc_str += red(parms[0])
-                    name = parms[1].replace(")", "")
+                    try:
+                        name = parms[1].replace(")", "")
+                    except:
+                        name = ""
+                    #endtry
                     rloc_str += "(" + blue(name) + "), "
                 #endfor
                 rloc_str = rloc_str[0:-2]

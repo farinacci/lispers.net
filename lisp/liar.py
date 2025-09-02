@@ -98,7 +98,7 @@ def main():
     s.sendto(pkt, (ms, 4342))
 
     e = green(orig_eid); r = red(orig_rloc); m = bold(orig_ms);
-    print("Map-Register sent to {} for EID {} RLOC {} with nonce {}". \
+    print("Map-Register sent to ms {} for EID {} RLOC {} with nonce {}". \
           format(m, e, r, hex(nonce)))
 
     #
