@@ -156,6 +156,15 @@ if (status != 0):
 #endif
 print("done")
 
+print("Copying app scripts to " + dir + " build directory ...", end=" ")
+command = "cp ../apps/iperf-send ../apps/iperf-rec ./{}/.".format(dir)
+status = os.system(command)
+if (status != 0):
+    print("failed")
+    exit(1)
+#endif
+print("done")
+
 #
 # Move *.py files to src directory. We will obfuscate the source files in
 # the main release directory and then compile them.
@@ -271,7 +280,7 @@ print("Build tgz file {} ... ".format(tar_file), end=" ")
 files = "*.pyo " if pycache == None else "*.pyc "
 files += "*.txt lisp.config.example lisp-config-commands.txt " + \
     "lisp-cert.pem.default *-LISP RL-* pslisp lig rig ltr mc sc liar " + \
-    "log-packets lispers.net-geo.html {}".format(lisp_xtr)
+    "log-packets lispers.net-geo.html iperf-send iperf-rec {}".format(lisp_xtr)
 command = "cd {}; export COPYFILE_DISABLE=true; tar czf {} {}".format(dir,
     tar_file, files)
 status = os.system(command)

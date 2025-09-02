@@ -25,7 +25,7 @@
 #
 # Docker images are stored on DropBox.        
 #
-FROM ubuntu:latest
+FROM ubuntu:20.04
 #FROM debian:latest
 #FROM centos:latest
 
@@ -40,12 +40,12 @@ FROM ubuntu:latest
 # And then rebuild.        
 #
 RUN apt-get update -y && apt-get install -y curl wget
-RUN ln -snf /usr/share/zoneinfo/$(curl https://ipapi.co/timezone) \
-    /etc/localtime
+RUN ln -snf /usr/share/zoneinfo/US/Pacific /etc/localtime
 RUN apt-get install -y \
     gcc libc-dev python2 python2-dev golang libffi-dev openssl libpcap-dev \
-    iptables iproute2 tcpdump tcsh sudo traceroute iputils-ping \
+    iptables iproute2 tcpdump tcsh sudo traceroute iputils-ping iperf \
     net-tools procps emacs vim jq
+RUN ln -s /usr/bin/python2 /usr/bin/python    
 
 #
 # Install LISP release in /lispers.net directory. Two options exist to get
@@ -94,6 +94,6 @@ WORKDIR /lispers.net
 #
 COPY ./RL.docker /lispers.net/RL
 COPY ./.cshrc /root/.cshrc
-CMD /lispers.net/RL; sleep 1; /lispers.net/pslisp; tcsh
+CMD  /lispers.net/RL; sleep 1; /lispers.net/pslisp; tcsh
 
 #------------------------------------------------------------------------------

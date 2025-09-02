@@ -1,11 +1,44 @@
 
+               lispers.net Beta Release Version 0.610
+               --------------------------------------
+
+o Release date: Mon Sep  1 18:39:02 PDT 2025
+
+o Add docs/how-to-install-rocky-linux.txt.
+
+o Check that there is no rloc-name when adding RLEs to rloc-records in the map-server.
+  This caused a crash in the lisp-ms process.
+
+o Change Dockerfile to default to ubuntu 20.04.
+
+o Make sure Dockerfile has "python" point to "python2".
+
+o In lisp-mc.py, fix crash when an RLE may not have a name supplied.
+
+o Add iperf install to the Dockerfile. And create scripts iperf-send and iperf-rec
+  to send and rec/join multicast groups. Put the scripts in the lispers.net release.
+
+o This version of code updates lispers.net to run on the latest M* Apple processors
+  with the latest Docker release.
+
+o Have each RLE rloc-record encode the hostname. Did this previously when nat-traversal
+  was enabled on the xTR. Now do it always.
+
+o Add "ms" to liar output to distinguish the map-server address on the output line.    
+
+o Build lispers.net-0.610-ubuntu-docker-image based on lispers.net release 0.610 on
+  Ubuntu 20.04.6.
+
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.609
                --------------------------------------
 
 o Release date: Sun Mar 30 14:34:49 PDT 2025
 
-o Add "dns-name" as a parameter to the "lisp rtr-list" command. You can mix both "address"
-  and "dns-name" parameters to build the RTR list map-servers adverise to xTRs.
+o Add "dns-name" as a parameter to the "lisp rtr-list" command. You can mix both
+  "address" and "dns-name" parameters to build the RTR list map-servers adverise to
+  xTRs.
 
 o Documentation update for the "lisp rtr-list" command.
 
