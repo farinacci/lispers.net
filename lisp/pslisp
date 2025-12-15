@@ -25,7 +25,7 @@
 
 ls ./is-lisp-running.pyo >& /dev/null
 if ($status == "0") then
-    python -O ./is-lisp-running.pyo
+    python2 -O ./is-lisp-running.pyo
     exit
 endif
 ls ./is-lisp-running.pyc >& /dev/null

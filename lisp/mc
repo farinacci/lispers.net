@@ -25,7 +25,7 @@
 
 ls ./lisp-mc.pyo >& /dev/null
 if ($status == "0") then
-    python -O ./lisp-mc.pyo $*
+    python2 -O ./lisp-mc.pyo $*
     exit
 endif
 ls ./lisp-mc.pyc >& /dev/null

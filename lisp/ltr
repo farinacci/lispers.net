@@ -42,7 +42,7 @@ if (-f ./ltr.py) then
 else if (-f ./ltr.pyc) then
     set PY = "python3.8 $FLAGS ./ltr.pyc"
 else if (-f ./ltr.pyo) then
-    set PY = "python $FLAGS ./ltr.pyo"
+    set PY = "python2 $FLAGS ./ltr.pyo"
 endif
 
 #

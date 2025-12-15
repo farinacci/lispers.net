@@ -25,7 +25,7 @@
 
 ls ./lisp-sc.pyo >& /dev/null
 if ($status == "0") then
-    python -O ./lisp-sc.pyo $*
+    python2 -O ./lisp-sc.pyo $*
     exit
 endif
 ls ./lisp-sc.pyc >& /dev/null

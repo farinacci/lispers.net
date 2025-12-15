@@ -68,7 +68,7 @@ sleep 1
 #
 # Point to correct python version.
 #
-set PY = "python"
+set PY = "python2"
 set SUFFIX = "pyo"
 if (-f ./remove-lisp-locks.pyc) then
     set PY = "python3.8"

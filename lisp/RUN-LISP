@@ -149,7 +149,7 @@ if (-f ./lisp-core.pyo) then
         echo "Installing 'ln -s python2 python' in $PY"
         pushd $PY; ln -s python2 python; popd
     endif
-    set PY = "python"
+    set PY = "python2"
     set SUFFIX = "pyo"
     set VER = "2"
 else if (-f ./lisp-core.pyc) then

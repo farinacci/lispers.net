@@ -25,7 +25,7 @@
 
 ls ./lisp-log-packets.pyo >& /dev/null
 if ($status == "0") then
-    python -O ./lisp-log-packets.pyo $*
+    python2 -O ./lisp-log-packets.pyo $*
     exit
 endif
 ls ./lisp-log-packets.pyc >& /dev/null

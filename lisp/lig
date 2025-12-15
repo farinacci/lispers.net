@@ -35,5 +35,5 @@ if (-f ./lisp-lig.py) then
 else if (-f ./lisp-lig.pyc) then
     sudo python3.8 $FLAGS ./lisp-lig.pyc "$EID" $*
 else if (-f ./lisp-lig.pyo) then
-    sudo python $FLAGS ./lisp-lig.pyo "$EID" $*
+    sudo python2 $FLAGS ./lisp-lig.pyo "$EID" $*
 endif

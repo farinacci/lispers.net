@@ -31,7 +31,7 @@ shift
 set FLAGS = "-W ignore -O -u"
 
 if (-f ./lisp-rig.pyo) then
-    sudo python $FLAGS ./lisp-rig.pyo "$EID" $*
+    sudo python2 $FLAGS ./lisp-rig.pyo "$EID" $*
 else if (-f ./lisp-rig.pyc) then
     sudo python3.8 $FLAGS ./lisp-rig.pyc "$EID" $*
 else if (-f ./lisp-rig.py) then
