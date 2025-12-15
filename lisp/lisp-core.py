@@ -575,7 +575,7 @@ def lisp_show_status_command():
     # Get LISP process status.
     #
     ps = "ps auww" if lisp.lisp_is_macos() else "ps aux"
-    grep = "egrep 'PID|python lisp|python -O lisp|python3.8 -O lisp'"
+    grep = "egrep 'PID|python lisp|python -O lisp|python2 -O lisp|python3.8 -O lisp'"
     grep += "| egrep -v grep"
     status = getoutput("{} | {}".format(ps, grep))
     status = status.replace(" ", lisp.space(1))
@@ -879,7 +879,7 @@ def lisp_install_command():
     #endif
 
     if (lisp.lisp_is_python2()):
-        py = "python -O "
+        py = "python2 -O "
         suffix = "pyo"
     #endif
     if (lisp.lisp_is_python3()):
@@ -1515,9 +1515,9 @@ def lisp_lig_command():
     #endif
 
     lig = ""
-    if os.path.exists("lisp-lig.pyo"): lig = "python -O lisp-lig.pyo"
+    if os.path.exists("lisp-lig.pyo"): lig = "python2 -O lisp-lig.pyo"
     if os.path.exists("lisp-lig.pyc"): lig = "python3.8 -O lisp-lig.pyc"
-    if os.path.exists("lisp-lig.py"): lig = "python lisp-lig.py"
+    if os.path.exists("lisp-lig.py"): lig = "python2 lisp-lig.py"
 
     #
     # Something went wrong with the install.
@@ -1578,9 +1578,9 @@ def lisp_rig_command():
     #endif
 
     rig = ""
-    if os.path.exists("lisp-rig.pyo"): rig = "python -O lisp-rig.pyo"
+    if os.path.exists("lisp-rig.pyo"): rig = "python2 -O lisp-rig.pyo"
     if os.path.exists("lisp-rig.pyc"): rig = "python3.8 -O lisp-rig.pyo"
-    if os.path.exists("lisp-rig.py"): rig = "python lisp-rig.py"
+    if os.path.exists("lisp-rig.py"): rig = "python2 lisp-rig.py"
 
     #
     # Something went wrong with the install.
@@ -1609,9 +1609,9 @@ def lisp_rig_command():
 #
 def lisp_run_geo_lig(eid1, eid2):
     lig = None
-    if os.path.exists("lisp-lig.pyo"): lig = "python -O lisp-lig.pyo"
+    if os.path.exists("lisp-lig.pyo"): lig = "python2 -O lisp-lig.pyo"
     if os.path.exists("lisp-lig.pyc"): lig = "python3.8 -O lisp-lig.pyc"
-    if os.path.exists("lisp-lig.py"): lig = "python lisp-lig.py"
+    if os.path.exists("lisp-lig.py"): lig = "python2 lisp-lig.py"
     if (lig == None): return([None, None])
 
     #

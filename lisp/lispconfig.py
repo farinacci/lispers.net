@@ -1611,7 +1611,7 @@ def lisp_start_stop_process(process, startstop):
     logfile = "./logs/" + process + ".log"
 
     if (lisp.lisp_is_python2()):
-        py = "python -O "
+        py = "python2 -O "
         filename = process + ".pyo"
     elif (lisp.lisp_is_python3()):
         py = "python3.8 -O "
