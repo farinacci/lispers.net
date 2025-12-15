@@ -1,6 +1,7 @@
 
-       How to Install a lispers.net Release on Ubuntu (on AWS)
-       -------------------------------------------------------
+       How to Install a lispers.net Release on Ubuntu v22
+                       (on AWS and GCP)
+       --------------------------------------------------
 
 #
 # Get popular use tools.
@@ -20,9 +21,10 @@ sudo ln -sf python2 python
 #
 # Get lispers.net tarball and put it in its own directory.
 #
-mkdir lispers.net
+mkdir /home/<user-id>/lispers.net
+sudo ln -sf /home/ubuntu/lispers.net /lispers.net
 cd lispers.net
-wget <tarball-url>
+wget <tarball-url> or scp
 tar zxvf lispers.net-release-0.<version>.tgz
 
 #
