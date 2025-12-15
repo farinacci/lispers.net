@@ -46,11 +46,13 @@ print("This build is using python{}".format("3.8" if use_python3 else "2.7"))
 # point to Python version 3.8.
 #
 if (use_python3):
-    PYTHON = "python3"
+    PYTHON = "python3.8"
     PYFLAKES = "python3.7 -m pyflakes"
+    obfuscate_on = False
 else:
     PYTHON = "python2"
     PYFLAKES = "pyflakes"
+    obfuscate_on = True
 #endif
 
 #
@@ -58,7 +60,6 @@ else:
 #
 include_lisp_xtr = os.getenv("LISP_XTR_INCLUDE") != None
 
-obfuscate_on = True
 root = "./.."
 
 #
