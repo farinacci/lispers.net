@@ -623,7 +623,7 @@ def lisp_is_centos():
 # Return True if this system is running Debian Jessie.
 #
 def lisp_is_debian():
-    return(platform.linux_distribution()[0] == "debian")
+    return(distro.linux_distribution()[0] == "debian")
 #enddef
 
 #
@@ -641,7 +641,7 @@ def lisp_is_debian_kali():
 # Return True if this system is running MacOS operating system.
 #
 def lisp_is_macos():
-    return(platform.uname()[0] == "Darwin")
+    return(distro.linux_distribution()[0] == "Darwin")
 #enddef
 
 #
