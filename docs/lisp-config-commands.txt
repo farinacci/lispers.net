@@ -445,7 +445,7 @@ Command Description:
     decentralized-nat
         Allows xTRs, which reside behind NAT devices, to encapsulate packets to
         each other. To traverse NAT devices, typcailly an RTR is used but
-        this future avoids hair-pinning traffic to an RTR, that is typically
+        this feature avoids hair-pinning traffic to an RTR, that is typically
         deployed in the core of the network and/or a cloud provider. This
         command is only used in xTRs. That is, itr=yes and etr=yes in the
         "lisp enable" command clause. This command requires nat-traversal=yes

@@ -4,7 +4,7 @@
        --------------------------------------------------
 
 #
-# Get popular use tools.
+# Get popular use tools. Must have version <= 22 or python2 won't install.
 #
 sudo apt-get update
 sudo apt-get install -y \
