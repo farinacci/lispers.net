@@ -10,7 +10,7 @@ sudo apt-get update
 sudo apt-get install -y \
     gcc libc-dev python2 python2-dev golang libffi-dev openssl libpcap-dev \
     iptables iproute2 tcpdump tcsh sudo traceroute iputils-ping \
-    net-tools procps emacs vim jq python-pip
+    net-tools procps emacs vim jq python-pip iperf
 
 #
 # After python2 install symlink to point 'python' to 'python2'.

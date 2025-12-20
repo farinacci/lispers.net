@@ -1,6 +1,4 @@
 
-- Have lig get back entire locator-set like xTRs do with decent-nat configured.
-
 - python3 on MacOS is not registering with decent mapping system.
 
 - RLOC-probing not working for multicast EIDs. Even when both unicast and multicast
