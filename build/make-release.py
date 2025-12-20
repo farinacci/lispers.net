@@ -46,10 +46,12 @@ print("This build is using python{}".format("3.8" if use_python3 else "2.7"))
 # point to Python version 3.8.
 #
 if (use_python3):
+    PY = "py3"
     PYTHON = "python3.8"
     PYFLAKES = "python3.7 -m pyflakes"
     obfuscate_on = False
 else:
+    PY = "py2"
     PYTHON = "python2"
     PYFLAKES = "pyflakes"
     obfuscate_on = True
@@ -128,7 +130,7 @@ else:
     version = input("Enter version number (in format x.y): ")
 #endif
 
-dir = "releases/release-{}".format(version)
+dir = "releases/release-{}-{}".format(PY, version)
 status = os.system("mkdir " + dir)
 if (status != 0):
     print("Could not create directory {}".format(dir))
@@ -276,7 +278,7 @@ os.system('cp ../docs/how-to-install*.txt ./{}/.'.format(dir))
 # Now tar and gzip files for release. COPYFILE is so MacOs does not put in
 # ._<foo> files.
 #
-tar_file = "lispers.net" + "-release-" + version + ".tgz"
+tar_file = "lispers.net" + "-release-{}-".format(PY) + version + ".tgz"
 print("Build tgz file {} ... ".format(tar_file), end=" ")
 files = "*.pyo " if pycache == None else "*.pyc "
 files += "*.txt lisp.config.example lisp-config-commands.txt " + \

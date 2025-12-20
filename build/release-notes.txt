@@ -1,4 +1,39 @@
 
+               lispers.net Beta Release Version 0.612
+               --------------------------------------
+
+o Release date:
+
+o Note with latest MacOS (15.6.1), only python3 builds will work since
+  the pcappy library fails on pcappy.open_live() calls.
+
+o The python3 liar wrapper was calling ./lisp-mc and not ./liar.
+
+o Fix typos and comments in doc files.
+
+o Add docs/pending-bugs to track bugs that are important but aren't being
+  addressed now. Usually this file will be empty.
+
+o Create docs/lisp.config.xtr-nat-decent with an example how to configure
+  an xTR that is using decentralized-nat.
+
+o Starting with this release, image names will look like this:
+
+    lispers.net-release-py2-0.612.tgz    
+    lispers.net-release-py3-0.612.tgz
+
+  Meaning the name will indicate what python version was used for the tarball.
+  Dashed releases (temporary test releases) will still be used where after
+  the version number a (-xx) will. For example:
+
+     lispers.net-release-py2-0.612-3.tgz
+
+  Denotes the 2nd test release off of vesion 0.612. Which is the convention
+  we have been using for years.
+
+-------------------------------------------------------------------------------
+    
+
                lispers.net Beta Release Version 0.611
                --------------------------------------
 
