@@ -1,0 +1,5 @@
+
+- RLOC-probing not working for multicast EIDs. Even when both unicast and multicast
+  RLOcs are used. The (S-EID, G-EID) are not placed in the rloc-probe-list. Therefore,
+  telemetry statistics are not reported for the RLE RLOCs.
+
