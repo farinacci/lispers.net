@@ -341,6 +341,7 @@ map_request.record_count = 1
 map_request.subscribe_bit = pubsub
 map_request.xtr_id_present = pubsub
 map_request.nonce = 0xdfdf0e1d10c10000 + random.randint(0, 65535)
+map_request.decent_nat_xtr = True
 if (dist_name):
     afi = lisp.LISP_AFI_NAME
     ml = len(dest_eid) * 8
