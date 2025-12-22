@@ -136,7 +136,7 @@ if (status != 0):
     print("Could not create directory {}".format(dir))
     exit(1)
 #endif
-os.system("rm latest; ln -sf {} latest".format(dir)) 
+os.system("rm latest-{}; ln -sf {} latest-{}".format(PY, dir, PY)) 
 
 print("Copying files from ../lisp to " + dir + " build directory ...", end=" ")
 command = '''

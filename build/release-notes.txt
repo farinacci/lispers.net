@@ -1,9 +1,23 @@
 
+               lispers.net Beta Release Version 0.613
+               --------------------------------------
+
+o Release date:
+
+o Have build/make-release.py use "latest" symlinks for each python2 and
+  python3 builds. The symlinks will be called "latest-py2" and "latest-py3".
+
+o Fix crash for python3 build. Make sure an EID produced by eid.print_prefix()
+  is encoded in "UTF-8" before calling hmac.new(). This code will work for
+  both python2 and python3 compiled builds.
+
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.612
                --------------------------------------
 
 o Release date: Sat Dec 20 14:53:41 PST 2025
-
+ 
 o Note with latest MacOS (15.6.1), only python3 builds will work since
   the pcappy library fails on pcappy.open_live() calls.
 
