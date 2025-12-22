@@ -19974,7 +19974,8 @@ def lisp_is_decent_dns_suffix(dns_name):
 #
 def lisp_get_decent_index(eid):
     eid_str = eid.print_prefix()
-    hash_value = hmac.new(b"lisp-decent", eid_str, hashlib.sha256).hexdigest()
+    e = eid_str.encode()
+    hash_value = hmac.new(b"lisp-decent", e, hashlib.sha256).hexdigest()
 
     #
     # Get hash-length to modulate from LISP_DECENT_HASH_WIDTH in bytes.
