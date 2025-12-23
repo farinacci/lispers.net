@@ -2,14 +2,18 @@
 #
 # commit-release
 #
-# After a "python make-release.py <release-numbrer>" is performed in the
+# After a "python make-release.py <release-number>" is performed in the
 # lispers.net/build directory, use this script to commit the release directory
 # and tag the repo with the <release-number>.
 # 
-# Usage: commit-release <release-number>
-#
+# Usage: commit-release <release-number> <py2-or-py3>
+if ($2 == "") then
+    echo "Need to supply py2 or py3 on command line"
+    exit
+endif
+set PY=$2
 
-set REL=release-$1
+set REL=release-$PY-$1
 
 set APP=apps-release-$1
 ls releases/$APP >& /dev/null
@@ -44,8 +48,7 @@ endif
 # Commiit and push files.
 #
 echo "git commit ..."
-git commit -m "Commit build release $REL" release-notes.txt latest \
-    releases/$REL
+git commit -m "Commit build release $REL" release-notes.txt latest-$PY releases/$REL
 if ($APP != "") then
     git commit -m "Commit build apps release $APP" releases/$APP
 endif
