@@ -2,7 +2,7 @@
                lispers.net Beta Release Version 0.613
                --------------------------------------
 
-o Release date:
+o Release date: Mon Dec 22 17:04:29 PST 2025
 
 o Have build/make-release.py use "latest" symlinks for each python2 and
   python3 builds. The symlinks will be called "latest-py2" and "latest-py3".
