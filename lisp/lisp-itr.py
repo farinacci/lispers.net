@@ -847,7 +847,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         for node in rle.rle_forwarding_list:
             if (node.level != level): return
 
-            packet.outer_dest.copy_address(node.address)
+            packet.outer_dest.copy_address(node.rloc.rloc)
             if (lisp_decent): packet.inner_dest.instance_id = 0xffffff
             version = packet.outer_dest.afi_to_version()
             packet.outer_version = version

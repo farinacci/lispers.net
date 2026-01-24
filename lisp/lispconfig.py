@@ -3133,11 +3133,11 @@ def lisp_rle_command(kv_pair):
             index = rle_nodes.index(node)
             if (index >= len(value)): index = len(value) - 1
             v = value[index]
-            if (kw == "level"): 
+            if (kw == "level"):
                 if (v == ""): v = "0"
                 node.level = int(v)
             #endif
-            if (kw == "address"): node.address.store_address(v)
+            if (kw == "address"): node.rloc.rloc.store_address(v)
         #endif
     #endfor
 

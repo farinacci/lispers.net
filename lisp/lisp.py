@@ -5703,12 +5703,12 @@ class lisp_rloc_record(object):
         if (self.rle):
             rle_recs = b""
             for rle_node in self.rle.rle_nodes:
-                afi = socket.htons(rle_node.address.afi)
+                afi = socket.htons(rle_node.rloc.rloc.afi)
                 rle_recs += struct.pack("HBBH", 0, 0, rle_node.level, afi)
-                rle_recs += rle_node.address.pack_address()
-                if (rle_node.rloc_name):
+                rle_recs += rle_node.rloc.rloc.pack_address()
+                if (rle_node.rloc.rloc_name):
                     rle_recs += struct.pack("H", socket.htons(LISP_AFI_NAME))
-                    rle_recs += (rle_node.rloc_name + "\0").encode()
+                    rle_recs += (rle_node.rloc.rloc_name + "\0").encode()
                 #endif
             #endfor
 
@@ -5896,19 +5896,19 @@ class lisp_rloc_record(object):
                 rle.rle_nodes.append(rle_node)
 
                 rle_node.level = level
-                rle_node.address.afi = afi
-                rle_node.address.mask_len = rle_node.address.host_mask_len()
-                packet = rle_node.address.unpack_address(packet[6::])
+                rle_node.rloc.rloc.afi = afi
+                rle_node.rloc.rloc.mask_len = rle_node.rloc.rloc.host_mask_len()
+                packet = rle_node.rloc.rloc.unpack_address(packet[6::])
 
-                lcaf_len -= rle_node.address.addr_length() + 6
+                lcaf_len -= rle_node.rloc.rloc.addr_length() + 6
                 if (lcaf_len >= 2):
                     afi = struct.unpack("H", packet[:2])[0]
                     if (socket.ntohs(afi) == LISP_AFI_NAME):
                         packet = packet[2::]
-                        packet, rle_node.rloc_name = \
+                        packet, rle_node.rloc.rloc_name = \
                             lisp_decode_dist_name(packet)
                         if (packet == None): return(None)
-                        lcaf_len -= len(rle_node.rloc_name) + 1 + 2
+                        lcaf_len -= len(rle_node.rloc.rloc_name) + 1 + 2
                     #endif
                 #endif
             #endwhile
@@ -9665,9 +9665,9 @@ def lisp_queue_multicast_map_notify(lisp_sockets, rle_list):
             if (len(sg_rloc_set) != 0 and sg_rloc_set[0].rle != None):
                 rle_nodes = sg_rloc_set[0].rle.rle_nodes
             #endif
-            for rle_node in rle_nodes: 
-                notify.append(rle_node.address)
-                notify_str.append(rle_node.address.print_address_no_iid())
+            for rle_node in rle_nodes:
+                notify.append(rle_node.rloc.rloc)
+                notify_str.append(rle_node.rloc.rloc.print_address_no_iid())
             #endfor
             lprint("Notify existing RLE-nodes {}".format(notify_str))
         else:
@@ -12974,34 +12974,32 @@ class lisp_geo(object):
 #endclass
 
 #
-# Structure for Replication List Entries. 
+# Structure for Replication List Entries.
 #
 class lisp_rle_node(object):
     def __init__(self):
-        self.address = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.level = 0
-        self.translated_port = 0
-        self.rloc_name = None
+        self.rloc = lisp_rloc(recurse=True)
     #enddef
-        
+
     def copy_rle_node(self):
         rle_node = lisp_rle_node()
-        rle_node.address.copy_address(self.address)
+        rle_node.rloc.rloc.copy_address(self.rloc.rloc)
+        rle_node.rloc.translated_port = self.rloc.translated_port
+        rle_node.rloc.rloc_name = self.rloc.rloc_name
         rle_node.level = self.level
-        rle_node.translated_port = self.translated_port
-        rle_node.rloc_name = self.rloc_name
         return(rle_node)
     #enddef
 
     def store_translated_rloc(self, rloc, port):
-        self.address.copy_address(rloc)
-        self.translated_port = port
+        self.rloc.rloc.copy_address(rloc)
+        self.rloc.translated_port = port
     #enddef
 
     def get_encap_keys(self):
-        port = "4341" if self.translated_port == 0 else \
-               str(self.translated_port)
-        addr_str = self.address.print_address_no_iid() + ":" + port
+        port = "4341" if self.rloc.translated_port == 0 else \
+               str(self.rloc.translated_port)
+        addr_str = self.rloc.rloc.print_address_no_iid() + ":" + port
 
         try:
             keys = lisp_crypto_keys_by_rloc_encap[addr_str]
@@ -13032,17 +13030,17 @@ class lisp_rle(object):
     def print_rle(self, html, do_formatting):
         rle_str = ""
         for rle_node in self.rle_nodes:
-            port = rle_node.translated_port
+            port = rle_node.rloc.translated_port
 
             rle_name_str = ""
-            if (rle_node.rloc_name != None):
-                rle_name_str = rle_node.rloc_name
+            if (rle_node.rloc.rloc_name != None):
+                rle_name_str = rle_node.rloc.rloc_name
                 if (do_formatting): rle_name_str = blue(rle_name_str, html)
                 rle_name_str = "({})".format(rle_name_str)
             #endif
 
-            addr_str = rle_node.address.print_address_no_iid()
-            if (rle_node.address.is_local()): addr_str = red(addr_str, html)
+            addr_str = rle_node.rloc.rloc.print_address_no_iid()
+            if (rle_node.rloc.rloc.is_local()): addr_str = red(addr_str, html)
             rle_str += "{}{}{}, ".format(addr_str, "" if port == 0 else \
                 ":" + str(port), rle_name_str)
         #endfor
@@ -13053,7 +13051,7 @@ class lisp_rle(object):
         level = -1
         for rle_node in self.rle_nodes:
             if (level == -1):
-                if (rle_node.address.is_local()): level = rle_node.level
+                if (rle_node.rloc.rloc.is_local()): level = rle_node.level
             else:
                 if (rle_node.level > level): break
             #endif
@@ -13062,10 +13060,10 @@ class lisp_rle(object):
 
         self.rle_forwarding_list = []
         for rle_node in self.rle_nodes:
-            if (rle_node.level == level or (level == 0 and 
+            if (rle_node.level == level or (level == 0 and
                 rle_node.level == 128)):
-                if (lisp_i_am_rtr == False and rle_node.address.is_local()):
-                    addr_str = rle_node.address.print_address_no_iid()
+                if (lisp_i_am_rtr == False and rle_node.rloc.rloc.is_local()):
+                    addr_str = rle_node.rloc.rloc.print_address_no_iid()
                     lprint("Exclude local RLE RLOC {}".format(addr_str))
                     continue
                 #endif
@@ -13532,8 +13530,8 @@ class lisp_rloc(object):
         self.rle = rloc_record.rle
         if (self.rle):
             for rle_node in self.rle.rle_nodes:
-                rloc_name = rle_node.rloc_name
-                nat_info = lisp_get_nat_info(rle_node.address, rloc_name)
+                rloc_name = rle_node.rloc.rloc_name
+                nat_info = lisp_get_nat_info(rle_node.rloc.rloc, rloc_name)
                 if (nat_info == None): continue
 
                 port = nat_info.port
@@ -13541,9 +13539,9 @@ class lisp_rloc(object):
                 if (rloc_name_str): rloc_name_str = blue(rloc_name, False)
 
                 lprint(("      Store translated encap-port {} for RLE-" + \
-                    "node {}, rloc-name '{}'").format(port, 
-                     rle_node.address.print_address_no_iid(), rloc_name_str))
-                rle_node.translated_port = port
+                    "node {}, rloc-name '{}'").format(port,
+                     rle_node.rloc.rloc.print_address_no_iid(), rloc_name_str))
+                rle_node.rloc.translated_port = port
             #endfor
         #endif
 
@@ -14031,8 +14029,18 @@ class lisp_mapping(object):
     #enddef
 
     def delete_rlocs_from_rloc_probe_list(self):
-        for rloc in self.best_rloc_set: 
-            rloc.delete_from_rloc_probe_list(self.eid, self.group)
+        for rloc in self.best_rloc_set:
+            if (rloc.rloc.is_null() and rloc.rle != None):
+
+                #
+                # Delete RLE node RLOCs from probe list.
+                #
+                for rle_node in rloc.rle.rle_forwarding_list:
+                    rle_node.rloc.delete_from_rloc_probe_list(self.eid, self.group)
+                #endfor
+            else:
+                rloc.delete_from_rloc_probe_list(self.eid, self.group)
+            #endif
         #endfor
     #enddef
 
@@ -14068,15 +14076,37 @@ class lisp_mapping(object):
 
         #
         # Put RLOC in lisp.lisp_rloc_probe_list if doesn't exist. And if
-        # we removed the RLOC out of the best list, we need to remove 
+        # we removed the RLOC out of the best list, we need to remove
         # references.
         #
-        for rloc in old_best: 
+        for rloc in old_best:
             if (rloc.priority < pr): continue
             rloc.delete_from_rloc_probe_list(self.eid, self.group)
+
+            #
+            # Also delete RLE nodes from probe list.
+            #
+            if (rloc.rle != None):
+                for rle_node in rloc.rle.rle_forwarding_list:
+                    rle_node.rloc.delete_from_rloc_probe_list(self.eid, self.group)
+                #endfor
+            #endif
         #endfor
-        for rloc in self.best_rloc_set: 
-            if (rloc.rloc.is_null()): continue
+
+        for rloc in self.best_rloc_set:
+            if (rloc.rloc.is_null()):
+
+                #
+                # This is an RLE RLOC. Add each rle_node's rloc directly to
+                # probe list.
+                #
+                if (rloc.rle != None and rloc.rle.rle_forwarding_list != []):
+                    for rle_node in rloc.rle.rle_forwarding_list:
+                        rle_node.rloc.add_to_rloc_probe_list(self.eid, self.group)
+                    #endfor
+                #endif
+                continue
+            #endif
             rloc.add_to_rloc_probe_list(self.eid, self.group)
         #endfor
     #enddef
@@ -14624,10 +14654,10 @@ class lisp_site_eid(object):
         for rloc_entry in self.registered_rlocs:
             if (rloc_entry.rle == None): continue
             for rle_node in rloc_entry.rle.rle_nodes:
-                if (rle_node.rloc_name == None): continue
-                addr = rle_node.address.print_address_no_iid() + \
-                    rle_node.rloc_name
-                old_rle[addr] = rle_node.address
+                if (rle_node.rloc.rloc_name == None): continue
+                addr = rle_node.rloc.rloc.print_address_no_iid() + \
+                    rle_node.rloc.rloc_name
+                old_rle[addr] = rle_node.rloc.rloc
             #endfor
             break
         #endif
@@ -14671,15 +14701,15 @@ class lisp_site_eid(object):
             rloc_name = site_eid.registered_rlocs[0].rloc_name
             if (rloc_name == None): rloc_name = ""
             for irle_node in irle.rle_nodes:
-                addr = irle_node.address.print_address_no_iid() + rloc_name
+                addr = irle_node.rloc.rloc.print_address_no_iid() + rloc_name
                 if (addr in new_rle): break
 
                 rle_node = lisp_rle_node()
-                rle_node.address.copy_address(irle_node.address)
+                rle_node.rloc.rloc.copy_address(irle_node.rloc.rloc)
                 rle_node.level = irle_node.level
-                rle_node.rloc_name = rloc_name
+                rle_node.rloc.rloc_name = rloc_name
                 rle.rle_nodes.append(rle_node)
-                new_rle[addr] = irle_node.address
+                new_rle[addr] = irle_node.rloc.rloc
             #endfor
         #endfor
 
@@ -14799,7 +14829,7 @@ class lisp_site_eid(object):
         for rloc_entry in self.registered_rlocs: 
             if (rloc_entry.rle):
                 for rle in rloc_entry.rle.rle_nodes:
-                    if (rle.address.is_exact_match(rloc)): return(True)
+                    if (rle.rloc.rloc.is_exact_match(rloc)): return(True)
                 #endif
             #endif
             if (rloc_entry.rloc.is_exact_match(rloc)): return(True)
@@ -18968,9 +18998,9 @@ def lisp_write_ipc_map_cache(add_or_delete, mc, dont_send=False):
     if (multicast):
         if (len(mc.rloc_set) >= 1 and mc.rloc_set[0].rle):
             for rle_node in mc.rloc_set[0].rle.rle_forwarding_list:
-                addr = rle_node.address.print_address_no_iid()
-                port = str(4341) if rle_node.translated_port == 0 else \
-                    str(rle_node.translated_port)                       
+                addr = rle_node.rloc.rloc.print_address_no_iid()
+                port = str(4341) if rle_node.rloc.translated_port == 0 else \
+                    str(rle_node.rloc.translated_port)                       
                 r = { "rle" : addr, "port" : port }
                 ekey, ikey = rle_node.get_encap_keys()
                 r = lisp_build_json_keys(r, ekey, ikey, "encrypt-key")
@@ -20333,12 +20363,12 @@ def lisp_build_gleaned_multicast(seid, geid, rloc, port, igmp):
     #endif
     if (rle_node == None):
         rle_node = lisp_rle_node()
-        rle_node.rloc_name = seid_name
+        rle_node.rloc.rloc_name = seid_name
         rle_entry.rle_nodes.append(rle_node)
         rle_entry.build_forwarding_list()
         lprint("Add RLE {} from {} for gleaned EID {}".format(r, s, e))
-    elif (rloc.is_exact_match(rle_node.address) == False or
-          port != rle_node.translated_port):
+    elif (rloc.is_exact_match(rle_node.rloc.rloc) == False or
+          port != rle_node.rloc.translated_port):
         lprint("Changed RLE {} from {} for gleaned EID {}".format(r, s, e))
     #endif
 
@@ -20379,7 +20409,7 @@ def lisp_remove_gleaned_multicast(seid, geid):
     rloc_name = seid.print_address_no_iid()
     found = False
     for rle_node in rle.rle_nodes:
-        if (rle_node.rloc_name == rloc_name):
+        if (rle_node.rloc.rloc_name == rloc_name):
             found = True
             break
         #endif

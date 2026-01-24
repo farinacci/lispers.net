@@ -921,12 +921,13 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         # use configured RLE in group-mapping. If one wasn't configured use
         # lisp_myrlocs IPv4 address.
         #
-        if (translated_rloc != None): 
-            rle_node.address = translated_rloc
+        if (translated_rloc != None):
+            rle_node.rloc.rloc.copy_address(translated_rloc)
         elif (rle_addr != None):
-            rle_node.address = rle_addr
+            rle_node.rloc.rloc.copy_address(rle_addr)
         else:
-            rle_node.address = rle_addr = lisp.lisp_myrlocs[0]
+            rle_addr = lisp.lisp_myrlocs[0]
+            rle_node.rloc.rloc.copy_address(rle_addr)
         #endif
 
         rloc_record.rle = rle

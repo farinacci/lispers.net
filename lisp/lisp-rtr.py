@@ -232,8 +232,8 @@ def lisp_fix_rloc_encap_state_entry(mc, parms):
         if (rloc_entry.rle):
             for rle_node in rloc_entry.rle.rle_nodes:
                 rle_node.store_translated_rloc(rloc, port)
-                old_addr = rle_node.address.print_address_no_iid() + ":" + \
-                    str(rle_node.translated_port)
+                old_addr = rle_node.rloc.rloc.print_address_no_iid() + ":" + \
+                    str(rle_node.rloc.translated_port)
                 lisp.lprint(msg.format("RLE", old_addr))
             #endfor
         #endif
@@ -927,9 +927,9 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         #
         orig_len = len(packet.packet)
         for node in rle.rle_forwarding_list:
-            packet.outer_dest.copy_address(node.address)
+            packet.outer_dest.copy_address(node.rloc.rloc)
             packet.encap_port = lisp.LISP_DATA_PORT if \
-                node.translated_port == 0 else node.translated_port
+                node.rloc.translated_port == 0 else node.rloc.translated_port
 
             version = packet.outer_dest.afi_to_version()
             packet.outer_version = version
@@ -1143,9 +1143,9 @@ def lisp_encapsulate_igmp_query(lisp_raw_socket, eid, geid, igmp):
 
     eid_name = eid.print_address_no_iid()
     for rle_node in mc.rloc_set[0].rle.rle_nodes:
-        if (rle_node.rloc_name == eid_name):
-            packet.outer_dest.copy_address(rle_node.address)
-            packet.encap_port = rle_node.translated_port
+        if (rle_node.rloc.rloc_name == eid_name):
+            packet.outer_dest.copy_address(rle_node.rloc.rloc)
+            packet.encap_port = rle_node.rloc.translated_port
             break
         #endif
     #endfor        
