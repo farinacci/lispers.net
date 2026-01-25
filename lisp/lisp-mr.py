@@ -1,25 +1,25 @@
 # -----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lisp-mr.py
 #
 # This file performs LISP Map-Resolver functionality.
-# 
+#
 # -----------------------------------------------------------------------------
 from __future__ import division
 from builtins import str
@@ -85,7 +85,7 @@ def lisp_ddt_root_command(kv_pair):
             value = kv_pair[kw]
             ddt_root.public_key = value
         #endif
-        if (kw == "priority"): 
+        if (kw == "priority"):
             value = kv_pair[kw]
             ddt_root.priority = value
         #endif
@@ -171,7 +171,7 @@ def lisp_referral_cache_command(kv_pair):
             #endfor
         #endif
 
-        if (kw == "priority"): 
+        if (kw == "priority"):
             for i in range(len(referral_set)):
                 ref_node = referral_set[i]
                 v = value[i]
@@ -224,33 +224,33 @@ def lisp_display_referral_cache(ref, output):
         ref.referral_source.print_address_no_iid()
 
     time_str = "--"
-    if (ref.eid.is_ultimate_root()): 
+    if (ref.eid.is_ultimate_root()):
         ref_type = "root"
     elif (ref_source == "configured"):
         ref_type = "any"
     else:
         ref_type = ref.print_referral_type()
-        if (ref.is_referral_negative()): 
+        if (ref.is_referral_negative()):
             ref_type = lisp.red(ref_type, True)
         #endif
         time_str = "{}<br>{}".format(ets, str(ref.referral_ttl/60))
     #endif
 
     if (len(ref.referral_set) == 0):
-        output += lispconfig.lisp_table_row(prefix, uts, time_str, 
+        output += lispconfig.lisp_table_row(prefix, uts, time_str,
             ref_type, ref_source, "--", "--", "--")
     #endif
 
-    for ref_node in list(ref.referral_set.values()): 
+    for ref_node in list(ref.referral_set.values()):
         addr = ref_node.referral_address.print_address_no_iid()
         addr += "<br>up" if ref_node.updown else "<br>down"
 
-        output += lispconfig.lisp_table_row(prefix, uts, time_str, 
+        output += lispconfig.lisp_table_row(prefix, uts, time_str,
             ref_type, ref_source, addr, str(ref_node.priority) + "<br>" +
             str(ref_node.weight), str(ref_node.map_requests_sent) + "<br>" +
             str(ref_node.no_responses))
 
-        if (prefix != ""): 
+        if (prefix != ""):
             prefix = ""
             uts = ""
             time_str = ""
@@ -268,7 +268,7 @@ def lisp_display_referral_cache(ref, output):
 # entries in lisp_referral.source_cache().
 #
 def lisp_walk_referral_cache(ref, output):
-    
+
     #
     # There is only destination state in this map-cache entry.
     #
@@ -326,7 +326,7 @@ def lisp_mr_show_referral_cache_command(parameter):
     #
     # Do lookup if there is a parameter supplied.
     #
-    if (parameter != ""): 
+    if (parameter != ""):
         return(lisp_mr_show_referral_cache_lookup(parameter))
     #endif
 
@@ -352,11 +352,11 @@ def lisp_mr_show_referral_cache_command(parameter):
         hover = "{} entries in map-request queue".format(queue_size)
         title = lisp.lisp_span("LISP-MR Map-Request Queue:", hover)
 
-        output += lispconfig.lisp_table_header(title, 
-            "EID-Prefix or (S,G)", "Nonce", "Uptime", "Map-Request Source", 
+        output += lispconfig.lisp_table_header(title,
+            "EID-Prefix or (S,G)", "Nonce", "Uptime", "Map-Request Source",
             "Retry Count", "Tried DDT-Root", "Last Request Sent To",
             "Last Map-Referral EID-Prefix")
-        
+
         for key in lisp.lisp_ddt_map_requestQ:
             mr = lisp.lisp_ddt_map_requestQ[key]
             ut = lisp.lisp_print_elapsed(mr.uptime)
@@ -366,15 +366,15 @@ def lisp_mr_show_referral_cache_command(parameter):
             itr = mr.itr
             itr = "--" if (itr == None) else (itr.print_address_no_iid() + \
                 "<br>({}ITR)".format("P" if mr.from_pitr else ""))
-            
+
             last_eid = mr.last_cached_prefix[0]
             last_group = mr.last_cached_prefix[1]
             last_prefix = "--" if (last_eid == None) else \
                  lisp.lisp_print_eid_tuple(last_eid, last_group)
 
-            output += lispconfig.lisp_table_row(mr.print_eid_tuple(), 
-                "0x" + lisp.lisp_hex_string(mr.nonce), ut, itr, 
-                mr.retry_count, "yes" if mr.tried_root else "no", last_sent, 
+            output += lispconfig.lisp_table_row(mr.print_eid_tuple(),
+                "0x" + lisp.lisp_hex_string(mr.nonce), ut, itr,
+                mr.retry_count, "yes" if mr.tried_root else "no", last_sent,
                 last_prefix)
 
         #endfor
@@ -385,13 +385,13 @@ def lisp_mr_show_referral_cache_command(parameter):
         lisp.lisp_referral_cache.cache_size())
     title = lisp.lisp_span("LISP-MR Referral-Cache:", hover)
 
-    output += lispconfig.lisp_table_header(title, 
-        "EID-Prefix or (S,G)", "Uptime", "Expires<br>TTL", 
-        "Referral Type", "Map-Referral Source", 
-        "Referral Address<br>Node Status", 
+    output += lispconfig.lisp_table_header(title,
+        "EID-Prefix or (S,G)", "Uptime", "Expires<br>TTL",
+        "Referral Type", "Map-Referral Source",
+        "Referral Address<br>Node Status",
         "Priority<br>Weight", "Map-Requests Sent<br>No Responses")
-    
-    output = lisp.lisp_referral_cache.walk_cache(lisp_walk_referral_cache, 
+
+    output = lisp.lisp_referral_cache.walk_cache(lisp_walk_referral_cache,
         output)
 
     output += lispconfig.lisp_table_footer()
@@ -408,7 +408,7 @@ def lisp_timeout_referral_entry(referral, delete_list):
     if (referral.expires == 0): return([True, delete_list])
 
     now = lisp.lisp_get_timestamp()
-    if (referral.uptime + referral.referral_ttl > now): 
+    if (referral.uptime + referral.referral_ttl > now):
         return([True, delete_list])
     #endif
 
@@ -438,7 +438,7 @@ def lisp_timeout_referral_cache_walk(ref, delete_list):
     #
     # There is only destination state in this map-cache entry.
     #
-    if (ref.group.is_null()): 
+    if (ref.group.is_null()):
         return(lisp_timeout_referral_entry(ref, delete_list))
     #endif
 
@@ -448,7 +448,7 @@ def lisp_timeout_referral_cache_walk(ref, delete_list):
     # There is (source, group) state so walk all sources for this group
     # entry.
     #
-    delete_list = ref.source_cache.walk_cache(lisp_timeout_referral_entry, 
+    delete_list = ref.source_cache.walk_cache(lisp_timeout_referral_entry,
         delete_list)
     return([True, delete_list])
 #enddef
@@ -493,7 +493,7 @@ def lisp_mr_startup():
     global lisp_ipc_listen_socket
     global lisp_send_internal_socket
     global lisp_ephem_listen_socket
-    
+
     lisp.lisp_i_am("mr")
     lisp.lisp_set_exception()
     lisp.lisp_print_banner("Map-Resolver starting up")
@@ -553,7 +553,7 @@ def lisp_mr_parse_packet(packet, source_str, sport):
         lisp.lprint("Could not decode control header")
         return
     #endif
-        
+
     #
     # Store source in internal lisp_address() format.
     #
@@ -561,8 +561,8 @@ def lisp_mr_parse_packet(packet, source_str, sport):
     source.store_address(source_str)
 
     #
-    # If this is an ECM and since we are a Map-Resolver, check if the 
-    # Map-Server is colocated on the same machine. If so, have it process 
+    # If this is an ECM and since we are a Map-Resolver, check if the
+    # Map-Server is colocated on the same machine. If so, have it process
     # the ECM when there is no DDT configured for the Map-Resolver.
     #
     if (header.type == lisp.LISP_ECM):
@@ -575,7 +575,7 @@ def lisp_mr_parse_packet(packet, source_str, sport):
 
         #
         # Process the Map-Request as a DDT-based Map-Resolver.
-        # 
+        #
         if (ddt_roots_exist):
             lisp.lisp_process_ecm(lisp_send_sockets, packet, source, sport)
             return
@@ -591,7 +591,7 @@ def lisp_mr_parse_packet(packet, source_str, sport):
     if (header.type == lisp.LISP_MAP_REFERRAL):
         lisp.lisp_process_map_referral(lisp_send_sockets, packet, source)
         return
-    #endif            
+    #endif
 
     #
     # This process processes only ECMs and Map-Referral messages.
@@ -610,17 +610,17 @@ lisp_mr_commands = {
     "lisp ddt-root" : [lisp_ddt_root_command, {
         "address" : [False],
         "public-key" : [False],
-        "priority" : [False, 0, 255], 
+        "priority" : [False, 0, 255],
         "weight" : [False, 0, 100] }],
 
     "lisp referral-cache" : [lisp_referral_cache_command, {
-        "prefix" : [], 
-        "instance-id" : [True, 0, 0xffffffff],  
-        "eid-prefix" : [True], 
-        "group-prefix" : [True], 
-        "referral" : [], 
-        "address" : [True], 
-        "priority" : [True, 0, 255], 
+        "prefix" : [],
+        "instance-id" : [True, 0, 0xffffffff],
+        "eid-prefix" : [True],
+        "group-prefix" : [True],
+        "referral" : [],
+        "address" : [True],
+        "priority" : [True, 0, 255],
         "weight" : [True, 0, 100] }],
 
     "show referral-cache" : [lisp_mr_show_referral_cache_command, { }],
@@ -645,7 +645,7 @@ while (True):
     except: break
 
     if (lisp_ephem_listen_socket in ready_list):
-        opcode, source, port, packet = lisp.lisp_receive(ephem_sockets[0], 
+        opcode, source, port, packet = lisp.lisp_receive(ephem_sockets[0],
             False)
         if (source == ""): break
         lisp.lisp_parse_packet(ephem_sockets, packet, source, port)
@@ -656,13 +656,13 @@ while (True):
         lisp.lisp_receive(lisp_ipc_listen_socket, True)
     if (source == ""): break
 
-    if (opcode == "command"): 
+    if (opcode == "command"):
         packet = packet.decode()
-        if (packet == "clear"): 
+        if (packet == "clear"):
             lisp_clear_referral_cache()
             continue
         #endif
-        lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode, 
+        lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode,
             packet, "lisp-mr", [lisp_mr_commands])
     else:
         lisp_mr_parse_packet(packet, source, port)

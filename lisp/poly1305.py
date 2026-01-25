@@ -62,7 +62,7 @@ elif crypto:
     def _aes_encrypt(key, val):
         "Encrypt one single data block with AES -- cryptography based"
         e = Cipher(AES_C(key), ECB(), default_backend()).encryptor()
-        return e.update(val)+e.finalize() 
+        return e.update(val)+e.finalize()
 elif m2crypto:
     def _aes_encrypt(key, val):
             "Encrypt one single data block with AES -- M2Crypto based"
@@ -95,7 +95,7 @@ else:
 
 constant_time_compare.__doc__ = """
 Returns True if the two strings are equal, False otherwise.
-    
+
 The time taken is independent of the number of characters that match.
 For the sake of simplicity, this function executes in constant time only
 when the two strings have the same length. It short-circuits when an error
@@ -122,13 +122,13 @@ class Poly1305(object):
     :param key_aes: your cipher key, the length
         depends on your cipher (16, 24 or 32 for AES)
     :type key_aes: bytes
-    
+
     :param r: your poly1305 key with a length of 16
     :type r: bytes
-    
+
     :param nonce: your *random* nonce with a length of 16
     :type nonce: bytes
-    
+
     :param string: the message you want to sign
     :type string: bytes
 
@@ -137,7 +137,7 @@ class Poly1305(object):
     :type method: method with args (key, msg)
     """
     digest_size = 16
-    
+
     def __init__(self, key_aes, r, nonce , string=b"", method=_aes_encrypt):
         self.__key_aes = key_aes
         self.__r = r
@@ -154,7 +154,7 @@ class Poly1305(object):
 
         :type msg: bytes
         """
-        
+
         self.__string += msg
 
     def digest(self):
@@ -184,7 +184,7 @@ class Poly1305(object):
         result = ''.join([chr(0xff & (result >> 8*i)) for i in range(16)])
         if PY3K:
             result = result.encode("latin-1")
-        
+
         return result
 
     def hexdigest(self):
@@ -219,17 +219,17 @@ def poly1305aes(k, r, n, m):
 
     :param k: your cipher key, the length depends on your cipher
     :type k: bytes
-    
+
     :param r: your poly1305 key with a length of 16
     :type r: bytes
-    
+
     :param n: your *random* nonce with a length of 16
     :type n: bytes
-    
+
     :param m: the message you want to sign
     :type m: bytes
 
-    
+
     """
     return Poly1305(k, r, n, m, _aes_encrypt).digest()
 

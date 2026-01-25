@@ -2,13 +2,13 @@
 # -----------------------------------------------------------------------------
 #
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 # -----------------------------------------------------------------------------
-# 
+#
 # ltr.py - LISP EID Traceroute Client - Trace the encap/decap paths
 #
 # Usage: python ltr.py [-s <source-eid>] <destination-EID | DNS-name>
@@ -66,28 +66,28 @@
 # EID and one for the return path. Each dictionary array is keyed with "seid",
 # "deid", and "paths". The array "paths" is the node data that is appended
 # at each encapsulation hop. Note example below:
-# 
-# [ 
+#
+# [
 #   { "se" : "[<iid>]<orig-eid>", "de" : "[<iid>]<dest-eid>", "paths" : a
 #   [
 #     { "n" : "ITR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
-#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
+#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] },
 #     { "n" : "RTR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
 #       "dts" : "<ts>", "hn" : "<hn>" },
 #     { "n" : "RTR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
-#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
+#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] },
 #     { "n" : "ETR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
 #       "ets" : "<ts>", "hn" : "<hn>" }, ...
 #   ] },
-# 
+#
 #   { "se" : "[<iid>]<dest-eid>", "de" : "[<iid>]<orig-eid>", "paths" :
 #   [
 #     { "n" : "ITR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
-#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
+#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] },
 #     { "n" : "RTR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
 #       "dts" : "<ts>", "hn" : "<hn>" },
 #     { "n" : "RTR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
-#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] }, 
+#       "ets" : "<ts>", "hn" : "<hn>", "rtts" : [...], "hops" : [...] },
 #     { "n" : "ETR", "sr" : "<source-rloc>",  "dr" : "<dest_rloc>",
 #       "ets" : "<ts>", "hn" : "<hn>" }, ...
 #   ] }
@@ -135,7 +135,7 @@ if (port != None):
     #endif
     http_port = int(port)
 #endif
-user = os.getenv("LISP_LTR_USER") 
+user = os.getenv("LISP_LTR_USER")
 pw = os.getenv("LISP_LTR_PW")
 if (user == None): user = "root"
 if (pw == None): pw = ""
@@ -155,7 +155,7 @@ LISP_TRACE_PORT = 2434
 # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 # |Type=9 |         0           |        Local Private Port       |
 # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-# |                  Local Private IPv4 RLOC                      | 
+# |                  Local Private IPv4 RLOC                      |
 # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 # |                         Nonce . . .                           |
 # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

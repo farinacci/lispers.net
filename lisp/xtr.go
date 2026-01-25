@@ -1,19 +1,19 @@
 // ---------------------------------------------------------------------------
-//             
+//
 // Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License.    
-// 
+// limitations under the License.
+//
 // ---------------------------------------------------------------------------
 //
 // xtr.go
@@ -32,7 +32,7 @@
 // (3) Look at alternative to gopacket.NewPacketSource(). Gopi says use
 //     static buffer. GC will kill you.
 // (4) Fix decap forwarding for IPv6 EIDs. Test IPv6 RLOCs.
-// 
+//
 // ---------------------------------------------------------------------------
 
 package main
@@ -102,7 +102,7 @@ func lisp_xtr_startup() bool {
 	hostname = strings.Split(hostname, ".")[0]
 	ts := lisp_command_output("date")
 	version := lisp_read_file("./lisp-version.txt")
-	
+
     lprint("lispers.net LISP xTR starting up %s, version %s, hostname %s", ts,
 		version, bold(hostname))
 
@@ -166,7 +166,7 @@ func lisp_xtr_startup() bool {
 // Initialize pre-built headers used in lisp_encapsulate().
 //
 func lisp_build_headers() {
-	
+
 	//
 	// Prebuild LISP and UDP headers. And IPv4 and IPv6 outer headers.
 	//
@@ -502,7 +502,7 @@ func lisp_itr_data_plane(packet []byte, input_device string) {
 	} else {
 		iid = 0
 	}
-	
+
 	//
 	// Do a lisp_database lookup on the source to see if its an EID.
 	//
@@ -564,7 +564,7 @@ func lisp_itr_data_plane(packet []byte, input_device string) {
 //
 func lisp_encrypt(plaintext []byte, lisp []byte, rloc *Lisp_rloc) (
 	ciphertext []byte) {
-	
+
 	key := rloc.keys[rloc.use_key_id]
 
 	//
@@ -731,7 +731,7 @@ func lisp_encapsulate(log string, packet []byte, iid int, rloc *Lisp_rloc,
 		udp[1] = byte(0xf5)
 	}
 	udp[2] = byte(rloc.encap_port >> 8)
-    udp[3] = byte(rloc.encap_port & 0xff)	
+    udp[3] = byte(rloc.encap_port & 0xff)
 	udp_length := len(packet) + 8
 	udp[4] = byte(udp_length >> 8)
 	udp[5] = byte(udp_length & 0xff)
@@ -812,7 +812,7 @@ func lisp_encapsulate(log string, packet []byte, iid int, rloc *Lisp_rloc,
 	// Did we get a send error?
 	//
 	if (err != nil) {
-		dprint("syscall.Sendto() to RLOC %s failed: %s", 
+		dprint("syscall.Sendto() to RLOC %s failed: %s",
 			red(rloc.rloc.lisp_print_address(false)), err)
 	}
 }
@@ -839,7 +839,7 @@ func lisp_map_cache_lookup(source Lisp_address,	dest Lisp_address) (*Lisp_rloc,
 	dprint("Map-cache lookup %s %s for EID %s", bold("found"),
         green(mc.eid_prefix.lisp_print_address(true)),
 		dest.lisp_print_address(true))
-	
+
 	//
 	// Map-cache entry has an rle-set.
 	//
@@ -927,7 +927,7 @@ func lisp_etr_thread() {
 //
 func lisp_etr_ipv6_thread(pfilter string) {
 	var source net.IP
-	
+
 	handle, _ := pcap.OpenLive("any", 1600, true, pcap.BlockForever)
 	handle.SetBPFFilter(pfilter)
 
@@ -954,7 +954,7 @@ func lisp_etr_ipv6_thread(pfilter string) {
 //
 func lisp_etr_nat_thread(pfilter string) {
 	var source net.IP
-	
+
 	handle, _ := pcap.OpenLive("any", 1600, true, pcap.BlockForever)
 	handle.SetBPFFilter(pfilter)
 

@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 # -----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lisp-sc.py
@@ -132,7 +132,7 @@ if (len(sys.argv) == 3):
         if (e.isdigit()): continue
         eid_input = None
         break
-    #endfor    
+    #endfor
     if (eid_input == None):
         eid_input = sys.argv[-1]
         for e in eid_input.split(":"):
@@ -157,15 +157,15 @@ if (len(sys.argv) == 2):
     args = args.split("@")
     if (len(args) == 2):
         userpw = args[0].split(":")
-        if (userpw[0] != ""): user = userpw[0] 
+        if (userpw[0] != ""): user = userpw[0]
         if (len(userpw)== 2 and userpw[1] != ""): pw = userpw[1]
         args = args[1]
     else:
         args = args[0]
     #endif
     hostport = args.split(":")
-    if (hostport[0] != ""): host = hostport[0] 
-    if (len(hostport) == 2 and hostport[1] != ""): port = hostport[1] 
+    if (hostport[0] != ""): host = hostport[0]
+    if (len(hostport) == 2 and hostport[1] != ""): port = hostport[1]
 #endif
 
 curl = ("curl --silent --insecure -u {}:{} https://{}:{}/lisp/" + \
@@ -205,7 +205,7 @@ for sc in sc_summary:
     c = sc["registrations"][0]["count"]
     r = sc["registrations"][0]["registered-count"]
     sites[sc["site"]] = (c, r)
-#endfor    
+#endfor
 
 #
 # Get hostname from version info query.
@@ -224,7 +224,7 @@ print("\nLISP Map-Server Site-Cache for {}, hostname {}, release {}\n". \
 if (len(site_cache) == 0):
     print("Site-cache is empty")
     exit(0)
-#endif    
+#endif
 
 found_eid = False
 for site in sites:
@@ -235,7 +235,7 @@ for site in sites:
     r = sites[site][1]
     r = bold(str(r))
     print("Site {}, {} EID entries, {} EIDs registered:".format(s, c, r))
-    
+
     for sc in site_cache:
         if (sc["registered-rlocs"] == []): continue
         if (sc["site-name"] != site): continue
@@ -284,7 +284,7 @@ for site in sites:
 #
 if (eid_input and found_eid == False):
     print("EID {} not in site-cache".format(green(eid_input)))
-#endif    
+#endif
 
 exit(0)
 

@@ -1,19 +1,19 @@
 # -----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lispconfig.py
@@ -21,7 +21,7 @@
 # This file contains all configuration support for the LISP subsystem. That
 # includes lisp.config file processing and the RESTful interface via the
 # bottle module.
-# 
+#
 # -----------------------------------------------------------------------------
 from __future__ import division
 from future import standard_library
@@ -50,17 +50,17 @@ LISP_USER_TIMEOUT = 1800  # Let users stay in web interface for 1/2 hour
 # This array decides where the command goes to get processed.
 #
 lisp_commands = {
-    "lisp user-account"             : ["lisp-core"], 
-    "lisp enable"                   : ["lisp-core"], 
-    "lisp debug"                    : ["lisp-core"], 
+    "lisp user-account"             : ["lisp-core"],
+    "lisp enable"                   : ["lisp-core"],
+    "lisp debug"                    : ["lisp-core"],
     "lisp xtr-parameters"           : ["lisp-itr", "lisp-rtr", "lisp-etr"],
-    "lisp interface"                : ["lisp-itr", "lisp-etr", "lisp-rtr"], 
+    "lisp interface"                : ["lisp-itr", "lisp-etr", "lisp-rtr"],
     "lisp rtr-list"                 : ["lisp-core"],
     "lisp map-resolver"             : ["lisp-itr", "lisp-rtr"],
     "lisp map-cache"                : ["lisp-itr", "lisp-rtr"],
     "lisp itr-map-cache"            : ["lisp-itr"],
     "lisp rtr-map-cache"            : ["lisp-rtr"],
-    "lisp map-server"               : ["lisp-itr", "lisp-etr"], 
+    "lisp map-server"               : ["lisp-itr", "lisp-etr"],
     "lisp database-mapping"         : ["lisp-itr", "lisp-etr", "lisp-rtr"],
     "lisp group-mapping"            : ["lisp-etr"],
     "lisp glean-mapping"            : ["lisp-rtr"],
@@ -89,7 +89,7 @@ lisp_commands = {
     "show database-mapping"         : ["lisp-etr"],
     "show referral-cache"           : ["lisp-mr"],
     "show delegations"              : ["lisp-ddt"],
-    "show site"                     : ["lisp-ms"], 
+    "show site"                     : ["lisp-ms"],
     "show itr-dynamic-eid"          : ["lisp-itr"],
     "show etr-dynamic-eid"          : ["lisp-etr"],
     "show itr-keys"                 : ["lisp-itr"],
@@ -99,25 +99,25 @@ lisp_commands = {
 
 lisp_core_commands = {
     "lisp enable" : ["", {
-        "itr" : [False, "yes", "no"], 
-        "etr" : [False, "yes", "no"], 
+        "itr" : [False, "yes", "no"],
+        "etr" : [False, "yes", "no"],
         "rtr" : [False, "yes", "no"],
-        "map-resolver" : [False, "yes", "no"], 
-        "map-server" : [False, "yes", "no"], 
+        "map-resolver" : [False, "yes", "no"],
+        "map-server" : [False, "yes", "no"],
         "ddt-node" : [False, "yes", "no"] } ],
 
     "lisp debug" : ["", {
-        "core" : [False, "yes", "no"], 
-        "itr" : [False, "yes", "no"], 
-        "etr" : [False, "yes", "no"], 
+        "core" : [False, "yes", "no"],
+        "itr" : [False, "yes", "no"],
+        "etr" : [False, "yes", "no"],
         "rtr" : [False, "yes", "no"],
-        "map-resolver" : [False, "yes", "no"], 
-        "map-server" : [False, "yes", "no"], 
+        "map-resolver" : [False, "yes", "no"],
+        "map-server" : [False, "yes", "no"],
         "ddt-node" : [False, "yes", "no"] } ],
 
     "lisp user-account" : ["", {
         "username" : [False],
-        "password" : [False], 
+        "password" : [False],
         "super-user" : [False, "yes", "no"] } ],
 
     "lisp rtr-list" : ["", {
@@ -158,7 +158,7 @@ def lisp_banner_top(no_hover):
           <td align="right" valign="bottom" width="50%">{}</td>
         </tr></table>
         <hr style="border: none; border-bottom: 1px solid gray;">
-    '''.format(html_title, lisp.green("lispers", True), lisp.red("net", True), 
+    '''.format(html_title, lisp.green("lispers", True), lisp.red("net", True),
         lisp.bold("Scalable Open Overlay Networking", True), hostname)
 
     return(banner)
@@ -176,7 +176,7 @@ def lisp_banner_bottom():
     py = " (py2)" if lisp.lisp_is_python2() else " (py3)"
 
     banner = '''<br><hr style="border: none; border-bottom: 1px solid gray;">
-        <i><font size="2">{} - Uptime 
+        <i><font size="2">{} - Uptime
         {}, Version {}<br>Copyright 2013-2019 - all rights reserved by
         <a href="http://www.lispers.net"><b>lispers.net</b></a> LLC<br>
         Features/Bugs go to <a href=
@@ -259,7 +259,7 @@ def lisp_write_last_changed_date(new, line):
 #
 # lisp_comment
 #
-# Return True if first character of a line from the configuration file line 
+# Return True if first character of a line from the configuration file line
 # has "#".
 #
 def lisp_comment(line):
@@ -286,7 +286,7 @@ def lisp_end_clause(line):
 #
 # lisp_end_file
 #
-# Return True if line is last line from the configuration file of editable 
+# Return True if line is last line from the configuration file of editable
 # part of file.
 #
 def lisp_end_file(line):
@@ -423,7 +423,7 @@ def lisp_valid_prefix_format(prefix):
     if (prefix.find("'") == -1 and prefix.find("/") == -1): return(False)
 
     addr = prefix.split("/")
-    if (len(addr) != 2): 
+    if (len(addr) != 2):
         if (prefix.find("'") == -1): return(False)
         addr = [prefix, len(prefix)]
     #endif
@@ -758,13 +758,13 @@ def lisp_syntax_check(kv_pairs, clause):
         #endif
         if (lisp_end_clause(line) and json == False):
             open_brace -= 1
-            if (open_brace == 0): 
+            if (open_brace == 0):
                 new_clause += lisp_write_line(line)
                 break
              #endif
-            if (error): 
+            if (error):
                 new_clause += "%" + line + "\n"
-            else: 
+            else:
                 new_clause += lisp_write_line(line)
             #endif
             continue
@@ -821,7 +821,7 @@ def lisp_syntax_check(kv_pairs, clause):
         # check. Right now special case keyword "eid-prefix" to be a prefix
         # type.
         #
-        if (len(kv_pairs[kw]) <= 1): 
+        if (len(kv_pairs[kw]) <= 1):
             msg = ""
             if (kw == "eid-prefix" and not lisp_valid_prefix_format(value)):
                 msg = "invalid prefix"
@@ -861,7 +861,7 @@ def lisp_syntax_check(kv_pairs, clause):
                 value = str(lower) + "-" + str(mask_len)
             #endif
         #endif
-                
+
         #
         # Multi-instance commands and clauses makes value into an array. The
         # while loop is for cases where a command can appear multiple times
@@ -954,7 +954,7 @@ def lisp_process_command(lisp_socket, opcode, clause, process, command_set):
         parameters = clause.split("%")
         command = parameters[0].split(" ")
         parm_len = len(parameters)
-        if (parm_len == 2): 
+        if (parm_len == 2):
             parameters = parameters[1]
         elif (parm_len == 3):
             parameters = parameters[1] + "%" + parameters[2] + "%"
@@ -981,7 +981,7 @@ def lisp_process_command(lisp_socket, opcode, clause, process, command_set):
     # the error line. Show commands don't have any input checking so they
     # will return show output. But the parameter passed to show commands could
     # be for a detailed display.
-    # 
+    #
     error = False
     if (len(kv_pairs) != 0):
         error, new_clause, kv_pairs = lisp_syntax_check(kv_pairs, clause)
@@ -1012,7 +1012,7 @@ def lisp_is_user_superuser(username):
     # Get all "lisp user-account" commands.
     #
     users = getoutput("egrep -A 4 user-account ./lisp.config")
-    
+
     username_str = "username = {}".format(username)
     index = users.find(username_str)
     end = users[index::].find("}")
@@ -1267,7 +1267,7 @@ def lisp_landing_page():
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["rtr"] == "yes" else "off"
-        output += '''<option value="/lisp/show/log/lisp-rtr/100">[{}] RTR 
+        output += '''<option value="/lisp/show/log/lisp-rtr/100">[{}] RTR
            log [{}]</option>'''.format(onoff, count)
     #endif
     if (os.path.exists("./logs/lisp-etr.log")):
@@ -1275,7 +1275,7 @@ def lisp_landing_page():
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["etr"] == "yes" else "off"
-        output += '''<option value="/lisp/show/log/lisp-etr/100">[{}] ETR 
+        output += '''<option value="/lisp/show/log/lisp-etr/100">[{}] ETR
             log [{}]</option>'''.format(onoff, count)
     #endif
     if (os.path.exists("./logs/lisp-xtr.log")):
@@ -1284,7 +1284,7 @@ def lisp_landing_page():
         count = count.split("logs")[0]
         onoff = "on" if dc["itr"] == "yes" or dc["etr"] == "yes" or \
             dc["rtr"] == "yes" else "off"
-        output += '''<option value="/lisp/show/log/lisp-xtr/100">[{}] XTR 
+        output += '''<option value="/lisp/show/log/lisp-xtr/100">[{}] XTR
            log [{}]</option>'''.format(onoff, count)
     #endif
     if (os.path.exists("./logs/lisp-mr.log")):
@@ -1292,7 +1292,7 @@ def lisp_landing_page():
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["mr"] == "yes" else "off"
-        output += '''<option value="/lisp/show/log/lisp-mr/100">[{}] MR 
+        output += '''<option value="/lisp/show/log/lisp-mr/100">[{}] MR
             log [{}] </option>'''.format(onoff, count)
     #endif
     if (os.path.exists("./logs/lisp-ddt.log")):
@@ -1300,7 +1300,7 @@ def lisp_landing_page():
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["ddt"] == "yes" else "off"
-        output += '''<option value="/lisp/show/log/lisp-ddt/100">[{}] DDT 
+        output += '''<option value="/lisp/show/log/lisp-ddt/100">[{}] DDT
             log [{}]</option>'''.format(onoff, count)
     #endif
     if (os.path.exists("./logs/lisp-ms.log")):
@@ -1308,7 +1308,7 @@ def lisp_landing_page():
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if dc["ms"] == "yes" else "off"
-        output += '''<option value="/lisp/show/log/lisp-ms/100">[{}] MS 
+        output += '''<option value="/lisp/show/log/lisp-ms/100">[{}] MS
             log [{}]</option>'''.format(onoff, count)
     #endif
     flow_logging_on = lisp_is_any_xtr_logging_on("flow-logging")
@@ -1317,7 +1317,7 @@ def lisp_landing_page():
         count = count.replace(" ", "")
         count = count.split("logs")[0]
         onoff = "on" if flow_logging_on else "off"
-        output += '''<option value="/lisp/show/log/lisp-flow/100">[{}] flow 
+        output += '''<option value="/lisp/show/log/lisp-flow/100">[{}] flow
             log [{}]</option>'''.format(onoff, count)
     #endif
     output += "</select></form>"
@@ -1348,7 +1348,7 @@ def lisp_landing_page():
         for process in dc:
             if (lisp.lisp_is_running("lisp-" + process) == False): continue
 
-            if (process in ["itr", "etr", "rtr"]): 
+            if (process in ["itr", "etr", "rtr"]):
                 data_plane_logging = True
                 flow_logging = True
             #endif
@@ -1358,24 +1358,24 @@ def lisp_landing_page():
             if (p == "mr"): p = "map-resolver"
             if (p == "ms"): p = "map-server"
             if (p == "ddt"): p = "ddt-node"
-            
+
             output += '''<option value="/lisp/debug/{}%{}">{} {} logging
-                </option>'''.format(p, "yes" if yesno == "no" else "no", 
-                "enable" if yesno == "no" else "disable", 
+                </option>'''.format(p, "yes" if yesno == "no" else "no",
+                "enable" if yesno == "no" else "disable",
                 process.upper() if process != "core" else "core")
         #endfor
         if (data_plane_logging):
             on = lisp_is_any_xtr_logging_on("data-plane-logging")
-            output += '''<option value="/lisp/debug/data-plane-logging%{}">{} 
+            output += '''<option value="/lisp/debug/data-plane-logging%{}">{}
                 data-plane logging </option>'''.format( \
-                "yes" if on == False else "no", 
+                "yes" if on == False else "no",
                 "enable" if on == False else "disable")
         #endif
         if (flow_logging):
             on = flow_logging_on
-            output += '''<option value="/lisp/debug/flow-logging%{}">{} 
+            output += '''<option value="/lisp/debug/flow-logging%{}">{}
                 flow logging </option>'''.format(
-                "yes" if on == False else "no", 
+                "yes" if on == False else "no",
                 "enable" if on == False else "disable")
         #endif
         output += "</select></form>"
@@ -1448,15 +1448,15 @@ def lisp_landing_page():
 
     ad = lisp.lisp_button("API Documentation", "/lisp/show/api-doc")
     cd = lisp.lisp_button("Command Documentation", "/lisp/show/command-doc")
-    ild = lisp.lisp_button("IETF LISP WG Drafts", 
+    ild = lisp.lisp_button("IETF LISP WG Drafts",
         "http://datatracker.ietf.org/wg/lisp/")
-    lfg = lisp.lisp_button("LISP Facebook Group", 
+    lfg = lisp.lisp_button("LISP Facebook Group",
         "https://www.facebook.com/groups/407716795982512")
-    llg = lisp.lisp_button("LISP LinkedIn Group", 
+    llg = lisp.lisp_button("LISP LinkedIn Group",
         "http://www.linkedin.com/groups/3776183")
 
     s = lisp.lisp_space(2)
-    output += '''     
+    output += '''
         <table><tr>
           <td width="50%" align="center">
           <table border="1">
@@ -1465,7 +1465,7 @@ def lisp_landing_page():
             </td></tr>
           </table>
           </td>
- 
+
           <td width="50%" align="center">
           <table border="1">
             <tr><td align="center"><i><b>Control-Plane</b></i><br>
@@ -1490,7 +1490,7 @@ def lisp_landing_page():
         <font face="Courier New" size="2">
         Run <b><i>rig</i></b> on EID: {}
         to any DDT-node: <input type="text" name="ddt" />
-        follow-all-referrals: <input type="checkbox" name="follow" 
+        follow-all-referrals: <input type="checkbox" name="follow"
         value="yes">
         <input style="background-color:transparent;border-radius:10px;" type="submit" value="Submit" />
         </font></form><br><br>
@@ -1536,7 +1536,7 @@ def lisp_drain_socket(lisp_socket, process):
 
         if (source != process):
             lisp.lprint("Discarding IPC message from {}".format(source))
-        elif (saved_output == None): 
+        elif (saved_output == None):
             saved_output = output
         #endif
     #endwhile
@@ -1588,7 +1588,7 @@ def lisp_process_show_command(lisp_socket, command):
     # If we get a response from the process we are not expecting, drain
     # lisp-core's lisp_ipc_socket.
     #
-    if (source == ""): 
+    if (source == ""):
         lisp.lprint("Command '{}' timed out to {}".format(command, process))
     elif (source != process):
         lisp.lprint("Received response from {} but expecting from {}".format( \
@@ -1620,7 +1620,7 @@ def lisp_start_stop_process(process, startstop):
         lisp.lprint("Cannot manage process '{}', unsupported python version". \
             format(process))
     #endif
-    
+
     if (lisp.lisp_is_ubuntu() or lisp.lisp_is_raspbian() or \
         lisp.lisp_is_debian() or lisp.lisp_is_debian_kali()):
         program = py + filename + " 2>&1 > " + logfile + " &"
@@ -1657,20 +1657,20 @@ def lisp_enable_command(clause):
     #
     # Only process this command if we are not in manual mode. Manual mode
     # means if there is a lisp.py in the current directory, we are in manual
-    # mode (running each LISP component from command line via .py or .pyc 
+    # mode (running each LISP component from command line via .py or .pyc
     # files only.
     #
     if (os.path.exists("lisp.py") and os.path.exists("lisp.pyo") == False):
         lisp.lprint("In manual mode, ignoring 'lisp enable' command")
-        return(clause)            
+        return(clause)
     #endif
 
     command = clause.split(" ")
     command = command[0] + " " + command[1]
-    
+
     kv_pairs  = lisp_core_commands["lisp enable"]
     kv_pairs = kv_pairs[1]
-    
+
     #
     # Do syntax check. kv_pairs change from static values to kw/value pairs
     # from the command line.
@@ -1683,10 +1683,10 @@ def lisp_enable_command(clause):
     if (error == True): return(new_clause)
 
     components = {"itr" : "lisp-itr", "etr" : "lisp-etr", "rtr" : "lisp-rtr",
-        "map-resolver" : "lisp-mr", "map-server" : "lisp-ms", 
+        "map-resolver" : "lisp-mr", "map-server" : "lisp-ms",
         "ddt-node" : "lisp-ddt"}
 
-    # 
+    #
     # Process command.
     #
     for parameter in list(components.keys()):
@@ -1704,10 +1704,10 @@ def lisp_enable_command(clause):
 def lisp_debug_command(lisp_socket, clause, single_process):
     command = clause.split(" ")
     command = command[0] + " " + command[1]
-    
+
     kv_pairs  = lisp_core_commands["lisp debug"]
     kv_pairs = kv_pairs[1]
-    
+
     #
     # Do syntax check. kv_pairs change from static values to kw/value pairs
     # from the command line.
@@ -1720,7 +1720,7 @@ def lisp_debug_command(lisp_socket, clause, single_process):
     if (error == True): return(new_clause)
 
     components = {"itr" : "lisp-itr", "etr" : "lisp-etr", "rtr" : "lisp-rtr",
-        "map-resolver" : "lisp-mr", "map-server" : "lisp-ms", 
+        "map-resolver" : "lisp-mr", "map-server" : "lisp-ms",
         "ddt-node" : "lisp-ddt", "core" : ""}
 
     for component in kv_pairs:
@@ -1766,7 +1766,7 @@ def lisp_replace_password_in_clause(clause, keyword_string):
     end = clause[index::].find("\n")
     end += index
     password = clause[index:end].replace(" ", "")
-    
+
     if (len(password) != 0 and password[0] == "="): return(clause)
 
     #
@@ -1796,10 +1796,10 @@ def lisp_user_account_command(clause):
 
     command = clause.split(" ")
     command = command[0] + " " + command[1]
-    
+
     kv_pairs  = lisp_core_commands["lisp user-account"]
     kv_pairs = kv_pairs[1]
-    
+
     #
     # Do syntax check. kv_pairs change from static values to kw/value pairs
     # from the command line.
@@ -1823,7 +1823,7 @@ def lisp_user_account_command(clause):
 def lisp_rtr_list_command(clause):
     command = clause.split(" ")
     command = command[0] + " " + command[1]
-    
+
     kv_pairs  = lisp_core_commands["lisp rtr-list"]
     kv_pairs = kv_pairs[1]
 
@@ -1884,7 +1884,7 @@ def lisp_process_command_lines(lisp_socket, old, new, line):
     #
     # Found invalid command with curly brackets delimiting it.
     #
-    processes = lisp_commands[command] 
+    processes = lisp_commands[command]
     write_once = False
     for process in processes:
         if (process == ""):
@@ -1899,7 +1899,7 @@ def lisp_process_command_lines(lisp_socket, old, new, line):
             for line in old:
                 if (lisp_begin_clause(line)): count += 1
                 clause += line
-                if (lisp_end_clause(line)): 
+                if (lisp_end_clause(line)):
                     count -= 1
                     if (count == 0): break
                 #endif
@@ -1910,7 +1910,7 @@ def lisp_process_command_lines(lisp_socket, old, new, line):
         # If process is not running, do not do anything with command.
         #
         if (lisp.lisp_is_running(process) == False):
-            if (write_once == False): 
+            if (write_once == False):
                 for line in clause: new.write(line)
                 write_once = True
             #endif
@@ -1920,7 +1920,7 @@ def lisp_process_command_lines(lisp_socket, old, new, line):
         #endif
 
         #
-        # Call local function if command for this process. Otherwise, send 
+        # Call local function if command for this process. Otherwise, send
         # clasue over internal socket. And then wait for a response clause.
         #
         if (process == "lisp-core"):
@@ -1941,8 +1941,8 @@ def lisp_process_command_lines(lisp_socket, old, new, line):
             lisp.lisp_ipc(ipc, lisp_socket, process)
             lisp.lprint("Waiting for response to config command '{}'".format( \
                 command))
-    
-            opcode, source, port, new_clause = lisp.lisp_receive(lisp_socket, 
+
+            opcode, source, port, new_clause = lisp.lisp_receive(lisp_socket,
                 True)
 
             if (source == ""):
@@ -2021,7 +2021,7 @@ def lisp_process_config_file(lisp_socket, file_name, startup):
             continue
         #endif
 
-        if (lisp_end_file(line)): 
+        if (lisp_end_file(line)):
             new.write(line + "\n")
             break
         #endif
@@ -2046,7 +2046,7 @@ def lisp_process_config_file(lisp_socket, file_name, startup):
     #
     # Do a diff and store in lisp.config.diff
     #
-    if (os.path.exists(diff_name) == False): 
+    if (os.path.exists(diff_name) == False):
         os.system("touch {}".format(diff_name))
     #endif
     if (startup == False):
@@ -2054,10 +2054,10 @@ def lisp_process_config_file(lisp_socket, file_name, startup):
     #endif
 
     #
-    # Copy current lisp.config file to backup so when it is changed later, 
-    # we have an old copy that can be diff'ed. 
+    # Copy current lisp.config file to backup so when it is changed later,
+    # we have an old copy that can be diff'ed.
     #
-    os.system("cp {} {}; rm -f {}; cp {} {}".format(new_name, file_name, 
+    os.system("cp {} {}; rm -f {}; cp {} {}".format(new_name, file_name,
         new_name, file_name, backup_name))
     return
 #enddef
@@ -2275,7 +2275,7 @@ def lisp_map_cache_command(kv_pair):
             for i in range(len(rloc_set)):
                 rloc = rloc_set[i]
                 v = value[i]
-                if (v != ""): 
+                if (v != ""):
                     rloc.rle_name = v
                     if (v in lisp.lisp_rle_list):
                         rloc.rle = lisp.lisp_rle_list[v]
@@ -2287,7 +2287,7 @@ def lisp_map_cache_command(kv_pair):
             for i in range(len(rloc_set)):
                 rloc = rloc_set[i]
                 v = value[i]
-                if (v != ""): 
+                if (v != ""):
                     rloc.elp_name = v
                     if (v in lisp.lisp_elp_list):
                         rloc.elp = lisp.lisp_elp_list[v]
@@ -2304,7 +2304,7 @@ def lisp_map_cache_command(kv_pair):
             #endfor
         #endif
 
-        if (kw == "priority"): 
+        if (kw == "priority"):
             for i in range(len(rloc_set)):
                 rloc = rloc_set[i]
                 v = value[i]
@@ -2381,12 +2381,12 @@ def lisp_display_map_cache(mc, output):
 
     if (len(mc.rloc_set) == 0):
         stats = mc.stats.get_stats(True, True)
-        output += lisp_table_row(eid_str, ts + "<br>" + ttl, "--", source, 
+        output += lisp_table_row(eid_str, ts + "<br>" + ttl, "--", source,
             stats, action, "--")
         return([True, output])
     #endif
 
-    for rloc in mc.rloc_set: 
+    for rloc in mc.rloc_set:
         rloc_str = ""
         if (rloc.rloc_exists()):
             if (rloc.rloc.is_null() == False):
@@ -2409,18 +2409,18 @@ def lisp_display_map_cache(mc, output):
         #endif
 
         if (rloc.rloc_name):
-            rloc_str += "rloc-name: {}<br>".format(lisp.blue(rloc.rloc_name, 
+            rloc_str += "rloc-name: {}<br>".format(lisp.blue(rloc.rloc_name,
                 True))
         #endif
 
-        if (rloc.geo): 
+        if (rloc.geo):
             rloc_str += "geo: {}<br>".format(rloc.geo.print_geo_url())
         #endif
-        if (rloc.elp): 
+        if (rloc.elp):
             elp = rloc.elp.print_elp(True)
             rloc_str += "elp: {}<br>".format(elp)
         #endif
-        if (rloc.rle): 
+        if (rloc.rle):
             rle = rloc.rle.print_rle(True, True)
             rloc_str += "rle: {}<br>".format(rle)
         #endif
@@ -2454,7 +2454,7 @@ def lisp_display_map_cache(mc, output):
                 state_change = lisp.lisp_print_elapsed(r.uptime)
             #endif
             s = r.print_state()
-            if (r.unreach_state() or r.no_echoed_nonce_state()): 
+            if (r.unreach_state() or r.no_echoed_nonce_state()):
                 s = lisp.red(s, True)
             #endif
             state += s + " since " + state_change
@@ -2478,18 +2478,18 @@ def lisp_display_map_cache(mc, output):
             if (lisp.lisp_i_am_rtr and rloc.translated_port != 0):
                 port = rloc.translated_port
             #endif
-                
+
             addr_str = rloc.rloc.print_address_no_iid() + ":" + str(port)
             if (addr_str in lisp.lisp_crypto_keys_by_rloc_encap):
                 key = lisp.lisp_crypto_keys_by_rloc_encap[addr_str][1]
-                if (key != None and key.shared_key != None): 
+                if (key != None and key.shared_key != None):
                     action = "encap-crypto-" + key.cipher_suite_string
                 #endif
             #endif
         #endif
 
         output += lisp_table_row(eid_str, ts + "<br>" + ttl, rloc_str, source,
-           stats, state + "<br>" + action, 
+           stats, state + "<br>" + action,
            str(rloc.priority) + "/" +  str(rloc.weight) + "<br>" + \
            str(rloc.mpriority) + "/" +  str(rloc.mweight))
 
@@ -2506,7 +2506,7 @@ def lisp_display_map_cache(mc, output):
 # entries in lisp_mapping.source_cache().
 #
 def lisp_walk_map_cache(mc, output):
-    
+
     #
     # There is only destination state in this map-cache entry.
     #
@@ -2616,7 +2616,7 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
     #
     # Do lookup if there is a parameter supplied.
     #
-    if (parameter != ""): 
+    if (parameter != ""):
         return(lisp_show_map_cache_lookup(parameter))
     #endif
 
@@ -2641,11 +2641,11 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
         s = []
         for i in range(len(lisp_threads)):
             t = lisp_threads[i]
-            s.append("{} Input Stats<br>queue-size: {}".format(t.thread_name, 
+            s.append("{} Input Stats<br>queue-size: {}".format(t.thread_name,
                 t.input_queue.qsize()))
         #endfor
         output += lisp_table_header("LISP-RTR Forwarding Stats:", *s)
-                                               
+
         s = []
         for i in range(len(lisp_threads)):
             t = lisp_threads[i]
@@ -2670,8 +2670,8 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
     title = "LISP-{} Configured Map-Resolvers{}".format(itr_or_rtr, dns_suffix)
     title = lisp.lisp_span(title, hover)
 
-    output += lisp_table_header(title, "Map-Resolver", "Last Used", 
-        "Map-Requests<br>Sent", "Negative Map-Replies<br>Received", 
+    output += lisp_table_header(title, "Map-Resolver", "Last Used",
+        "Map-Requests<br>Sent", "Negative Map-Replies<br>Received",
         "Last Negative<br>Map-Reply", "Average RTT")
 
     for mr in list(lisp.lisp_map_resolvers_list.values()):
@@ -2737,13 +2737,13 @@ def lisp_itr_rtr_show_command(parameter, itr_or_rtr, lisp_threads, dns=False):
     # Put a 'clear cache" button in if superuser. That means that the clear
     # button shows up but the clear can't be done if you are not superuser.
     #
-    title += lisp.lisp_button("clear cache", 
+    title += lisp.lisp_button("clear cache",
         "/lisp/clear/{}/map-cache".format(itr_or_rtr.lower()))
     title += banner
 
 
-    output += lisp_table_header(title,  "EID-Prefix or (S,G)", 
-        "Uptime<br>TTL", "RLOC Record" + keys, "Map-Reply Source", 
+    output += lisp_table_header(title,  "EID-Prefix or (S,G)",
+        "Uptime<br>TTL", "RLOC Record" + keys, "Map-Reply Source",
         "RLOC Send Stats", rloc_state_link + "<br>RLOC Action",
         "Unicast Priority/Weight<br>Multicast Priority/Weight")
 
@@ -2794,7 +2794,7 @@ def lisp_itr_rtr_show_rloc_probe_command(itr_or_rtr):
             eid_str += lisp.lisp_print_cour(ee) + "<br>"
         #endfor
         eid_str = ", EIDs ({}):<br>".format(len(rlocs)) + eid_str
-            
+
         r, e, g = rlocs[0]
 
         #
@@ -2816,7 +2816,7 @@ def lisp_itr_rtr_show_rloc_probe_command(itr_or_rtr):
         state = r.print_state()
         if (r.up_state() == False): state = lisp.red(r.print_state(), True)
         rs = "RLOC " + rs + ", {}".format(state)
-            
+
         col1 = rs + eid_str
 
         #
@@ -2908,7 +2908,7 @@ def lisp_xtr_command(kv_pair):
         #endif
         if (kw == "data-plane-security"):
             lisp.lisp_data_plane_security = (value == "yes")
-            if (value == "no"): 
+            if (value == "no"):
                 lisp.lisp_crypto_keys_by_nonce = {}
                 lisp.lisp_crypto_keys_by_rloc_encap = {}
                 lisp.lisp_crypto_keys_by_rloc_decap = {}
@@ -3027,7 +3027,7 @@ def lisp_show_elp_list(output):
 
 #
 # lisp_geo_command
-# 
+#
 # Process "lisp geo-coordinates" command.
 #
 def lisp_geo_command(kv_pair):
@@ -3059,7 +3059,7 @@ def lisp_geo_command(kv_pair):
 
 #
 # lisp_elp_command
-# 
+#
 # Process "lisp explicit-locator-path" command.
 #
 def lisp_elp_command(kv_pair):
@@ -3081,7 +3081,7 @@ def lisp_elp_command(kv_pair):
             continue
         #endif
 
-        for node in elp_nodes: 
+        for node in elp_nodes:
             index = elp_nodes.index(node)
             if (index >= len(value)): index = len(value) - 1
             v = value[index]
@@ -3107,7 +3107,7 @@ def lisp_elp_command(kv_pair):
 
 #
 # lisp_rle_command
-# 
+#
 # Process "lisp replication-list-entry" command.
 #
 def lisp_rle_command(kv_pair):
@@ -3129,7 +3129,7 @@ def lisp_rle_command(kv_pair):
             continue
         #endif
 
-        for node in rle_nodes: 
+        for node in rle_nodes:
             index = rle_nodes.index(node)
             if (index >= len(value)): index = len(value) - 1
             v = value[index]
@@ -3157,7 +3157,7 @@ def lisp_rle_command(kv_pair):
 
 #
 # lisp_json_command
-# 
+#
 # Process "lisp json" command.
 #
 def lisp_json_command(kv_pair):
@@ -3286,7 +3286,7 @@ def lisp_get_clause_for_api(command):
         # we reach the final "}". Note there can be many "}" since we allow
         # nesting.
         #
-        if (line.find(command + " {") != -1): 
+        if (line.find(command + " {") != -1):
             indent += 1
             capture = True
             continue
@@ -3307,9 +3307,9 @@ def lisp_get_clause_for_api(command):
         # Go find more commands if what was requested was a command that
         # can appear multiple times.
         #
-        if (lisp_end_clause(line)): 
+        if (lisp_end_clause(line)):
             indent -= 1
-            if (indent): 
+            if (indent):
                 clause[command].append(subclause)
                 subclause = {}
                 continue
@@ -3382,7 +3382,7 @@ def lisp_put_clause_for_api(data):
     # Validate command by looking at lisp_commands[].
     #
     command = list(data.keys())[0]
-    if (command not in list(lisp_commands.keys())): 
+    if (command not in list(lisp_commands.keys())):
         return([{ command : [{"?" : "add/replace"}] }])
     #endif
 
@@ -3399,7 +3399,7 @@ def lisp_put_clause_for_api(data):
         append = True
         out = getoutput("egrep '{}' ./lisp.config".format(command))
         out = out.split("\n")
-        for line in out: 
+        for line in out:
             if (line[0:len(command)] == command): append = False
         #endfor
     #endif
@@ -3451,10 +3451,10 @@ def lisp_put_clause_for_api(data):
     #endfor
     clause += "}\n"
 
-    # 
+    #
     # Check if entire command clause is already in lisp.config file.
     #
-    if (lisp_duplicate_command_clause(command, clause)): 
+    if (lisp_duplicate_command_clause(command, clause)):
         return([{ command : [{"!" : "duplicate"}] }])
     #endif
 
@@ -3476,7 +3476,7 @@ def lisp_put_clause_for_api(data):
         #
         # We are inserting or maybe replacing an existing clause.
         #
-        if (found_command == False and lisp_begin_clause(line) and 
+        if (found_command == False and lisp_begin_clause(line) and
             line[0:len(command)] == command):
             if (replace_only_command == False):
                 wf.write(line)
@@ -3488,8 +3488,8 @@ def lisp_put_clause_for_api(data):
         #
         # Exit if we got to end of file.
         #
-        if (lisp_end_file(line)): 
-            if (append): 
+        if (lisp_end_file(line)):
+            if (append):
                 for nline in clause: wf.write(nline)
             #endif
             wf.write(line)
@@ -3504,7 +3504,7 @@ def lisp_put_clause_for_api(data):
 
         #
         # Here we do a replace if the command is a single instance and can
-        # be replaced. 
+        # be replaced.
         #
         if (lisp_begin_clause(line) and line[0:len(command)] == command):
             if (replace_only_command):
@@ -3534,7 +3534,7 @@ def lisp_remove_clause_for_api(data):
     # Validate command by looking at lisp_commands[].
     #
     command = list(data.keys())[0]
-    if (command not in list(lisp_commands.keys())): 
+    if (command not in list(lisp_commands.keys())):
         return([{ command : [{"?" : "delete"}] }])
     #endif
 
@@ -3598,7 +3598,7 @@ def lisp_remove_clause_for_api(data):
             match_line = match_line.replace("\n", "")
             match_line = match_line.replace("=", " = ")
 
-            if (match_line not in subcommands): 
+            if (match_line not in subcommands):
                 found = False
                 if (len(subcommands) > 1): break
                 continue
@@ -3630,7 +3630,7 @@ def lisp_remove_clause_for_api(data):
     found = False
     for line in rf:
         if (line.find(command) != -1): occurence -= 1
-        if (occurence == 0 and not found): 
+        if (occurence == 0 and not found):
             if (line[0] == "}"): found = True
             continue
         #endif
@@ -3683,7 +3683,7 @@ def lisp_unicode_to_ascii(udata):
             lisp_u2a_walk_dict_array(adata, label)
         elif (type(label) == list):
             l_array = []
-            for element in label: 
+            for element in label:
                 ldata = {}
                 lisp_u2a_walk_dict_array(ldata, element)
                 l_array.append(ldata)
@@ -3712,7 +3712,7 @@ def lisp_unicode_to_ascii(udata):
 def lisp_replace_db_list(db):
     index = -1
     for db_list in lisp.lisp_db_list:
-        if (db.match_eid_tuple(db_list)): 
+        if (db.match_eid_tuple(db_list)):
             index = lisp.lisp_db_list.index(db_list)
             break
         #endif
@@ -3759,7 +3759,7 @@ def lisp_map_server_command(kv_pairs):
 
     for kw in list(kv_pairs.keys()):
         value = kv_pairs[kw]
-        if (kw == "ms-name"): 
+        if (kw == "ms-name"):
             ms_name = value[0]
         #endif
         if (kw == "address"):
@@ -3809,12 +3809,12 @@ def lisp_map_server_command(kv_pairs):
     #
     for addr_str in addresses:
         if (addr_str == ""): continue
-        ms = lisp.lisp_ms(addr_str, None, ms_name, alg_id, key_id, password, 
+        ms = lisp.lisp_ms(addr_str, None, ms_name, alg_id, key_id, password,
             proxy_reply, merge, refresh, want, site_id, ekey_id, ekey)
     #endfor
     for name in dns_names:
         if (name == ""): continue
-        ms = lisp.lisp_ms(None, name, ms_name, alg_id, key_id, password, 
+        ms = lisp.lisp_ms(None, name, ms_name, alg_id, key_id, password,
             proxy_reply, merge, refresh, want, site_id, ekey_id, ekey)
     #endfor
     return(ms)
@@ -3822,7 +3822,7 @@ def lisp_map_server_command(kv_pairs):
 
 #
 # lisp_database_mapping_command
-# 
+#
 # This function supports adding additional RLOCs to a database-mapping entry
 # that already exists.
 #
@@ -3924,7 +3924,7 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
                 db.register_ttl = int(value[i])
             #endfor
         #endif
-        if (kw == "priority"): 
+        if (kw == "priority"):
             for i in range(len(rloc_set)):
                 rloc = rloc_set[i]
                 v = value[i]
@@ -3952,10 +3952,10 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
             for i in range(len(rloc_set)):
                 rloc = rloc_set[i]
                 v = value[i]
-                if (v != ""): 
+                if (v != ""):
                     rloc.interface = v
                     addr = lisp.lisp_get_interface_address(v)
-                    if (addr): 
+                    if (addr):
                         rloc.rloc.copy_address(addr)
                         lisp.lisp_myrlocs[0] = addr
                     #endif
@@ -4008,7 +4008,7 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
     # NAT-traversal, we have to overwrite the above convention.
     #
     if (len(nat_interfaces) > 1):
-        for rloc in nat_interfaces: 
+        for rloc in nat_interfaces:
             rloc.rloc_name = hostname + "-" + rloc.interface
         #endfor
     #endif
@@ -4032,7 +4032,7 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
     #
     # Set default instance-ID to be the first database-mapping command in
     # the lisp.config configuration file. This can be overwritten by using
-    # "lisp interface" commands where an instance-ID can be assigned per 
+    # "lisp interface" commands where an instance-ID can be assigned per
     # interface.
     #
     lisp.lisp_default_iid = lisp.lisp_db_list[0].eid.instance_id
@@ -4041,7 +4041,7 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
     # Check to see if we are doing L2-overlays. The presents of an EID-prefix
     # of "0000-0000-0000/0" with "dynamic-eid = yes" means we are.
     #
-    # Check to see if we (the ITR) is acting as a PITR. The presents of an 
+    # Check to see if we (the ITR) is acting as a PITR. The presents of an
     # IPv4 or IPv6 default EID-prefix means we are.
     #
     for db in prefix_set:
@@ -4072,15 +4072,15 @@ def lisp_database_mapping_command(kv_pair, ephem_port=None, replace=True):
         lisp.lprint("No RLOCs found, local addresses changed from RLOC to EID")
     #endif
 
-    # 
-    # If we are programming hardware and a dynamic-EID-prefix has been 
+    #
+    # If we are programming hardware and a dynamic-EID-prefix has been
     # configured, then add a route to the kernel so hardware can uRPF fail
     # to punt the packet for dynamic-EID discovery.
     #
     # An Arista box will need the following CLI interface:
     #
     # int <interface>
-    #   ip verify unicast source reachable-via rx 
+    #   ip verify unicast source reachable-via rx
     #
     #   /proc/sys/net/ipv4/conf/<interface>/rp_filter is 0
     #
@@ -4125,7 +4125,7 @@ def lisp_show_db_list(itr_or_etr, output):
     else:
         output += lisp_table_header(title, "EID-Prefix Record",
             "Uptime", "RLOC Record" + keys, "Unicast<br>Priority/Weight",
-            "Multicast<br>Priority/Weight", "Receive Stats", 
+            "Multicast<br>Priority/Weight", "Receive Stats",
             "Map-Replies<br>Sent", "Use MS")
     #endif
 
@@ -4146,7 +4146,7 @@ def lisp_show_db_list(itr_or_etr, output):
         #endif
 
         first_time = True
-        for rloc in db.rloc_set: 
+        for rloc in db.rloc_set:
             if (first_time):
                 prefix = db.print_eid_tuple()
                 prefix = db.star_secondary_iid(prefix)
@@ -4156,11 +4156,11 @@ def lisp_show_db_list(itr_or_etr, output):
             else:
                 prefix, ts, mrs = ("", "", "")
             #endif
-                
+
             rloc_str = "" if rloc.rloc.is_null() else \
                 rloc.rloc.print_address_no_iid()
 
-            if (rloc.interface != None): 
+            if (rloc.interface != None):
                 rloc_str += " ({})".format(rloc.interface)
             #endif
             if (rloc_str != ""): rloc_str += "<br>"
@@ -4188,13 +4188,13 @@ def lisp_show_db_list(itr_or_etr, output):
 
             if (itr_or_etr == "ITR"):
                 output += lisp_table_row(prefix, ts, rloc_str,
-                    str(rloc.priority) + "/" + str(rloc.weight), 
-                    str(rloc.mpriority) + "/" + str(rloc.mweight), 
+                    str(rloc.priority) + "/" + str(rloc.weight),
+                    str(rloc.mpriority) + "/" + str(rloc.mweight),
                     db.use_mr_name)
             else:
                 stats = rloc.stats.get_stats(True, True)
                 output += lisp_table_row(prefix, ts, rloc_str,
-                    str(rloc.priority) + "/" + str(rloc.weight), 
+                    str(rloc.priority) + "/" + str(rloc.weight),
                     str(rloc.mpriority) + "/" + str(rloc.mweight), stats,
                     mrs, db.use_ms_name)
             #endif
@@ -4207,7 +4207,7 @@ def lisp_show_db_list(itr_or_etr, output):
     #
     if (len(lisp.lisp_geo_list) != 0):
         title = "Configured Geo-Coordinates:"
-        output += lisp_table_header(title, "Geo Name", 
+        output += lisp_table_header(title, "Geo Name",
             "Geo-Prefix or Geo-Point")
         geo_list = sorted(lisp.lisp_geo_list)
         for geo_name in geo_list:
@@ -4266,23 +4266,23 @@ def lisp_interface_command(kv_pair):
     # Add to global data structures.
     #
     interface.interface_name = interface_name
-    if (instance_id != None): 
+    if (instance_id != None):
         if (instance_id.isdigit() == False): instance_id = "0"
         interface.instance_id = int(instance_id)
     else:
         interface.instance_id = 0
     #endif
-    if (dynamic_eid != None): 
+    if (dynamic_eid != None):
         interface.dynamic_eid.store_prefix(dynamic_eid)
         interface.dynamic_eid.instance_id = interface.instance_id
     #endif
-    if (dynamic_eid_device_name != None): 
+    if (dynamic_eid_device_name != None):
         interface.dynamic_eid_device = dynamic_eid_device_name
     #endif
-    if (dyn_eid_timeout != None): 
+    if (dyn_eid_timeout != None):
         interface.dynamic_eid_timeout = int(dyn_eid_timeout)
     #endif
-    if (mt_eid != None): 
+    if (mt_eid != None):
         interface.multi_tenant_eid.store_prefix(mt_eid)
         interface.multi_tenant_eid.instance_id = int(interface.instance_id)
         lisp.lisp_multi_tenant_interfaces.append(interface)
@@ -4301,7 +4301,7 @@ def lisp_interface_command(kv_pair):
             os.system("sudo sysctl net.ipv4.ip_forward=1")
         #endif
     #endif
-    
+
     lisp.lisp_iid_to_interface[instance_id] = interface
 
     #
@@ -4347,7 +4347,7 @@ def lisp_parse_eid_in_url(command, eid_prefix):
     #
     # Check for "[*]".
     #
-    if (eid_prefix == "0--0"): 
+    if (eid_prefix == "0--0"):
         command = command + "%[0]/0%"
     elif (eid_prefix.find("-name-") != -1):
         eid_prefix = eid_prefix.split("-")
@@ -4401,13 +4401,13 @@ def lisp_parse_eid_in_url(command, eid_prefix):
             #endif
         #endif
 
-    else: 
-            
+    else:
+
         #
         # An IPv4 or IPv6 unicast or multicast entry.
         #
         eid_prefix = eid_prefix.split("-")
-        if (eid_prefix[1] == "*"): 
+        if (eid_prefix[1] == "*"):
             eid_str = ""
             group_str = "[" + eid_prefix[2] + "]" + eid_prefix[3] + "/" + \
                 eid_prefix[4]
@@ -4443,7 +4443,7 @@ def lisp_show_dynamic_eid_command(parm):
     eid_str = db.print_eid_tuple()
 
     title = "LISP-{} Discovered Dynamic EIDs for {}:".format(itr, eid_str)
-    
+
     if (itr == "ITR"):
         output = lisp_table_header(title, "Dynamic-EID", "Interface", "Uptime",
             "Last Packet", "Inactivity Timeout")
@@ -4509,7 +4509,7 @@ def lisp_show_decap_stats(output, etr_or_rtr):
 #
 # lisp_show_crypto_list
 #
-# Print out the lisp_crypto_keys_by_rloc_encap array in a readable way for 
+# Print out the lisp_crypto_keys_by_rloc_encap array in a readable way for
 # debugging.
 #
 def lisp_show_crypto_list(xtr):
@@ -4519,7 +4519,7 @@ def lisp_show_crypto_list(xtr):
     if (lisp.lisp_i_am_itr or lisp.lisp_i_am_rtr):
         if (nonce_entries):
             title = "LISP-{} Nonce Crypto State".format(xtr)
-            output += lisp_table_header(title, "Nonce", "Uptime", "Key-ID", 
+            output += lisp_table_header(title, "Nonce", "Uptime", "Key-ID",
                 "Key Material")
             for key in lisp.lisp_crypto_keys_by_nonce:
                 col1 = "0x" + lisp.lisp_hex_string(key)
@@ -4534,9 +4534,9 @@ def lisp_show_crypto_list(xtr):
             #endfor
             output += lisp_table_footer()
         #endif
-    
+
         title = "LISP-{} Encapsulation Crypto State".format(xtr)
-        output += lisp_table_header(title, "RLOC", "Uptime", "Last Rekey", 
+        output += lisp_table_header(title, "RLOC", "Uptime", "Last Rekey",
             "Rekey Count", "Use Count", "Key-ID", "Key Material")
         for key in lisp.lisp_crypto_keys_by_rloc_encap:
             col1 =  key
@@ -4546,7 +4546,7 @@ def lisp_show_crypto_list(xtr):
                 ut = lisp.lisp_print_elapsed(kid.uptime)
                 rt = lisp.lisp_print_elapsed(kid.last_rekey)
                 keys = kid.print_keys(False)
-                output += lisp_table_row(col1, ut, rt, kid.rekey_count, 
+                output += lisp_table_row(col1, ut, rt, kid.rekey_count,
                     kid.use_count, kid.key_id, keys)
                 col1 = ""
             #endfor
@@ -4556,7 +4556,7 @@ def lisp_show_crypto_list(xtr):
 
     if (lisp.lisp_i_am_etr or lisp.lisp_i_am_rtr):
         title = "LISP-{} Decapsulation Crypto State".format(xtr)
-        output += lisp_table_header(title, "RLOC", "Uptime", "Last Rekey", 
+        output += lisp_table_header(title, "RLOC", "Uptime", "Last Rekey",
             "Rekey Count", "Use Count", "Key-ID", "Key Material")
         for key in lisp.lisp_crypto_keys_by_rloc_decap:
             col1 =  key
@@ -4566,7 +4566,7 @@ def lisp_show_crypto_list(xtr):
                 ut = lisp.lisp_print_elapsed(kid.uptime)
                 rt = lisp.lisp_print_elapsed(kid.last_rekey)
                 keys = kid.print_keys(False)
-                output += lisp_table_row(col1, ut, rt, kid.rekey_count, 
+                output += lisp_table_row(col1, ut, rt, kid.rekey_count,
                     kid.use_count, kid.key_id, keys)
                 col1 = ""
             #endfor

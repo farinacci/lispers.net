@@ -1,19 +1,19 @@
 // ---------------------------------------------------------------------------
-//             
+//
 // Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License.    
-// 
+// limitations under the License.
+//
 // ---------------------------------------------------------------------------
 //
 // lisp.go
@@ -23,7 +23,7 @@
 // This is a external data-plane from the lispers.net control-plane perspective
 // and must be run with "lisp xtr-parameters" sub-command "ipc-data-plane =
 // yes".
-// 
+//
 // ---------------------------------------------------------------------------
 
 package main
@@ -173,7 +173,7 @@ func (a *Lisp_address) lisp_is_multicast() bool {
 // Store and instance-ID and byte representation of an IPv4 or IPv6 address
 // and store in Lisp_address format. Note that Lisp_address.address_string
 // is created when it is needed (in Lisp_address.lisp_print_address()).
-// 
+//
 func (a *Lisp_address) lisp_make_address(iid int, addr []byte) {
 	a.instance_id = iid
 	a.address = addr

@@ -6,7 +6,7 @@
 #
 # This client tool will send a Map-Register message to a Map-Server and then
 # exit. It is used to import state from other systems into the LISP mapping
-# system. 
+# system.
 #
 # When the -quic switch is supplied, then the Map-Register is sent as a UDP
 # message over a QUIC connection. Otherwise, the Map-Register is simply
@@ -22,7 +22,7 @@
 #
 # This program runs stand alone and does not depend on any lispers.net code. If
 # you want to lookup mapping entries you can use the lispers.net "lig" client
-# which does depend on lispers.net being installed  on the system. 
+# which does depend on lispers.net being installed  on the system.
 #
 #------------------------------------------------------------------------------
 
@@ -106,7 +106,7 @@ def main():
     #
     s.close()
     return
-#enddef    
+#enddef
 
 # -----------------------------------------------------------------------------
 
@@ -244,11 +244,11 @@ def validate_eid(eid):
     #
     iid = 0
     i = eid.find("["); j = eid.find("]")
-    if (i != -1 and j != -1): 
+    if (i != -1 and j != -1):
         iid = int(eid[i+1:j])
         eid = eid[j+1::]
     #endif
-    
+
     e = eid.split("/")
     ml = int(e[1]) if len(e) == 2 else None
     eid = e[0]
@@ -335,7 +335,7 @@ def validate_rloc(rloc):
 #
 # validate_ms
 #
-# Just do a DNS hostname lookup. 
+# Just do a DNS hostname lookup.
 #
 def validate_ms(ms):
     try:
@@ -351,7 +351,7 @@ def validate_ms(ms):
 # byte_swap_64
 #
 # Byte-swap a 64-bit number.
-# 
+#
 def byte_swap_64(address):
     addr = \
         ((address & 0x00000000000000ff) << 56) | \
@@ -375,10 +375,10 @@ def bold(string):
 #enddef
 def green(string):
     return(bold("\033[92m" + string + "\033[0m"))
-#enddef    
+#enddef
 def red(string):
     return(bold("\033[91m" + string + "\033[0m"))
-#enddef    
+#enddef
 
 #------------------------------------------------------------------------------
 

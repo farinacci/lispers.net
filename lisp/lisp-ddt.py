@@ -1,19 +1,19 @@
 # -----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lisp-ddt.py
@@ -146,7 +146,7 @@ def lisp_ddt_delegation_command(kv_pair):
             #endfor
         #endif
 
-        if (kw == "priority"): 
+        if (kw == "priority"):
             for index in range(len(child_set)):
                 child = child_set[index]
                 v = value[index]
@@ -154,7 +154,7 @@ def lisp_ddt_delegation_command(kv_pair):
                 child.priority = int(v)
             #endfor
         #endif
-        if (kw == "weight"): 
+        if (kw == "weight"):
             for index in range(len(child_set)):
                 child = child_set[index]
                 v = value[index]
@@ -215,8 +215,8 @@ def lisp_ddt_show_delegations_lookup(eid_str):
     #
     ddt_entry = lisp.lisp_ddt_cache_lookup(eid, group, eid_exact)
     if (ddt_entry == None):
-        banner = "DDT entry not found for non-authoritative EID" 
-        output += "{} {}".format(lisp.lisp_print_sans(banner), 
+        banner = "DDT entry not found for non-authoritative EID"
+        output += "{} {}".format(lisp.lisp_print_sans(banner),
             lisp.lisp_print_cour(eid_str))
         return(output + "<br>")
     #endif
@@ -227,7 +227,7 @@ def lisp_ddt_show_delegations_lookup(eid_str):
                 lisp.lisp_ddt_cache)
             neg_prefix = lisp.lisp_print_cour(neg_prefix.print_prefix()),
         else:
-            gneg_prefix = lisp.lisp_ddt_compute_neg_prefix(group, ddt_entry, 
+            gneg_prefix = lisp.lisp_ddt_compute_neg_prefix(group, ddt_entry,
                 lisp.lisp_ddt_cache)
             neg_prefix = lisp.lisp_ddt_compute_neg_prefix(eid, ddt_entry,
                 ddt_entry.source_cache)
@@ -275,9 +275,9 @@ def lisp_ddt_display_ddt_cache(ddt_entry, output):
     for child in ddt_entry.delegation_set:
         addr = child.delegate_address
         pw = str(child.priority) + "/" + str(child.weight)
-        output += lispconfig.lisp_table_row(prefix, 
+        output += lispconfig.lisp_table_row(prefix,
             addr.print_address_no_iid(), child.print_node_type(), pw, mrs)
-        if (prefix != ""): 
+        if (prefix != ""):
             prefix = ""
             mrs = ""
         #endif
@@ -292,11 +292,11 @@ def lisp_ddt_display_ddt_cache(ddt_entry, output):
 # entries in lisp_ddt_entry.source_cache().
 #
 def lisp_ddt_walk_ddt_cache(ddt_entry, output):
-    
+
     #
     # There is only destination state in this map-cache entry.
     #
-    if (ddt_entry.group.is_null()): 
+    if (ddt_entry.group.is_null()):
         return(lisp_ddt_display_ddt_cache(ddt_entry, output))
     #endif
 
@@ -306,7 +306,7 @@ def lisp_ddt_walk_ddt_cache(ddt_entry, output):
     # There is (source, group) state so walk all sources for this group
     # entry.
     #
-    output = ddt_entry.source_cache.walk_cache(lisp_ddt_display_ddt_cache, 
+    output = ddt_entry.source_cache.walk_cache(lisp_ddt_display_ddt_cache,
         output)
     return([True, output])
 #enddef
@@ -321,7 +321,7 @@ def lisp_ddt_show_delegations_command(parameter):
     #
     # Do lookup if there is a parameter supplied.
     #
-    if (parameter != ""): 
+    if (parameter != ""):
         return(lisp_ddt_show_delegations_lookup(parameter))
     #endif
 
@@ -364,7 +364,7 @@ def lisp_ddt_show_delegations_command(parameter):
 def lisp_ddt_startup():
     global lisp_send_sockets
     global lisp_ipc_listen_socket
-    
+
     lisp.lisp_i_am("ddt")
     lisp.lisp_set_exception()
     lisp.lisp_print_banner("DDT-Node starting up")
@@ -405,20 +405,20 @@ def lisp_ddt_shutdown():
 #
 lisp_ddt_commands = {
     "lisp ddt-authoritative-prefix" : [lisp_ddt_auth_prefix_command, {
-        "instance-id" : [False, 0, 0xffffffff, True],  
+        "instance-id" : [False, 0, 0xffffffff, True],
         "eid-prefix" : [False],
         "group-prefix" : [False], }],
 
     "lisp delegation" : [lisp_ddt_delegation_command, {
-        "delegate" : [], 
-        "address" : [True], 
-        "node-type" : [True, "ddt-child", "map-server-child"], 
-        "priority" : [True, 0, 255], 
+        "delegate" : [],
+        "address" : [True],
+        "node-type" : [True, "ddt-child", "map-server-child"],
+        "priority" : [True, 0, 255],
         "weight" : [True, 0, 100],
         "public-key" : [True],
-        "prefix" : [], 
-        "instance-id" : [True, 0, 0xffffffff, True],  
-        "eid-prefix" : [True],  
+        "prefix" : [],
+        "instance-id" : [True, 0, 0xffffffff, True],
+        "eid-prefix" : [True],
         "group-prefix" : [True] }],
 
     "show delegations" : [lisp_ddt_show_delegations_command, { }],
@@ -440,9 +440,9 @@ while (True):
         lisp.lisp_receive(lisp_ipc_listen_socket, True)
     if (source == ""): break
 
-    if (opcode == "command"): 
+    if (opcode == "command"):
         packet = packet.decode()
-        lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode, 
+        lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode,
             packet, "lisp-ddt", [lisp_ddt_commands])
     else:
         lisp.lisp_parse_packet(lisp_send_sockets, packet, source, port)

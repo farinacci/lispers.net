@@ -1,25 +1,25 @@
 #-----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lisp-etr.py
 #
 # This file performs LISP Egress Tunnel Router (ETR) functionality.
-# 
+#
 # -----------------------------------------------------------------------------
 
 from future import standard_library
@@ -95,7 +95,7 @@ def lisp_etr_map_server_command(kv_pair):
     first_ms = (len(lisp.lisp_map_servers_list) == 1)
     if (first_ms):
         ms = list(lisp.lisp_map_servers_list.values())[0]
-        lisp_etr_info_timer = threading.Timer(2, lisp_etr_process_info_timer, 
+        lisp_etr_info_timer = threading.Timer(2, lisp_etr_process_info_timer,
             [ms.map_server])
         lisp_etr_info_timer.start()
     else:
@@ -108,7 +108,7 @@ def lisp_etr_map_server_command(kv_pair):
         # in we do trigger Map-Registers to all map-servers.
         #
         if (lisp.lisp_nat_traversal): return
-        if (ms and len(lisp.lisp_db_list) > 0): 
+        if (ms and len(lisp.lisp_db_list) > 0):
             lisp_build_map_register(lisp_send_sockets, None, None, ms, False)
         #endif
     #endif
@@ -123,9 +123,9 @@ def lisp_etr_map_server_command(kv_pair):
     # Handle case where "lisp database-mapping" comes before "lisp map-server"
     # in configuration file. We have to start periodic timer.
     #
-    if (len(lisp.lisp_db_list) > 0): 
+    if (len(lisp.lisp_db_list) > 0):
         if (lisp_trigger_register_timer != None): return
-        lisp_trigger_register_timer = threading.Timer(5, 
+        lisp_trigger_register_timer = threading.Timer(5,
             lisp_process_register_timer, [lisp_send_sockets])
         lisp_trigger_register_timer.start()
     #endif
@@ -133,7 +133,7 @@ def lisp_etr_map_server_command(kv_pair):
 
 #
 # lisp_etr_database_mapping_command
-# 
+#
 # This function supports adding additional RLOCs to a database-mapping entry
 # that already exists.
 #
@@ -226,10 +226,10 @@ def lisp_etr_show_command(clause):
 
     hover = ("P = proxy-reply requested, M = merge-registrations " + \
         "requested, N = Map-Notify requested")
-    reg_title = lisp.lisp_span("Registration<br>flags", hover) 
+    reg_title = lisp.lisp_span("Registration<br>flags", hover)
 
-    output += lispconfig.lisp_table_header(title, "Address", "Auth-Type", 
-        "xTR-ID", "Site-ID", reg_title, "Map-Registers<br>Sent", 
+    output += lispconfig.lisp_table_header(title, "Address", "Auth-Type",
+        "xTR-ID", "Site-ID", reg_title, "Map-Registers<br>Sent",
         "Map-Notifies<br>Received")
 
     for ms in list(lisp.lisp_map_servers_list.values()):
@@ -247,7 +247,7 @@ def lisp_etr_show_command(clause):
         registers_sent = ms.map_registers_sent + \
             ms.map_registers_multicast_sent
 
-        output += lispconfig.lisp_table_row(addr_str, 
+        output += lispconfig.lisp_table_row(addr_str,
            "sha1" if (ms.alg_id == lisp.LISP_SHA_1_96_ALG_ID) else  "sha2",
             xtr_id, ms.site_id, flags, registers_sent,
             ms.map_notifies_received)
@@ -285,7 +285,7 @@ def lisp_etr_show_command(clause):
     #
     if (len(lisp.lisp_group_mapping_list) != 0):
         title = "Configured Group Mappings:"
-        output += lispconfig.lisp_table_header(title, "Name", "Group Prefix", 
+        output += lispconfig.lisp_table_header(title, "Name", "Group Prefix",
             "Sources", "Use MS")
         for gm in list(lisp.lisp_group_mapping_list.values()):
             sources = ""
@@ -295,7 +295,7 @@ def lisp_etr_show_command(clause):
             else:
                 sources = sources[0:-2]
             #endif
-            output += lispconfig.lisp_table_row(gm.group_name, 
+            output += lispconfig.lisp_table_row(gm.group_name,
                 gm.group_prefix.print_prefix(), sources, gm.use_ms_name)
         #endfor
         output += lispconfig.lisp_table_footer()
@@ -325,22 +325,22 @@ def lisp_group_mapping_command(kv_pairs):
 
     for kw in list(kv_pairs.keys()):
         value = kv_pairs[kw]
-        if (kw == "group-name"): 
+        if (kw == "group-name"):
             group_name = value
         #endif
-        if (kw == "group-prefix"): 
+        if (kw == "group-prefix"):
             if (group_prefix == None):
                 group_prefix = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
             #endif
             group_prefix.store_prefix(value)
         #endif
-        if (kw == "instance-id"): 
+        if (kw == "instance-id"):
             if (group_prefix == None):
                 group_prefix = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
             #endif
             group_prefix.instance_id = int(value)
         #endif
-        if (kw == "ms-name"): 
+        if (kw == "ms-name"):
             ms_name = value[0]
         #endif
         if (kw == "address"):
@@ -406,7 +406,7 @@ def lisp_build_map_register_records(quiet, db, eid, group, ttl):
         eid_record.group.copy_address(group)
 
         eid_records += eid_record.encode()
-        if (not quiet): 
+        if (not quiet):
             prefix_str = lisp.lisp_print_eid_tuple(eid, group)
             decent_index = ""
             if (lisp.lisp_decent_pull_xtr_configured()):
@@ -457,7 +457,7 @@ def lisp_build_map_register_records(quiet, db, eid, group, ttl):
 #
 # lisp_build_map_register
 #
-# From each configured "database-mapping" command, register mappings to 
+# From each configured "database-mapping" command, register mappings to
 # configured map-servers.
 #
 def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
@@ -465,7 +465,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
     #
     # No database-mapping entries.
     #
-    if (eid_only != None): 
+    if (eid_only != None):
         db_list_len = 1
     else:
         db_list_len = lisp.lisp_db_list_length()
@@ -550,7 +550,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         #endif
 
         #
-        # If dynamic-EIDs are discovered, add each of them to EID-records, 
+        # If dynamic-EIDs are discovered, add each of them to EID-records,
         # unless, we are doing a trigger in which case a single dynamic-EID
         # is built into an EID-record.
         #
@@ -568,7 +568,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
                     msl[1] += count
                 #endif
             #endfor
-        else:            
+        else:
             if (eid_only == None):
                 if (ttl != 0): ttl = db.register_ttl
                 eid_records, count = lisp_build_map_register_records(quiet, db,
@@ -598,7 +598,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
 
         ms_dns_name = ms.dns_name if decent else ms.ms_name
         if (ms_dns_name not in ms_list): continue
-        
+
         for msl in ms_list[ms_dns_name]:
 
             #
@@ -616,7 +616,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
             map_register.xtr_id = ms.xtr_id
             map_register.site_id = ms.site_id
             map_register.encrypt_bit = (ms.ekey != None)
-            if (ms.refresh_registrations): 
+            if (ms.refresh_registrations):
                 map_register.map_register_refresh = refresh
             #endif
             if (ms.ekey != None): map_register.encryption_key_id = ms.ekey_id
@@ -624,7 +624,7 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
             map_register.print_map_register()
 
             #
-            # Append EID-records and encode xtr-ID and site-ID at end of 
+            # Append EID-records and encode xtr-ID and site-ID at end of
             # Map-Register.
             #
             trailer = map_register.encode_xtr_id(b"")
@@ -653,9 +653,9 @@ def lisp_build_map_register(lisp_sockets, ttl, eid_only, ms_only, refresh):
         ms.resolve_dns_name()
 
         #
-        # Exit loop if we are triggering a Map-Register to a single 
+        # Exit loop if we are triggering a Map-Register to a single
         # Map-Server.
-        # 
+        #
         if (ms_only != None and ms == ms_only): break
     #endfor
     return
@@ -704,13 +704,13 @@ def lisp_etr_process_info_timer(ms):
         lisp.lprint("Send NAT-Probe to ETR {}".format(etr_str))
         lisp.lisp_send_info_request(sockets, etr, lisp.LISP_DATA_PORT, None)
     #endfor
-    
+
     #
     # Restart periodic timer. For some reason only this timer has to be
     # canceled. Found on while testing NAT-traversal on rasp-pi in Jul 2015.
     #
     lisp_etr_info_timer.cancel()
-    lisp_etr_info_timer = threading.Timer(lisp.LISP_INFO_INTERVAL, 
+    lisp_etr_info_timer = threading.Timer(lisp.LISP_INFO_INTERVAL,
         lisp_etr_process_info_timer, [None])
     lisp_etr_info_timer.start()
     return
@@ -754,7 +754,7 @@ def lisp_process_register_timer(lisp_sockets):
     # Restart periodic timer.
     #
     if (lisp_register_timer): lisp_register_timer.cancel()
-    lisp_register_timer = threading.Timer(LISP_MAP_REGISTER_INTERVAL, 
+    lisp_register_timer = threading.Timer(LISP_MAP_REGISTER_INTERVAL,
         lisp_process_register_timer, [lisp_send_sockets])
     lisp_register_timer.start()
     return
@@ -774,10 +774,10 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     if (length == 0): return
 
     afi = None
-    if (entries[0][1].find(":") != -1): afi = lisp.LISP_AFI_IPV6 
+    if (entries[0][1].find(":") != -1): afi = lisp.LISP_AFI_IPV6
     if (entries[0][1].find(".") != -1): afi = lisp.LISP_AFI_IPV4
     if (entries[0][1].find("-") != -1): afi = lisp.LISP_AFI_MAC
-    if (afi == None): 
+    if (afi == None):
         lisp.lprint("lisp_send_multicast_map_register() invalid group address")
         return
     #endif
@@ -799,7 +799,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
 
     ms_list = {}
     entries = []
-    for group, joinleave in g_entries: 
+    for group, joinleave in g_entries:
         ms_gm = lisp.lisp_lookup_group(group)
         if (ms_gm == None):
             lisp.lprint("No group-mapping for {}, could be underlay group". \
@@ -825,11 +825,11 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
             ms_list[key] = [b"", 0]
         #endif
 
-        if (len(ms_gm.sources) == 0): 
+        if (len(ms_gm.sources) == 0):
             entries.append(["0.0.0.0", group, iid, key, rle, joinleave])
             continue
         #endif
-        for s in ms_gm.sources: 
+        for s in ms_gm.sources:
             ms_list[key] = [b"", 0]
             entries.append([s, group, iid, key, rle, joinleave])
         #endfor
@@ -1002,7 +1002,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
         map_register.print_map_register()
 
         #
-        # Append EID-records and encode xtr-ID and site-ID at end of 
+        # Append EID-records and encode xtr-ID and site-ID at end of
         # Map-Register.
         #
         trailer = map_register.encode_xtr_id(b"")
@@ -1073,7 +1073,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
 
     #
     # First check if we are assembling IPv4 fragments. Do this only when
-    # not doing NAT-traversal. Otherwise, the kernel will do it when we 
+    # not doing NAT-traversal. Otherwise, the kernel will do it when we
     # receive the same packet on a raw socket (in lisp_etr_nat_data_plane()).
     #
     if (struct.unpack("B", packet[0:1])[0] & 0xf0 == 0x40):
@@ -1134,7 +1134,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
     # Packets are arriving on pcap interface. Need to check if another data-
     # plane is running. If so, don't deliver duplicates.
     #
-    if (lisp.lisp_ipc_data_plane): 
+    if (lisp.lisp_ipc_data_plane):
         lisp.dprint("Drop packet, external data-plane active")
         return
     #endif
@@ -1219,7 +1219,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
         packet.inner_dest.print_address())
 
     lisp.dprint("{} packet for EIDs {}: {} ...".format(f_or_b, \
-        lisp.green(addr_str, False), 
+        lisp.green(addr_str, False),
         lisp.lisp_format_packet(packet.packet[0:60])))
 
     #
@@ -1276,10 +1276,10 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     # Store outer source RLOC address so if we are doing lisp-crypto across
     # NAT-traversal, we can find the decryption key.
     #
-    packet.outer_source = lisp.lisp_address(lisp.LISP_AFI_IPV4, source, 
+    packet.outer_source = lisp.lisp_address(lisp.LISP_AFI_IPV4, source,
         lisp.LISP_IPV4_HOST_MASK_LEN, 0)
 
-    status = packet.decode(False, lisp_ipc_listen_socket, 
+    status = packet.decode(False, lisp_ipc_listen_socket,
         lisp.lisp_decap_stats)
     if (status == None): return
 
@@ -1348,7 +1348,7 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     # Packets are arriving on ephemeral socket. Need to check if another data-
     # plane is running. If so, don't deliver duplicates.
     #
-    if (lisp.lisp_ipc_data_plane): 
+    if (lisp.lisp_ipc_data_plane):
         lisp.dprint("Drop packet, external data-plane active")
         return
     #endif
@@ -1395,7 +1395,7 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
         packet.inner_dest.print_address())
 
     lisp.dprint("{} packet for EIDs {}: {} ...".format( \
-        lisp.bold("NAT-Forward", False), lisp.green(addr_str, False), 
+        lisp.bold("NAT-Forward", False), lisp.green(addr_str, False),
             lisp.lisp_format_packet(packet.packet[0:60])))
 
     #
@@ -1431,7 +1431,7 @@ def lisp_register_ipv6_group_entries(group, joinleave):
     if (ms_gm == None): return
 
     sg = []
-    for s in ms_gm.sources: 
+    for s in ms_gm.sources:
         sg.append([s, group, joinleave])
     #endfor
 
@@ -1459,7 +1459,7 @@ def lisp_etr_join_leave_process():
     lisp.lisp_set_exception()
 
     swap = socket.htonl
-    ipigmp = [swap(0x46000020), swap(0x9fe60000), swap(0x0102d7cc), 
+    ipigmp = [swap(0x46000020), swap(0x9fe60000), swap(0x0102d7cc),
               swap(0x0acfc15a), swap(0xe00000fb), swap(0x94040000)]
 
     packet = b""
@@ -1477,7 +1477,7 @@ def lisp_etr_join_leave_process():
             if (lisp.lisp_valid_address_format("address", group) == False):
                 continue
             #endif
-            
+
             ipv6 = (group.find(":") != -1)
 
             #
@@ -1577,7 +1577,7 @@ def lisp_etr_process():
         pcap = pcapy.open_live(device, 1600, 0, 100)
         pcap.setfilter(pfilter)
         while(True):
-            header, packet = pcap.next()     
+            header, packet = pcap.next()
             if (len(packet) == 0): continue
             lisp_etr_data_plane([device, lisp_raw_socket], None, packet)
         #endwhile
@@ -1617,9 +1617,9 @@ def lisp_etr_startup():
 #   mac = ""
 #   for i in range(0, 12, 2): mac += chr(int(m[i:i+2], 16))
 #   lisp_mac_header = mac + mac + "\x86\xdd"
-#   lisp.dprint("Built MAC header for L2 socket:", 
+#   lisp.dprint("Built MAC header for L2 socket:",
 #       lisp.lisp_format_packet(lisp_mac_header))
-    
+
     #
     # Used on for listening for Info-Replies for NAT-traversal support.
     #
@@ -1666,7 +1666,7 @@ def lisp_etr_startup():
 #       #endif
 #   #endif
 
-    # 
+    #
     # Setup tuntap tunnel interface so when we decap IPv6 packets, we can
     # send to kernel to route them.
     #
@@ -1674,7 +1674,7 @@ def lisp_etr_startup():
         lisp_mac_header = b'\x00\x00\x86\xdd'
         device = "lispers.net"
         try:
-            lisp_l2_socket = pytun.TunTapDevice(flags=pytun.IFF_TUN, 
+            lisp_l2_socket = pytun.TunTapDevice(flags=pytun.IFF_TUN,
                 name=device)
             os.system("ip link set dev {} up".format(device))
         except:
@@ -1775,7 +1775,7 @@ def lisp_etr_discover_eid(ipc):
         #endif
         return
     #endif
-   
+
     #
     # Add new entry and register it.
     #
@@ -1810,11 +1810,11 @@ def lisp_etr_discover_eid(ipc):
     if (eid_str in db.dynamic_eids):
         interface = db.dynamic_eids[eid_str].interface
         dereg = lisp.bold("Deregistering", False)
-        lisp.lprint("{} dynamic-EID {}".format(dereg, 
+        lisp.lprint("{} dynamic-EID {}".format(dereg,
             lisp.green(eid_str, False)))
 
         lisp_build_map_register(lisp_send_sockets, 0, eid, None, False)
-                 
+
         db.dynamic_eids.pop(eid_str)
 
         #
@@ -1843,7 +1843,7 @@ def lisp_etr_discover_eid(ipc):
 def lisp_etr_nat_probe(ipc):
     global lisp_etr_nat_probe_list
     global lisp_ephem_socket
-    
+
     ipc = ipc.split("%")
     rloc = ipc[-2]
     rloc_name = ipc[-1]
@@ -1899,7 +1899,7 @@ def lisp_etr_process_rtr_updown(ipc):
 
     lisp.lprint("Process ITR IPC message, RTR {} has gone {}".format(
         lisp.red(rtr_str, False), lisp.bold(status, False)))
-    
+
     rtr = lisp.lisp_rtr_list[rtr_str]
     if (status == "down"):
         lisp.lisp_rtr_list[rtr_str] = None
@@ -1962,7 +1962,7 @@ lisp_etr_commands = {
     "lisp interface" : [lispconfig.lisp_interface_command, {
         "interface-name" : [True],
         "device" : [True],
-        "instance-id" : [True, 0, 0xffffffff], 
+        "instance-id" : [True, 0, 0xffffffff],
         "dynamic-eid" : [True],
         "dynamic-eid-device" : [True],
         "lisp-nat" : [True, "yes", "no"],
@@ -1970,11 +1970,11 @@ lisp_etr_commands = {
 
     "lisp map-server" : [lisp_etr_map_server_command, {
         "ms-name" : [True],
-        "address" : [True], 
-        "dns-name" : [True], 
+        "address" : [True],
+        "dns-name" : [True],
         "authentication-type" : [False, "sha1", "sha2"],
-        "authentication-key" : [False], 
-        "encryption-key" : [False], 
+        "authentication-key" : [False],
+        "encryption-key" : [False],
         "proxy-reply" : [False, "yes", "no"],
         "want-map-notify" : [False, "yes", "no"],
         "merge-registrations" : [False, "yes", "no"],
@@ -1982,40 +1982,40 @@ lisp_etr_commands = {
         "site-id" : [False, 1, 0xffffffffffffffff] }],
 
     "lisp database-mapping" : [lisp_etr_database_mapping_command, {
-        "prefix" : [], 
+        "prefix" : [],
         "mr-name" : [True],
         "ms-name" : [True],
-        "instance-id" : [True, 0, 0xffffffff],  
-        "secondary-instance-id" : [True, 0, 0xffffffff], 
-        "eid-prefix" : [True], 
-        "group-prefix" : [True], 
+        "instance-id" : [True, 0, 0xffffffff],
+        "secondary-instance-id" : [True, 0, 0xffffffff],
+        "eid-prefix" : [True],
+        "group-prefix" : [True],
         "dynamic-eid" : [True, "yes", "no"],
         "signature-eid" : [True, "yes", "no"],
-        "register-ttl" : [True, 1, 0xffffffff], 
-        "rloc" : [], 
+        "register-ttl" : [True, 1, 0xffffffff],
+        "rloc" : [],
         "rloc-record-name" : [True],
         "elp-name" : [True],
         "geo-name" : [True],
         "rle-name" : [True],
         "json-name" : [True],
-        "address" : [True], 
-        "interface" : [True], 
-        "priority" : [True, 0, 255], 
+        "address" : [True],
+        "interface" : [True],
+        "priority" : [True, 0, 255],
         "weight" : [True, 0, 100] }],
 
     "lisp explicit-locator-path" : [lispconfig.lisp_elp_command, {
-        "elp-name" : [False], 
-        "elp-node" : [], 
-        "address" : [True], 
+        "elp-name" : [False],
+        "elp-node" : [],
+        "address" : [True],
         "probe" : [True, "yes", "no"],
         "strict" : [True, "yes", "no"],
-        "eid" : [True, "yes", "no"] }], 
+        "eid" : [True, "yes", "no"] }],
 
     "lisp replication-list-entry" : [lispconfig.lisp_rle_command, {
-        "rle-name" : [False], 
-        "rle-node" : [], 
-        "address" : [True], 
-        "level" : [True, 0, 255] }], 
+        "rle-name" : [False],
+        "rle-node" : [],
+        "address" : [True],
+        "level" : [True, 0, 255] }],
 
     "lisp geo-coordinates" : [lispconfig.lisp_geo_command, {
         "geo-name" : [False],
@@ -2029,7 +2029,7 @@ lisp_etr_commands = {
         "group-name" : [False],
         "ms-name" : [True],
         "group-prefix" : [False],
-        "instance-id" : [True, 0, 0xffffffff],  
+        "instance-id" : [True, 0, 0xffffffff],
         "rle-address" : [False],
         "sources" : [],
         "address" : [True] }],
@@ -2071,11 +2071,11 @@ while (True):
                 lisp.lprint("ETR ignoring RLOC-probe request, using pcap")
                 continue
             #endif
-            send_register = lisp.lisp_parse_packet(lisp_send_sockets, packet, 
+            send_register = lisp.lisp_parse_packet(lisp_send_sockets, packet,
                 source, port)
 
             #
-            # Info-Reply from map-server has new RTR-list, trigger a 
+            # Info-Reply from map-server has new RTR-list, trigger a
             # Map-Register and a Info-Request to the RTR.
             #
             if (send_register):
@@ -2098,7 +2098,7 @@ while (True):
             lisp.lisp_receive(lisp_ipc_listen_socket, True)
         if (source == ""): break
 
-        if (opcode == "command"): 
+        if (opcode == "command"):
             packet = packet.decode()
             if (packet.find("learn%") != -1):
                 lisp_etr_discover_eid(packet)
@@ -2114,7 +2114,7 @@ while (True):
                 packet = packet.split("%")[-1]
                 lisp.lisp_process_data_plane_decap_stats(packet, None)
             else:
-                lispconfig.lisp_process_command(lisp_ipc_listen_socket, 
+                lispconfig.lisp_process_command(lisp_ipc_listen_socket,
                     opcode, packet, "lisp-etr", [lisp_etr_commands])
             #endif
         elif (opcode == "api"):

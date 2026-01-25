@@ -1,19 +1,19 @@
 # -----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lisp-rtr.py
@@ -80,7 +80,7 @@ fb = None
 def lisp_rtr_show_command(parameter):
     global lisp_threads
 
-    return(lispconfig.lisp_itr_rtr_show_command(parameter, "RTR", 
+    return(lispconfig.lisp_itr_rtr_show_command(parameter, "RTR",
         lisp_threads))
 #enddef
 
@@ -107,7 +107,7 @@ def lisp_rtr_show_keys_command(parameter):
 
 #
 # lisp_rtr_database_mapping_command
-# 
+#
 # Add database-mapping entry so RTR can sign Map-Requests.
 #
 def lisp_rtr_database_mapping_command(kv_pair):
@@ -116,7 +116,7 @@ def lisp_rtr_database_mapping_command(kv_pair):
 
 #
 # lisp_rtr_glean_mapping_command
-# 
+#
 # Add a configured glean_mapping to the lisp_glean_mapping array.
 #
 def lisp_rtr_glean_mapping_command(kv_pair):
@@ -304,7 +304,7 @@ def lisp_fix_rloc_encap_state_walk(mc, parms):
 # the supplied port passed to this function.
 #
 def lisp_fix_rloc_encap_state(sockets, hostname, rloc, port):
-    lisp.lisp_map_cache.walk_cache(lisp_fix_rloc_encap_state_walk, 
+    lisp.lisp_map_cache.walk_cache(lisp_fix_rloc_encap_state_walk,
         [sockets, rloc, port, hostname])
     return
 #enddef
@@ -349,7 +349,7 @@ def lisp_fast_lookup_debug(dest, mc):
 #
 def lisp_latency_debug(ts, msg):
     global lisp_rtr_latency_debug
-    
+
     if (lisp_rtr_latency_debug == False): return(None)
 
     #
@@ -362,7 +362,7 @@ def lisp_latency_debug(ts, msg):
     #
     ts = (time.time() - ts) * 1000000
     lisp.lprint("{}-Latency: {} usecs".format(msg, round(ts, 1)), "force")
-    return(None)        
+    return(None)
 #enddef
 
 #
@@ -457,7 +457,7 @@ def lisp_rtr_fast_data_plane(packet):
         if (packet[20:22] == b'\x09\x82'): return(False)
         if (packet[22:24] == b'\x09\x82'): return(False)
     #endif
-    
+
     #
     # Do map-cache lookup.
     #
@@ -500,14 +500,14 @@ def lisp_rtr_fast_data_plane(packet):
         lisp_fast_lookup_debug(dest, mc)
         if (mc == None): return(False)
     #endif
-    
+
     #
     # Determine if new LISP encap is to be prepended or we are forwarding
     # a decapsulated packet.
     #
     if (mc.action != lisp.LISP_NATIVE_FORWARD_ACTION):
         if (mc.best_rloc_set == []): return(False)
-        
+
         dest = mc.best_rloc_set[0]
         if (dest.state != lisp.LISP_RLOC_UP_STATE): return(False)
 
@@ -570,7 +570,7 @@ def lisp_rtr_fast_data_plane(packet):
     #
     mc.last_refresh_time = time.time()
     stats.increment(length)
-    
+
     #
     # Send it.
     #
@@ -579,7 +579,7 @@ def lisp_rtr_fast_data_plane(packet):
 
     lisp_latency_debug(ts, "Fast")
     return(True)
-#endif    
+#endif
 
 #
 # lisp_rtr_data_plane
@@ -588,7 +588,7 @@ def lisp_rtr_fast_data_plane(packet):
 # re-encapsulated it.
 #
 def lisp_rtr_data_plane(lisp_packet, thread_name):
-    global lisp_send_sockets, lisp_ephem_prot, lisp_data_packet 
+    global lisp_send_sockets, lisp_ephem_prot, lisp_data_packet
     global lisp_raw_socket, lisp_raw_v6_socket
     global lisp_trace_listen_socket
     global lisp_rtr_source_rloc
@@ -655,8 +655,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # NAT-traversal reasons.
     #
     # We don't need to send an Info-Reply from the 4341 data port. There is no
-    # information the xTR needs. It has the translated address from the 
-    # map-server, and the NAT is ready for packets from port 4341 since we 
+    # information the xTR needs. It has the translated address from the
+    # map-server, and the NAT is ready for packets from port 4341 since we
     # received this Info-Request.
     #
     if (is_lisp_packet and packet.lisp_header.get_instance_id() == 0xffffff):
@@ -695,7 +695,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     # Packets are arriving on pcap interface. Need to check if another data-
     # plane is running. If so, don't deliver duplicates.
     #
-    if (lisp.lisp_ipc_data_plane): 
+    if (lisp.lisp_ipc_data_plane):
         lisp.dprint("Drop packet, external data-plane active")
         return
     #endif
@@ -775,10 +775,10 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     if (mc): mc.add_recent_source(packet.inner_source)
 
     #
-    # Check if we are doing secondary-instance-ids only when we have a 
+    # Check if we are doing secondary-instance-ids only when we have a
     # map-cache entry in the IID that is possibly a non-LISP site.
     #
-    if (mc and (mc.action == lisp.LISP_NATIVE_FORWARD_ACTION or 
+    if (mc and (mc.action == lisp.LISP_NATIVE_FORWARD_ACTION or
         mc.eid.address == 0)):
         db = lisp.lisp_db_for_lookups.lookup_cache(packet.inner_source, False)
         if (db and db.secondary_iid):
@@ -796,7 +796,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             #endif
         #endif
     #endif
-        
+
     #
     # Map-cache lookup miss. Do not send Map-Request to mapping system if
     # dest-EID is configured to be gleaned. We want to give preference to
@@ -812,7 +812,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         if (lisp.lisp_rate_limit_map_request(packet.inner_dest)): return
 
         pubsub = (mc and mc.action == lisp.LISP_SEND_PUBSUB_ACTION)
-        lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
+        lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port,
             packet.inner_source, packet.inner_dest, None, pubsub)
 
         if (packet.is_trace()):
@@ -831,7 +831,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         if (lisp.lisp_rate_limit_map_request(packet.inner_dest) == False):
             lisp.lprint("Refresh map-cache entry {}".format( \
                 lisp.green(mc.print_eid_tuple(), False)))
-            lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
+            lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port,
                 packet.inner_source, packet.inner_dest, None)
         #endif
     #endif
@@ -871,7 +871,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         #endif
         return
     #endif
-    if (dest_rloc and dest_rloc.is_null()): 
+    if (dest_rloc and dest_rloc.is_null()):
         lisp.dprint("Drop action RLOC found")
 
         if (packet.is_trace()):
@@ -961,7 +961,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         #endfor
     #endif
 
-    # 
+    #
     # Don't need packet structure anymore.
     #
     del(packet)
@@ -973,7 +973,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
 #
 # lisp_rtr_worker_thread
 #
-# This function runs for each thread started. 
+# This function runs for each thread started.
 #
 def lisp_rtr_worker_thread(lisp_thread):
     lisp.lisp_set_exception()
@@ -1148,7 +1148,7 @@ def lisp_encapsulate_igmp_query(lisp_raw_socket, eid, geid, igmp):
             packet.encap_port = rle_node.rloc.translated_port
             break
         #endif
-    #endfor        
+    #endfor
     if (packet.outer_dest.is_null()): return
 
     local_addr = lisp.lisp_myrlocs[0]
@@ -1436,7 +1436,7 @@ def lisp_rtr_startup():
     #endif
 
     #
-    # Start worker threads. If you want to change the number of them, only 
+    # Start worker threads. If you want to change the number of them, only
     # this constant needs changing.
     #
     for i in range(worker_threads):
@@ -1495,9 +1495,9 @@ def lisp_rtr_map_resolver_command(kv_pair):
 
     lispconfig.lisp_map_resolver_command(kv_pair)
 
-    if (lisp.lisp_test_mr_timer == None or 
+    if (lisp.lisp_test_mr_timer == None or
         lisp.lisp_test_mr_timer.is_alive() == False):
-        lisp.lisp_test_mr_timer = threading.Timer(2, lisp.lisp_test_mr, 
+        lisp.lisp_test_mr_timer = threading.Timer(2, lisp.lisp_test_mr,
             [lisp_send_sockets, lisp_ephem_port])
         lisp.lisp_test_mr_timer.start()
     #endif
@@ -1563,7 +1563,7 @@ lisp_rtr_commands = {
     "lisp interface" : [lispconfig.lisp_interface_command, {
         "interface-name" : [True],
         "device" : [True],
-        "instance-id" : [True, 0, 0xffffffff], 
+        "instance-id" : [True, 0, 0xffffffff],
         "dynamic-eid" : [True],
         "dynamic-eid-device" : [True],
         "lisp-nat" : [True, "yes", "no"],
@@ -1576,78 +1576,78 @@ lisp_rtr_commands = {
         "address" : [True] }],
 
     "lisp map-cache" : [lispconfig.lisp_map_cache_command, {
-        "prefix" : [], 
+        "prefix" : [],
         "mr-name" : [True],
         "ms-name" : [True],
-        "instance-id" : [True, 0, 0xffffffff],  
-        "eid-prefix" : [True], 
-        "group-prefix" : [True], 
-        "send-map-request" : [True, "yes", "no"], 
-        "subscribe-request" : [True, "yes", "no"], 
-        "rloc" : [], 
+        "instance-id" : [True, 0, 0xffffffff],
+        "eid-prefix" : [True],
+        "group-prefix" : [True],
+        "send-map-request" : [True, "yes", "no"],
+        "subscribe-request" : [True, "yes", "no"],
+        "rloc" : [],
         "rloc-record-name" : [True],
         "rle-name" : [True],
         "elp-name" : [True],
-        "address" : [True], 
-        "priority" : [True, 0, 255], 
+        "address" : [True],
+        "priority" : [True, 0, 255],
         "weight" : [True, 0, 100] }],
 
     "lisp rtr-map-cache" : [lispconfig.lisp_map_cache_command, {
-        "prefix" : [], 
-        "instance-id" : [True, 0, 0xffffffff],  
-        "eid-prefix" : [True], 
-        "group-prefix" : [True], 
-        "rloc" : [], 
+        "prefix" : [],
+        "instance-id" : [True, 0, 0xffffffff],
+        "eid-prefix" : [True],
+        "group-prefix" : [True],
+        "rloc" : [],
         "rloc-record-name" : [True],
         "rle-name" : [True],
         "elp-name" : [True],
-        "address" : [True], 
-        "priority" : [True, 0, 255], 
+        "address" : [True],
+        "priority" : [True, 0, 255],
         "weight" : [True, 0, 100] }],
 
     "lisp explicit-locator-path" : [lispconfig.lisp_elp_command, {
-        "elp-name" : [False], 
-        "elp-node" : [], 
-        "address" : [True], 
+        "elp-name" : [False],
+        "elp-node" : [],
+        "address" : [True],
         "probe" : [True, "yes", "no"],
         "strict" : [True, "yes", "no"],
-        "eid" : [True, "yes", "no"] }], 
+        "eid" : [True, "yes", "no"] }],
 
     "lisp replication-list-entry" : [lispconfig.lisp_rle_command, {
-        "rle-name" : [False], 
-        "rle-node" : [], 
-        "address" : [True], 
-        "level" : [True, 0, 255] }], 
+        "rle-name" : [False],
+        "rle-node" : [],
+        "address" : [True],
+        "level" : [True, 0, 255] }],
 
     "lisp json" : [lispconfig.lisp_json_command, {
         "json-name" : [False],
         "json-string" : [False] }],
 
     "lisp database-mapping" : [lisp_rtr_database_mapping_command, {
-        "prefix" : [], 
+        "prefix" : [],
         "mr-name" : [True],
         "ms-name" : [True],
-        "instance-id" : [True, 0, 0xffffffff],  
-        "secondary-instance-id" : [True, 0, 0xffffffff], 
-        "eid-prefix" : [True], 
+        "instance-id" : [True, 0, 0xffffffff],
+        "secondary-instance-id" : [True, 0, 0xffffffff],
+        "eid-prefix" : [True],
         "group-prefix" : [True],
         "dynamic-eid" : [True, "yes", "no"],
         "signature-eid" : [True, "yes", "no"],
-        "rloc" : [], 
+        "rloc" : [],
         "rloc-record-name" : [True],
         "elp-name" : [True],
         "geo-name" : [True],
         "rle-name" : [True],
         "json-name" : [True],
-        "address" : [True], 
-        "interface" : [True], 
-        "priority" : [True, 0, 255], 
+        "address" : [True],
+        "interface" : [True],
+        "priority" : [True, 0, 255],
         "weight" : [True, 0, 100] }],
 
     "lisp glean-mapping" : [lisp_rtr_glean_mapping_command, {
-        "instance-id" : [False], 
-        "eid-prefix" : [True], 
-        "group-prefix" : [True], 
+        "instance-id" : [False],
+        "eid-prefix" : [True],
+        "group-prefix" : [True],
         "rloc-prefix" : [True],
         "rloc-probe" : [True, "yes", "no"],
         "igmp-query" : [True, "yes", "no"] }],
@@ -1740,9 +1740,9 @@ while (True):
             lisp.lisp_receive(lisp_ipc_listen_socket, True)
         if (source == ""): break
 
-        if (opcode == "command"): 
+        if (opcode == "command"):
             packet = packet.decode()
-            if (packet == "clear"): 
+            if (packet == "clear"):
                 lisp.lisp_clear_map_cache()
                 continue
             #endif
@@ -1750,7 +1750,7 @@ while (True):
                 lispconfig.lisp_clear_decap_stats(packet)
                 continue
             #endif
-            lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode, 
+            lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode,
                 packet, "lisp-rtr", [lisp_rtr_commands])
         elif (opcode == "api"):
             packet = packet.decode()

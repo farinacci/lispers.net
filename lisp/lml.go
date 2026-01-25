@@ -1,19 +1,19 @@
 // ---------------------------------------------------------------------------
-//             
+//
 // Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License.    
-// 
+// limitations under the License.
+//
 // ---------------------------------------------------------------------------
 //
 // lml.go
@@ -22,7 +22,7 @@
 // It is used by xtr.go for doing map-cache lookups for forwarding. And is
 // used by ipc.go to add and delete map-cache entries when the lispers.net
 // control-plane tells it so.
-// 
+//
 // ---------------------------------------------------------------------------
 
 package main
@@ -108,7 +108,7 @@ func lisp_lml_delete_entry(mc *Lisp_map_cache) {
 //
 func lisp_lml_lookup(dest Lisp_address) *Lisp_map_cache {
 	var start int
-	
+
 	if (dest.lisp_is_ipv4()) {
 		start = 32
 	} else if (dest.lisp_is_ipv6()) {

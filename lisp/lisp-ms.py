@@ -1,19 +1,19 @@
 # -----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lisp-ms.py
@@ -53,7 +53,7 @@ lisp_pubsub_timer = None
 #
 # Inject mode will take value from env variable LISP_MS_INJECT and create
 # n site-eid entries in instance-ID 1300.
-# 
+#
 count = os.getenv("LISP_MS_INJECT")
 lisp_inject_mode_count = 0 if count == None else int(count)
 
@@ -79,7 +79,7 @@ def lisp_site_command(kv_pairs):
             allowed_rloc_set.append(rloc)
         #endfor
     #endif
-    
+
     allowed_eid_set = []
     if (lispconfig.lisp_clause_syntax_error(kv_pairs, "eid-prefix",
         "allowed-prefix")): return
@@ -92,10 +92,10 @@ def lisp_site_command(kv_pairs):
         value = kv_pairs[kw]
         if (kw == "site-name"): site.site_name = value
         if (kw == "description"): site.description = value
-        if (kw == "authentication-key"): 
+        if (kw == "authentication-key"):
             site.auth_key = lisp.lisp_parse_auth_key(value)
         #endif
-        if (kw == "shutdown"): 
+        if (kw == "shutdown"):
             site.shutdown = True if value == "yes" else False
         #endif
 
@@ -103,7 +103,7 @@ def lisp_site_command(kv_pairs):
             for i in range(len(allowed_eid_set)):
                 site_eid = allowed_eid_set[i]
                 v = value[i]
-                if (v == "*"): 
+                if (v == "*"):
                     site_eid.eid.store_iid_range(0, 0)
                 else:
                     if (v == ""): v = "0"
@@ -242,7 +242,7 @@ def lisp_site_command(kv_pairs):
     lisp_sites_by_name[site.site_name] = site
     lisp_sites_by_name_sorted = sorted(lisp_sites_by_name)
 
-    for site_eid in allowed_eid_set: 
+    for site_eid in allowed_eid_set:
         site_eid.add_cache()
         key = site_eid.build_sort_key()
         site.allowed_prefixes[key] = site_eid
@@ -409,11 +409,11 @@ def lisp_ms_eid_crypto_hash_command(kv_pair):
 
     for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
-        if (kw == "instance-id"): 
+        if (kw == "instance-id"):
             if (value == "*"): value = "-1"
             address.instance_id = int(value)
         #endif
-        if (kw == "eid-prefix"): 
+        if (kw == "eid-prefix"):
             address.store_prefix(value)
             if (address.is_ipv6() == False): return
             if ((address.mask_len % 4) != 0): return
@@ -435,10 +435,10 @@ def lisp_ms_eid_crypto_hash_command(kv_pair):
 def lisp_ms_encryption_keys_command(kv_pair):
     for kw in list(kv_pair.keys()):
         value = kv_pair[kw]
-        if (kw == "map-register-key"): 
+        if (kw == "map-register-key"):
             lisp.lisp_ms_encryption_keys = lisp.lisp_parse_auth_key(value)
         #endif
-        if (kw == "json-key"): 
+        if (kw == "json-key"):
             lisp.lisp_ms_json_keys = lisp.lisp_parse_auth_key(value)
         #endif
     #endfor
@@ -453,10 +453,10 @@ def lisp_ms_encryption_keys_command(kv_pair):
 def lisp_ms_show_site_detail_command(eid_key, group_key):
 
     eid = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
-    if (eid_key): 
-        if (eid_key == "[0]/0"): 
+    if (eid_key):
+        if (eid_key == "[0]/0"):
             eid.store_iid_range(0, 0)
-        else: 
+        else:
             eid.store_prefix(eid_key)
         #endif
     #endif
@@ -470,7 +470,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     # Do longest match lookup. We do this so prefix slashes are not in URLs.
     #
     site_eid = lisp.lisp_site_eid_lookup(eid, group, True)
-    if (site_eid == None): 
+    if (site_eid == None):
         output = "Could not find EID {} in site cache".format(eid_str)
         return(output)
     #endif
@@ -490,11 +490,11 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     xi = lisp.lisp_print_cour("0x" + xi)
     fr = lisp.lisp_print_elapsed(site_eid.first_registered)
     lr = lisp.lisp_print_elapsed(site_eid.last_registered)
-    if (time.time() - site_eid.last_registered >= 
+    if (time.time() - site_eid.last_registered >=
         (old_div(site_eid.register_ttl, 2)) and lr != "never"):
         lr = lisp.red(lr, True)
     #endif
-    if (site_eid.last_registerer.afi == lisp.LISP_AFI_NONE): 
+    if (site_eid.last_registerer.afi == lisp.LISP_AFI_NONE):
         reger = "none"
     else:
         reger = site_eid.last_registerer.print_address_no_iid()
@@ -508,7 +508,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     output += '''Site name: {}, EID-prefix: {}, registered: {}{}{}
         <br>'''.format(sn, eid_str, yesno, ams, shutdown)
 
-    output += "{}Description: {}<br>".format(indent4, 
+    output += "{}Description: {}<br>".format(indent4,
         lisp.lisp_print_cour(site_eid.site.description))
     output += "{}Last registerer: {}, xTR-ID: {}, site-ID: {}<br>".format( \
         indent4, reger, xi, si)
@@ -516,11 +516,11 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     flags = site_eid.print_flags(False)
     flags = lisp.lisp_print_cour(flags)
     auth_type = "none"
-    if (site_eid.registered): 
+    if (site_eid.registered):
         auth_type = "sha1" if (site_eid.auth_sha1_or_sha2) else "sha2"
     #endif
     output += ("{}First registered: {}, last registered: {}, auth-type: " + \
-        "{}, registration flags: {}<br>").format(indent4, 
+        "{}, registration flags: {}<br>").format(indent4,
          lisp.lisp_print_cour(fr), lisp.lisp_print_cour(lr),
          lisp.lisp_print_cour(auth_type), flags)
 
@@ -584,7 +584,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     any_rloc = "any" if len(site_eid.site.allowed_rlocs) == 0 else ""
     if (any_rloc != ""): any_rloc = lisp.lisp_print_cour(any_rloc)
     output += "{}Allowed RLOC-set: {}<br>".format(indent4, any_rloc)
-    if (any_rloc == ""):                                      
+    if (any_rloc == ""):
         for rloc in list(site_eid.site.allowed_rlocs.values()):
             a = lisp.lisp_print_cour(rloc.rloc.print_address())
             s = lisp.lisp_print_cour(rloc.print_state())
@@ -603,7 +603,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     none = "none" if len(site_eid.registered_rlocs) == 0 else ""
     if (none != ""): none = lisp.lisp_print_cour(none)
     output += "<br>Registered RLOC-set ({}): {}<br>".format("merge-semantics" \
-        if (site_eid.merge_register_requested) else "replacement-semantics", 
+        if (site_eid.merge_register_requested) else "replacement-semantics",
         none)
     if (none == ""):
         for rloc in site_eid.registered_rlocs:
@@ -638,7 +638,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
     #endif
 
     none = "none" if len(site_eid.individual_registrations) == 0 else ""
-    if (none == "none"): 
+    if (none == "none"):
         none = lisp.lisp_print_cour(none)
     elif (site_eid.inconsistent_registration):
         none = lisp.red("inconsistent registrations", True)
@@ -680,7 +680,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
         fr = lisp.lisp_print_elapsed(site_eid.first_registered)
         fr = lisp.lisp_print_cour(fr)
         lr = lisp.lisp_print_elapsed(site_eid.last_registered)
-        if (time.time() - site_eid.last_registered >= 
+        if (time.time() - site_eid.last_registered >=
             (old_div(site_eid.register_ttl, 2)) and lr != "never"):
             lr = lisp.red(lr, True)
         #endif
@@ -692,7 +692,7 @@ def lisp_ms_show_site_detail_command(eid_key, group_key):
             {}Registerer: {}, xTR-ID: 0x{}, site-id: {}, registered: {}<br>
             {}First registered: {}, last registered: {}, registration TTL: {},
             auth-type: {}, registration flags: {}<br>
-        '''.format(indent4, a, xi, si, yesno, indent4, fr, lr, ttl, auth_type, 
+        '''.format(indent4, a, xi, si, yesno, indent4, fr, lr, ttl, auth_type,
             flags)
 
         none = "none" if len(site_eid.registered_rlocs) == 0 else ""
@@ -745,7 +745,7 @@ def lisp_ms_display_ddt_cache(ddt_entry, output):
 
     if (ddt_entry.is_auth_prefix()):
         output += lispconfig.lisp_table_row(prefix, "--", "auth-prefix", "--",
-            mrs)                                    
+            mrs)
         return([True, output])
     #endif
 
@@ -754,7 +754,7 @@ def lisp_ms_display_ddt_cache(ddt_entry, output):
         pw = str(child.priority) + "/" + str(child.weight)
         output += lispconfig.lisp_table_row(prefix, addr.print_address(),
             child.print_node_type(), pw, mrs)
-        if (prefix != ""): 
+        if (prefix != ""):
             prefix = ""
             mrs = ""
         #endif
@@ -769,11 +769,11 @@ def lisp_ms_display_ddt_cache(ddt_entry, output):
 # entries in lisp_ddt_entry.source_cache().
 #
 def lisp_ms_walk_ddt_cache(ddt_entry, output):
-    
+
     #
     # There is only destination state in this map-cache entry.
     #
-    if (ddt_entry.group.is_null()): 
+    if (ddt_entry.group.is_null()):
         return(lisp_ms_display_ddt_cache(ddt_entry, output))
     #endif
 
@@ -783,7 +783,7 @@ def lisp_ms_walk_ddt_cache(ddt_entry, output):
     # There is (source, group) state so walk all sources for this group
     # entry.
     #
-    output = ddt_entry.source_cache.walk_cache(lisp_ms_display_ddt_cache, 
+    output = ddt_entry.source_cache.walk_cache(lisp_ms_display_ddt_cache,
         output)
     return([True, output])
 #enddef
@@ -799,7 +799,7 @@ def lisp_ms_show_ddt_entries():
     title = lisp.lisp_span("LISP-MS Configured Map-Server Peers & " + \
         "Authoritative Prefixes:", hover)
     output = lispconfig.lisp_table_header(title, "EID-Prefix or (S,G)",
-        "Peer Address", "Delegation Type", "Priority/Weight", 
+        "Peer Address", "Delegation Type", "Priority/Weight",
         "Map-Referrals Sent")
 
     output = lisp.lisp_ddt_cache.walk_cache(lisp_ms_walk_ddt_cache, output)
@@ -853,8 +853,8 @@ def lisp_ms_show_site_lookup(input_str):
     #endif
 
     if (action == lisp.LISP_DDT_ACTION_NOT_AUTH):
-        banner = "Site entry not found for non-authoritative EID" 
-        output += "{} {} {} {}".format(lisp.lisp_print_sans(banner), 
+        banner = "Site entry not found for non-authoritative EID"
+        output += "{} {} {} {}".format(lisp.lisp_print_sans(banner),
             lisp.lisp_print_cour(input_str),
             lisp.lisp_print_sans("<br><br>Computed negative-prefix"),
             neg_prefix)
@@ -900,7 +900,7 @@ def lisp_display_site_eid_entry(site_eid, site, first, output):
     #
     eid = site_eid.eid
     group = site_eid.group
-    if (eid.is_null() and group.is_null() == False): 
+    if (eid.is_null() and group.is_null() == False):
         url = "{}-*-{}".format(group.instance_id, group.print_prefix_url())
         eid_str = "<a href='/lisp/show/site/{}'>{}</a>".format(url, eid_str)
     #endif
@@ -932,7 +932,7 @@ def lisp_display_site_eid_entry(site_eid, site, first, output):
     if (site_eid.registered): flags = site_eid.print_flags(True)
     registerer = "--"
     ttl = "--"
-    if (site_eid.last_registerer.afi != lisp.LISP_AFI_NONE): 
+    if (site_eid.last_registerer.afi != lisp.LISP_AFI_NONE):
         registerer = site_eid.last_registerer.print_address_no_iid()
         ttl = str(datetime.timedelta(seconds=site_eid.register_ttl))
     #endif
@@ -945,9 +945,9 @@ def lisp_display_site_eid_entry(site_eid, site, first, output):
     elif (site_eid.accept_more_specifics):
         registered = "(ams)"
     #endif
-            
+
     lts = lisp.lisp_print_elapsed(site_eid.last_registered)
-    if (time.time() - site_eid.last_registered >= 
+    if (time.time() - site_eid.last_registered >=
         (old_div(site_eid.register_ttl, 2)) and lts != "never"):
         lts = lisp.red(lts, True)
     #endif
@@ -974,7 +974,7 @@ def lisp_ms_show_site_command(parameter):
     #
     # Do detailed display.
     #
-    if (parameter != ""): 
+    if (parameter != ""):
         if (parameter.find("@lookup") != -1):
             parameter = parameter.split("@")
             return(lisp_ms_show_site_lookup(parameter[0]))
@@ -1001,7 +1001,7 @@ def lisp_ms_show_site_command(parameter):
     #
     # First display auth-prefix and map-server-peer configuration, if any.
     #
-    if (lisp.lisp_ddt_cache.cache_count != 0): 
+    if (lisp.lisp_ddt_cache.cache_count != 0):
         output += lisp_ms_show_ddt_entries()
     #endif
 
@@ -1013,8 +1013,8 @@ def lisp_ms_show_site_command(parameter):
         lisp.lisp_sites_by_eid.cache_size(), lisp.lisp_registered_count)
 
     title = lisp.lisp_span("LISP-MS Site Information:", hover)
-    output += lispconfig.lisp_table_header(title, "Site Name", 
-        "EID-Prefix or (S,G)", "Registered", "Last Registerer", 
+    output += lispconfig.lisp_table_header(title, "Site Name",
+        "EID-Prefix or (S,G)", "Registered", "Last Registerer",
         "First Registered", "Last Registered", "TTL", "Registration Flags")
 
     for site_name in lisp_sites_by_name_sorted:
@@ -1025,9 +1025,9 @@ def lisp_ms_show_site_command(parameter):
 
             output = lisp_display_site_eid_entry(site_eid, site, first, output)
             if (first): first = False
-                      
+
             for ms_site_eid in site_eid.more_specific_registrations:
-                output = lisp_display_site_eid_entry(ms_site_eid, site, first, 
+                output = lisp_display_site_eid_entry(ms_site_eid, site, first,
                     output)
             #endfor
         #endfor
@@ -1048,8 +1048,8 @@ def lisp_ms_show_site_command(parameter):
     # Display pubsub cache.
     #
     title = "LISP-MS Subscriber Information:"
-    output += lispconfig.lisp_table_header(title, "EID-prefix", 
-        "Uptime<br>TTL", "Subscriber RLOC", "xTR-ID", "Nonce", 
+    output += lispconfig.lisp_table_header(title, "EID-prefix",
+        "Uptime<br>TTL", "Subscriber RLOC", "xTR-ID", "Nonce",
         "Map-Notifies<br>Sent")
 
     for e in lisp.lisp_pubsub_cache:
@@ -1066,7 +1066,7 @@ def lisp_ms_show_site_command(parameter):
             #endif
             nonce = "0x" + lisp.lisp_hex_string(pubsub.nonce)
             c = pubsub.map_notify_count
-            output += lispconfig.lisp_table_row(eid, ut, rloc_str, xtr_id, 
+            output += lispconfig.lisp_table_row(eid, ut, rloc_str, xtr_id,
                 nonce, c)
             eid = ""
         #endfor
@@ -1079,16 +1079,16 @@ def lisp_ms_show_site_command(parameter):
 # Map-Server commands processed by this process.
 #
 lisp_ms_commands = {
-    "lisp site" : [lisp_site_command, { 
-        "site-name" : [False], 
-        "description" : [False], 
+    "lisp site" : [lisp_site_command, {
+        "site-name" : [False],
+        "description" : [False],
         "shutdown" : [False],
-        "authentication-key" : [False], 
+        "authentication-key" : [False],
         "allowed-prefix" : [],
         "instance-id" : [True, 0, 0xffffffff],
         "eid-prefix" : [True],
-        "group-prefix" : [True], 
-        "policy-name" : [True], 
+        "group-prefix" : [True],
+        "policy-name" : [True],
         "accept-more-specifics" : [True, "yes", "no"],
         "force-proxy-reply" : [True, "yes", "no"],
         "force-nat-proxy-reply" : [True, "yes", "no"],
@@ -1100,27 +1100,27 @@ lisp_ms_commands = {
         "require-signature" : [True, "yes", "no"],
         "encrypt-json" : [True, "yes", "no"],
         "allowed-rloc" : [],
-        "address" : [True], 
-        "priority" : [True, 0, 255], 
+        "address" : [True],
+        "priority" : [True, 0, 255],
         "weight" : [True, 0, 100] }],
 
     "lisp ms-authoritative-prefix" : [lisp_ms_auth_prefix_command, {
-        "instance-id" : [False, 0, 0xffffffff, True],  
+        "instance-id" : [False, 0, 0xffffffff, True],
         "eid-prefix" : [False],
         "group-prefix" : [False]  }],
 
     "lisp map-server-peer" : [lisp_ms_map_server_peer_command, {
-        "peer" : [], 
-        "address" : [True], 
-        "priority" : [True, 0, 255], 
+        "peer" : [],
+        "address" : [True],
+        "priority" : [True, 0, 255],
         "weight" : [True, 0, 100],
-        "prefix" : [], 
-        "instance-id" : [True, 0, 0xffffffff, True],  
-        "eid-prefix" : [True], 
+        "prefix" : [],
+        "instance-id" : [True, 0, 0xffffffff, True],
+        "eid-prefix" : [True],
         "group-prefix" : [True]  }],
 
     "lisp eid-crypto-hash" : [lisp_ms_eid_crypto_hash_command, {
-        "instance-id" : [True, 0, 0xffffffff],  
+        "instance-id" : [True, 0, 0xffffffff],
         "eid-prefix" : [False] }],
 
     "lisp encryption-keys" : [lisp_ms_encryption_keys_command, {
@@ -1132,18 +1132,18 @@ lisp_ms_commands = {
         "geo-tag" : [False] }],
 
     "lisp explicit-locator-path" : [lispconfig.lisp_elp_command, {
-        "elp-name" : [False], 
-        "elp-node" : [], 
-        "address" : [True], 
+        "elp-name" : [False],
+        "elp-node" : [],
+        "address" : [True],
         "probe" : [True, "yes", "no"],
         "strict" : [True, "yes", "no"],
-        "eid" : [True, "yes", "no"] }], 
+        "eid" : [True, "yes", "no"] }],
 
     "lisp replication-list-entry" : [lispconfig.lisp_rle_command, {
-        "rle-name" : [False], 
-        "rle-node" : [], 
-        "address" : [True], 
-        "level" : [True, 0, 255] }], 
+        "rle-name" : [False],
+        "rle-node" : [],
+        "address" : [True],
+        "level" : [True, 0, 255] }],
 
     "lisp json" : [lispconfig.lisp_json_command, {
         "json-name" : [False],
@@ -1162,7 +1162,7 @@ def lisp_timeout_site_eid(site_eid, delete_list):
     now = lisp.lisp_get_timestamp()
 
     if (site_eid.registered == False): return(delete_list)
-    if (site_eid.last_registered + site_eid.register_ttl > now): 
+    if (site_eid.last_registered + site_eid.register_ttl > now):
         return(delete_list)
     #endif
 
@@ -1178,8 +1178,8 @@ def lisp_timeout_site_eid(site_eid, delete_list):
     registerer = site_eid.last_registerer.print_address_no_iid()
 
     lisp.lprint(("Registration timeout for {}EID-prefix {} site '{}' " + \
-        "from {}, was registered for {}, {}-semantics").format(dynamic, 
-        lisp.green(prefix_str, False), site_eid.site.site_name, registerer, 
+        "from {}, was registered for {}, {}-semantics").format(dynamic,
+        lisp.green(prefix_str, False), site_eid.site.site_name, registerer,
         elapsed, m_or_r))
 
     if (delete_list == None): return(None)
@@ -1245,7 +1245,7 @@ def lisp_timeout_sites():
                 rle_list = lisp_timeout_individuals(ms, rle_list)
                 delete_list = lisp_timeout_site_eid(ms, delete_list)
             #endfor
-            for ms in delete_list: 
+            for ms in delete_list:
                 parent.more_specific_registrations.remove(ms)
                 ms.delete_cache()
             #endfor
@@ -1255,14 +1255,14 @@ def lisp_timeout_sites():
     #
     # Send Map-Noitfy to ITRs if any (S,G) RLE has changed.
     #
-    if (len(rle_list) != 0): 
+    if (len(rle_list) != 0):
         lisp.lisp_queue_multicast_map_notify(lisp_send_sockets, rle_list)
     #endif
-    
+
     #
     # Restart periodic timer.
     #
-    lisp_site_timer = threading.Timer(lisp.LISP_SITE_TIMEOUT_CHECK_INTERVAL, 
+    lisp_site_timer = threading.Timer(lisp.LISP_SITE_TIMEOUT_CHECK_INTERVAL,
         lisp_timeout_sites, [])
     lisp_site_timer.start()
     return
@@ -1280,7 +1280,7 @@ def lisp_ms_scale_inject():
     # Only do it once or never.
     #
     if (lisp_inject_mode_count == 0): return
-    
+
     count = lisp_inject_mode_count
     i = lisp.bold("Injecting", False)
     lisp.fprint("{} {} entries into mapping system for scale testing". \
@@ -1303,7 +1303,7 @@ def lisp_ms_scale_inject():
         lisp.fprint("Site must be configured with accept-more-specifics")
         return
     #endif
-    
+
     #
     # Create RLOC-record info.
     #
@@ -1416,7 +1416,7 @@ def lisp_timeout_pubsub():
         # If not more subscriptions for this EID-prefix, remove EID-prefix
         # from parent dictionary array.
         #
-        if (len(lisp.lisp_pubsub_cache[e]) == 0): 
+        if (len(lisp.lisp_pubsub_cache[e]) == 0):
             lisp.lisp_pubsub_cache.pop(e)
         #endif
     #endfor
@@ -1461,7 +1461,7 @@ def lisp_ms_startup():
     #
     # Start site-cache timeout timer.
     #
-    lisp_site_timer = threading.Timer(lisp.LISP_SITE_TIMEOUT_CHECK_INTERVAL, 
+    lisp_site_timer = threading.Timer(lisp.LISP_SITE_TIMEOUT_CHECK_INTERVAL,
         lisp_timeout_sites, [])
     lisp_site_timer.start()
 
@@ -1513,9 +1513,9 @@ while (True):
         lisp.lisp_receive(lisp_ipc_listen_socket, True)
     if (source == ""): break
 
-    if (opcode == "command"): 
+    if (opcode == "command"):
         packet = packet.decode()
-        lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode, 
+        lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode,
             packet, "lisp-ms", [lisp_ms_commands, lisp.lisp_policy_commands])
     elif (opcode == "api"):
         packet = packet.decode()

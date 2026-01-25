@@ -1,25 +1,25 @@
 # -----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lispapi.py
 #
 # This file containse API definitions that users call in their python programs.
-# 
+#
 # When this file is changed, remote file lispapi.html and click the "API
 # Documentation" button on the landing page to build a pydoc lispapi.txt
 # file.
@@ -52,7 +52,7 @@ Here is a program calling sequence:
 >>> att_rtr = att.is_rtr_enabled()
 >>> vz_ms = vz.is_ms_enabled()
 >>>
->>> print "AT&T has RTR:, att_rtr 
+>>> print "AT&T has RTR:, att_rtr
 AT&T has RTR: True
 >>> print "VZ has MS:", vz_ms
 VZ has MS: False
@@ -81,7 +81,7 @@ REQ_TIMEOUT = 3
 #------------------------------------------------------------------------------
 
 class api_init(object):
-    def __init__(self, host, user, pw=None, port=8080, api_debug=False, 
+    def __init__(self, host, user, pw=None, port=8080, api_debug=False,
         do_get=True):
         """ Required to be first call by API user. Returns instance that must
             be stored by caller. If 'pw' is None, then the password will be
@@ -141,7 +141,7 @@ class api_init(object):
         """ Returns "lisp enable" status for system. Returns a dictionary
             array.
         """
-        if (force_query == False and self.enable_status != None): 
+        if (force_query == False and self.enable_status != None):
             return(self.enable_status)
         #endif
         data = self.__get("lisp enable")
@@ -186,13 +186,13 @@ class api_init(object):
 
     def is_mr_enabled(self):
         """ Return True if MR is enabled on system. """
-        return(self.enable_status and 
+        return(self.enable_status and
             self.enable_status["map-resolver"] == "yes")
     #enddef
 
     def is_ms_enabled(self):
         """ Return True if Map-Server is enabled on system. """
-        return(self.enable_status and 
+        return(self.enable_status and
             self.enable_status["map-server"] == "yes")
     #enddef
 
@@ -218,7 +218,7 @@ class api_init(object):
 
     def is_mr_debug_enabled(self):
         """ Return True if Map-Resolver debug looging is enabled on system. """
-        return(self.debug_status and 
+        return(self.debug_status and
             self.debug_status["map-resolver"] == "yes")
     #enddef
 
@@ -470,7 +470,7 @@ class api_init(object):
         """ Configures a user-account command. Returns True if successful. """
         if (self.enable_status == None): return
 
-        data = self.__put("lisp user-account", 
+        data = self.__put("lisp user-account",
             { "username" : username, "password" : password})
         return(self.__error(data) == False)
     #enddef
@@ -505,7 +505,7 @@ class api_init(object):
 
     def enable_xtr_nat_traversal(self):
         """ Enable NAT-traversal functionality on ITR and ETR. Make sure
-            your database-mapping configuration contains an interface 
+            your database-mapping configuration contains an interface
             (versus an address) for an RLOC."""
         if (self.enable_status == None): return
 
@@ -611,7 +611,7 @@ class api_init(object):
             when successful.
         """
         if (address == ""): return("no address supplied")
-        if (self.__check_address_syntax(address) == False): 
+        if (self.__check_address_syntax(address) == False):
             return("bad address syntax")
         #endif
 
@@ -628,7 +628,7 @@ class api_init(object):
             when successful.
         """
         if (address == ""): return("no address supplied")
-        if (self.__check_address_syntax(address) == False): 
+        if (self.__check_address_syntax(address) == False):
             return("bad address syntax")
         #endif
 
@@ -645,18 +645,18 @@ class api_init(object):
             or MAC address prefix string. The third argument is an optional
             group address when an (S,G) entry is being passed where 'prefix'
             is S and 'group" is G. The fourth argument is an array
-            of DDT-node IPv4 or IPv6 address strings. Returns error string or 
+            of DDT-node IPv4 or IPv6 address strings. Returns error string or
             "good" when successful.
         """
         if (prefix == ""): return("no prefix supplied")
         if (referral_set == ""): return("no referral-set supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
-        if (self.__check_address_set_syntax(referral_set, False) == False): 
+        if (self.__check_address_set_syntax(referral_set, False) == False):
             return("bad address syntax in referral-set")
         #endif
 
@@ -672,18 +672,18 @@ class api_init(object):
         if (self.__error(data)): return("put error")
         return("good")
     #enddef
-       
+
     def delete_mr_referral(self, iid="0", prefix="", group=""):
-        """ Deconfigure a referral EID-prefix. The 'prefix' and 'group' 
+        """ Deconfigure a referral EID-prefix. The 'prefix' and 'group'
             arguments are IPv4, IPv6 or MAC address prefix strings. The 'iid'
             argument is the value of an instance-ID in string format.
             Returns error string or "good" when successful.
         """
         if (prefix == ""): return("no prefix supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
 
@@ -696,25 +696,25 @@ class api_init(object):
         return("good")
     #enddef
 
-    def add_ddt_delegation(self, iid="0", prefix="", group="", 
+    def add_ddt_delegation(self, iid="0", prefix="", group="",
         referral_set=[]):
-        """ Configure a LISP-DDT delegation EID-prefix with a referral-set. 
-            First argument is an instance-ID value in string format. the 
-            second argument is an IPv4, IPv6 or MAC address prefix string. 
-            The third argument is an optional group address when an (S,G) 
-            entry is being passed where 'prefix' is S and 'group" is G. 
+        """ Configure a LISP-DDT delegation EID-prefix with a referral-set.
+            First argument is an instance-ID value in string format. the
+            second argument is an IPv4, IPv6 or MAC address prefix string.
+            The third argument is an optional group address when an (S,G)
+            entry is being passed where 'prefix' is S and 'group" is G.
             The fourth argument is an array of child DDT-node IPv4 or IPv6
             address strings. Returns error string or "good" when successful.
         """
         if (prefix == ""): return("no prefix supplied")
         if (referral_set == ""): return("no referral-set supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
-        if (self.__check_address_set_syntax(referral_set, False) == False): 
+        if (self.__check_address_set_syntax(referral_set, False) == False):
             return("bad address syntax in referral-set")
         #endif
 
@@ -725,7 +725,7 @@ class api_init(object):
         for ref in referral_set:
             data.append({"delegate" : {"address" : ref}})
         #endfor
-                                                              
+
         data = self.__put("lisp delegation", data)
 
         if (self.__error(data)): return("put error")
@@ -734,15 +734,15 @@ class api_init(object):
 
     def delete_ddt_delegation(self, iid="0", prefix="", group=""):
         """ Deconfigure a LISP-DDT delegation EID-prefix. The 'prefix'
-            argument is an IPv4, IPv6 or MAC address prefix string. 
-            The second argument is an array of child DDT-node IPv4 or IPv6 
+            argument is an IPv4, IPv6 or MAC address prefix string.
+            The second argument is an array of child DDT-node IPv4 or IPv6
             address strings. Returns error string or "good" when successful.
         """
         if (prefix == ""): return("no prefix supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
 
@@ -757,14 +757,14 @@ class api_init(object):
 
     def add_ddt_auth_prefix(self, iid="0", auth_prefix="", group=""):
         """ Configure a LISP-DDT authoritative-prefix for a DDT-node.
-            The 'auth_prefix' argument is an IPv4, IPv6 or MAC address prefix 
+            The 'auth_prefix' argument is an IPv4, IPv6 or MAC address prefix
             string. Returns error string or "good" when successful.
         """
         if (auth_prefix == ""): return("no prefix supplied")
-        if (self.__check_prefix_syntax(auth_prefix) == False): 
+        if (self.__check_prefix_syntax(auth_prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
 
@@ -780,14 +780,14 @@ class api_init(object):
 
     def delete_ddt_auth_prefix(self, iid="0", auth_prefix="", group=""):
         """ Deconfigure a LISP-DDT authoritative-prefix for a DDT-node.
-            The 'auth_prefix' argument is an IPv4, IPv6 or MAC address prefix 
+            The 'auth_prefix' argument is an IPv4, IPv6 or MAC address prefix
             string. Returns error string or "good" when successful.
         """
         if (auth_prefix == ""): return("no auth-prefix supplied")
-        if (self.__check_prefix_syntax(auth_prefix) == False): 
+        if (self.__check_prefix_syntax(auth_prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
 
@@ -800,30 +800,30 @@ class api_init(object):
         return("good")
     #enddef
 
-    def add_ms_map_server_peer(self, iid="0", prefix="", group="", 
+    def add_ms_map_server_peer(self, iid="0", prefix="", group="",
         peer_set=[]):
         """ Configure a Map-Server peer for a given EID-prefix. This allows
             a Map-Server to return all otther Map-Servers in a Map-Referral
-            message for this given EID-prefix. First argument is an 
-            instance-ID value in string format. the second argument is an 
-            IPv4, IPv6 or MAC address prefix string. The third argument is an 
-            optional group address when an (S,G) entry is being passed where 
+            message for this given EID-prefix. First argument is an
+            instance-ID value in string format. the second argument is an
+            IPv4, IPv6 or MAC address prefix string. The third argument is an
+            optional group address when an (S,G) entry is being passed where
             'prefix' is S and 'group" is G. The fourth argument is an array of
             of all Map-Servers serving this EID-prefix. It should include
             this local Map-Server the API call is to. Each element of the
-            array are address strings. Returns error string or "good" when 
+            array are address strings. Returns error string or "good" when
             successful.
         """
 
         if (prefix == ""): return("no prefix supplied")
         if (peer_set == ""): return("no peer-set supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
-        if (self.__check_address_set_syntax(peer_set, False) == False): 
+        if (self.__check_address_set_syntax(peer_set, False) == False):
             return("bad address syntax in referral-set")
         #endif
 
@@ -834,7 +834,7 @@ class api_init(object):
         for peer in peer_set:
             data.append({"peer" : {"address" : peer}})
         #endfor
-                                                              
+
         data = self.__put("lisp map-server-peer", data)
 
         if (self.__error(data)): return("put error")
@@ -842,16 +842,16 @@ class api_init(object):
     #enddef
 
     def delete_ms_map_server_peer(self, iid="0", prefix="", group=""):
-        """ Deconfigure a Map-Server peer EID-prefix in a Map-Server. The 
-            'prefix' argument is an IPv4, IPv6 or MAC address prefix string. 
-            The second argument is an array of child DDT-node IPv4 or IPv6 
+        """ Deconfigure a Map-Server peer EID-prefix in a Map-Server. The
+            'prefix' argument is an IPv4, IPv6 or MAC address prefix string.
+            The second argument is an array of child DDT-node IPv4 or IPv6
             address strings. Returns error string or "good" when successful.
         """
         if (prefix == ""): return("no prefix supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
 
@@ -887,7 +887,7 @@ class api_init(object):
         return("good")
     #enddef
 
-    def build_ms_site_allowed_prefix(self, prefix_list, iid="0", prefix="", 
+    def build_ms_site_allowed_prefix(self, prefix_list, iid="0", prefix="",
         group="", ams=False, fpr=False, fnpr=False, pprd=False, pra=""):
         """ Add EID-prefix and attributes to a prefix-list array to be supplied
             with site information when calling add_ms_site(). Caller needs to
@@ -896,10 +896,10 @@ class api_init(object):
         """
 
         if (prefix == ""): return("no prefix supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
 
@@ -908,7 +908,7 @@ class api_init(object):
         #
         # The prefix-list is an array of dictionary arrays.
         #
-        data = self.__build_prefix_tuple(iid, prefix, group, 
+        data = self.__build_prefix_tuple(iid, prefix, group,
             kw="allowed-prefix")
         ap = data["allowed-prefix"]
         if (ams): ap["accept-more-specifics"] = "yes"
@@ -934,21 +934,21 @@ class api_init(object):
         return("good")
     #enddef
 
-    def add_etr_database_mapping(self, iid="0", prefix="", group="", 
+    def add_etr_database_mapping(self, iid="0", prefix="", group="",
         rloc_set=[]):
-        """ Add database-mapping for LISP site to ETR. The rloc-set can be an 
+        """ Add database-mapping for LISP site to ETR. The rloc-set can be an
             array of address strings or an array of dictionaries that has been
             created by making successive calls to build_rloc_record().
         """
         if (prefix == ""): return("no prefix supplied")
         if (rloc_set == ""): return("no rloc-set supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
-        if (self.__check_address_set_syntax(rloc_set, True) == False): 
+        if (self.__check_address_set_syntax(rloc_set, True) == False):
             return("bad address syntax in rloc-set")
         #endif
 
@@ -982,10 +982,10 @@ class api_init(object):
     def delete_etr_database_mapping(self, iid="0", prefix="", group=""):
         """ Remove database-mapping for LISP site from ETR."""
         if (prefix == ""): return("no prefix supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
 
@@ -998,7 +998,7 @@ class api_init(object):
         return("good")
     #enddef
 
-    def add_etr_map_server(self, address="", auth_key=None, 
+    def add_etr_map_server(self, address="", auth_key=None,
         address_is_name=False):
         """ Add Map-Server address to ETR at LISP site. If parameter
             address_is_name is set to True then 'address' is a DNS name for
@@ -1007,7 +1007,7 @@ class api_init(object):
         if (address == ""): return("no address supplied")
 
         if (address_is_name == False):
-            if (self.__check_address_syntax(address) == False): 
+            if (self.__check_address_syntax(address) == False):
                 return("bad address syntax")
             #endif
             name_or_addr = "address"
@@ -1019,7 +1019,7 @@ class api_init(object):
 
         if (self.enable_status == None): return
 
-        data = self.__put("lisp map-server", 
+        data = self.__put("lisp map-server",
             { name_or_addr : address, "authentication-type" : "sha2",
               "authentication-key" : auth_key })
 
@@ -1037,7 +1037,7 @@ class api_init(object):
         if (address == ""): return("no address supplied")
 
         if (address_is_name == False):
-            if (self.__check_address_syntax(address) == False): 
+            if (self.__check_address_syntax(address) == False):
                 return("bad address syntax")
             #endif
             name_or_addr = "address"
@@ -1057,7 +1057,7 @@ class api_init(object):
         if (address == ""): return("no address supplied")
 
         if (address_is_name == False):
-            if (self.__check_address_syntax(address) == False): 
+            if (self.__check_address_syntax(address) == False):
                 return("bad address syntax")
             #endif
             name_or_addr = "address"
@@ -1080,7 +1080,7 @@ class api_init(object):
         if (address == ""): return("no address supplied")
 
         if (address_is_name == False):
-            if (self.__check_address_syntax(address) == False): 
+            if (self.__check_address_syntax(address) == False):
                 return("bad address syntax")
             #endif
             name_or_addr = "address"
@@ -1105,7 +1105,7 @@ class api_init(object):
         if (address == ""): return("no address supplied")
 
         if (address_is_name == False):
-            if (self.__check_address_syntax(address) == False): 
+            if (self.__check_address_syntax(address) == False):
                 return("bad address syntax")
             #endif
             name_or_addr = "address"
@@ -1118,14 +1118,14 @@ class api_init(object):
     #enddef
 
     def delete_itr_map_resolver(self, address, address_is_name=False):
-        """ Remove Map-Resolver address from RTR, or ITR at LISP site. If 
-            parameter address_is_name is set to True then 'address' is a DNS 
+        """ Remove Map-Resolver address from RTR, or ITR at LISP site. If
+            parameter address_is_name is set to True then 'address' is a DNS
             name for the Map-Resolver.
         """
         if (address == ""): return("no address supplied")
-        
+
         if (address_is_name == False):
-            if (self.__check_address_syntax(address) == False): 
+            if (self.__check_address_syntax(address) == False):
                 return("bad address syntax")
             #endif
             name_or_addr = "address"
@@ -1140,7 +1140,7 @@ class api_init(object):
         return("good")
     #enddef
 
-    def build_rloc_record(self, rloc_or_int, upriority, uweight, 
+    def build_rloc_record(self, rloc_or_int, upriority, uweight,
         rloc_name=None, mpriority=255, mweight=0, rloc_set=[]):
         """ Build an RLOC record to be passed to add_itr_map_cache() and
             add_etr_database_mapping(). Returns an array of dictionaries.
@@ -1166,13 +1166,13 @@ class api_init(object):
             created by making successive calls to build_rloc_record().
         """
         if (prefix == ""): return("no prefix supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
-        if (self.__check_address_set_syntax(rloc_set, False) == False): 
+        if (self.__check_address_set_syntax(rloc_set, False) == False):
             return("bad address syntax in rloc-set")
         #endif
 
@@ -1197,10 +1197,10 @@ class api_init(object):
     def delete_itr_map_cache(self, iid="0", prefix="", group=""):
         """ Delete map-cache from ITR or RTR."""
         if (prefix == ""): return("no prefix supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
 
@@ -1240,10 +1240,10 @@ class api_init(object):
         """
 
         if (prefix == ""): return("no prefix supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
 
@@ -1273,10 +1273,10 @@ class api_init(object):
         if (self.enable_status == None): return
 
         if (prefix == ""): return("no prefix supplied")
-        if (self.__check_prefix_syntax(prefix) == False): 
+        if (self.__check_prefix_syntax(prefix) == False):
             return("bad prefix syntax")
         #endif
-        if (group != "" and self.__check_prefix_syntax(group) == False): 
+        if (group != "" and self.__check_prefix_syntax(group) == False):
             return("bad group syntax")
         #endif
 
@@ -1285,13 +1285,13 @@ class api_init(object):
         return(data)
     #enddef
 
-    def add_policy(self, policy_name, match_iid="0", match_seid="", 
+    def add_policy(self, policy_name, match_iid="0", match_seid="",
         match_deid="", match_srloc="", match_drloc="", match_rloc_name="" ,
         match_geo="", match_elp="", match_rle="", match_json="",
-        match_datetime_range="", set_action="drop", set_record_ttl="", 
+        match_datetime_range="", set_action="drop", set_record_ttl="",
         set_iid="", set_seid="", set_deid="", set_rloc="",  set_rloc_name="",
         set_geo="", set_elp="", set_rle="", set_json=""):
-        """ Add a LISP policy. All parameters except policy_name are 
+        """ Add a LISP policy. All parameters except policy_name are
             optional.
         """
         if (self.enable_status == None): return
@@ -1319,28 +1319,28 @@ class api_init(object):
             if (self.__check_prefix_syntax(set_seid) == False):
                 return("bad set-source-eid prefix syntax")
             #endif
-            sets["set-source-eid"] = set_seid 
+            sets["set-source-eid"] = set_seid
         #endif
         if (set_deid != "" and set_deid != None):
             if (self.__check_prefix_syntax(set_deid) == False):
                 return("bad set-destination-eid prefix syntax")
             #endif
-            sets["set-destination-eid"] = set_deid 
+            sets["set-destination-eid"] = set_deid
         #endif
         if (set_rloc != "" and set_rloc != None):
             if (self.__check_address_syntax(set_rloc) == False):
                 return("bad set-rloc-address syntax")
             #endif
-            sets["set-rloc-address"] = set_rloc  
+            sets["set-rloc-address"] = set_rloc
         #endif
         if (set_rloc_name != "" and set_rloc_name != None):
-            sets["set-rloc-record-name"] = set_rloc_name 
+            sets["set-rloc-record-name"] = set_rloc_name
         #endif
         if (set_geo != "" and set_geo != None):
-            sets["set-geo-name"] = set_geo 
+            sets["set-geo-name"] = set_geo
         #endif
         if (set_elp != "" and set_elp != None):
-            sets["set-elp-name"] = set_elp 
+            sets["set-elp-name"] = set_elp
         #endif
         if (set_rle != "" and set_rle != None):
             sets["set-rle-name"] = set_rle
@@ -1395,7 +1395,7 @@ class api_init(object):
         if (match_json != "" and match_json != None):
             matches["json-name"] = match_json
         #endif
-        if (match_datetime_range != "" and 
+        if (match_datetime_range != "" and
             match_datetime_range != None):
             matches["datetime-range"] = match_datetime_range
         #endif
@@ -1427,10 +1427,10 @@ class api_init(object):
         url = self.url + command.split(" ")[1]
 
         self.__api_debug("get command: {}".format(command))
-        try: 
+        try:
             r = requests.get(url, auth=(self.user, self.pw), verify=False,
                 timeout=REQ_TIMEOUT)
-        except: 
+        except:
             return(None)
         #endtry
         if (r == None or r.text == None): return(None)
@@ -1439,16 +1439,16 @@ class api_init(object):
 
         return(self.__unicode_to_ascii(command, r.text))
     #enddef
- 
+
     def __get_data(self, command, data):
         url = self.url + "data/" + command.split(" ")[1]
         data = self.__ascii_to_unicode(command, data)
 
         self.__api_debug("get api data: {}".format(data))
-        try: 
-            r = requests.get(url, data=data, auth=(self.user, self.pw), 
+        try:
+            r = requests.get(url, data=data, auth=(self.user, self.pw),
                 verify=False, timeout=REQ_TIMEOUT)
-        except: 
+        except:
             return(None)
         #endtry
         if (r == None or r.text == None): return(None)
@@ -1470,7 +1470,7 @@ class api_init(object):
 
         self.__api_debug("put data: {}".format(data))
         try:
-            r = requests.put(url, data=data, auth=(self.user, self.pw), 
+            r = requests.put(url, data=data, auth=(self.user, self.pw),
                 verify=False, timeout=REQ_TIMEOUT)
         except:
             return(None)
@@ -1485,10 +1485,10 @@ class api_init(object):
     def __delete(self, command, data):
         url = self.url + command.split(" ")[1]
         data = self.__ascii_to_unicode(command, data)
-            
+
         self.__api_debug("delete data: {}".format(data))
         try:
-            r = requests.delete(url, data=data, auth=(self.user, self.pw), 
+            r = requests.delete(url, data=data, auth=(self.user, self.pw),
                 verify=False, timeout=REQ_TIMEOUT)
         except:
             return(None)
@@ -1499,9 +1499,9 @@ class api_init(object):
 
         return(self.__unicode_to_ascii(command, r.text))
     #enddef
-    
+
     def __unicode_to_ascii(self, command, rtext):
-        
+
         #
         # Check for server error. That means the data is in html.
         #
@@ -1532,14 +1532,14 @@ class api_init(object):
     #enddef
 
     def __walk_dict_array(self, udata, u_dict):
-        for key in u_dict: 
+        for key in u_dict:
             value = str(u_dict[key])
 
             #
             # Value field can be another dictionary array. Don't
             # unicode() it or the array will be encoded as a string.
             #
-            if (type(u_dict[key]) == dict): 
+            if (type(u_dict[key]) == dict):
                 vdata = {}
                 value = u_dict[key]
                 for k in value: vdata[str(k)] = str(value[k])
@@ -1547,7 +1547,7 @@ class api_init(object):
             #endif
 
             #
-            # Store 
+            # Store
             #
             udata[str(key)] = value
         #endfor
@@ -1555,7 +1555,7 @@ class api_init(object):
 
     def __ascii_to_unicode(self, command, ascii_data):
         was_dict = (type(ascii_data) == dict)
-        if (was_dict): ascii_data = [ ascii_data ] 
+        if (was_dict): ascii_data = [ ascii_data ]
 
         udata = {}
         u_array = []
@@ -1566,7 +1566,7 @@ class api_init(object):
                 self.__walk_dict_array(udata, label)
             elif (type(label) == list):
                 l_array = []
-                for element in label: 
+                for element in label:
                     ldata = {}
                     self.__walk_dict_array(ldata, element)
                     l_array.append(ldata)
@@ -1611,7 +1611,7 @@ class api_init(object):
 
     def __check_prefix_list(self, prefix_list):
         if (type(prefix_list) != list): return("prefix_list must be an array")
-        if (len(prefix_list) == 0): 
+        if (len(prefix_list) == 0):
             return("prefix_list has no array elements supplied")
         #endif
         if (type(prefix_list[0]) != dict):
@@ -1631,7 +1631,7 @@ class api_init(object):
                 addr_str = addr["address"] if ("address" in addr) else \
                     addr["interface"] if ("interface" in addr) else ""
             #endif
-            if (allow_interfaces and 
+            if (allow_interfaces and
                 addr_str in ["en0", "en1", "eth0", "eth1"]): continue
             if (self.__check_address_syntax(addr_str)): continue
             return(False)

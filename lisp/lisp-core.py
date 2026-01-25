@@ -1,24 +1,24 @@
 # -----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lisp-core.py
 #
-# This is the core process that is used to demux to the specific LISP 
+# This is the core process that is used to demux to the specific LISP
 # functional components. The 4342 listen socket is centralized here.
 #
 #
@@ -31,9 +31,9 @@
 #        |           |    +------------+              |              |
 #        |           |    |            |              |              |
 #        |           |    |            v              v              v 4341
-#  +-------------+  +----------+   +----------+   +----------+   +----------+ 
+#  +-------------+  +----------+   +----------+   +----------+   +----------+
 #  | lisp-[ir]tr |  | lisp-mr  |   | lisp-ddt |   | lisp-ms  |   | lisp-etr |
-#  +-------------+  +----------+   +----------+   +----------+   +----------+ 
+#  +-------------+  +----------+   +----------+   +----------+   +----------+
 #        ^ IPC          ^ IPC          ^ IPC          ^ IPC          ^ IPC
 #        |              |              |              |              |
 #        |              |              |              |              |
@@ -101,22 +101,22 @@ def lisp_api_get(command = "", data_structure=""):
     #
     # Authenticate.
     #
-    if (bottle.request.auth != None): 
+    if (bottle.request.auth != None):
         username, pw = bottle.request.auth
-        if (lispconfig.lisp_find_user_account(username, pw) == False): 
+        if (lispconfig.lisp_find_user_account(username, pw) == False):
             return(json.dumps(data))
         #endif
     else:
         if (bottle.request.headers["User-Agent"].find("python") != -1):
             return(json.dumps(data))
         #endif
-        if (lispconfig.lisp_validate_user() == False): 
+        if (lispconfig.lisp_validate_user() == False):
             return(json.dumps(data))
         #endif
     #endif
 
     #
-    # First check for dynamic data. That is go get data from appropriate 
+    # First check for dynamic data. That is go get data from appropriate
     # process. Return from process in JSON format.
     #
     if (command == "data" and data_structure != ""):
@@ -136,13 +136,13 @@ def lisp_api_get(command = "", data_structure=""):
 
     #
     # A valid user can access data now.
-    #        
+    #
     if (command != ""):
         command = "lisp " + command
     else:
         jdata = bottle.request.body.readline()
         if (type(jdata) == bytes): jdata = jdata.decode()
-        if (jdata == ""): 
+        if (jdata == ""):
             data = [{ "?" : [{"?" : "no-body"}] }]
             return(json.dumps(data))
         #endif
@@ -181,7 +181,7 @@ def lisp_get_api_system():
 #
 # lisp_get_api_data
 #
-# Send IPC message to process that owns the dynamic data strucutre we 
+# Send IPC message to process that owns the dynamic data strucutre we
 # are retrieving via the API. Variable data for the 'map-cache' and
 # 'site-cache' API contains:
 #
@@ -211,10 +211,10 @@ def lisp_get_api_data(data_structure, data):
     ipc = lisp.lisp_api_ipc("lisp-core", data_structure + "%" + data)
 
     if (data_structure in ["map-cache", "map-resolver"]):
-        if (lisp.lisp_is_running("lisp-rtr")): 
+        if (lisp.lisp_is_running("lisp-rtr")):
             lisp.lisp_ipc_lock.acquire()
             lisp.lisp_ipc(ipc, lisp_ipc_socket, "lisp-rtr")
-        elif (lisp.lisp_is_running("lisp-itr")): 
+        elif (lisp.lisp_is_running("lisp-itr")):
             lisp.lisp_ipc_lock.acquire()
             lisp.lisp_ipc(ipc, lisp_ipc_socket, "lisp-itr")
         else:
@@ -222,10 +222,10 @@ def lisp_get_api_data(data_structure, data):
         #endif
     #endif
     if (data_structure in ["map-server", "database-mapping"]):
-        if (lisp.lisp_is_running("lisp-etr")): 
+        if (lisp.lisp_is_running("lisp-etr")):
             lisp.lisp_ipc_lock.acquire()
             lisp.lisp_ipc(ipc, lisp_ipc_socket, "lisp-etr")
-        elif (lisp.lisp_is_running("lisp-itr")): 
+        elif (lisp.lisp_is_running("lisp-itr")):
             lisp.lisp_ipc_lock.acquire()
             lisp.lisp_ipc(ipc, lisp_ipc_socket, "lisp-itr")
         else:
@@ -233,7 +233,7 @@ def lisp_get_api_data(data_structure, data):
         #endif
     #endif
     if (data_structure in ["site-cache", "site-cache-summary"]):
-        if (lisp.lisp_is_running("lisp-ms")): 
+        if (lisp.lisp_is_running("lisp-ms")):
             lisp.lisp_ipc_lock.acquire()
             lisp.lisp_ipc(ipc, lisp_ipc_socket, "lisp-ms")
         else:
@@ -243,7 +243,7 @@ def lisp_get_api_data(data_structure, data):
 
     lisp.lprint("Waiting for api get-data '{}', parmameters: '{}'".format( \
         data_structure, data))
-    
+
     opcode, source, port, output = lisp.lisp_receive(lisp_ipc_socket, True)
     lisp.lisp_ipc_lock.release()
     output = output.decode()
@@ -265,16 +265,16 @@ def lisp_api_put_delete(command = ""):
     #
     # Authenticate.
     #
-    if (bottle.request.auth != None): 
+    if (bottle.request.auth != None):
         username, pw = bottle.request.auth
-        if (lispconfig.lisp_find_user_account(username, pw) == False): 
+        if (lispconfig.lisp_find_user_account(username, pw) == False):
             return(json.dumps(data))
         #endif
     else:
         if (bottle.request.headers["User-Agent"].find("python") != -1):
             return(json.dumps(data))
         #endif
-        if (lispconfig.lisp_validate_user() == False): 
+        if (lispconfig.lisp_validate_user() == False):
             return(json.dumps(data))
         #endif
     #endif
@@ -284,7 +284,7 @@ def lisp_api_put_delete(command = ""):
     # the validated user must be configured as a superuser.
     #
     if (command == "user-account"):
-        if (lispconfig.lisp_is_user_superuser(username) == False): 
+        if (lispconfig.lisp_is_user_superuser(username) == False):
             data = [{ "user-account" : [{"?" : "not-auth"}] }]
             return(json.dumps(data))
         #endif
@@ -292,10 +292,10 @@ def lisp_api_put_delete(command = ""):
 
     #
     # A valid user can access data now.
-    #        
+    #
     jdata = bottle.request.body.readline()
     if (type(jdata) == bytes): jdata = jdata.decode()
-    if (jdata == ""): 
+    if (jdata == ""):
         data = [{ "?" : [{"?" : "no-body"}] }]
         return(json.dumps(data))
     #endif
@@ -327,7 +327,7 @@ def lisp_api_put_delete(command = ""):
 @bottle.route('/lisp/show/api-doc', method="get")
 def lisp_show_api_doc():
     if (os.path.exists("lispapi.py")): os.system("pydoc lispapi > lispapi.txt")
-    if (os.path.exists("lispapi.txt") == False): 
+    if (os.path.exists("lispapi.txt") == False):
         return("lispapi.txt file not found")
     #endif
     return(bottle.static_file("lispapi.txt", root="./"))
@@ -338,7 +338,7 @@ def lisp_show_api_doc():
 #
 @bottle.route('/lisp/show/command-doc', method="get")
 def lisp_show_comamnd_doc():
-    return(bottle.static_file("lisp-config-commands.txt", root="./", 
+    return(bottle.static_file("lisp-config-commands.txt", root="./",
         mimetype="text/plain"))
 #enddef
 
@@ -349,7 +349,7 @@ def lisp_show_comamnd_doc():
 #
 @bottle.route('/lisp/show/lisp-xtr', method="get")
 def lisp_show_lisp_xtr():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -381,7 +381,7 @@ def lisp_show_lisp_xtr():
 #
 @bottle.route('/lisp/show/<xtr>/keys', method="get")
 def lisp_show_keys(xtr):
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
     superuser = lispconfig.lisp_is_user_superuser(None)
@@ -407,7 +407,7 @@ def lisp_show_keys(xtr):
 #
 @bottle.route('/lisp/geo-map/<geo_prefix>')
 def lisp_show_geo_map(geo_prefix):
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -443,7 +443,7 @@ def lisp_core_login_page():
 #
 @bottle.route('/lisp/login', method="post")
 def lisp_core_do_login():
-    if (lispconfig.lisp_validate_user()): 
+    if (lispconfig.lisp_validate_user()):
         return(lispconfig.lisp_landing_page())
     #endif
     return(lisp_core_login_page())
@@ -456,7 +456,7 @@ def lisp_core_do_login():
 #
 @bottle.route('/lisp')
 def lisp_core_landing_page():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
     return(lispconfig.lisp_landing_page())
@@ -469,7 +469,7 @@ def lisp_core_landing_page():
 #
 @bottle.route('/lisp/traceback')
 def lisp_core_traceback_page():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -505,7 +505,7 @@ def lisp_core_traceback_page():
         output = output[0:-4]
     #endif
 
-    if (clean): 
+    if (clean):
         output = "No Tracebacks found - a stable system is a happy system"
     #endif
 
@@ -520,7 +520,7 @@ def lisp_core_traceback_page():
 #
 @bottle.route('/lisp/show/not-supported')
 def lisp_core_not_supported():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
     return(lispconfig.lisp_not_supported())
@@ -533,7 +533,7 @@ def lisp_core_not_supported():
 #
 @bottle.route('/lisp/show/status')
 def lisp_show_status_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -564,7 +564,7 @@ def lisp_show_status_command():
     # machine (on MacOS).
     #
     cpu_count = multiprocessing.cpu_count()
-    
+
     i = sys_uptime.find(", load")
     sys_uptime = sys_uptime[0:i]
     elapsed = lisp.lisp_print_elapsed(lisp.lisp_uptime)
@@ -589,9 +589,9 @@ def lisp_show_status_command():
         top = getoutput("top -l 1 | head -50")
         top = top.split("PID")
         top = top[0]
-    
+
         #
-        # Massage the 'top' output so we can have one line per information 
+        # Massage the 'top' output so we can have one line per information
         # line.
         #
         i = top.find("Load Avg")
@@ -670,8 +670,8 @@ def lisp_show_status_command():
         </tr>
 
         </table>
-        '''.format(main_version, lisp.lisp_version, lisp_build_date, elapsed, 
-            sys_uptime, lisp.lisp_space(1), cpu_count, uname, status, top, 
+        '''.format(main_version, lisp.lisp_version, lisp_build_date, elapsed,
+            sys_uptime, lisp.lisp_space(1), cpu_count, uname, status, top,
             release_notes)
 
     return(lispconfig.lisp_show_wrapper(output))
@@ -684,7 +684,7 @@ def lisp_show_status_command():
 #
 @bottle.route('/lisp/show/conf')
 def lisp_show_conf_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
     return(bottle.static_file("lisp.config", root="./", mimetype="text/plain"))
@@ -697,10 +697,10 @@ def lisp_show_conf_command():
 #
 @bottle.route('/lisp/show/diff')
 def lisp_show_diff_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
-    return(bottle.static_file("lisp.config.diff", root="./", 
+    return(bottle.static_file("lisp.config.diff", root="./",
         mimetype="text/plain"))
 #enddef
 
@@ -711,7 +711,7 @@ def lisp_show_diff_command():
 #
 @bottle.route('/lisp/archive/conf')
 def lisp_archive_conf_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -732,7 +732,7 @@ def lisp_archive_conf_command():
 #
 @bottle.route('/lisp/clear/conf')
 def lisp_clear_conf_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -754,7 +754,7 @@ def lisp_clear_conf_command():
 #
 @bottle.route('/lisp/clear/conf/verify')
 def lisp_clear_conf_verify_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -797,7 +797,7 @@ def lisp_get_port_on_command_line():
 #
 @bottle.route('/lisp/restart')
 def lisp_restart_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -815,7 +815,7 @@ def lisp_restart_command():
     lisp.lprint(lisp.bold("LISP subsystem restart request received", False))
 
     #
-    # Check if we should start the process with 443 (or -8080) as the port 
+    # Check if we should start the process with 443 (or -8080) as the port
     # number for the lisp-core should run on.
     #
     port = lisp_get_port_on_command_line()
@@ -837,7 +837,7 @@ def lisp_restart_command():
 #
 def lisp_restart_lisp(command):
     os.system(command)
-#enddef    
+#enddef
 
 #
 # lisp_restart_verify_command
@@ -846,7 +846,7 @@ def lisp_restart_lisp(command):
 #
 @bottle.route('/lisp/restart/verify')
 def lisp_restart_verify_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -866,7 +866,7 @@ def lisp_restart_verify_command():
 #
 @bottle.route('/lisp/install', method="post")
 def lisp_install_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -908,7 +908,7 @@ def lisp_install_command():
         output = "Install completed for release {}".format(release)
         output = lisp.lisp_print_sans(output)
 
-        output += "<br><br>" + lisp.lisp_button("restart LISP subsystem", 
+        output += "<br><br>" + lisp.lisp_button("restart LISP subsystem",
             "/lisp/restart/verify") + "<br>"
     else:
         string = lisp.lisp_print_cour(image)
@@ -929,7 +929,7 @@ def lisp_install_command():
 #
 @bottle.route('/lisp/install/image')
 def lisp_install_get_image():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -952,7 +952,7 @@ def lisp_install_get_image():
 #
 @bottle.route('/lisp/log/flows')
 def lisp_log_flows_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -972,11 +972,11 @@ def lisp_log_flows_command():
 #
 @bottle.route('/lisp/search/log/<name>/<num>/<keyword>')
 def lisp_search_log_command(name = "", num = "", keyword = ""):
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
-    command = "tail -n {} logs/{}.log | egrep -B10 -A10 {}".format(num, name, 
+    command = "tail -n {} logs/{}.log | egrep -B10 -A10 {}".format(num, name,
         keyword)
     output = getoutput(command)
 
@@ -1009,7 +1009,7 @@ def lisp_search_log_command(name = "", num = "", keyword = ""):
 #
 @bottle.post('/lisp/search/log/<name>/<num>')
 def lisp_search_log_command_input(name = "", num=""):
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1024,10 +1024,10 @@ def lisp_search_log_command_input(name = "", num=""):
 #
 @bottle.route('/lisp/show/log/<name>/<num>')
 def lisp_show_log_name_command(name = "", num=""):
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
-    
+
     #
     # Deafult to print out last 100 lines and convert to html bold.
     #
@@ -1062,7 +1062,7 @@ def lisp_show_log_name_command(name = "", num=""):
 #
 @bottle.route('/lisp/debug/<name>')
 def lisp_debug_menu_command(name = ""):
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1086,7 +1086,7 @@ def lisp_debug_menu_command(name = ""):
             new = []
             for entry in data[0]["lisp xtr-parameters"]:
                 key = list(entry.keys())[0]
-                if (key in ["data-plane-logging", "flow-logging"]): 
+                if (key in ["data-plane-logging", "flow-logging"]):
                     new.append({ key : "no" })
                 else:
                     new.append({ key : entry[key] })
@@ -1138,7 +1138,7 @@ def lisp_debug_menu_command(name = ""):
 def lisp_clear_command(name = "", itr_name = '', rtr_name = "", etr_name = "",
     stats_name = ""):
 
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1151,25 +1151,25 @@ def lisp_clear_command(name = "", itr_name = '', rtr_name = "", etr_name = "",
     #endif
 
     ipc = "clear"
-    if (name == "referral"): 
+    if (name == "referral"):
         process = "lisp-mr"
         print_name = "Referral"
-    elif (itr_name == "map-cache"): 
+    elif (itr_name == "map-cache"):
         process = "lisp-itr"
         print_name = "ITR <a href='/lisp/show/itr/map-cache'>map-cache</a>"
-    elif (rtr_name == "map-cache"): 
+    elif (rtr_name == "map-cache"):
         process = "lisp-rtr"
         print_name = "RTR <a href='/lisp/show/rtr/map-cache'>map-cache</a>"
-    elif (etr_name == "stats"): 
+    elif (etr_name == "stats"):
         process = "lisp-etr"
         print_name = ("ETR '{}' decapsulation <a href='/lisp/show/" + \
             "database'>stats</a>").format(stats_name)
-        ipc += "%" + stats_name 
-    elif (rtr_name == "stats"): 
+        ipc += "%" + stats_name
+    elif (rtr_name == "stats"):
         process = "lisp-rtr"
         print_name = ("RTR '{}' decapsulation <a href='/lisp/show/" + \
             "rtr/map-cache'>stats</a>").format(stats_name)
-        ipc += "%" + stats_name 
+        ipc += "%" + stats_name
     else:
         output =  lisp.lisp_print_sans("Invalid command")
         return(lispconfig.lisp_show_wrapper(output))
@@ -1200,11 +1200,11 @@ def lisp_clear_command(name = "", itr_name = '', rtr_name = "", etr_name = "",
 #
 @bottle.route('/lisp/show/map-server')
 def lisp_show_map_server_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
-    return(lispconfig.lisp_process_show_command(lisp_ipc_socket, 
+    return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
         "show map-server"))
 #enddef
 
@@ -1215,7 +1215,7 @@ def lisp_show_map_server_command():
 #
 @bottle.route('/lisp/show/database')
 def lisp_show_database_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
@@ -1229,7 +1229,7 @@ def lisp_show_database_command():
 #
 @bottle.route('/lisp/show/itr/map-cache')
 def lisp_show_itr_map_cache_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
@@ -1243,7 +1243,7 @@ def lisp_show_itr_map_cache_command():
 #
 @bottle.route('/lisp/show/itr/rloc-probing')
 def lisp_show_itr_rloc_probing_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
@@ -1254,10 +1254,10 @@ def lisp_show_itr_rloc_probing_command():
 # lisp_show_itr_map_cache_lookup
 #
 # Execute longest match lookup and return results.
-# 
+#
 @bottle.post('/lisp/show/itr/map-cache/lookup')
 def lisp_show_itr_map_cache_lookup():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1281,7 +1281,7 @@ def lisp_show_itr_map_cache_lookup():
 @bottle.route('/lisp/show/rtr/map-cache')
 @bottle.route('/lisp/show/rtr/map-cache/<dns>')
 def lisp_show_rtr_map_cache_command(dns = ""):
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1301,7 +1301,7 @@ def lisp_show_rtr_map_cache_command(dns = ""):
 #
 @bottle.route('/lisp/show/rtr/rloc-probing')
 def lisp_show_rtr_rloc_probing_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
@@ -1312,10 +1312,10 @@ def lisp_show_rtr_rloc_probing_command():
 # lisp_show_rtr_map_cache_lookup
 #
 # Execute longest match lookup and return results.
-# 
+#
 @bottle.post('/lisp/show/rtr/map-cache/lookup')
 def lisp_show_rtr_map_cache_lookup():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1338,7 +1338,7 @@ def lisp_show_rtr_map_cache_lookup():
 #
 @bottle.route('/lisp/show/referral')
 def lisp_show_referral_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
@@ -1349,10 +1349,10 @@ def lisp_show_referral_command():
 # lisp_show_referral_cache_lookup
 #
 # Execute longest match lookup and return results.
-# 
+#
 @bottle.post('/lisp/show/referral/lookup')
 def lisp_show_referral_cache_lookup():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1374,7 +1374,7 @@ def lisp_show_referral_cache_lookup():
 #
 @bottle.route('/lisp/show/delegations')
 def lisp_show_delegations_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket,
@@ -1385,10 +1385,10 @@ def lisp_show_delegations_command():
 # lisp_show_delegations_lookup
 #
 # Execute longest match lookup and return results.
-# 
+#
 @bottle.post('/lisp/show/delegations/lookup')
 def lisp_show_delegations_lookup():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1407,13 +1407,13 @@ def lisp_show_delegations_lookup():
 # lisp_show_site_command
 #
 # Have the lisp-ms process show the site registration information. Convert
-# eid-prefix from format "<iid>-<eid>-<ml>" to "[<iid>]<eid>/<ml>" internal 
+# eid-prefix from format "<iid>-<eid>-<ml>" to "[<iid>]<eid>/<ml>" internal
 # format. We need to do this because URLs should avoid square brackets.
 #
 @bottle.route('/lisp/show/site')
 @bottle.route('/lisp/show/site/<eid_prefix>')
 def lisp_show_site_command(eid_prefix = ""):
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1432,7 +1432,7 @@ def lisp_show_site_command(eid_prefix = ""):
 #
 @bottle.route('/lisp/show/itr/dynamic-eid/<eid_prefix>')
 def lisp_show_itr_dyn_eid_command(eid_prefix = ""):
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1451,7 +1451,7 @@ def lisp_show_itr_dyn_eid_command(eid_prefix = ""):
 #
 @bottle.route('/lisp/show/etr/dynamic-eid/<eid_prefix>')
 def lisp_show_dyn_eid_command(eid_prefix = ""):
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1467,10 +1467,10 @@ def lisp_show_dyn_eid_command(eid_prefix = ""):
 # lisp_show_site_lookup
 #
 # Execute longest match lookup and return results.
-# 
+#
 @bottle.post('/lisp/show/site/lookup')
 def lisp_show_site_lookup():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1481,7 +1481,7 @@ def lisp_show_site_lookup():
         return(lispconfig.lisp_show_wrapper(output))
     #endif
 
-    command = "show site" + "%" + eid_str + "@lookup" 
+    command = "show site" + "%" + eid_str + "@lookup"
     return(lispconfig.lisp_process_show_command(lisp_ipc_socket, command))
 #enddef
 
@@ -1492,7 +1492,7 @@ def lisp_show_site_lookup():
 #
 @bottle.post('/lisp/lig')
 def lisp_lig_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1522,7 +1522,7 @@ def lisp_lig_command():
     #
     # Something went wrong with the install.
     #
-    if (lig == ""): 
+    if (lig == ""):
         output = "Cannot find lisp-lig.py or lisp-lig.pyo"
         return(lispconfig.lisp_show_wrapper(lisp.lisp_print_cour(output)))
     #endif
@@ -1555,7 +1555,7 @@ def lisp_lig_command():
 #
 @bottle.post('/lisp/rig')
 def lisp_rig_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1585,7 +1585,7 @@ def lisp_rig_command():
     #
     # Something went wrong with the install.
     #
-    if (rig == ""): 
+    if (rig == ""):
         output = "Cannot find lisp-rig.py or lisp-rig.pyo"
         return(lispconfig.lisp_show_wrapper(lisp.lisp_print_cour(output)))
     #endif
@@ -1637,7 +1637,7 @@ def lisp_run_geo_lig(eid1, eid2):
     addr = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
     geos = []
     for eid in [eid1, eid2]:
-        
+
         #
         # Don't do lookups for Geo-Coordinates. Only for EIDs that are not
         # in Geo-Coordinate format.
@@ -1675,7 +1675,7 @@ def lisp_run_geo_lig(eid1, eid2):
 #
 @bottle.post('/lisp/geo')
 def lisp_geo_command():
-    if (lispconfig.lisp_validate_user() == False): 
+    if (lispconfig.lisp_validate_user() == False):
         return(lisp_core_login_page())
     #endif
 
@@ -1684,7 +1684,7 @@ def lisp_geo_command():
     output = ""
 
     #
-    # If an EID in the form of an IP address or distinguish-name, run a 
+    # If an EID in the form of an IP address or distinguish-name, run a
     # lig to get record from mapping database to obtain the geo data.
     #
     gs = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
@@ -1701,7 +1701,7 @@ def lisp_geo_command():
             output = "Could not parse geo-point format"
         #endif
     elif (point == None):
-        output = "EID {} lookup could not find geo-point".format( 
+        output = "EID {} lookup could not find geo-point".format(
             lisp.bold(eid, True))
     elif (geo_point.parse_geo_string(point) == False):
         output = "Could not parse geo-point format returned from lookup"
@@ -1743,7 +1743,7 @@ def lisp_geo_command():
         distance = round(geo_prefix.get_distance(geo_point), 2)
         inside = "inside" if geo_prefix.point_in_circle(geo_point) else \
             "outside"
-    
+
         spo = lisp.space(2)
         spe = lisp.space(1)
         sd = lisp.space(3)
@@ -1768,7 +1768,7 @@ def lisp_get_info_source(addr_str, port, nonce):
     if (addr_str != None):
         for info_source in list(lisp.lisp_info_sources_by_address.values()):
             info_source_str = info_source.address.print_address_no_iid()
-            if (info_source_str == addr_str and info_source.port == port): 
+            if (info_source_str == addr_str and info_source.port == port):
                 return(info_source)
             #endif
         #endfor
@@ -1805,7 +1805,7 @@ def lisp_nat_proxy_map_request(lisp_sockets, info_source, packet):
         lisp.lprint("Could not decode control header")
         return(True)
     #endif
-    if (header.type != lisp.LISP_MAP_REQUEST): 
+    if (header.type != lisp.LISP_MAP_REQUEST):
         lisp.lprint("Received ECM without Map-Request inside")
         return(True)
     #endif
@@ -1824,8 +1824,8 @@ def lisp_nat_proxy_map_request(lisp_sockets, info_source, packet):
     map_request.print_map_request()
 
     lisp.lprint("Process {} from info-source {}, port {}, nonce 0x{}". \
-        format(lisp.bold("nat-proxy Map-Request", False), 
-        lisp.red(addr_str, False), info_source.port, 
+        format(lisp.bold("nat-proxy Map-Request", False),
+        lisp.red(addr_str, False), info_source.port,
         lisp.lisp_hex_string(nonce)))
 
     #
@@ -1859,9 +1859,9 @@ def lisp_nat_proxy_map_request(lisp_sockets, info_source, packet):
 
     packet = map_request.encode(None, 0)
     map_request.print_map_request()
-    
+
     deid = map_request.target_eid
-    if (deid.is_ipv6()): 
+    if (deid.is_ipv6()):
         myself_v6 = lisp.lisp_myrlocs[1]
         if (myself_v6 != None): myself = myself_v6
     #endif
@@ -1870,7 +1870,7 @@ def lisp_nat_proxy_map_request(lisp_sockets, info_source, packet):
     # Send ECM based Map-Request to Map-Resolver.
     #
     ms = lisp.lisp_is_running("lisp-ms")
-    lisp.lisp_send_ecm(lisp_sockets, packet, deid, lisp.LISP_CTRL_PORT, 
+    lisp.lisp_send_ecm(lisp_sockets, packet, deid, lisp.LISP_CTRL_PORT,
         deid, myself, to_ms=ms, ddt=False)
     return(True)
 #enddef
@@ -1879,7 +1879,7 @@ def lisp_nat_proxy_map_request(lisp_sockets, info_source, packet):
 # lisp_nat_proxy_reply
 #
 # Grab the nonce from the Map-Request, store it in the info-source data
-# structure and modify the ITR-RLOCs field so the Map-Reply/Notify comes 
+# structure and modify the ITR-RLOCs field so the Map-Reply/Notify comes
 # back to us.
 #
 def lisp_nat_proxy_reply(lisp_sockets, info_source, packet, mr_or_mn):
@@ -1889,9 +1889,9 @@ def lisp_nat_proxy_reply(lisp_sockets, info_source, packet, mr_or_mn):
 
     mr_or_mn = "Reply" if mr_or_mn else "Notify"
     mr_or_mn = lisp.bold("nat-proxy Map-{}".format(mr_or_mn), False)
-    
+
     lisp.lprint("Forward {} to info-source {}, port {}, nonce 0x{}".format( \
-        mr_or_mn, lisp.red(addr_str, False), port, 
+        mr_or_mn, lisp.red(addr_str, False), port,
         lisp.lisp_hex_string(nonce)))
 
     #
@@ -1927,7 +1927,7 @@ def lisp_core_dispatch_packet(lisp_sockets, source, sport, packet):
         if (header.info_reply == False):
             lisp.lisp_process_info_request(lisp_sockets, packet, source, sport,
                 lisp.lisp_ms_rtr_list)
-        #endif            
+        #endif
         return
     #endif
 
@@ -1956,7 +1956,7 @@ def lisp_core_dispatch_packet(lisp_sockets, source, sport, packet):
             lig = "/tmp/lisp-lig"
             if (os.path.exists(lig)):
                 lisp.lisp_ipc(packet, lisp_ipc_socket, lig)
-            else:  
+            else:
                 lisp.lisp_ipc(packet, lisp_ipc_socket, "lisp-itr")
             #endif
         #endif
@@ -1972,13 +1972,13 @@ def lisp_core_dispatch_packet(lisp_sockets, source, sport, packet):
 
         info_source = lisp_get_info_source(None, 0, map_notify.nonce)
         if (info_source):
-            lisp_nat_proxy_reply(lisp_sockets, info_source, local_packet, 
+            lisp_nat_proxy_reply(lisp_sockets, info_source, local_packet,
                 False)
         else:
             lig = "/tmp/lisp-lig"
             if (os.path.exists(lig)):
                 lisp.lisp_ipc(packet, lisp_ipc_socket, lig)
-            else:  
+            else:
                 process = "lisp-rtr" if lisp.lisp_is_running("lisp-rtr") else \
                     "lisp-etr"
                 lisp.lisp_ipc(packet, lisp_ipc_socket, process)
@@ -1991,21 +1991,21 @@ def lisp_core_dispatch_packet(lisp_sockets, source, sport, packet):
     # Map-Referral messages go to MRs. But if a rig client is running on
     # this machine, IPC it to the client.
     #
-    if (header.type == lisp.LISP_MAP_REFERRAL): 
+    if (header.type == lisp.LISP_MAP_REFERRAL):
         rig = "/tmp/lisp-rig"
         if (os.path.exists(rig)):
             lisp.lisp_ipc(packet, lisp_ipc_socket, rig)
-        else:  
+        else:
             lisp.lisp_ipc(packet, lisp_ipc_socket, "lisp-mr")
         #endif
         return
     #endif
-        
+
     #
-    # Map-Requests go to ETRs/RTRs when they RLOC-probes or SMR-invoked 
+    # Map-Requests go to ETRs/RTRs when they RLOC-probes or SMR-invoked
     # requests. And Map-Requests go to ITRs when they are SMRs.
     #
-    if (header.type == lisp.LISP_MAP_REQUEST): 
+    if (header.type == lisp.LISP_MAP_REQUEST):
         process = "lisp-itr" if (header.is_smr()) else "lisp-etr"
 
         #
@@ -2020,29 +2020,29 @@ def lisp_core_dispatch_packet(lisp_sockets, source, sport, packet):
 
     #
     # ECMs can go to a lot of places. They are sent ITR->MR, LIG->MR, MR->DDT,
-    # MR->MS, and MS->ETR.  If we find an Info-Request source, this core 
-    # process will process the Map-Request so it can get the Map-Reply and 
+    # MR->MS, and MS->ETR.  If we find an Info-Request source, this core
+    # process will process the Map-Request so it can get the Map-Reply and
     # forward to the translated address and port of a client behind a NAT.
     #
-    if (header.type == lisp.LISP_ECM): 
+    if (header.type == lisp.LISP_ECM):
         info_source = lisp_get_info_source(source, sport, None)
         if (info_source):
-            if (lisp_nat_proxy_map_request(lisp_sockets, info_source, 
+            if (lisp_nat_proxy_map_request(lisp_sockets, info_source,
                 local_packet)): return
         #endif
-        
+
         process = "lisp-mr"
-        if (header.is_to_etr()): 
+        if (header.is_to_etr()):
             process = "lisp-etr"
-        elif (header.is_to_ms()): 
+        elif (header.is_to_ms()):
             process = "lisp-ms"
         elif (header.is_ddt()):
-            if (lisp.lisp_is_running("lisp-ddt")): 
+            if (lisp.lisp_is_running("lisp-ddt")):
                 process = "lisp-ddt"
-            elif (lisp.lisp_is_running("lisp-ms")): 
+            elif (lisp.lisp_is_running("lisp-ms")):
                 process = "lisp-ms"
             #endif
-        elif (lisp.lisp_is_running("lisp-mr") == False): 
+        elif (lisp.lisp_is_running("lisp-mr") == False):
             process = "lisp-etr"
         #endif
         lisp.lisp_ipc(packet, lisp_ipc_socket, process)
@@ -2076,10 +2076,10 @@ class lisp_ssl_server(bottle.ServerAdapter):
 
         server = wsgi_server((self.host, self.port), hand)
         server.ssl_adapter = ssl_adaptor(cert, cert, None)
-        try: 
-            server.start()  
-        finally: 
-            server.stop()  
+        try:
+            server.start()
+        finally:
+            server.stop()
         #endtry
     #enddef
 #endclass
@@ -2146,7 +2146,7 @@ def lisp_check_processes(lisp_socket):
     lisp.lisp_set_exception()
     status = {"lisp-itr" : False, "lisp-etr" : False, "lisp-rtr" : False,
               "lisp-mr" : False, "lisp-ms" : False, "lisp-ddt" : False}
- 
+
     while (True):
         time.sleep(1)
         old_status = status
@@ -2204,10 +2204,10 @@ def lisp_timeout_info_sources():
             #endif
         #endfor
 
-        # 
+        #
         # Go through delete list to remove from dictionary array.
         #
-        for key in delete_list: 
+        for key in delete_list:
             lisp.lisp_info_sources_by_address.pop(key)
         #endfor
     #endwhile
@@ -2236,7 +2236,7 @@ def lisp_core_control_packet_process(lisp_ipc_control_socket, lisp_sockets):
         #
         # For py3, decode from byte string array to string. Noop for py2.
         #
-        if (len(packet) > 1): 
+        if (len(packet) > 1):
             packet = lisp.lisp_bit_stuff(packet)
         else:
             packet = packet[0]
@@ -2249,7 +2249,7 @@ def lisp_core_control_packet_process(lisp_ipc_control_socket, lisp_sockets):
         #endif
 
         lisp.lprint(("{} {} bytes from {}, dest/port: {}/{}, control-" + \
-            "packet: {}").format(lisp.bold("Receive", False), len(packet), 
+            "packet: {}").format(lisp.bold("Receive", False), len(packet),
             source, dest, port, lisp.lisp_format_packet(packet)))
 
         #
@@ -2369,7 +2369,7 @@ def lisp_core_startup(bottle_port):
             str(lisp.LISP_CTRL_PORT))
     else:
         address = lisp.lisp_myrlocs[0].print_address_no_iid()
-        lisp_control_listen_socket = lisp.lisp_open_listen_socket(address, 
+        lisp_control_listen_socket = lisp.lisp_open_listen_socket(address,
             str(lisp.LISP_CTRL_PORT))
     #endif
     lisp.lprint("Listen on {}, port 4342".format(address))
@@ -2398,11 +2398,11 @@ def lisp_core_startup(bottle_port):
     #
     lisp_ipc_control_socket = lisp.lisp_open_listen_socket("", "lisp-core-pkt")
 
-    lisp_sockets = [lisp_control_listen_socket, lisp_control_listen_socket, 
+    lisp_sockets = [lisp_control_listen_socket, lisp_control_listen_socket,
                     lisp_ipc_socket]
 
     #
-    # Start a thread to listen for control packet from LISP component 
+    # Start a thread to listen for control packet from LISP component
     # processes.
     #
     threading.Thread(target=lisp_core_control_packet_process,
@@ -2425,20 +2425,20 @@ def lisp_core_startup(bottle_port):
     #
     lisp_check_decent_xtr_multicast(lisp_control_listen_socket)
 
-    threading.Thread(target=lispconfig.lisp_config_process, 
+    threading.Thread(target=lispconfig.lisp_config_process,
         args=[lisp_ipc_socket]).start()
 
     #
     # Start a new thread to run bottle for each address-family.
     #
-    threading.Thread(target=lisp_bottle_ipv4_process, 
+    threading.Thread(target=lisp_bottle_ipv4_process,
         args=[bottle_port]).start()
     threading.Thread(target=lisp_bottle_ipv6_process, args=[]).start()
 
     #
     # Start a new thread to run LISP component health check.
     #
-    threading.Thread(target=lisp_check_processes, 
+    threading.Thread(target=lisp_check_processes,
         args=[lisp_ipc_socket]).start()
 
     #
@@ -2493,7 +2493,7 @@ def lisp_check_decent_xtr_multicast(lisp_socket):
         break
     #endfor
     if (decent_xtr == False): return
-    
+
     #
     # Check if "lisp map-server" command clauses have multicast addresses
     # configured.
@@ -2503,7 +2503,7 @@ def lisp_check_decent_xtr_multicast(lisp_socket):
     for line in lines:
         if (line[0:1] == "#-" and line[-2:-1] == "-#"): break
         if (line == "" or line[0] == "#"): continue
-            
+
         if (line.find("lisp map-server") != -1):
             in_clause = True
             continue

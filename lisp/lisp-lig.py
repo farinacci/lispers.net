@@ -1,19 +1,19 @@
 # -----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lisp-lig.py
@@ -81,7 +81,7 @@ def find_lisp_config():
     mr = mr.split(" = ")[-1]
 
     return(iid, mr)
-#enddef    
+#enddef
 
 #
 # read_sockets
@@ -97,10 +97,10 @@ def read_sockets(socket_list, lisp_ephem_listen_socket, lisp_listen_socket,
         opcode, source, port, packet = lisp.lisp_receive( \
             lisp_ephem_listen_socket, False)
     elif (lisp_listen_socket in ready_list):
-        opcode, source, port, packet = lisp.lisp_receive(lisp_listen_socket, 
+        opcode, source, port, packet = lisp.lisp_receive(lisp_listen_socket,
             False)
     elif (lisp_ipc_socket in ready_list):
-        opcode, source, port, packet = lisp.lisp_receive(lisp_ipc_socket, 
+        opcode, source, port, packet = lisp.lisp_receive(lisp_ipc_socket,
             True)
     else:
         return("", "", 0, None)
@@ -127,7 +127,7 @@ def process_eid_records(record_count, nonce, packet):
             action = lisp.bold(action, False)
             print("  Empty, map-reply action: {}".format(action))
         #endif
-        
+
         eid_record.print_record("", False)
         for j in range(eid_record.rloc_count):
             rloc_record = lisp.lisp_rloc_record()
@@ -137,7 +137,7 @@ def process_eid_records(record_count, nonce, packet):
             mp = rloc_record.mpriority
             print("  RLOC: {}, up/uw/mp/mw: {}/{}/{}/{}, flags: {}{}{}". \
                 format(rloc_record.rloc.print_address_no_iid(), p, rloc_record.
-                weight, mp, rloc_record.mweight, rloc_record.print_flags(), 
+                weight, mp, rloc_record.mweight, rloc_record.print_flags(),
                 "" if rloc_record.rloc_name == None else \
                 ", " + rloc_record.print_rloc_name(),
                 ", RTR" if p == 254 and mp == 255 else ""))
@@ -194,7 +194,7 @@ pubsub = ("pubsub" in sys.argv)
 # config file in the current directory to obtain an instance-ID and map-
 # resolver to complete the lig query.
 #
-if (argc == 2): 
+if (argc == 2):
     dest_eid = sys.argv[1]
     brackets = (dest_eid.find("[") != -1 and dest_eid.find("]") != -1)
     iid, mr = find_lisp_config()
@@ -223,12 +223,12 @@ else:
         if (index+1 < argc): source_eid = sys.argv[index+1]
     #endif
     if ("to" in sys.argv):
-        index = sys.argv.index("to")        
+        index = sys.argv.index("to")
         if (index+1 < argc): mr = sys.argv[index+1]
     #endif
     if ("count" in sys.argv):
-        index = sys.argv.index("count")        
-        if (index+1 < argc): 
+        index = sys.argv.index("count")
+        if (index+1 < argc):
             count = sys.argv[index+1]
             if (count.isdigit() == False): mr = ""
         #endif
@@ -237,7 +237,7 @@ else:
         print("Usage: lig [<iid>]<dest-eid> to <mr-rloc> " + \
             "[source <source-eid>] [count <1-5>] [debug] [no-info]")
         exit(1)
-    #endif        
+    #endif
 #endif
 
 #
@@ -311,7 +311,7 @@ port = str(lisp_ephem_port)
 
 #
 # Open IPC socket because if the lisp-core is running on this machine that
-# lig is running, it will get Map-Reply/Notify messages that it will IPC to 
+# lig is running, it will get Map-Reply/Notify messages that it will IPC to
 # this named socket. We have to listen on port 4342 because that is how IOS
 # returns Map-Replies.
 #
@@ -323,7 +323,7 @@ lisp_ephem_listen_socket.settimeout(2)
 try:
     lisp_listen_socket = lisp.lisp_open_listen_socket(address,
         str(lisp.LISP_CTRL_PORT))
-    socket_list = [lisp_ephem_listen_socket, lisp_listen_socket, 
+    socket_list = [lisp_ephem_listen_socket, lisp_listen_socket,
         lisp_ipc_socket]
 except:
     socket_list = [lisp_ephem_listen_socket, lisp_ipc_socket]
@@ -345,7 +345,7 @@ map_request.decent_nat_xtr = True
 if (dist_name):
     afi = lisp.LISP_AFI_NAME
     ml = len(dest_eid) * 8
-elif (dest_eid.find(":") != -1): 
+elif (dest_eid.find(":") != -1):
     afi = lisp.LISP_AFI_IPV6
     ml = 128
 elif (dest_eid.find(".") != -1):
@@ -385,7 +385,7 @@ else:
 #
 # Fill in source-eid field.
 #
-if (source_eid == ""): 
+if (source_eid == ""):
     map_request.source_eid.afi = lisp.LISP_AFI_NONE
 else:
     seid = lisp.lisp_gethostbyname(source_eid)
@@ -416,7 +416,7 @@ if (map_request.source_eid.is_ipv6() and source_eid != ""):
 header = lisp.lisp_control_header()
 map_reply = lisp.lisp_map_reply()
 map_notify = lisp.lisp_map_notify(None)
-if (mr.find(":") != -1): 
+if (mr.find(":") != -1):
     afi = lisp.LISP_AFI_IPV6
     ml = 128
 elif (mr.find(".") != -1):
@@ -431,7 +431,7 @@ mr = lisp.lisp_address(afi, mr, ml, 0)
 
 #
 # If we are behind a NAT, send a Info-Request to the DDT-node, wait for
-# Info-Reply before proceeding. 
+# Info-Reply before proceeding.
 #
 global_address = None
 local_address = lisp.lisp_get_local_rloc()
@@ -443,7 +443,7 @@ if (local_address == None):
 #endif
 source_port = lisp.LISP_CTRL_PORT
 
-if (local_address != None and local_address.is_private_address() and 
+if (local_address != None and local_address.is_private_address() and
     "no-info" not in sys.argv):
     print("Possible NAT in path, sending Info-Request ... ")
 
@@ -479,11 +479,11 @@ if (local_address != None and local_address.is_private_address() and
         addr_str = port_str = "?"
     else:
         addr_str = global_address.print_address_no_iid()
-        port_str = str(translated_port)    
+        port_str = str(translated_port)
     #endif
     print("Info-Reply received, public address {}, translated port {}\n". \
         format(addr_str, port_str))
-    
+
     source_port = lisp_ephem_port
 
 elif (lisp_listen_socket != None):
@@ -563,10 +563,10 @@ for i in range(count):
     map_request_ts = time.time()
 
     #
-    # Wait 2 seconds for Map-Reply/Notify and if it does not come in, retry 
+    # Wait 2 seconds for Map-Reply/Notify and if it does not come in, retry
     # Map-Request up to count times.
     #
-    opcode, source, port, packet = read_sockets(socket_list, 
+    opcode, source, port, packet = read_sockets(socket_list,
         lisp_ephem_listen_socket, lisp_listen_socket, lisp_ipc_socket)
 
     #
@@ -577,7 +577,7 @@ for i in range(count):
     #
     # Did not get a packet, hmm.
     #
-    if (opcode != "packet"): 
+    if (opcode != "packet"):
         print("Internal fatal error")
         continue
     #endif
@@ -641,8 +641,8 @@ if (pubsub):
 
         try:
             while (True):
-                opcode, source, port, packet = read_sockets(socket_list, 
-                    lisp_ephem_listen_socket, lisp_listen_socket, 
+                opcode, source, port, packet = read_sockets(socket_list,
+                    lisp_ephem_listen_socket, lisp_listen_socket,
                     lisp_ipc_socket)
                 if (source != ""): break
             #endwhile

@@ -1,19 +1,19 @@
 # -----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lisp-rig.py
@@ -92,7 +92,7 @@ def find_lisp_config():
     mr = mr.split(" = ")[-1]
 
     return(iid, mr)
-#enddef    
+#enddef
 
 #------------------------------------------------------------------------------
 
@@ -107,7 +107,7 @@ ddt_node = ""
 # If <dest-eid> is not on input line, prompt for everything. Otherwise, get
 # command line input.
 #
-if (argc == 2): 
+if (argc == 2):
     dest_eid = sys.argv[1]
     brackets = (dest_eid.find("[") != -1 and dest_eid.find("]") != -1)
     iid, ddt_node = find_lisp_config()
@@ -127,13 +127,13 @@ if (argc <= 1):
 else:
     if (dest_eid == ""): dest_eid = sys.argv[1]
     if ("to" in sys.argv):
-        index = sys.argv.index("to")        
+        index = sys.argv.index("to")
         if (index+1 < argc): ddt_node = sys.argv[index+1]
     #endif
     if (ddt_node == ""):
         print("Usage: rig [<iid>]<dest-eid> to <ddt-node> [debug]")
         exit(1)
-    #endif        
+    #endif
 #endif
 
 #
@@ -194,7 +194,7 @@ lisp.lisp_i_am("rig")
 
 #
 # Open IPC socket because if the lisp-core is running on this machine that
-# rig is running, it will get Map-Referral messages that it will IPC to 
+# rig is running, it will get Map-Referral messages that it will IPC to
 # this named socket.
 #
 lisp_sockets[0] = lisp.lisp_open_send_socket("", lisp.LISP_AFI_IPV4)
@@ -224,7 +224,7 @@ map_request.nonce = 0
 if (dist_name):
     afi = lisp.LISP_AFI_NAME
     ml = len(dest_eid) * 8
-elif (dest_eid.find(":") != -1): 
+elif (dest_eid.find(":") != -1):
     afi = lisp.LISP_AFI_IPV6
     ml = 128
 elif (dest_eid.find(".") != -1):
@@ -265,7 +265,7 @@ else:
 #
 map_request.source_eid.afi = lisp.LISP_AFI_NONE
 
-if (lisp.lisp_get_local_addresses() == False): 
+if (lisp.lisp_get_local_addresses() == False):
     print("Cannot obtain a local address")
     exit(1)
 #endif
@@ -289,7 +289,7 @@ map_request.print_map_request()
 #
 header = lisp.lisp_control_header()
 map_referral = lisp.lisp_map_referral()
-if (ddt_node.find(":") != -1): 
+if (ddt_node.find(":") != -1):
     afi = lisp.LISP_AFI_IPV6
     ml = 128
 elif (ddt_node.find(".") != -1):
@@ -347,7 +347,7 @@ while (True):
         # Send ECM based Map-Request to Map-Resolver..
         #
         packet = copy
-        lisp.lisp_send_ecm(lisp_sockets, packet, inner_source, 
+        lisp.lisp_send_ecm(lisp_sockets, packet, inner_source,
             lisp_ephem_port, inner_dest, ddt_node, to_ms=to_ms, ddt=True)
         map_request_ts = time.time()
         pending[key][0] = map_request_ts
@@ -393,7 +393,7 @@ while (True):
     #
     # Did not get a packet, hmm.
     #
-    if (opcode != "packet"): 
+    if (opcode != "packet"):
         print("Internal fatal error")
         continue
     #endif
@@ -470,7 +470,7 @@ while (True):
             lisp.LISP_DDT_ACTION_MS_ACK)
 
         neg_or_done = eid_record.action in (lisp.LISP_DDT_ACTION_MS_NOT_REG,
-            lisp.LISP_DDT_ACTION_DELEGATION_HOLE, 
+            lisp.LISP_DDT_ACTION_DELEGATION_HOLE,
             lisp.LISP_DDT_ACTION_NOT_AUTH, lisp.LISP_DDT_ACTION_MS_ACK)
 
         #

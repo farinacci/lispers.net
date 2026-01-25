@@ -1,19 +1,19 @@
 # -----------------------------------------------------------------------------
-#             
+#
 # Copyright 2013-2019 lispers.net - Dino Farinacci <farinacci@gmail.com>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.    
-# 
+# limitations under the License.
+#
 # -----------------------------------------------------------------------------
 #
 # lisp-itr.py
@@ -116,7 +116,7 @@ def lisp_itr_process_timer(lisp_sockets, lisp_ephem_port):
     lisp.lisp_crypto_keys_by_nonce = {}
 
     #
-    # If doing L2-overlays, get map-cache entry from (0000-0000-0000/0, 
+    # If doing L2-overlays, get map-cache entry from (0000-0000-0000/0,
     # ffff-ffff-ffff/48).
     #
     if (lisp.lisp_l2_overlay):
@@ -136,7 +136,7 @@ def lisp_itr_process_timer(lisp_sockets, lisp_ephem_port):
     #
     # Restart periodic timer.
     #
-    lisp_periodic_timer = threading.Timer(60, lisp_itr_process_timer, 
+    lisp_periodic_timer = threading.Timer(60, lisp_itr_process_timer,
         [lisp_sockets, lisp_ephem_port])
     lisp_periodic_timer.start()
     return
@@ -145,7 +145,7 @@ def lisp_itr_process_timer(lisp_sockets, lisp_ephem_port):
 #
 # lisp_itr_timeout_dynamic_eids
 #
-# Check to see if dyanmic-EIDs have stop sending data. If so, remove the 
+# Check to see if dyanmic-EIDs have stop sending data. If so, remove the
 # state and stop registering them.
 #
 def lisp_itr_timeout_dynamic_eids(lisp_socket):
@@ -183,7 +183,7 @@ def lisp_itr_timeout_dynamic_eids(lisp_socket):
             lisp.lisp_ipc(ipc, lisp_socket, "lisp-etr")
 
             lisp.lprint("Dynamic-EID {}".format( \
-                lisp.bold(lisp.green(eid_str, False) + " activity timeout", 
+                lisp.bold(lisp.green(eid_str, False) + " activity timeout",
                 False)))
             delete_list.append(eid_str)
         #endfor
@@ -197,7 +197,7 @@ def lisp_itr_timeout_dynamic_eids(lisp_socket):
     #
     # Restart periodic timer.
     #
-    threading.Timer(lisp.LISP_DEFAULT_DYN_EID_TIMEOUT, 
+    threading.Timer(lisp.LISP_DEFAULT_DYN_EID_TIMEOUT,
         lisp_itr_timeout_dynamic_eids, [lisp_socket]).start()
     return
 #enddef
@@ -209,7 +209,7 @@ def lisp_itr_timeout_dynamic_eids(lisp_socket):
 #
 # We need to test these 3 types of lines from "ifconfig" output:
 #
-# aten2     Link encap:Ethernet  HWaddr 00:1F:A0:07:0C:04 
+# aten2     Link encap:Ethernet  HWaddr 00:1F:A0:07:0C:04
 # eth7: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
 # en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
 #
@@ -219,7 +219,7 @@ def lisp_get_active_interfaces():
     # Choose only actively connected physical interfaces. Plus loopback. This
     # is needed for a roaming MAC to do telemetry measurements and wants to
     # connect to an ethernet. Each dongle vendor comes in with a different
-    # interface/device name. 
+    # interface/device name.
     #
     if (lisp.lisp_is_macos()):
         lines = getoutput("netstat -rn | egrep default | egrep UGS")
@@ -240,7 +240,7 @@ def lisp_get_active_interfaces():
         gs = ": flags="
         interfaces = getoutput("ifconfig | egrep '{}'".format(gs))
     #endif
-        
+
     interfaces = interfaces.split("\n")
 
     return_interfaces = []
@@ -305,7 +305,7 @@ def lisp_itr_startup():
     #
     # Used on for listening for Info-Replies for NAT-traversal support.
     #
-    lisp_ephem_nat_socket = lisp.lisp_open_listen_socket("0.0.0.0", 
+    lisp_ephem_nat_socket = lisp.lisp_open_listen_socket("0.0.0.0",
         str(lisp_ephem_nat_port))
 
     #
@@ -353,7 +353,7 @@ def lisp_itr_startup():
     #
     # Start dynamic-EID timeout timer.
     #
-    threading.Timer(lisp.LISP_DEFAULT_DYN_EID_TIMEOUT, 
+    threading.Timer(lisp.LISP_DEFAULT_DYN_EID_TIMEOUT,
         lisp_itr_timeout_dynamic_eids, [lisp_ipc_listen_socket]).start()
     return(True)
 #enddef
@@ -409,7 +409,7 @@ def lisp_itr_get_local_eid_prefixes():
     #
     while (count != len(lisp.lisp_db_list)):
         lisp.lprint(("Waiting {} second(s) for {} database-mapping EID-" + \
-            "prefixes, {} processed so far ...").format(wait_time, count, 
+            "prefixes, {} processed so far ...").format(wait_time, count,
             len(lisp.lisp_db_list)))
         time.sleep(wait_time)
     #endwhile
@@ -457,7 +457,7 @@ def lisp_itr_get_capture_info():
     # messages for LISP-Decent.
     #
     cp_pfilter = None
-    if (lisp.lisp_ipc_data_plane): 
+    if (lisp.lisp_ipc_data_plane):
         lisp.lprint(lisp.bold("Data-plane packet capture disabled", False))
         cp_pfilter = "(udp src port 4342 and ip[28] == 0x28)" + \
             " or (ip[16] >= 224 and ip[16] < 240 and (ip[28] & 0xf0) == 0x30)"
@@ -526,12 +526,12 @@ def lisp_itr_get_capture_info():
 
         args = [device, pfilter, lisp_pcap_lock]
         lisp.lprint("Capturing packets on {}interface {}".format(us, device))
-        threading.Thread(target=lisp_itr_pcap_thread, args=args).start() 
+        threading.Thread(target=lisp_itr_pcap_thread, args=args).start()
     #endfor
     if (cp_pfilter): return
 
     #
-    # Start a pcap thread so we can receive RLOC-probe Map-Replies packets on 
+    # Start a pcap thread so we can receive RLOC-probe Map-Replies packets on
     # RLOC interfaces. This is only called when LISP_PCAP_LIST is set.
     #
     probe_pfilter = "(udp src port 4342 and ip[28] == 0x28)"
@@ -539,7 +539,7 @@ def lisp_itr_get_capture_info():
         args = [device, probe_pfilter, lisp_pcap_lock]
         lisp.lprint("Capture RLOC-probe replies on RLOC interface {}".format( \
             device))
-        threading.Thread(target=lisp_itr_pcap_thread, args=args).start() 
+        threading.Thread(target=lisp_itr_pcap_thread, args=args).start()
     #endfor
     return
 #enddef
@@ -656,10 +656,10 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         # Check to see if we are doing dynamic-EID discovery.
         #
         if (db.dynamic_eid_configured()):
-            i = lisp.lisp_allow_dynamic_eid(input_interface, 
+            i = lisp.lisp_allow_dynamic_eid(input_interface,
                 packet.inner_source)
             if (i):
-                lisp.lisp_itr_discover_eid(db, packet.inner_source, 
+                lisp.lisp_itr_discover_eid(db, packet.inner_source,
                     input_interface, i, lisp_ipc_listen_socket)
             else:
                 e = lisp.green(packet.inner_source.print_address(), False)
@@ -669,7 +669,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
             #endif
         #endif
 
-        if (packet.inner_source.is_local() and 
+        if (packet.inner_source.is_local() and
             packet.udp_dport == lisp.LISP_CTRL_PORT): return
     #endif
 
@@ -705,15 +705,15 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         #endif
     #endif
 
-    # 
+    #
     # Do map-cache lookup.
     #
     mc = lisp.lisp_map_cache_lookup(packet.inner_source, packet.inner_dest)
     if (mc): mc.add_recent_source(packet.inner_source)
 
     #
-    # If "secondary-iid" is configured, we want to check the secondary 
-    # map-cache if a lookup miss occured in the default IID for this source 
+    # If "secondary-iid" is configured, we want to check the secondary
+    # map-cache if a lookup miss occured in the default IID for this source
     # EID-prefix. If destination EID found in secondary map-cache, use it.
     # Otherwise, send Map-Request for EID in default IID.
     #
@@ -732,7 +732,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         if (lisp.lisp_rate_limit_map_request(packet.inner_dest)): return
 
         pubsub = (mc and mc.action == lisp.LISP_SEND_PUBSUB_ACTION)
-        lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
+        lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port,
             packet.inner_source, packet.inner_dest, None, pubsub)
 
         if (packet.is_trace()):
@@ -749,7 +749,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         if (lisp.lisp_rate_limit_map_request(packet.inner_dest) == False):
             lisp.lprint("Refresh map-cache entry {}".format( \
                 lisp.green(mc.print_eid_tuple(), False)))
-            lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port, 
+            lisp.lisp_send_map_request(lisp_send_sockets, lisp_ephem_port,
                 packet.inner_source, packet.inner_dest, None)
         #endif
     #endif
@@ -782,7 +782,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         if (packet.is_trace()): lisp.lisp_trace_append(packet, reason=r)
         return
     #endif
-    if (dest_rloc and dest_rloc.is_null()): 
+    if (dest_rloc and dest_rloc.is_null()):
         r = "Drop action RLOC found"
         lisp.dprint(r)
 
@@ -876,7 +876,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         #endfor
     #endif
 
-    # 
+    #
     # Don't need packet structure anymore.
     #
     del(packet)
@@ -892,19 +892,19 @@ def lisp_itr_pcap_process_packet(device, not_used, packet):
     offset = 4 if device == "lo0" else 0 if device == "lispers.net" else 14
 
     if (lisp.lisp_frame_logging):
-        title = lisp.bold("Received frame on interface '{}'".format(device), 
+        title = lisp.bold("Received frame on interface '{}'".format(device),
             False)
         frame = lisp.lisp_format_packet(packet[0:64])
         lisp.lprint("{}: {}".format(title, frame))
     #endif
- 
+
     #
     # Get input interface based on source MAC address.
     #
     macs = ""
     my_sa = False
     interface = device
-    if (offset == 14): 
+    if (offset == 14):
         interfaces, sa, da, my_sa = lisp.lisp_get_input_interface(packet)
         interface = device if (device in interfaces) else interfaces[0]
         macs = lisp.lisp_format_macs(sa, da)
@@ -918,13 +918,13 @@ def lisp_itr_pcap_process_packet(device, not_used, packet):
         if (int(da[1], 16) & 1): my_sa = True
     #endif
 
-    # 
+    #
     # Check for VLAN encapsulation.
     #
     if (offset != 0):
         ethertype = struct.unpack("H", packet[offset-2:offset])[0]
         ethertype = socket.ntohs(ethertype)
-        if (ethertype == 0x8100): 
+        if (ethertype == 0x8100):
             vlan = struct.unpack("I", packet[offset:offset+4])[0]
             vlan = socket.ntohl(vlan)
             interface = "vlan" + str(vlan >> 16)
@@ -956,8 +956,8 @@ def lisp_itr_pcap_process_packet(device, not_used, packet):
 #  non-EID  -> remote-EID processed by kernel
 #  non-EID  -> site-EID   processed by kernel
 #
-# The pcap filters reflect the ITR processing combos and can be found in 
-# lisp_itr_build_pcap_filter(). This routine programs iptables to do the 
+# The pcap filters reflect the ITR processing combos and can be found in
+# lisp_itr_build_pcap_filter(). This routine programs iptables to do the
 # kernel processing combos.
 #
 # (1) iptables -t raw -A lisp -j ACCEPT -d <special-addresses>
@@ -965,13 +965,13 @@ def lisp_itr_pcap_process_packet(device, not_used, packet):
 # (3) iptables -t raw -A lisp -j ACCEPT -s <site-eid> -d <site-eid> ...
 # (4) iptables -t raw -A lisp -j DROP -s <site-eid> ...
 #
-# (1) and (2), we want kernel to route packets. This allows loopback and 
-# multicast to be processed by kernel. 
+# (1) and (2), we want kernel to route packets. This allows loopback and
+# multicast to be processed by kernel.
 #
 # For (3), we want the kernel to do local routing of packets inside of a site
 # in this ITR.
 #
-# For (4), we want kernel to not touch any packets sourced from locally 
+# For (4), we want kernel to not touch any packets sourced from locally
 # configured EIDs. That is each EID-prefix from a "lisp database-mapping"
 # command. Because those EID-prefixes are pcap'ed and process by the lisp-itr
 # process.
@@ -981,7 +981,7 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
         lisp.lprint("User selected to suppress installing iptables rules")
         return
     #endif
-    
+
     os.system("sudo iptables -t raw -N lisp")
     os.system("sudo iptables -t raw -A PREROUTING -j lisp")
     os.system("sudo ip6tables -t raw -N lisp")
@@ -989,9 +989,9 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
 
     #
     # Have kernel process packets for local addresses when sourced from site
-    # EIDs. We do not want the lisp-itr process to process such packets. 
-    # We want the kernel to deliver packets to and from local applications. 
-    # And we want the kernel to forward decapsulated packets out interfaces 
+    # EIDs. We do not want the lisp-itr process to process such packets.
+    # We want the kernel to deliver packets to and from local applications.
+    # And we want the kernel to forward decapsulated packets out interfaces
     # leading the EIDs.
     #
     add = "sudo ip{}tables -t raw -A lisp -j ACCEPT -d {}"
@@ -1049,7 +1049,7 @@ def lisp_itr_kernel_filter(sources, dyn_eids):
 
     #
     # Check if we need to put in a iptables rule workaround for the virtio TCP
-    # checksum corruption problem for KVM guest OSes. Check environmnt 
+    # checksum corruption problem for KVM guest OSes. Check environmnt
     # variable LISP_VIRTIO_BUG.
     #
     # Note a debian host system that runs docker will need the following
@@ -1182,7 +1182,7 @@ def lisp_itr_pcap_thread(device, pfilter, pcap_lock):
         pcap_lock.release()
         pcap.setfilter(pfilter)
         while(True):
-            header, packet = pcap.next()     
+            header, packet = pcap.next()
             if (len(packet) == 0): continue
             lisp_itr_pcap_process_packet(device, None, packet)
         #endwhile
@@ -1208,7 +1208,7 @@ def lisp_itr_process_info_timer():
     # Build Info-Request messages if we have any private RLOCs in database-
     # mappings.
     #
-    sockets = [lisp_ephem_nat_socket, lisp_ephem_nat_socket, 
+    sockets = [lisp_ephem_nat_socket, lisp_ephem_nat_socket,
         lisp_ipc_listen_socket]
     lisp.lisp_build_info_requests(sockets, None, lisp.LISP_CTRL_PORT)
 
@@ -1216,7 +1216,7 @@ def lisp_itr_process_info_timer():
     # Restart periodic timer.
     #
     lisp_itr_info_timer.cancel()
-    lisp_itr_info_timer = threading.Timer(lisp.LISP_INFO_INTERVAL, 
+    lisp_itr_info_timer = threading.Timer(lisp.LISP_INFO_INTERVAL,
         lisp_itr_process_info_timer, [])
     lisp_itr_info_timer.start()
     return
@@ -1234,9 +1234,9 @@ def lisp_itr_map_resolver_command(kv_pair):
 
     lispconfig.lisp_map_resolver_command(kv_pair)
 
-    if (lisp.lisp_test_mr_timer == None or 
+    if (lisp.lisp_test_mr_timer == None or
         lisp.lisp_test_mr_timer.is_alive() == False):
-        lisp.lisp_test_mr_timer = threading.Timer(2, lisp.lisp_test_mr, 
+        lisp.lisp_test_mr_timer = threading.Timer(2, lisp.lisp_test_mr,
             [lisp_send_sockets, lisp_ephem_port])
         lisp.lisp_test_mr_timer.start()
     #endif
@@ -1251,7 +1251,7 @@ def lisp_itr_map_resolver_command(kv_pair):
 
 #
 # lisp_itr_database_mapping_command
-# 
+#
 # Add database-mapping entry so ITR can packet capture on packets only from
 # sources from the *first* database-mapping configured.
 #
@@ -1292,7 +1292,7 @@ def lisp_itr_xtr_command(kv_pair):
     interval = 0
     if (rloc_probing_now_on): interval = 1
     if (nat_now_on): interval = 5
-    
+
     if (interval != 0):
         lisp_sockets = [lisp_rloc_probe_socket, lisp_ephem_listen_socket,
             lisp_ipc_listen_socket, lisp_raw_socket]
@@ -1356,7 +1356,7 @@ def lisp_itr_process_nonce_ipc(ipc):
         if (echo_nonce.request_nonce_sent == nonce):
             en = lisp.bold("echoed nonce", False)
             lisp.lprint("Received {} {} from {}".format(en,
-                lisp.lisp_hex_string(nonce), 
+                lisp.lisp_hex_string(nonce),
                 lisp.red(echo_nonce.rloc_str, False)))
 
             echo_nonce.request_nonce_sent = None
@@ -1400,7 +1400,7 @@ lisp_itr_commands = {
     "lisp interface" : [lispconfig.lisp_interface_command, {
         "interface-name" : [True],
         "device" : [True],
-        "instance-id" : [True, 0, 0xffffffff], 
+        "instance-id" : [True, 0, 0xffffffff],
         "dynamic-eid" : [True],
         "multi-tenant-eid" : [True],
         "lisp-nat" : [True, "yes", "no"],
@@ -1415,11 +1415,11 @@ lisp_itr_commands = {
 
     "lisp map-server" : [lispconfig.lisp_map_server_command, {
         "ms-name" : [True],
-        "address" : [True], 
-        "dns-name" : [True], 
+        "address" : [True],
+        "dns-name" : [True],
         "authentication-type" : [False, "sha1", "sha2"],
-        "authentication-key" : [False], 
-        "encryption-key" : [False], 
+        "authentication-key" : [False],
+        "encryption-key" : [False],
         "proxy-reply" : [False, "yes", "no"],
         "want-map-notify" : [False, "yes", "no"],
         "merge-registrations" : [False, "yes", "no"],
@@ -1427,68 +1427,68 @@ lisp_itr_commands = {
         "site-id" : [False, 1, 0xffffffffffffffff] }],
 
     "lisp database-mapping" : [lisp_itr_database_mapping_command, {
-        "prefix" : [], 
+        "prefix" : [],
         "mr-name" : [True],
         "ms-name" : [True],
-        "instance-id" : [True, 0, 0xffffffff],  
-        "secondary-instance-id" : [True, 0, 0xffffffff], 
-        "eid-prefix" : [True], 
-        "group-prefix" : [True], 
+        "instance-id" : [True, 0, 0xffffffff],
+        "secondary-instance-id" : [True, 0, 0xffffffff],
+        "eid-prefix" : [True],
+        "group-prefix" : [True],
         "dynamic-eid" : [True, "yes", "no"],
         "signature-eid" : [True, "yes", "no"],
-        "register-ttl" : [True, 1, 0xffffffff], 
-        "rloc" : [], 
+        "register-ttl" : [True, 1, 0xffffffff],
+        "rloc" : [],
         "rloc-record-name" : [True],
         "elp-name" : [True],
         "geo-name" : [True],
         "rle-name" : [True],
         "json-name" : [True],
-        "address" : [True], 
-        "interface" : [True], 
-        "priority" : [True, 0, 255], 
+        "address" : [True],
+        "interface" : [True],
+        "priority" : [True, 0, 255],
         "weight" : [True, 0, 100] }],
 
     "lisp map-cache" : [lispconfig.lisp_map_cache_command, {
-        "prefix" : [], 
-        "instance-id" : [True, 0, 0xffffffff],  
-        "eid-prefix" : [True], 
-        "group-prefix" : [True], 
-        "send-map-request" : [True, "yes", "no"], 
-        "subscribe-request" : [True, "yes", "no"], 
-        "rloc" : [], 
+        "prefix" : [],
+        "instance-id" : [True, 0, 0xffffffff],
+        "eid-prefix" : [True],
+        "group-prefix" : [True],
+        "send-map-request" : [True, "yes", "no"],
+        "subscribe-request" : [True, "yes", "no"],
+        "rloc" : [],
         "rloc-record-name" : [True],
         "rle-name" : [True],
         "elp-name" : [True],
-        "address" : [True], 
-        "priority" : [True, 0, 255], 
+        "address" : [True],
+        "priority" : [True, 0, 255],
         "weight" : [True, 0, 100] }],
 
     "lisp itr-map-cache" : [lispconfig.lisp_map_cache_command, {
-        "prefix" : [], 
-        "instance-id" : [True, 0, 0xffffffff],  
-        "eid-prefix" : [True], 
-        "group-prefix" : [True], 
-        "rloc" : [], 
+        "prefix" : [],
+        "instance-id" : [True, 0, 0xffffffff],
+        "eid-prefix" : [True],
+        "group-prefix" : [True],
+        "rloc" : [],
         "rloc-record-name" : [True],
         "rle-name" : [True],
         "elp-name" : [True],
-        "address" : [True], 
-        "priority" : [True, 0, 255], 
+        "address" : [True],
+        "priority" : [True, 0, 255],
         "weight" : [True, 0, 100] }],
 
     "lisp explicit-locator-path" : [lispconfig.lisp_elp_command, {
-        "elp-name" : [False], 
-        "elp-node" : [], 
-        "address" : [True], 
+        "elp-name" : [False],
+        "elp-node" : [],
+        "address" : [True],
         "probe" : [True, "yes", "no"],
         "strict" : [True, "yes", "no"],
-        "eid" : [True, "yes", "no"] }], 
+        "eid" : [True, "yes", "no"] }],
 
     "lisp replication-list-entry" : [lispconfig.lisp_rle_command, {
-        "rle-name" : [False], 
-        "rle-node" : [], 
-        "address" : [True], 
-        "level" : [True, 0, 255] }], 
+        "rle-name" : [False],
+        "rle-node" : [],
+        "address" : [True],
+        "level" : [True, 0, 255] }],
 
     "lisp geo-coordinates" : [lispconfig.lisp_geo_command, {
         "geo-name" : [False],
@@ -1515,7 +1515,7 @@ if (lisp_itr_startup() == False):
     exit(1)
 #endif
 
-socket_list = [lisp_ephem_listen_socket, lisp_ipc_listen_socket, 
+socket_list = [lisp_ephem_listen_socket, lisp_ipc_listen_socket,
     lisp_ephem_nat_socket, lisp_ipc_punt_socket]
 
 #
@@ -1542,7 +1542,7 @@ while (True):
     # Process Map-Reply messages received on ephemeral port.
     #
     if (lisp_ephem_listen_socket in ready_list):
-        opcode, source, port, packet = lisp.lisp_receive(ephem_sockets[0], 
+        opcode, source, port, packet = lisp.lisp_receive(ephem_sockets[0],
             False)
         if (source == ""): break
 
@@ -1557,7 +1557,7 @@ while (True):
     # Process Info-Reply messages received on NAT ephemeral port.
     #
     if (lisp_ephem_nat_socket in ready_list):
-        opcode, source, port, packet = lisp.lisp_receive(ephem_nat_sockets[0], 
+        opcode, source, port, packet = lisp.lisp_receive(ephem_nat_sockets[0],
             False)
         if (source == ""): break
 
@@ -1571,7 +1571,7 @@ while (True):
         # Info-Reply has new RTR-list, RLOC-probe the RTR RLOCs so we can
         # lisp-crypto faster.
         #
-        if (probe): 
+        if (probe):
             lisp_sockets = [lisp_rloc_probe_socket, lisp_ephem_listen_socket,
                 lisp_ipc_listen_socket, lisp_raw_socket]
             lisp.lisp_start_rloc_probe_timer(0, lisp_sockets)
@@ -1587,9 +1587,9 @@ while (True):
             lisp.lisp_receive(lisp_ipc_listen_socket, True)
         if (source == ""): break
 
-        if (opcode == "command"): 
+        if (opcode == "command"):
             packet = packet.decode()
-            if (packet == "clear"): 
+            if (packet == "clear"):
                 lisp.lisp_clear_map_cache()
                 continue
             #endif
@@ -1597,7 +1597,7 @@ while (True):
                 lisp_itr_process_nonce_ipc(packet)
                 continue
             #endif
-            lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode, 
+            lispconfig.lisp_process_command(lisp_ipc_listen_socket, opcode,
                 packet, "lisp-itr", [lisp_itr_commands])
         elif (opcode == "api"):
             packet = packet.decode()
@@ -1612,7 +1612,7 @@ while (True):
             # from port 4341 to the translated port used for data packets to
             # get through NAT devices.
             #
-            if (int(port) != lisp.LISP_DATA_PORT and 
+            if (int(port) != lisp.LISP_DATA_PORT and
                 lisp.lisp_is_rloc_probe_reply(packet[0:1])):
                 lisp.lprint("ITR ignoring RLOC-probe reply, using pcap")
                 continue
