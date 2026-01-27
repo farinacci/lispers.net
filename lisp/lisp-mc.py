@@ -34,6 +34,11 @@ from subprocess import getoutput
 import sys
 import json
 
+#
+# For turning on map-cache and rloc memory address debugging.
+#
+debug = True
+
 #------------------------------------------------------------------------------
 
 def green(string):
@@ -209,63 +214,58 @@ for mc in map_cache:
     uptime = "uptime {}, ttl {}".format(mc["uptime"], ttl)
     a = mc["action"]
     uptime += ", action {}".format(bold(a)) if a != "no-action" else ""
+
+    if (debug and "eid-memory" in mc): uptime += ", " + mc["eid-memory"]
+
     print(eid, uptime)
 
+    #
+    # First build RLOC-set with plain old RLOCs. Then build RLEs, then build multicast
+    # RLOC-sets.
+    #
+    rloc_set = []
     for r in mc["rloc-set"]:
-        rloc_set = [r]
-        if ("multicast-rloc-set" in r): rloc_set += r["multicast-rloc-set"]
+        if ("multicast-rloc-set" in r):
+            rloc_set += r
+            for rr in r["multicast-rloc-set"]:
+                rr["mrloc"] = True
+                rloc_set.append(rr)
+            #endfor
+            continue
+        #endif
+        if ("rle" in r):
+            for rr in r["rle"].values():
+                rr["rle-node"] = True
+                rloc_set.append(rr)
+            continue
+        #endif
+        rloc_set.append(r)
+    #endfor
+        
+    for rr in rloc_set:
+        rlocrle = "RLOC"
+        if ("mrloc" in rr): rlocrle = "mRLOC"
+        if ("rle-node" in rr): rlocrle = "RLE"
 
-        for rr in rloc_set:
-            if (rloc_set.index(rr) == 0):
-                rlocrle = "RLOC"
-            else:
-                rlocrle = "mRLOC"
-            #endif
+        rloc = rr["address"]
+        if ("encap-port" in rr): rloc += ":{}".format(rr["encap-port"])
+        state = rr["state"]
+        state = green(state) if state == "up-state" else red(state)
+        rloc_str = red(rloc)
 
-            rloc = rr["address"]
-            if ("rle" in rr):
-                rloc = rr["rle"]
-                rlocrle = "RLE"
-            #endif
-            if ("encap-port" in rr): rloc += ":{}".format(rr["encap-port"])
-            state = rr["state"]
-            state = green(state) if state == "up-state" else red(state)
+        rloc = "  {} {}, state {} since {}".format(rlocrle, rloc_str, state, rr["uptime"])
+        if ("encap-crypto" in rr):
+            rloc += ", {}".format(rr["encap-crypto"])
+        #endif
+        if ("rloc-name" in rr):
+            rloc += ", {}".format(blue(rr["rloc-name"]))
+        #endif
+        if (debug and "rloc-memory" in rr): rloc += ", " + rr["rloc-memory"]
 
-            #
-            # For RLE strings, print RLOCs in red but hostnames in blue.
-            #
-            if (rlocrle == "RLE"):
-                rloc_str = ""
-                rles = rloc.split(",")
-                for rle in rles:
-                    parms = rle.split("(")
-                    rloc_str += red(parms[0])
-                    try:
-                        name = parms[1].replace(")", "")
-                    except:
-                        name = ""
-                    #endtry
-                    rloc_str += "(" + blue(name) + "), "
-                #endfor
-                rloc_str = rloc_str[0:-2]
-            else:
-                rloc_str = red(rloc)
-            #endif
-
-            rloc = "  {} {}, state {} since {}".format(rlocrle, rloc_str,
-                state, rr["uptime"])
-            if ("encap-crypto" in rr):
-                rloc += ", {}".format(rr["encap-crypto"])
-            #endif
-            if ("rloc-name" in rr):
-                rloc += ", {}".format(blue(rr["rloc-name"]))
-            #endif
-
-            print(rloc)
-            print("    {}".format(print_stats(rr)))
-            rtt, hc, lat = format_telemetry(rr)
-            print("    rtts {}, hops {}, latencies {}".format(rtt, hc, lat))
-        #endfor
+        print(rloc)
+        print("    {}".format(print_stats(rr)))
+        rtt, hc, lat = format_telemetry(rr)
+        print("    rtts {}, hops {}, latencies {}".format(rtt, hc, lat))
     #endfor
     print()
 #endfor
