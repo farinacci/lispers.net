@@ -48,6 +48,7 @@ except:
 lisp_register_timer = None
 lisp_trigger_register_timer = None
 lisp_etr_info_timer = None
+lisp_igmp_db_timer = None
 lisp_ephem_socket = None
 lisp_ephem_port = lisp.lisp_get_ephemeral_port()
 lisp_ipc_listen_socket = None
@@ -129,6 +130,23 @@ def lisp_etr_map_server_command(kv_pair):
             lisp_process_register_timer, [lisp_send_sockets])
         lisp_trigger_register_timer.start()
     #endif
+#enddef
+
+#
+# lisp_etr_timeout_igmp_database
+#
+# Timer function to timeout IGMP database entries.
+#
+def lisp_etr_timeout_igmp_database():
+    global lisp_igmp_db_timer
+
+    lisp.lisp_set_exception()
+
+    lisp.lisp_timeout_igmp_database()
+
+    if lisp_igmp_db_timer: lisp_igmp_db_timer.cancel()
+    lisp_igmp_db_timer = threading.Timer(60, lisp_etr_timeout_igmp_database)
+    lisp_igmp_db_timer.start()
 #enddef
 
 #
@@ -1691,6 +1709,14 @@ def lisp_etr_startup():
     # Test code to force IGMPv2 joins and leaves on an airplane. ;-)
     #
     threading.Thread(target=lisp_etr_join_leave_process, args=[]).start()
+
+    #
+    # Start IGMP database timeout timer.
+    #
+    global lisp_igmp_db_timer
+    lisp_igmp_db_timer = threading.Timer(60, lisp_etr_timeout_igmp_database)
+    lisp_igmp_db_timer.start()
+
     return(True)
 #enddef
 
@@ -1702,12 +1728,14 @@ def lisp_etr_startup():
 def lisp_etr_shutdown():
     global lisp_register_timer
     global lisp_etr_info_timer
+    global lisp_igmp_db_timer
 
     #
     # Cancel periodic Map-Register and Info timer threads.
     #
     if (lisp_register_timer): lisp_register_timer.cancel()
     if (lisp_etr_info_timer): lisp_etr_info_timer.cancel()
+    if (lisp_igmp_db_timer): lisp_igmp_db_timer.cancel()
 
     #
     # Close sockets.
