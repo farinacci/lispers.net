@@ -7495,10 +7495,10 @@ def lisp_etr_process_map_request(lisp_sockets, map_request, source, sport,
         # NAT probe the RLOC address to open NAT. Now we will use it for
         # RLOC-probe replies.
         #
-        if (lisp_decent_nat):
+        ir = itr_rloc.print_address_no_iid()
+        if (lisp_decent_nat and ir not in lisp_rtr_list):
             ni = lisp_get_nat_info(itr_rloc, None)
             if (ni == None):
-                ir = itr_rloc.print_address_no_iid()
                 lprint("Could not find NAT-info state for {}".format(ir))
                 return
             #endif
@@ -8945,9 +8945,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
         #
         if (multicast):
             mc = lisp_map_cache.lookup_cache(eid_record.group, True)
-            if (mc):
-                mc = mc.lookup_source_cache(eid_record.eid, False)
-            #endif
+            if (mc): mc = mc.lookup_source_cache(eid_record.eid, False)
         else:
             mc = lisp_map_cache.lookup_cache(eid_record.eid, True)
         #endif
@@ -8981,9 +8979,17 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
             #endif
             rloc_record.print_record("    ")
 
+            #
+            # If an RLOC is not found and this is a multicast EID, go look for RLEs.
+            #
             old_rloc = None
-            if (mc): old_rloc = mc.get_rloc(rloc_record.rloc)
-
+            if (mc):
+                old_rloc = mc.get_rloc(rloc_record.rloc)
+                if (old_rloc == None and multicast and mc.rloc_set != []):
+                    rs = mc.rloc_set[0]
+                    old_rloc = rs.get_rle(rloc_record.rloc)
+                #endif
+            #endif
             if (old_rloc):
                 rloc = old_rloc
             else:
@@ -8995,8 +9001,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
             # if the RLOC has been translated by a NAT. If so, go get the
             # translated port and store in rloc entry.
             #
-            port = rloc.store_rloc_from_record(rloc_record, map_reply.nonce,
-                source)
+            port = rloc.store_rloc_from_record(rloc_record, map_reply.nonce, source)
             rloc.echo_nonce_capable = map_reply.echo_nonce_capable
 
             if (rloc.echo_nonce_capable):
@@ -9020,9 +9025,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
             #
             # Store RLOC name for multicast RLOC members records.
             #
-            if (rloc_name == None):
-                rloc_name = rloc.rloc_name
-            #enif
+            if (rloc_name == None): rloc_name = rloc.rloc_name
 
             #
             # Process state for RLOC-probe reply from this specific RLOC. And
@@ -10687,17 +10690,33 @@ def lisp_process_multicast_map_notify(packet, source):
             if (rloc_record.rle == None): continue
 
             #
-            # Get copy of stats from old stored record so the display can
-            # look continuous even though the physical pointer is changing.
-            #
-            stats = mc.rloc_set[0].stats if len(mc.rloc_set) != 0 else None
-
-            #
-            # Store in map-cache.
+            # Create new rloc data structure and store in map-cache.
             #
             rloc = lisp_rloc()
             rloc.store_rloc_from_record(rloc_record, None, mc.mapping_source)
-            if (stats != None): rloc.stats = copy.deepcopy(stats)
+
+            #
+            # For every new RLE in the Map-Notify, find it in the old RLEs so we can move
+            # the old stats into the new one. Do the same for the telemetry recents.
+            #
+            old_rloc = mc.rloc_set[0] if (mc.rloc_set != []) else None
+            if (old_rloc != None):
+                for nrle in rloc.rle.rle_nodes:
+                    orle = old_rloc.get_rle(nrle.rloc.rloc)
+                    if (orle == None): continue
+                    nrle.rloc.stats = copy.deepcopy(orle.stats)
+                    nrle.rloc.copy_recents(orle)
+                #endfor
+            #endif
+
+            #
+            # Now there can be RLEs in the old_rloc that need to be copied to the new RLOC.
+            #
+            for orle in old_rloc.rle.rle_nodes:
+                nrle = rloc.get_rle(orle.rloc.rloc)
+                if (nrle != None): continue
+                rloc.rle.add_one_rle_node(orle)
+            #endfor
 
             if (rtr_mc and rloc.is_rtr() == False): continue
 
@@ -12979,15 +12998,12 @@ class lisp_geo(object):
 class lisp_rle_node(object):
     def __init__(self):
         self.level = 0
-        self.rloc = lisp_rloc(recurse=True)
+        self.rloc = lisp_rloc()
     #enddef
 
     def copy_rle_node(self):
         rle_node = lisp_rle_node()
-        rle_node.rloc.rloc.copy_address(self.rloc.rloc)
-        rle_node.rloc.translated_port = self.rloc.translated_port
-        rle_node.rloc.rloc_name = self.rloc.rloc_name
-        rle_node.level = self.level
+        rle_node = copy.deepcopy(self)
         return(rle_node)
     #enddef
 
@@ -13027,24 +13043,45 @@ class lisp_rle(object):
         return(rle)
     #enddef
 
+    def add_one_rle_node(self, rle_node):
+        new_rle_node = lisp_rle_node()
+        new_rle_node = copy.deepcopy(rle_node)
+        self.rle_nodes.append(new_rle_node)
+        self.build_forwarding_list()
+    #enddef
+
+    def print_one_rle(self, rle_node, html, do_formatting):
+        port = rle_node.rloc.translated_port
+
+        rle_name_str = ""
+        if (rle_node.rloc.rloc_name != None):
+            rle_name_str = rle_node.rloc.rloc_name
+            if (do_formatting): rle_name_str = blue(rle_name_str, html)
+            rle_name_str = "({})".format(rle_name_str)
+        #endif
+
+        addr_str = rle_node.rloc.rloc.print_address_no_iid()
+        if (rle_node.rloc.rloc.is_local()): addr_str = red(addr_str, html)
+        rle_str = "{}{}{}".format(addr_str, "" if port == 0 else ":" + str(port), rle_name_str)
+        return(rle_str)
+    #enddef
+
     def print_rle(self, html, do_formatting):
         rle_str = ""
         for rle_node in self.rle_nodes:
-            port = rle_node.rloc.translated_port
-
-            rle_name_str = ""
-            if (rle_node.rloc.rloc_name != None):
-                rle_name_str = rle_node.rloc.rloc_name
-                if (do_formatting): rle_name_str = blue(rle_name_str, html)
-                rle_name_str = "({})".format(rle_name_str)
-            #endif
-
-            addr_str = rle_node.rloc.rloc.print_address_no_iid()
-            if (rle_node.rloc.rloc.is_local()): addr_str = red(addr_str, html)
-            rle_str += "{}{}{}, ".format(addr_str, "" if port == 0 else \
-                ":" + str(port), rle_name_str)
+            rle_str += self.print_one_rle(rle_node, html, do_formatting)
+            rle_str += ", "
         #endfor
         return(rle_str[0:-2] if rle_str != "" else "")
+    #enddef
+
+    def print_api_rle(self):
+        api_rle = {}
+        for rle_node in self.rle_nodes:
+            rle_str = self.print_one_rle(rle_node, False, False)
+            api_rle[rle_str] = lisp_fill_rloc_in_json(rle_node.rloc)
+        #endfor
+        return(api_rle)
     #enddef
 
     def build_forwarding_list(self):
@@ -13610,6 +13647,12 @@ class lisp_rloc(object):
         return(string)
     #enddef
 
+    def copy_recents(self, rloc):
+        self.recent_rloc_probe_rtts = rloc.recent_rloc_probe_rtts
+        self.recent_rloc_probe_hops = rloc.recent_rloc_probe_hops
+        self.recent_rloc_probe_latencies = rloc.recent_rloc_probe_latencies
+    #enddef
+
     def print_rloc_probe_rtt(self):
         if (self.rloc_probe_rtt == -1): return("none")
         return(self.rloc_probe_rtt)
@@ -13897,6 +13940,15 @@ class lisp_rloc(object):
         lprint("Refresh map-cache for {} for RLOC {}, {}".format(e, r, rn))
 
         lisp_send_map_request(lisp_sockets, 0, None, eid, None)
+    #enddef
+
+    def get_rle(self, rloc):
+        if (self.rle == None): return(None)
+        for rle_node in self.rle.rle_nodes:
+            r = rle_node.rloc.rloc
+            if (rloc.is_exact_match(r)): return(rle_node.rloc)
+        #endfor
+        return(None)
     #enddef
 #endclass
 
@@ -14191,12 +14243,7 @@ class lisp_mapping(object):
         #endif
 
         #
-        # We are going to use this RLOC. Increment statistics.
-        #
-        rloc.stats.increment(len(packet))
-
-        #
-        # Give RLE preference.
+        # Give RLE preference. Increment RLE stats in caller.
         #
         if (rloc.rle_name and rloc.rle == None):
             if (rloc.rle_name in lisp_rle_list):
@@ -14204,6 +14251,11 @@ class lisp_mapping(object):
             #endif
         #endif
         if (rloc.rle): return([None, None, None, None, rloc.rle, None])
+
+        #
+        # We are going to use this RLOC. Increment statistics.
+        #
+        rloc.stats.increment(len(packet))
 
         #
         # Next check if ELP is cached for this RLOC entry.
@@ -17088,6 +17140,7 @@ def lisp_gather_map_cache_data(mc, data):
     entry["action"] =  lisp_map_reply_action_string[mc.action]
     entry["ttl"] = "--" if mc.map_cache_ttl == None else \
         str(mc.map_cache_ttl / 60)
+    entry["eid-memory"] = hex(id(mc))
 
     #
     # Encode in RLOC-set which is an array of entries.
@@ -17142,10 +17195,12 @@ def lisp_fill_rloc_in_json(rloc):
         #endif
     #endif
 
+    r["rloc-memory"] = hex(id(rloc))
+
     r["state"] = rloc.print_state()
     if (rloc.geo): r["geo"] = rloc.geo.print_geo()
     if (rloc.elp): r["elp"] = rloc.elp.print_elp(False)
-    if (rloc.rle): r["rle"] = rloc.rle.print_rle(False, False)
+    if (rloc.rle): r["rle"] = rloc.rle.print_api_rle()
     if (rloc.json): r["json"] = rloc.json.print_json(False)
     if (rloc.rloc_name): r["rloc-name"] = rloc.rloc_name
     stats = rloc.stats.get_stats(False, False)
@@ -18040,6 +18095,8 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
     # Look for RLOC in the RLOC-probe list for EID tuple and fix-up stored
     # RLOC-probe state.
     #
+    if (addr not in lisp_rloc_probe_list): return
+    
     for rloc, eid, group in lisp_rloc_probe_list[addr]:
         if (lisp_i_am_rtr):
             if (rloc.translated_port != 0 and rloc.translated_port != port):
@@ -20712,11 +20769,184 @@ def lisp_process_igmp_packet(packet):
     #endfor
 
     #
+    # Update local database for RLOC-probe support.
+    #
+    for source_str, group_str, joinleave in register_entries:
+        lisp_update_igmp_database(source_str, group_str, joinleave)
+    #endfor
+
+    #
     # Return (S,G) entries to return to call to send a Map-Register.
     # They are put in a multicast Info LCAF Type with ourselves as an RLE.
     # This is spec'ed in RFC 8378.
     #
     return(register_entries)
+#enddef
+
+#
+# lisp_update_igmp_database
+#
+# Update database with IGMP-learned multicast group membership.
+# Enables RLOC-probe Map-Requests to succeed.
+#
+def lisp_update_igmp_database(source_str, group_str, joinleave):
+
+    #
+    # Parse group address
+    #
+    group = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+    group.store_address(group_str)
+
+    #
+    # Parse source (or use 0.0.0.0/0 for (*,G))
+    #
+    if source_str:
+        eid = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+        eid.store_address(source_str)
+    else:
+        eid = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+        eid.mask_len = 0
+        eid.address = 0
+    #endif
+
+    if (joinleave):
+
+        #
+        # JOIN - add or update database entry
+        #
+        db = lisp_db_for_lookups.lookup_cache(group, False)
+        if db:
+            source_db = db.lookup_source_cache(eid, False)
+            if source_db:
+
+                #
+                # Refresh timestamp
+                #
+                source_db.last_refresh_time = lisp_get_timestamp()
+                return
+            #endif
+        #endif
+
+        #
+        # Create new database entry. Get translated info from the configured database entries.
+        #
+        db_rloc = lisp_db_list[0].rloc_set[0]
+
+        rloc_entry = copy.deepcopy(db_rloc)
+        rloc_entry.priority = 1
+        rloc_entry.weight = 100
+        rloc_entry.mpriority = 255
+        rloc_entry.mweight = 0
+        rloc_entry.state = LISP_RLOC_UP_STATE
+
+        db_entry = lisp_mapping(eid, group, [rloc_entry])
+        db_entry.map_cache_ttl = LISP_IGMP_TIMEOUT_INTERVAL  # 180 seconds
+        db_entry.last_refresh_time = lisp_get_timestamp()
+        db_entry.gleaned = True  # Mark as dynamically learned
+
+        db_entry.add_db()
+
+        prefix = "({}, {})".format(source_str if source_str else "*", group_str)
+        lprint("Added IGMP database entry for {}".format(green(prefix, False)))
+    else:
+
+        #
+        # LEAVE - remove database entry
+        #
+        lisp_remove_igmp_database(source_str, group_str)
+    #endif
+#enddef
+
+#
+# lisp_remove_igmp_database
+#
+# Remove IGMP-learned database entry when leave received.
+#
+def lisp_remove_igmp_database(source_str, group_str):
+    group = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+    group.store_address(group_str)
+
+    db = lisp_db_for_lookups.lookup_cache(group, False)
+    if db == None: return
+
+    if source_str:
+        eid = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+        eid.store_address(source_str)
+    else:
+        eid = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+        eid.mask_len = 0
+        eid.address = 0
+    #endif
+
+    source_db = db.lookup_source_cache(eid, False)
+    if source_db == None: return
+
+    #
+    # Don't remove configured entries
+    #
+    if source_db.gleaned == False: return
+
+    db.source_cache.delete_cache(eid)
+    prefix = "({}, {})".format(source_str if source_str else "*", group_str)
+    lprint("Removed IGMP database entry for {}".format(green(prefix, False)))
+
+    #
+    # Remove empty group entry
+    #
+    if db.source_cache.cache_size() == 0:
+        lisp_db_for_lookups.delete_cache(group)
+    #endif
+#enddef
+
+#
+# lisp_timeout_igmp_database
+#
+# Walk database and timeout IGMP-learned entries.
+# Called every 60 seconds.
+#
+def lisp_timeout_igmp_database():
+    now = lisp_get_timestamp()
+
+    #
+    # Walk all group entries in database
+    #
+    for group_db in list(lisp_db_for_lookups.cache.values()):
+        if group_db.group.is_null(): continue
+        if group_db.source_cache == None: continue
+
+        #
+        # Check each source entry for timeout
+        #
+        delete_list = []
+        for source_db in list(group_db.source_cache.cache.values()):
+            if source_db.gleaned == False: continue
+            if source_db.map_cache_ttl == None: continue
+
+            elapsed = now - source_db.last_refresh_time
+            if elapsed >= source_db.map_cache_ttl:
+                delete_list.append(source_db)
+            #endif
+        #endfor
+
+        #
+        # Delete timed-out sources
+        #
+        for source_db in delete_list:
+            prefix = source_db.print_eid_tuple()
+            lprint("IGMP database entry {} {}".format(
+                green(prefix, False), bold("timed out", False)))
+            group_db.source_cache.delete_cache(source_db.eid)
+        #endfor
+
+        #
+        # Remove empty group entry
+        #
+        if group_db.source_cache.cache_size() == 0:
+            lprint("Removing empty IGMP group database entry {}".format(
+                green(group_db.group.print_address(), False)))
+            lisp_db_for_lookups.delete_cache(group_db.group)
+        #endif
+    #endfor
 #enddef
 
 #
