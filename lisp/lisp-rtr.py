@@ -947,6 +947,11 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
 
             if (packet.encode(None) == None): return
 
+            #
+            # Increment stats for each RLE we are replicating to.
+            #
+            node.rloc.stats.increment(len(packet.packet))
+
             packet.print_packet("Replicate-to-L{}".format(node.level), True)
             packet.send_packet(lisp_raw_socket, packet.outer_dest)
 

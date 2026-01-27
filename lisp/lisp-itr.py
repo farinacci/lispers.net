@@ -862,6 +862,11 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
             if (packet.encode(None) == None): return
 
             #
+            # Increment stats for each RLE we are replicating to.
+            #
+            node.rloc.stats.increment(len(packet.packet))
+
+            #
             # Replicate out on raw socket.
             #
             packet.print_packet("Replicate-to-L{}".format(node.level), True)
