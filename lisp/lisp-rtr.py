@@ -927,6 +927,8 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         #
         orig_len = len(packet.packet)
         for node in rle.rle_forwarding_list:
+            if (node.rloc.up_state() == False): continue
+
             packet.outer_dest.copy_address(node.rloc.rloc)
             packet.encap_port = lisp.LISP_DATA_PORT if \
                 node.rloc.translated_port == 0 else node.rloc.translated_port

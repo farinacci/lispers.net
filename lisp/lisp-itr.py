@@ -845,6 +845,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         level = rle.rle_nodes[0].level
         orig_len = len(packet.packet)
         for node in rle.rle_forwarding_list:
+            if (node.rloc.up_state() == False): continue
             if (node.level != level): return
 
             packet.outer_dest.copy_address(node.rloc.rloc)
