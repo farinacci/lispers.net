@@ -5913,7 +5913,7 @@ class lisp_rloc_record(object):
                 #endif
             #endwhile
             self.rle = rle
-            self.rle.build_forwarding_list()
+            self.rle.build_rle_forwarding_list()
 
         elif (lcaf_type == LISP_LCAF_SECURITY_TYPE):
 
@@ -10709,15 +10709,6 @@ def lisp_process_multicast_map_notify(packet, source):
                 #endfor
             #endif
 
-            #
-            # Now there can be RLEs in the old_rloc that need to be copied to the new RLOC.
-            #
-            for orle in old_rloc.rle.rle_nodes:
-                nrle = rloc.get_rle(orle.rloc.rloc)
-                if (nrle != None): continue
-                rloc.rle.add_one_rle_node(orle)
-            #endfor
-
             if (rtr_mc and rloc.is_rtr() == False): continue
 
             mc.rloc_set = [rloc]
@@ -13039,7 +13030,7 @@ class lisp_rle(object):
         for rle_node in self.rle_nodes:
             rle.rle_nodes.append(rle_node.copy_rle_node())
         #endfor
-        rle.build_forwarding_list()
+        rle.build_rle_forwarding_list()
         return(rle)
     #enddef
 
@@ -13047,7 +13038,7 @@ class lisp_rle(object):
         new_rle_node = lisp_rle_node()
         new_rle_node = copy.deepcopy(rle_node)
         self.rle_nodes.append(new_rle_node)
-        self.build_forwarding_list()
+        self.build_rle_forwarding_list()
     #enddef
 
     def print_one_rle(self, rle_node, html, do_formatting):
@@ -13084,7 +13075,7 @@ class lisp_rle(object):
         return(api_rle)
     #enddef
 
-    def build_forwarding_list(self):
+    def build_rle_forwarding_list(self):
         level = -1
         for rle_node in self.rle_nodes:
             if (level == -1):
@@ -13097,8 +13088,7 @@ class lisp_rle(object):
 
         self.rle_forwarding_list = []
         for rle_node in self.rle_nodes:
-            if (rle_node.level == level or (level == 0 and
-                rle_node.level == 128)):
+            if (rle_node.level == level or (level == 0 and rle_node.level == 128)):
                 if (lisp_i_am_rtr == False and rle_node.rloc.rloc.is_local()):
                     addr_str = rle_node.rloc.rloc.print_address_no_iid()
                     lprint("Exclude local RLE RLOC {}".format(addr_str))
@@ -20422,7 +20412,7 @@ def lisp_build_gleaned_multicast(seid, geid, rloc, port, igmp):
         rle_node = lisp_rle_node()
         rle_node.rloc.rloc_name = seid_name
         rle_entry.rle_nodes.append(rle_node)
-        rle_entry.build_forwarding_list()
+        rle_entry.build_rle_forwarding_list()
         lprint("Add RLE {} from {} for gleaned EID {}".format(r, s, e))
     elif (rloc.is_exact_match(rle_node.rloc.rloc) == False or
           port != rle_node.rloc.translated_port):
@@ -20477,7 +20467,7 @@ def lisp_remove_gleaned_multicast(seid, geid):
     # Found entry to remove.
     #
     rle.rle_nodes.remove(rle_node)
-    rle.build_forwarding_list()
+    rle.build_rle_forwarding_list()
 
     group_str = geid.print_address()
     seid_str = seid.print_address()

@@ -3150,7 +3150,7 @@ def lisp_rle_command(kv_pair):
     # Put RLE in list by name.
     #
     rle.rle_nodes = rle_nodes
-    rle.build_forwarding_list()
+    rle.build_rle_forwarding_list()
     lisp.lisp_rle_list[rle.rle_name] = rle
     return
 #enddef

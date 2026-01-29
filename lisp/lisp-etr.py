@@ -868,6 +868,7 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
     translated_rloc = lisp.lisp_get_any_translated_rloc()
     rle = lisp.lisp_rle("")
     rle.rle_nodes.append(rle_node)
+    rle.build_rle_forwarding_list()
 
     #
     # Set up each map-server names so we can decide which EID-prefixes go
