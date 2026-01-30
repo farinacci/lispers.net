@@ -37,7 +37,7 @@ import json
 #
 # For turning on map-cache and rloc memory address debugging.
 #
-debug = True
+debug = False
 
 #------------------------------------------------------------------------------
 
@@ -62,7 +62,9 @@ def bold(string):
 #enddef
 
 def format_telemetry(rloc):
-    r = str(rloc["recent-rloc-probe-rtts"]).replace("u'", "")
+    rtt = str(rloc["recent-rloc-probe-rtts"])
+    rtt = rtt.replace("-1", "?")
+    r = rtt.replace("u'", "")
     r = r.replace("'", "")
     h = str(rloc["recent-rloc-hop-counts"]).replace("u'", "")
     h = h.replace("'", "")
