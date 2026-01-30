@@ -13820,6 +13820,7 @@ class lisp_rloc(object):
                 break
             #endif
         #endfor
+
         lisp_rloc_probe_list[addr_str].append([self, eid, group])
 
         #
@@ -20635,7 +20636,7 @@ def lisp_process_igmp_packet(packet):
 
     if (igmp_type == 17):
         lprint("IGMP Query for group {}".format(group_str))
-        return(True)
+        return([])
     #endif
 
     reports_and_leaves_only = (igmp_type in (0x12, 0x16, 0x17, 0x22))
@@ -20656,6 +20657,7 @@ def lisp_process_igmp_packet(packet):
     #
     if (igmp_type == 0x17):
         lprint("IGMPv2 leave (*, {})".format(bold(group_str, False)))
+        lisp_update_igmp_database(None, group_str, False)
         return([[None, group_str, False]])
     #endif
     if (igmp_type in (0x12, 0x16)):
@@ -20667,14 +20669,11 @@ def lisp_process_igmp_packet(packet):
         #
         if (group_str.find("224.0.0.") != -1):
             lprint("Suppress registration for link-local groups")
-        else:
-            return([[None, group_str, True]])
+            return([])
         #endif
 
-        #
-        # Finished with IGMPv1 or IGMPv2 processing.
-        #
-        return([])
+        lisp_update_igmp_database(None, group_str, True)
+        return([[None, group_str, True]])
     #endif
 
     #
@@ -20694,7 +20693,7 @@ def lisp_process_igmp_packet(packet):
     #
     register_entries = []
     for i in range(record_count):
-        if (len(igmp) < group_size): return
+        if (len(igmp) < group_size): return([])
         record_type, x, source_count, address = struct.unpack(group_format,
             igmp[:group_size])
 
@@ -20748,7 +20747,7 @@ def lisp_process_igmp_packet(packet):
         # Process (S,G)s (source records)..
         #
         for j in range(source_count):
-            if (len(igmp) < source_size): return
+            if (len(igmp) < source_size): return([])
             address = struct.unpack(source_format, igmp[:source_size])[0]
             source.address = socket.ntohl(address)
             source_str = source.print_address_no_iid()
@@ -20791,29 +20790,24 @@ def lisp_update_igmp_database(source_str, group_str, joinleave):
     #
     # Parse source (or use 0.0.0.0/0 for (*,G))
     #
+    eid = lisp_address(LISP_AFI_IPV4, "", 32, 0)
     if source_str:
-        eid = lisp_address(LISP_AFI_IPV4, "", 32, 0)
         eid.store_address(source_str)
     else:
-        eid = lisp_address(LISP_AFI_IPV4, "", 32, 0)
-        eid.mask_len = 0
         eid.address = 0
+        eid.mask_len = 0
     #endif
 
+    prefix = "({}, {})".format(source_str if source_str else "*", group_str)
+
     if (joinleave):
-
-        #
-        # JOIN - add or update database entry
-        #
         db = lisp_db_for_lookups.lookup_cache(group, False)
-        if db:
+        if (db):
             source_db = db.lookup_source_cache(eid, False)
-            if source_db:
-
-                #
-                # Refresh timestamp
-                #
+            if (source_db): 
                 source_db.last_refresh_time = lisp_get_timestamp()
+                lprint("Update IGMP database-mapping entry timestamp for {}".format( \
+                    green(prefix, False)))
                 return
             #endif
         #endif
@@ -20837,13 +20831,8 @@ def lisp_update_igmp_database(source_str, group_str, joinleave):
 
         db_entry.add_db()
 
-        prefix = "({}, {})".format(source_str if source_str else "*", group_str)
-        lprint("Added IGMP database entry for {}".format(green(prefix, False)))
+        lprint("Add IGMP database-mapping entry for {}".format(green(prefix, False)))
     else:
-
-        #
-        # LEAVE - remove database entry
-        #
         lisp_remove_igmp_database(source_str, group_str)
     #endif
 #enddef
@@ -20858,28 +20847,32 @@ def lisp_remove_igmp_database(source_str, group_str):
     group.store_address(group_str)
 
     db = lisp_db_for_lookups.lookup_cache(group, False)
-    if db == None: return
+    if (db == None): return
 
-    if source_str:
-        eid = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+    eid = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+    if (source_str):
         eid.store_address(source_str)
     else:
-        eid = lisp_address(LISP_AFI_IPV4, "", 32, 0)
-        eid.mask_len = 0
         eid.address = 0
+        eid.mask_len = 0
     #endif
 
+    prefix = "({}, {})".format(source_str if source_str else "*", group_str)
+
     source_db = db.lookup_source_cache(eid, False)
-    if source_db == None: return
+    if (source_db == None):
+        lprint("Could not remove not found IGMP database-mapping entry for {}".format( \
+            green(prefix, False)))
+        return
+    #endif
 
     #
     # Don't remove configured entries
     #
-    if source_db.gleaned == False: return
+    if (source_db.gleaned == False): return
 
     db.source_cache.delete_cache(eid)
-    prefix = "({}, {})".format(source_str if source_str else "*", group_str)
-    lprint("Removed IGMP database entry for {}".format(green(prefix, False)))
+    lprint("Remove IGMP database-mapping entry for {}".format(green(prefix, False)))
 
     #
     # Remove empty group entry
@@ -21015,7 +21008,7 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
     # The lisp-etr process will do this.
     #
     entries = lisp_process_igmp_packet(igmp)
-    if (type(entries) == bool): return
+    if (entries == []): return
 
     for source, group, joinleave in entries:
         if (source != None): continue

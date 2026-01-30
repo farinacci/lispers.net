@@ -1073,7 +1073,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
     protocol = struct.unpack("B", packet[9:10])[0]
     if (protocol == 2):
         entries = lisp.lisp_process_igmp_packet(packet)
-        if (type(entries) != bool):
+        if (entries != []):
             lisp_send_multicast_map_register(lisp_send_sockets, entries)
             return
         #endif
@@ -1183,7 +1183,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
         if (packet.packet == None): return
         if (igmp):
             entries = lisp.lisp_process_igmp_packet(packet.packet)
-            if (type(entries) != bool):
+            if (entries != []):
                 lisp_send_multicast_map_register(lisp_send_sockets, entries)
                 return
             #endif
@@ -1530,7 +1530,7 @@ def lisp_etr_join_leave_process():
                 value += int(octet[3])
                 send_packet += struct.pack("I", swap(value))
                 sg = lisp.lisp_process_igmp_packet(send_packet)
-                if (type(sg) != bool):
+                if (sg != []):
                     lisp_send_multicast_map_register(lisp_send_sockets, sg)
                 #endif
                 time.sleep(.100)
