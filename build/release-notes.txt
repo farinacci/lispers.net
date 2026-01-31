@@ -2,7 +2,7 @@
                lispers.net Beta Release Version 0.615
                --------------------------------------
 
-o Release date:
+o Release date: Fri Jan 30 23:15:26 PST 2026
 
 o IGMPv2 reports were not creating database-entries causing RLOC-probes to
   (*,G) entries to not be replied too. That was causing RLOCs to go unreachable
