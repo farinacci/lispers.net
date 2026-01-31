@@ -2801,10 +2801,10 @@ def lisp_itr_rtr_show_rloc_probe_command(itr_or_rtr):
         # Build column 1.
         #
         n = lisp.lisp_hex_string(r.last_rloc_probe_nonce)
-        if (r.translated_rloc.not_set()):
+        if (r.translated_port == 0):
             rs = r.rloc.print_address_no_iid()
         else:
-            rs = "{}{}{}".format(r.translated_rloc.print_address_no_iid(),
+            rs = "{}{}{}".format(r.rloc.print_address_no_iid(),
                 lisp.bold(":", True), r.translated_port)
         #endif
         rs = lisp.bold(lisp.lisp_print_cour(rs), True)
@@ -2850,8 +2850,9 @@ def lisp_itr_rtr_show_rloc_probe_command(itr_or_rtr):
             rep = lisp.lisp_print_cour(rep)
             n = lisp.lisp_hex_string(r.last_rloc_probe_nonce)
             n = lisp.lisp_print_cour("0x" + n)
-            col2 += ("Last probe-request sent: {}, " + \
-                "last probe-reply received: {}, nonce: {}<br>").format(req,
+            m = lisp.lisp_print_cour(str(hex(id(r))))
+            col2 += ("RLOC-memory: {}<br>Last probe-request sent: {}, " + \
+                "last probe-reply received: {}, nonce: {}<br>").format(m, req,
                 rep, n)
 
             rtt = r.print_recent_rloc_probe_rtts()

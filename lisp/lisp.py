@@ -10705,7 +10705,7 @@ def lisp_process_multicast_map_notify(packet, source):
                     orle = old_rloc.get_rle(nrle.rloc.rloc)
                     if (orle == None): continue
                     nrle.rloc.stats = copy.deepcopy(orle.stats)
-                    nrle.rloc.copy_recents(orle)
+                    nrle.rloc.copy_rloc_probe_recents(orle)
                 #endfor
             #endif
 
@@ -13637,7 +13637,14 @@ class lisp_rloc(object):
         return(string)
     #enddef
 
-    def copy_recents(self, rloc):
+    def copy_rloc_probe_recents(self, rloc):
+        self.rloc_probe_rtt = rloc.rloc_probe_rtt
+        self.rloc_probe_hops = rloc.rloc_probe_hops
+        self.rloc_probe_latency = rloc.rloc_probe_latency
+        self.last_rloc_probe = rloc.last_rloc_probe
+        self.last_rloc_probe_reply = rloc.last_rloc_probe_reply
+        self.last_rloc_probe_nonce = rloc.last_rloc_probe_nonce
+        self.echo_nonce_capable = rloc.echo_nonce_capable
         self.recent_rloc_probe_rtts = rloc.recent_rloc_probe_rtts
         self.recent_rloc_probe_hops = rloc.recent_rloc_probe_hops
         self.recent_rloc_probe_latencies = rloc.recent_rloc_probe_latencies
@@ -13801,37 +13808,52 @@ class lisp_rloc(object):
     def add_to_rloc_probe_list(self, eid, group):
         addr_str = self.rloc.print_address_no_iid()
         port = self.translated_port
-        if (port != 0): addr_str += ":" + str(port)
 
-        if (addr_str not in lisp_rloc_probe_list):
-            lisp_rloc_probe_list[addr_str] = []
+        #
+        # Check if there is a portless addr_str in the probe_list and this
+        # call is for a portful addr_str.
+        #
+        if (port != 0):
+            addr_port_str = addr_str + ":" + str(port)
+            if (addr_str in lisp_rloc_probe_list):
+                lisp_rloc_probe_list[addr_port_str] = lisp_rloc_probe_list[addr_str]
+                lisp_rloc_probe_list.pop(addr_str)
+            #endif
+            addr_str = addr_port_str
         #endif
 
+        #
+        # Add new addr_str to the probe-list.
+        #
+        if (addr_str not in lisp_rloc_probe_list): lisp_rloc_probe_list[addr_str] = []
+
+        #
+        # Now look for all EID entries that use the same RLOC address and update the
+        # rloc-probe data including the recent telemetry stats.
+        #
         if (group.is_null()): group.instance_id = 0
+
+        old_entry = None
         for r, e, g in lisp_rloc_probe_list[addr_str]:
             if (e.is_exact_match(eid) and g.is_exact_match(group)):
-                if (r == self):
-                    if (lisp_rloc_probe_list[addr_str] == []):
-                        lisp_rloc_probe_list.pop(addr_str)
-                    #endif
-                    return
-                #endif
-                lisp_rloc_probe_list[addr_str].remove([r, e, g])
+                if (r == self): return
+                self.copy_rloc_probe_recents(r)
+                old_entry = [r, e, g]
                 break
             #endif
         #endfor
 
-        lisp_rloc_probe_list[addr_str].append([self, eid, group])
+        #
+        # Remove the RLOC memory pointer we are replacing with self.
+        #
+        if (old_entry != None):
+            lisp_rloc_probe_list[addr_str].remove(old_entry)
+        #endif
 
         #
-        # Copy reach/unreach state from first RLOC that the active RLOC-probing
-        # is run on.
+        # Add self.
         #
-        rloc = lisp_rloc_probe_list[addr_str][0][0]
-        if (rloc.state == LISP_RLOC_UNREACH_STATE):
-            self.state = LISP_RLOC_UNREACH_STATE
-            self.last_state_change = lisp_get_timestamp()
-        #endif
+        lisp_rloc_probe_list[addr_str].append([self, eid, group])
     #enddef
 
     def delete_from_rloc_probe_list(self, eid, group):
