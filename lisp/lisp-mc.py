@@ -37,7 +37,7 @@ import json
 #
 # For turning on map-cache and rloc memory address debugging.
 #
-debug = False
+debug = True
 
 #------------------------------------------------------------------------------
 

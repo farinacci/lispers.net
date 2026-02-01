@@ -10704,6 +10704,7 @@ def lisp_process_multicast_map_notify(packet, source):
                 for nrle in rloc.rle.rle_nodes:
                     orle = old_rloc.get_rle(nrle.rloc.rloc)
                     if (orle == None): continue
+                    nrle.rloc.uptime = orle.uptime
                     nrle.rloc.stats = copy.deepcopy(orle.stats)
                     nrle.rloc.copy_rloc_probe_recents(orle)
                 #endfor
@@ -13838,6 +13839,7 @@ class lisp_rloc(object):
             if (e.is_exact_match(eid) and g.is_exact_match(group)):
                 if (r == self): return
                 self.copy_rloc_probe_recents(r)
+                self.uptime = r.uptime
                 old_entry = [r, e, g]
                 break
             #endif
