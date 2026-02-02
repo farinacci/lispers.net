@@ -21,7 +21,7 @@ sudo ln -sf python2 python
 #
 # Get lispers.net tarball and put it in its own directory.
 #
-mkdir /home/<user-id>/lispers.net
+mkdir /home/ubuntu/lispers.net
 sudo ln -sf /home/ubuntu/lispers.net /lispers.net
 cd lispers.net
 wget <tarball-url> or scp
