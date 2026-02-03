@@ -13000,8 +13000,7 @@ class lisp_rle_node(object):
     #enddef
 
     def store_translated_rloc(self, rloc, port):
-        self.rloc.rloc.copy_address(rloc)
-        self.rloc.translated_port = port
+        rloc.store_translated_rloc(rloc.rloc, port)
     #enddef
 
     def get_encap_keys(self):
@@ -13569,7 +13568,8 @@ class lisp_rloc(object):
                 lprint(("      Store translated encap-port {} for RLE-" + \
                     "node {}, rloc-name '{}'").format(port,
                      rle_node.rloc.rloc.print_address_no_iid(), rloc_name_str))
-                rle_node.rloc.translated_port = port
+
+                rle_node.store_translated_rloc(rle_node.rloc, port)
             #endfor
         #endif
 
