@@ -10713,6 +10713,7 @@ def lisp_process_multicast_map_notify(packet, source):
             if (rtr_mc and rloc.is_rtr() == False): continue
 
             mc.rloc_set = [rloc]
+            mc.action = LISP_NO_ACTION
             mc.build_best_rloc_set()
             lisp_write_ipc_map_cache(True, mc)
 
@@ -16737,23 +16738,24 @@ def lisp_timeout_map_cache_walk(mc, parms):
     checkpoint_list = parms[1]
 
     #
-    # There is only destination state in this map-cache entry.
+    # There is only unicast destination state in this map-cache entry.
     #
     if (mc.group.is_null()):
         status, delete_list = lisp_timeout_map_cache_entry(mc, delete_list)
         if (delete_list == [] or mc != delete_list[-1]):
             checkpoint_list = lisp_write_checkpoint_entry(checkpoint_list, mc)
+            parms[1] = checkpoint_list
         #endif
+        parms[0] = delete_list
         return([status, parms])
     #endif
-
     if (mc.source_cache == None): return([True, parms])
 
     #
-    # There is (source, group) state so walk all sources for this group
-    # entry.
+    # There is (source, group) state so walk all sources for this group entry.
     #
-    parms = mc.source_cache.walk_cache(lisp_timeout_map_cache_entry, parms)
+    delete_list = mc.source_cache.walk_cache(lisp_timeout_map_cache_entry, delete_list)
+    parms[0] = delete_list
     return([True, parms])
 #enddef
 
