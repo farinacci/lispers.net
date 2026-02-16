@@ -37,7 +37,7 @@ of syntax and functionality in:
 The lispers.net implementation supports the following IETF LISP Working Group
 RFCs and Internet-Drafts:
 
-RFC 9299                               - An Architectural Introduction to the Locator/ID Separation Protocol (LISP)
+RFC 9299                               - Architectural Introduction to Locator/ID Separation Protocol (LISP)
 RFC 6830                               - The Locator/ID Separation Protocol (LISP)
 draft-ietf-lisp-rfc6830bis             - The Locator/ID Separation Protocol (LISP)
 RFC 9300                               - The Locator/ID Separation Protocol (LISP) Proposed Standard
