@@ -1,4 +1,14 @@
 
+               lispers.net Beta Release Version 0.618
+               --------------------------------------
+
+o Release date:
+
+o Update main lispers.net repo README file to update platforms and RFCs/Internet Drafts
+  the lispers.net implementation runs on.        
+
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.617
                --------------------------------------
 
