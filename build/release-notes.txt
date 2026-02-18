@@ -4,8 +4,8 @@
 
 o Release date:
 
-o Update main lispers.net repo README file to update platforms and RFCs/Internet Drafts
-  the lispers.net implementation runs on.        
+o Update main lispers.net repo README.md file to update platforms and RFCs/Internet Drafts
+  the lispers.net implementation runs on. Reformat so more view friendly.
 
 -------------------------------------------------------------------------------
 
