@@ -69,12 +69,6 @@ The lispers.net implementation supports the following IETF LISP Working Group RF
 
 ---
 
-- draft-ermagan-lisp-nat-traversal — NAT traversal for LISP
-- draft-farinacci-lisp-decent — A Decent LISP Mapping System (LISP-Decent)
-- draft-farinacci-lisp-lispers-net-nat — Simple NAT traversal for LISP
-- draft-farinacci-lisp-mobile-network — LISP for the Mobile Network
-- draft-farinacci-lisp-satellite-network — LISP for Satellite Networks
-- draft-farinacci-lisp-telemetry — LISP Data-Plane Telemetry
 - draft-ietf-lisp-8111bis — Locator/ID Separation Protocol Delegated Database Tree (LISP-DDT)
 - draft-ietf-lisp-8378bis — Signal-Free Locator/ID Separation Protocol (LISP) Multicast
 - draft-ietf-lisp-ecdsa-auth — LISP Control-Plane ECDSA Authentication and Authorization
@@ -92,5 +86,14 @@ The lispers.net implementation supports the following IETF LISP Working Group RF
 - draft-ietf-lisp-rfc8060bis — LISP Canonical Address Format (LCAF)
 - draft-ietf-lisp-te — LISP Traffic Engineering Use-Cases
 - draft-ietf-lisp-vpn — LISP Virtual Private Networks (VPNs)
+
+---
+
+- draft-ermagan-lisp-nat-traversal — NAT traversal for LISP
+- draft-farinacci-lisp-decent — A Decent LISP Mapping System (LISP-Decent)
+- draft-farinacci-lisp-lispers-net-nat — Simple NAT traversal for LISP
+- draft-farinacci-lisp-mobile-network — LISP for the Mobile Network
+- draft-farinacci-lisp-satellite-network — LISP for Satellite Networks
+- draft-farinacci-lisp-telemetry — LISP Data-Plane Telemetry
 
 ---
