@@ -20918,44 +20918,46 @@ def lisp_timeout_igmp_database():
     now = lisp_get_timestamp()
 
     #
-    # Walk all group entries in database
+    # Walk all group entries in database.
     #
-    for group_db in list(lisp_db_for_lookups.cache.values()):
-        if group_db.group.is_null(): continue
-        if group_db.source_cache == None: continue
+    for ml in lisp_db_for_lookups.cache_sorted:
+        for group_db in (list(lisp_db_for_lookups.cache[ml].entries.values())):
+            if (group_db.group.is_null()): continue
+            if (group_db.source_cache == None): continue
 
-        #
-        # Check each source entry for timeout
-        #
-        delete_list = []
-        for source_db in list(group_db.source_cache.cache.values()):
-            if source_db.gleaned == False: continue
-            if source_db.map_cache_ttl == None: continue
+            #
+            # Check each source entry for timeout.
+            #
+            delete_list = []
+            for source_db in (list(group_db.source_cache.cache.values())):
+                if (source_db.gleaned == False): continue
+                if (source_db.map_cache_ttl == None): continue
 
-            elapsed = now - source_db.last_refresh_time
-            if elapsed >= source_db.map_cache_ttl:
-                delete_list.append(source_db)
+                elapsed = now - source_db.last_refresh_time
+                if (elapsed >= source_db.map_cache_ttl):
+                    delete_list.append(source_db)
+                #endif
+            #endfor
+
+            #
+            # Delete timed-out sources.
+            #
+            for source_db in (delete_list):
+                prefix = source_db.print_eid_tuple()
+                lprint("IGMP database entry {} {}".format(
+                    green(prefix, False), bold("timed out", False)))
+                group_db.source_cache.delete_cache(source_db.eid)
+            #endfor
+
+            #
+            # Remove empty group entry.
+            #
+            if (group_db.source_cache.cache_size() == 0):
+                lprint("Removing empty IGMP group database entry {}".format(
+                    green(group_db.group.print_address(), False)))
+                lisp_db_for_lookups.delete_cache(group_db.group)
             #endif
         #endfor
-
-        #
-        # Delete timed-out sources
-        #
-        for source_db in delete_list:
-            prefix = source_db.print_eid_tuple()
-            lprint("IGMP database entry {} {}".format(
-                green(prefix, False), bold("timed out", False)))
-            group_db.source_cache.delete_cache(source_db.eid)
-        #endfor
-
-        #
-        # Remove empty group entry
-        #
-        if group_db.source_cache.cache_size() == 0:
-            lprint("Removing empty IGMP group database entry {}".format(
-                green(group_db.group.print_address(), False)))
-            lisp_db_for_lookups.delete_cache(group_db.group)
-        #endif
     #endfor
 #enddef
 
