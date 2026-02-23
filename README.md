@@ -27,6 +27,7 @@ For more information, visit [lispers.net](https://www.lispers.net).
 
 - Arista EOS (Linux Fedora)
 - Cisco IOS-XE guestshell (Linux CentOS)
+- Nvidia Bluefield-3 DPU
 
 ## Getting Started
 
@@ -70,7 +71,6 @@ The lispers.net implementation supports the following IETF LISP Working Group RF
 ---
 
 - [draft-ietf-lisp-8111bis](https://datatracker.ietf.org/doc/draft-ietf-lisp-8111bis/) — Locator/ID Separation Protocol Delegated Database Tree (LISP-DDT)
-- [draft-ietf-lisp-8378bis](https://datatracker.ietf.org/doc/draft-ietf-lisp-8378bis/) — Signal-Free Locator/ID Separation Protocol (LISP) Multicast
 - [draft-ietf-lisp-ecdsa-auth](https://datatracker.ietf.org/doc/draft-ietf-lisp-ecdsa-auth/) — LISP Control-Plane ECDSA Authentication and Authorization
 - [draft-ietf-lisp-eid-anonymity](https://datatracker.ietf.org/doc/draft-ietf-lisp-eid-anonymity/) — LISP EID Anonymity
 - [draft-ietf-lisp-eid-mobility](https://datatracker.ietf.org/doc/draft-ietf-lisp-eid-mobility/) — LISP L2/L3 EID Mobility Using a Unified Control Plane
@@ -84,6 +84,7 @@ The lispers.net implementation supports the following IETF LISP Working Group RF
 - [draft-ietf-lisp-rfc6831bis](https://datatracker.ietf.org/doc/draft-ietf-lisp-rfc6831bis/) — The Locator/ID Separation Protocol (LISP) for Multicast Environments
 - [draft-ietf-lisp-rfc6833bis](https://datatracker.ietf.org/doc/draft-ietf-lisp-rfc6833bis/) — Locator/ID Separation Protocol (LISP) Control-Plane
 - [draft-ietf-lisp-rfc8060bis](https://datatracker.ietf.org/doc/draft-ietf-lisp-rfc8060bis/) — LISP Canonical Address Format (LCAF)
+- [draft-ietf-lisp-rfc8378bis](https://datatracker.ietf.org/doc/draft-ietf-lisp-rfc8378bis) — Signal-Free Locator/ID Separation Protocol (LISP) Multicast
 - [draft-ietf-lisp-te](https://datatracker.ietf.org/doc/draft-ietf-lisp-te/) — LISP Traffic Engineering Use-Cases
 - [draft-ietf-lisp-vpn](https://datatracker.ietf.org/doc/draft-ietf-lisp-vpn/) — LISP Virtual Private Networks (VPNs)
 
