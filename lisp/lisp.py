@@ -96,6 +96,7 @@ lisp_geo_list = {}
 lisp_json_list = {}
 lisp_myrlocs = [None, None, None]
 lisp_mymacs = {}
+lisp_startup_complete = False # Set to True when initial config processing is done
 
 #
 # Used for multi-tenancy. First dictionary array is indexed by device name
@@ -17077,6 +17078,16 @@ def lisp_process_api(process, lisp_socket, data_structure):
 
     lprint("Process API request '{}', parameters: '{}'".format(api_name,
         parms))
+
+    #
+    # If configuration loading is not complete yet, return status message
+    # in JSON format. This prevents returning incomplete data structures on
+    # slower processors where config parsing takes longer. Client can retry.
+    #
+    if (not lisp_startup_complete):
+        status = [{ "status" : "startup-in-progress" }]
+        return(json.dumps(status))
+    #endif
 
     data = []
     if (api_name == "map-cache"):

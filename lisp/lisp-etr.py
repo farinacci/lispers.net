@@ -194,6 +194,7 @@ def lisp_etr_database_mapping_command(kv_pair):
         if (db.eid.is_dist_name() == False): return
         if (db.eid.address != "eid-done"): return
         lisp_seen_eid_done = True
+        lisp.lisp_startup_complete = True
 
         lisp.fprint("Finished batch of {} database-mappings".format(db_size))
 

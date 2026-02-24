@@ -1068,7 +1068,9 @@ def lisp_find_user_account(username, password):
     # case.
     #
     pw = users[:end].split("=")
+    if (len(pw) < 2): return(False)
     if (pw[1] == ""):
+        if (len(pw) < 3): return(False)
         ciphertext = lisp_hash_password(password)
         if (pw[2] != ciphertext): return(False)
     else:
