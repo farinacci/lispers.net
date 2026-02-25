@@ -158,7 +158,6 @@ def lisp_etr_timeout_igmp_database():
 def lisp_etr_database_mapping_command(kv_pair):
     global lisp_register_timer, lisp_trigger_register_timer
     global lisp_send_sockets, lisp_seen_eid_done
-    global lisp_seen_eid_done_count
 
     #
     # This is to fix an issue with the same set of database-mappings being
