@@ -18844,8 +18844,8 @@ def lisp_get_default_route_next_hops():
     for route in default_routes:
         r = route.split()
         try:
-            device = r[-1]
-            nh = r[-3]
+            nh = r[2]       # default via <nh>
+            device = r[4]   # default via <nh> dev <device>
         except:
             continue
         #endtry
