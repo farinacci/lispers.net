@@ -20929,14 +20929,16 @@ def lisp_timeout_igmp_database():
             # Check each source entry for timeout.
             #
             delete_list = []
-            for source_db in (list(group_db.source_cache.cache.values())):
-                if (source_db.gleaned == False): continue
-                if (source_db.map_cache_ttl == None): continue
+            for sml in group_db.source_cache.cache_sorted:
+                for source_db in (list(group_db.source_cache.cache[sml].entries.values())):
+                    if (source_db.gleaned == False): continue
+                    if (source_db.map_cache_ttl == None): continue
 
-                elapsed = now - source_db.last_refresh_time
-                if (elapsed >= source_db.map_cache_ttl):
-                    delete_list.append(source_db)
-                #endif
+                    elapsed = now - source_db.last_refresh_time
+                    if (elapsed >= source_db.map_cache_ttl):
+                        delete_list.append(source_db)
+                    #endif
+                #endfor
             #endfor
 
             #
