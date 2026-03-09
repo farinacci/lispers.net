@@ -299,6 +299,14 @@ lisp_decent_modulus = 0
 lisp_decent_dns_suffix = None
 
 #
+# EID prefix to lookup-length mapping for decent hash lookups. Maps EID
+# prefixes to their configured lookup prefix lengths. Used by
+# lisp_get_decent_index() to hash on the correct prefix length when looking
+# up EIDs in the cache.
+#
+lisp_decent_lookup_prefixes = {}
+
+#
 # lisp.lisp_ipc_socket is used by the lisp-itr process during RLOC-probing
 # to send the lisp-etr process status about RTRs learned. This is part of
 # NAT-traversal support.
@@ -20068,6 +20076,42 @@ def lisp_is_decent_dns_suffix(dns_name):
 #enddef
 
 #
+# lisp_get_decent_eid_string
+#
+# Build the EID string to use for LISP-Decent hashing. Check if the EID
+# matches a configured decent lookup prefix. If it does, mask the EID to the
+# configured lookup-length instead of using the full prefix length. Ensure
+# bits beyond the lookup-length are zero.
+#
+def lisp_get_decent_eid_string(eid):
+    eid_str = eid.print_prefix()
+
+    best_lookup_len = None
+    best_prefix_len = 0
+    for config_prefix, lookup_len in lisp_decent_lookup_prefixes.items():
+        if (eid.is_more_specific(config_prefix)):
+            if (best_lookup_len == None or config_prefix.mask_len > best_prefix_len):
+                best_prefix_len = config_prefix.mask_len
+                best_lookup_len = lookup_len
+            #endif
+        #endif
+    #endfor
+
+    #
+    # If not found, return host prefix.
+    #
+    if (best_lookup_len == None): return(eid_str)
+
+    #
+    # Return longest match lookup prefix.
+    #
+    eid_for_hash = copy.deepcopy(eid)
+    eid_for_hash.mask_len = best_lookup_len
+    eid_for_hash.zero_host_bits()
+    return(eid_for_hash.print_prefix())
+#enddef
+
+#
 # lisp_get_decent_index
 #
 # Hash the EID-prefix and mod the configured LISP-Decent modulus value. We
@@ -20077,7 +20121,12 @@ def lisp_is_decent_dns_suffix(dns_name):
 # The seed/password for the sha256 hash is string "".
 #
 def lisp_get_decent_index(eid):
-    eid_str = eid.print_prefix()
+
+    #
+    # Build the EID string for hashing, applying any configured decent
+    # lookup prefix masks.
+    #
+    eid_str = lisp_get_decent_eid_string(eid)
     e = eid_str.encode()
     hash_value = hmac.new(b"lisp-decent", e, hashlib.sha256).hexdigest()
 
@@ -20099,8 +20148,8 @@ def lisp_get_decent_index(eid):
     mod_value = hash_value[0:hash_width]
     index = int(mod_value, 16) % lisp_decent_modulus
 
-    lprint("LISP-Decent modulus {}, hash-width {}, mod-value {}, index {}". \
-        format(lisp_decent_modulus, old_div(hash_width, 2) , mod_value, index))
+    lprint("LISP-Decent modulus {}, hash-width {}, mod-value {}, index {} for {}". \
+        format(lisp_decent_modulus, old_div(hash_width, 2) , mod_value, index, eid_str))
 
     return(index)
 #enddef

@@ -61,6 +61,8 @@ lisp_commands = {
     "lisp itr-map-cache"            : ["lisp-itr"],
     "lisp rtr-map-cache"            : ["lisp-rtr"],
     "lisp map-server"               : ["lisp-itr", "lisp-etr"],
+    "lisp decent-prefix"            : ["lisp-itr"],
+
     "lisp database-mapping"         : ["lisp-itr", "lisp-etr", "lisp-rtr"],
     "lisp group-mapping"            : ["lisp-etr"],
     "lisp glean-mapping"            : ["lisp-rtr"],
@@ -604,6 +606,13 @@ def lisp_setup_kv_pairs(clause):
         kv_pairs["address"] = [""] * count
         kv_pairs["priority"] = [""] * count
         kv_pairs["weight"] = [""] * count
+    #endif
+
+    count = clause.count(" decent-prefix {")
+    if (count != 0):
+        kv_pairs["instance-id"] = [""] * count
+        kv_pairs["eid-prefix"] = [""] * count
+        kv_pairs["lookup-length"] = [""] * count
     #endif
 
     #

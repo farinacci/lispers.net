@@ -546,6 +546,68 @@ lisp map-server {
 
 -------------------------------------------------------------------------------
 
+   Configure LISP-Decent Prefix Lookup Mapping on an ITR
+   -------------------------------------------------------
+
+Command syntax:
+
+lisp decent-prefix {
+    instance-id = <0 - 0xffffffff>
+    eid-prefix = x.x.x.x/ml | xxxx:yyyy::zzzz/ml
+    lookup-length = <0 - 128>
+    ...
+}
+...
+
+Command Description:
+    Configures EID prefix to lookup prefix-length mapping for LISP-Decent
+    hash-based routing. When an ITR performs a lookup on an EID, if the EID
+    falls within a configured well-known prefix range AND matches the instance-id,
+    the ITR will hash the lookup using the configured lookup-length instead of
+    the full prefix length. This allows the ITR to find the correct map-server
+    when the EID was registered with a different (typically shorter) prefix length.
+
+Parameters:
+    instance-id
+        The LISP instance-id that this configuration applies to. If not specified,
+        this parameter defaults to 0. Only EIDs with matching instance-ids will be
+        subject to the lookup-length masking.
+
+    eid-prefix
+        The well-known EID prefix range that will be used for hash lookups.
+        Format is address/prefix-length where prefix-length indicates the
+        size of the well-known allocation block.
+
+    lookup-length
+        The prefix-length to use when hashing lookups for EIDs within this
+        range. For IPv4, this cannot exceed 32. For IPv6, this can be 0-128.
+
+Example:
+
+#
+# Configure LISP-Decent with well-known EID ranges (instance-id defaults to 0).
+#
+lisp decent-prefix {
+    eid-prefix = 240.11.0.0/16
+    lookup-length = 24
+}
+lisp decent-prefix {
+    eid-prefix = 240.12.0.0/16
+    lookup-length = 30
+}
+lisp decent-prefix {
+    instance-id = 0
+    eid-prefix = 2001:db8:1::/48
+    lookup-length = 64
+}
+lisp decent-prefix {
+    instance-id = 1
+    eid-prefix = 192.168.0.0/16
+    lookup-length = 25
+}
+
+-------------------------------------------------------------------------------
+
          Configure the Map-Resolver address on an ITR and RTR
          ----------------------------------------------------
 
