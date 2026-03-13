@@ -69,13 +69,13 @@ if (`uname` == "Darwin") then
 
     sudo ifconfig en0 $EID/32 alias
     sudo route add 224.0.0.0/8 $EID > /dev/null
-    sudo ifconfig en0 $EID/32 -alias
-
-    sudo ifconfig lo0 $EID/32 alias
-    sudo ifconfig lo0 mtu 1400
     sudo route add 240.0.0.0/8 $EID > /dev/null
+#   sudo ifconfig lo0 $EID/32 alias
+
+    sudo ifconfig lo0 mtu 1400
     sudo sysctl net.inet.igmp.default_version=2
     sudo sysctl net.inet.igmp.sendra=0
+
 else    
     set DEVICE = "eth0"
     set PATH = "/lispers.net"
