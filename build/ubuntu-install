@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# ubuntu-install
+#
+# Install lispers.net, its dependencies and networking tools on Ubuntu Linux.
+#
+# Usage: ./ubuntu-install <lispers.net-tarball> <RL-file> <lisp.config-file>
+#
+
+if [ -z "$1" ]; then
+  echo "Usage: ./ubuntu-install <lispers.net-tarball> <RL-file> <lisp.config-file>"
+  exit 1
+fi
+    
+read -p "Enter hostname: " HN
+
+LISP=$1
+RL=$2
+LISPCONFIG=$3            
+HOME="/home/ubuntu"
+
+echo "Install networking tools ... "    
+sudo apt-get update
+sudo apt-get install -y \
+    gcc libc-dev python2 python2-dev golang libffi-dev openssl libpcap-dev \
+    iptables iproute2 tcpdump tcsh sudo traceroute iputils-ping \
+    net-tools procps emacs vim jq python-pip iperf
+
+echo "Setup python and lispers.net directory ... "
+cd /usr/bin
+sudo ln -sf python2 python        
+mkdir -p $HOME/lispers.net
+sudo ln -sf /home/ubuntu/lispers.net /lispers.net
+cd $HOME/lispers.net
+tar zxvf ../$LISP
+
+echo "Install lispers.net python dependencies ... "
+python -m pip install cheroot bottle netifaces pcapy pcappy pyOpenSSL \
+    pycrypto requests curve25519-donna geopy ecdsa pycryptodome pytun \
+    future distro
+
+echo "Test if installation is complete ... "
+cd $HOME/lispers.net
+python lispers.net-test-install.pyo
+
+echo "" >> $HOME/.bashrc    
+echo "sudo hostname $HN" >> $HOME/.bashrc    
+echo "/bin/tcsh" >> $HOME/.bashrc
+    
+if [ -z "$RL" ] || [ -z "$LISPCONFIG" ]; then
+  echo "Done"    
+  exit 1
+fi    
+
+echo "Move RL/lisp.config file to working lispers.net directory ... "
+cp ../$RL RL; chmod 755 RL
+cp ../$LISPCONFIG lisp.config
+
+echo "Start up LISP subsystem ... "
+./RL
+
+echo "Done"    
+exit 0            

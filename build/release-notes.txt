@@ -1,4 +1,30 @@
 
+               lispers.net Beta Release Version 0.620
+               --------------------------------------
+
+o Release date:
+
+o Changing the RL interface/route configuration for MacOS. We can use the EID
+  on en0 for both unicast and multicast packets and have the source selected
+  for both 240 and 224 routes. If we don't do this, MacOS will source TCP packets,
+  if EID is configured on loopback interace, with checksum errors. This configuration
+  is sufficient:
+
+    sudo ifconfig en0 $EID/32 alias
+    sudo route add 224.0.0.0/8 $EID > /dev/null
+    sudo route add 240.0.0.0/8 $EID > /dev/null
+
+  There is one really big caveat. If the interface address goes away on en0
+  (your wifi connection goes down or IP address is changed), the EID will
+  be promoted as the primary address and you are likely to lose Internet
+  connectivity.
+
+o Put script "ubuntu-install' in /build that execute the instructions in
+  docs/how-to-install-ubuntu.txt. You need to supply lispers.net tarball
+  name and optionally an RL and lisp.config file.
+
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.619
                --------------------------------------
 
