@@ -96,9 +96,11 @@ def lisp_etr_map_server_command(kv_pair):
     first_ms = (len(lisp.lisp_map_servers_list) == 1)
     if (first_ms):
         ms = list(lisp.lisp_map_servers_list.values())[0]
-        lisp_etr_info_timer = threading.Timer(2, lisp_etr_process_info_timer,
-            [ms.map_server])
-        lisp_etr_info_timer.start()
+        if (lisp_etr_info_timer == None):
+            lisp_etr_info_timer = threading.Timer(2, lisp_etr_process_info_timer,
+                [ms.map_server])
+            lisp_etr_info_timer.start()
+        #endif
     else:
 
         #
@@ -125,10 +127,11 @@ def lisp_etr_map_server_command(kv_pair):
     # in configuration file. We have to start periodic timer.
     #
     if (len(lisp.lisp_db_list) > 0):
-        if (lisp_trigger_register_timer != None): return
-        lisp_trigger_register_timer = threading.Timer(5,
-            lisp_process_register_timer, [lisp_send_sockets])
-        lisp_trigger_register_timer.start()
+        if (lisp_trigger_register_timer == None):
+            lisp_trigger_register_timer = threading.Timer(5,
+                lisp_process_register_timer, [lisp_send_sockets])
+            lisp_trigger_register_timer.start()
+        #endif
     #endif
 #enddef
 
@@ -196,10 +199,11 @@ def lisp_etr_database_mapping_command(kv_pair):
 
         lisp.fprint("Finished batch of {} database-mappings".format(db_size))
 
-        t = threading.Timer(0, lisp_process_register_timer,
-            [lisp_send_sockets])
-        lisp_register_timer = t
-        lisp_register_timer.start()
+        if (lisp_register_timer == None):
+            lisp_register_timer = threading.Timer(0, lisp_process_register_timer,
+                [lisp_send_sockets])
+            lisp_register_timer.start()
+        #endif
         return
     #endif
 
@@ -726,10 +730,12 @@ def lisp_etr_process_info_timer(ms):
     # Restart periodic timer. For some reason only this timer has to be
     # canceled. Found on while testing NAT-traversal on rasp-pi in Jul 2015.
     #
-    lisp_etr_info_timer.cancel()
-    lisp_etr_info_timer = threading.Timer(lisp.LISP_INFO_INTERVAL,
-        lisp_etr_process_info_timer, [None])
-    lisp_etr_info_timer.start()
+    if (lisp_etr_info_timer):
+        lisp_etr_info_timer.cancel()
+        lisp_etr_info_timer = threading.Timer(lisp.LISP_INFO_INTERVAL,
+            lisp_etr_process_info_timer, [None])
+        lisp_etr_info_timer.start()
+    #endif
     return
 #enddef
 
@@ -770,10 +776,12 @@ def lisp_process_register_timer(lisp_sockets):
     #
     # Restart periodic timer.
     #
-    if (lisp_register_timer): lisp_register_timer.cancel()
-    lisp_register_timer = threading.Timer(LISP_MAP_REGISTER_INTERVAL,
-        lisp_process_register_timer, [lisp_send_sockets])
-    lisp_register_timer.start()
+    if (lisp_register_timer):
+        lisp_register_timer.cancel()
+        lisp_register_timer = threading.Timer(LISP_MAP_REGISTER_INTERVAL,
+            lisp_process_register_timer, [lisp_send_sockets])
+        lisp_register_timer.start()
+    #endif
     return
 #enddef
 
@@ -2107,12 +2115,16 @@ while (True):
             # Map-Register and a Info-Request to the RTR.
             #
             if (send_register):
-                lisp_etr_info_timer = threading.Timer(0,
-                    lisp_etr_process_info_timer, [None])
-                lisp_etr_info_timer.start()
-                lisp_register_timer = threading.Timer(0,
-                    lisp_process_register_timer, [lisp_send_sockets])
-                lisp_register_timer.start()
+                if (lisp_etr_info_timer == None):
+                    lisp_etr_info_timer = threading.Timer(0,
+                        lisp_etr_process_info_timer, [None])
+                    lisp_etr_info_timer.start()
+                #endif
+                if (lisp_register_timer == None):
+                    lisp_register_timer = threading.Timer(0,
+                        lisp_process_register_timer, [lisp_send_sockets])
+                    lisp_register_timer.start()
+                #endif
             #endif
         #endif
     #endif
