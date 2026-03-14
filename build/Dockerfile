@@ -25,7 +25,7 @@
 #
 # Docker images are stored on DropBox.        
 #
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 #FROM debian:latest
 #FROM centos:latest
 
@@ -64,7 +64,7 @@ RUN mkdir /lispers.net
 #
 # Get lispers.net release. Git repo option.
 #        
-ENV LISP_TGZ ./latest/lispers.net.tgz
+ENV LISP_TGZ ./latest-py2/lispers.net.tgz
 COPY $LISP_TGZ /lispers.net/.
 RUN cd /lispers.net; cat `basename $LISP_TGZ` | gzip -dc | tar -xf - 
 
