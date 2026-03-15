@@ -412,12 +412,12 @@ for addr in rloc_cache:
         cmd = tr_command.format(address)
     #endif
 
+    rloc = rloc_cache[addr]
     rn = blue(rloc[RLOC_NAME])
     Print("Run {} ({}) ...".format(bold(cmd), rn)) 
     
     out = getoutput(cmd)
 
-    rloc = rloc_cache[addr]
     rloc[TR_OUTPUT] = out
     rloc[TR_HOPS] = massage(rloc[TR_OUTPUT], cisco)
     if (no_dns): name = "-"
