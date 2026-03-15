@@ -60,6 +60,8 @@ except:
 import os
 import signal
 
+reset = False
+
 #------------------------------------------------------------------------------
 
 #
@@ -68,7 +70,6 @@ import signal
 # This is a signal handler that cleans up socket so the group can be left.
 #
 def cleanup(signum, frame):
-    global reset
     
     if (reset):
         print("Returning value to icmp_echo_ignore_broadcasts ...", end="' ")
@@ -170,7 +171,6 @@ signal.signal(signal.SIGINT, cleanup)
 # Check if ICMP is ignoring multicast pings. If so, enable it and remember
 # to set it back to its original setting.
 #
-reset = False
 if (getoutput(cat) == "1"):
     print("Enabling ICMP to respond to multicast pings ...",)
     os.system(enable_icmp)
