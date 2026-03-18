@@ -26,14 +26,12 @@
 #
 # -----------------------------------------------------------------------------
 
-set EID="$1"
-shift
 set FLAGS = "-W ignore -O -u"
 
 if (-f ./lisp-rig.pyo) then
-    sudo python2 $FLAGS ./lisp-rig.pyo "$EID" $*
+    sudo python2 $FLAGS ./lisp-rig.pyo $*
 else if (-f ./lisp-rig.pyc) then
-    sudo python3.8 $FLAGS ./lisp-rig.pyc "$EID" $*
+    sudo python3.8 $FLAGS ./lisp-rig.pyc $*
 else if (-f ./lisp-rig.py) then
-    sudo python $FLAGS ./lisp-rig.py "$EID" $*
+    sudo python $FLAGS ./lisp-rig.py $*
 endif
