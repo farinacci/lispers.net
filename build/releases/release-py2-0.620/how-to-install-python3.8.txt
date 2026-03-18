@@ -1,0 +1,23 @@
+
+                  How to Install python3.8 on Linux
+                  ---------------------------------
+
+Many Linux distributions (especially on cloud platforms) have python3.10
+installed by default. If you use any python3.8 code and have a symlink of
+python3 point to /usr/bin/python3.10, the code won't run. Here is a quick
+way to get python3.8 back on your system:        
+                
+sudo apt -y update && sudo apt -y upgrade
+sudo apt install -y software-properties-common
+sudo add-apt-repository -y ppa:deadsnakes/ppa
+sudo apt -y install python3.8
+
+cd /usr/bin
+ln -sf python3.8 python3        
+python3 --version
+
+Use this procedure when you get this error message after running 'python3':
+
+    RuntimeError: Bad magic number in .pyc file
+
+-------------------------------------------------------------------------------
