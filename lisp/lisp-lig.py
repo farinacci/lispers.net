@@ -201,6 +201,7 @@ if (argc == 2):
     if (iid == None):
         argc = 1
     elif (brackets == False):
+        dest_eid = lisp.lisp_gethostbyname(dest_eid)
         dest_eid = "[" + iid + "]" + dest_eid
     #endif
 #endif
