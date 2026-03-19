@@ -50,37 +50,61 @@ lisp_listen_socket = None
 lisp_ephem_listen_socket = None
 lisp_sockets = [None, None, None]
 lisp_ephem_port = lisp.lisp_get_ephemeral_port()
+lisp.lisp_debug_logging = True if "debug" in sys.argv else False
 
 #------------------------------------------------------------------------------
 
 #
 # find_lisp_config
 #
-# Return instance-ID and map-resolver by querying the lisp.config file.
+# Return instance-ID and map-resolver by querying the lisp.config file. If LISP-Decent
+# is running and do the hash to return map-ressoler.
 #
-def find_lisp_config():
-    if (os.path.exists("./lisp.config") == False): return(None, None)
+def find_lisp_config(eid_str):
+    if (os.path.exists("./lisp.config") == False): return(None, None, None)
 
     #
     # Grep for instance-id.
     #
     iid = getoutput('egrep "instance-id = " ./lisp.config')
-    if (iid == ""): return(None, None)
+    if (iid == ""): return(None, None, None)
     iid = iid.split("\n")[0]
     iid = iid.split(" = ")[-1]
+
+    if (eid_str != None):
+        decent = getoutput('egrep "decentralized-pull-xtr-modulus = " ./lisp.config')
+        decent = decent.split() if decent != "" else []
+        if (decent != []):
+            modulus = int(decent[-1])
+            decent = modulus != 0
+        #endif
+        if (decent):
+            suffix = getoutput('egrep "decentralized-pull-xtr-dns-suffix = " ./lisp.config')
+            suffix = suffix.split() if suffix != "" else []
+            if (suffix == []): return(None, None, None)
+
+            eid = lisp.lisp_address(lisp.LISP_AFI_NONE, eid_str, 32, iid)
+
+            lisp.lisp_decent_modulus = modulus
+            lisp.lisp_decent_dns_suffix = suffix[-1]
+
+            mr = lisp.lisp_get_decent_dns_name(eid)
+            return(iid, mr, mr)
+        #endif
+    #endif
 
     #
     # Grep for map-resolver and the DNS or address command following it.
     #
     mr = getoutput('egrep -A1 "lisp map-resolver {" ./lisp.config')
-    if (mr == ""): return(None, None)
+    if (mr == ""): return(None, None, None)
     mr = mr.split("\n")[-1]
     if (mr.find("dns-name") == -1 and mr.find("address") == -1):
-        return(None, None)
+        return(None, None, None)
     #endif
     mr = mr.split(" = ")[-1]
 
-    return(iid, mr)
+    return(iid, mr, None)
 #enddef
 
 #
@@ -197,14 +221,20 @@ pubsub = ("pubsub" in sys.argv)
 if (argc == 2):
     dest_eid = sys.argv[1]
     brackets = (dest_eid.find("[") != -1 and dest_eid.find("]") != -1)
-    iid, mr = find_lisp_config()
+    iid, mr, mr_name = find_lisp_config(None)
     if (iid == None):
         argc = 1
     elif (brackets == False):
         dest_eid = lisp.lisp_gethostbyname(dest_eid)
         dest_eid = "[" + iid + "]" + dest_eid
     #endif
+
+    #
+    # Check if LISP-Decent is running from the lisp.config file.
+    #
+    _, mr, mr_name = find_lisp_config(dest_eid)
 #endif
+
 if (argc <= 1):
     while (dest_eid == ""):
         dest_eid = input("Enter destination EID (or S->G): ")
@@ -292,11 +322,6 @@ if (mr_addr == ""):
     exit(1)
 #endif
 mr = mr_addr
-
-#
-# Was more internal debugging requested by user?
-#
-lisp.lisp_debug_logging = True if "debug" in sys.argv else False
 
 #
 # Default count if it was not supplied.
@@ -544,11 +569,13 @@ copy = packet
 no_reply = True
 count = int(count)
 
+mr_name = lisp.bold(" ({})".format(mr_name), False) if mr_name != None else ""
+
 for i in range(count):
     packet = copy
     pubsub_str = "subscribe " if pubsub else ""
-    print("Send lig {}map-request to {} for EID {} ...".format(pubsub_str,
-        mr.print_address_no_iid(), target_eid_str))
+    print("Send lig {}map-request to {}{} for EID {} ...".format(pubsub_str,
+        mr.print_address_no_iid(), mr_name, target_eid_str))
 
     #
     # Send ECM based Map-Request to Map-Resolver..
