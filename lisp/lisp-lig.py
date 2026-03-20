@@ -211,8 +211,9 @@ def process_eid_records(record_count, nonce, packet):
             if (packet == None): break
             p = rloc_record.priority
             mp = rloc_record.mpriority
+            rstr = lisp.red(rloc_record.rloc.print_address_no_iid(), False)
             print("  RLOC: {}, up/uw/mp/mw: {}/{}/{}/{}, flags: {}{}{}". \
-                format(rloc_record.rloc.print_address_no_iid(), p, rloc_record.
+                format(rstr, p, rloc_record.
                 weight, mp, rloc_record.mweight, rloc_record.print_flags(),
                 "" if rloc_record.rloc_name == None else \
                 ", " + rloc_record.print_rloc_name(),
