@@ -1582,6 +1582,11 @@ lisp_rtr_commands = {
         "dns-name" : [True],
         "address" : [True] }],
 
+    "lisp decent-prefix" : [lispconfig.lisp_decent_prefix_command, {
+        "instance-id" : [False, 0, 0xffffffff],
+        "eid-prefix" : [True],
+        "lookup-length" : [True, 0, 128] }],
+
     "lisp map-cache" : [lispconfig.lisp_map_cache_command, {
         "prefix" : [],
         "mr-name" : [True],

@@ -61,7 +61,7 @@ lisp_commands = {
     "lisp itr-map-cache"            : ["lisp-itr"],
     "lisp rtr-map-cache"            : ["lisp-rtr"],
     "lisp map-server"               : ["lisp-itr", "lisp-etr"],
-    "lisp decent-prefix"            : ["lisp-itr"],
+    "lisp decent-prefix"            : ["lisp-itr", "lisp-rtr"],
 
     "lisp database-mapping"         : ["lisp-itr", "lisp-etr", "lisp-rtr"],
     "lisp group-mapping"            : ["lisp-etr"],
@@ -4586,6 +4586,94 @@ def lisp_show_crypto_list(xtr):
         output += lisp_table_footer()
     #endif
     return(output)
+#enddef
+
+
+#
+# lisp_decent_prefix_command
+#
+# Store EID prefix to lookup-length mappings for LISP-Decent hash lookups.
+# This allows ITRs to hash lookups on a different prefix length than what
+# was registered.
+#
+def lisp_decent_prefix_command(kv_pair):
+
+    #
+    # Validate that both eid-prefix and lookup-length are present.
+    #
+    if ("eid-prefix" not in kv_pair or "lookup-length" not in kv_pair):
+        lisp.lprint("LISP-Decent prefix error: eid-prefix and lookup-length must both be present")
+        return
+    #endif
+
+    if (len(kv_pair["eid-prefix"]) != len(kv_pair["lookup-length"])):
+        lisp.lprint("LISP-Decent prefix error: eid-prefix and lookup-length count mismatch")
+        return
+    #endif
+
+    #
+    # Process each eid-prefix and lookup-length pair.
+    #
+    for i in range(len(kv_pair["eid-prefix"])):
+        eid_prefix = kv_pair["eid-prefix"][i]
+        lookup_len = kv_pair["lookup-length"][i]
+        lookup_len = int(lookup_len)
+
+        #
+        # Both parameters must be non-empty.
+        #
+        if (eid_prefix == "" or lookup_len == ""):
+            lisp.lprint("decent-prefix error, eid-prefix and lookup-length must be configured")
+            continue
+        #endif
+
+        #
+        # Get instance-id, defaulting to 0 if not provided.
+        #
+        instance_id = 0
+        if ("instance-id" in kv_pair and len(kv_pair["instance-id"]) > i):
+            if (kv_pair["instance-id"][i] != ""):
+                try:
+                    instance_id = int(kv_pair["instance-id"][i])
+                except:
+                    instance_id = 0
+                #endtry
+            #endif
+        #endif
+
+        #
+        # Parse the EID-prefix. store_address() will determine the address
+        # family automatically.
+        #
+        eid = lisp.lisp_address(lisp.LISP_AFI_NONE, "", 0, 0)
+        eid.store_prefix(eid_prefix)
+        eid.instance_id = instance_id
+
+        #
+        # Validate lookup-length does not exceed prefix-length.
+        #
+        if (lookup_len < eid.mask_len):
+            lisp.lprint("decent-lookup error, EID-prefix {} length > than lookup-length {}". \
+                format(eid.print_prefix(), lookup_len))
+            continue
+        #endif
+
+        #
+        # Store the mapping if not already stored.
+        #
+        add = True
+        for e, ll in lisp.lisp_decent_lookup_prefixes.items():
+            if (eid.is_exact_match(e) and ll == lookup_len): add = False
+        #endfor)
+
+        if (add):
+            lisp.lisp_decent_lookup_prefixes[eid] = lookup_len
+            lisp.lprint("decent-prefix configured, EID-prefix {} -> lookup-length {}". \
+                format(eid.print_prefix(), lookup_len))
+        #endif
+    #endfor
+
+    return
 #enddef
 
 #------------------------------------------------------------------------------
