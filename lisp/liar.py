@@ -98,8 +98,9 @@ def main():
     s.sendto(pkt, (ms, 4342))
 
     e = green(orig_eid); r = red(orig_rloc); m = bold(orig_ms);
+    n = hex(nonce); n = n.replace("L", "")
     print("Map-Register sent to ms {} for EID {} RLOC {} with nonce {}". \
-          format(m, e, r, hex(nonce)))
+          format(m, e, r, n))
 
     #
     # Cleanup resources.

@@ -1,4 +1,17 @@
 
+               lispers.net Beta Release Version 0.622
+               --------------------------------------
+
+o Release date:
+
+o In lig output, print RLOCs and RLEs in red.
+
+o Make sure that the lisp-rtr process can support "lisp decent-prefix" commands.
+
+o Don not display "L" for nonce value in liar.py.    
+
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.621
                --------------------------------------
 
