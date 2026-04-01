@@ -7853,7 +7853,9 @@ def lisp_process_pubsub(lisp_sockets, packet, reply_eid, itr_rloc, port, nonce,
 # and external action values.
 #
 def lisp_ms_process_map_request(lisp_sockets, packet, map_request, mr_source,
-    mr_sport, ecm_source):
+    mr_sport, ecm_source, ecm_sport):
+
+    mr_sport = ecm_sport
 
     #
     # Look up EID in site cache. If we find it and it has registered for
@@ -8832,7 +8834,7 @@ def lisp_process_map_request(lisp_sockets, packet, ecm_source, ecm_port,
     if (lisp_i_am_ms):
         packet = orig_packet
         eid, group, ddt_action = lisp_ms_process_map_request(lisp_sockets,
-            orig_packet, map_request, mr_source, mr_port, ecm_source)
+            orig_packet, map_request, mr_source, mr_port, ecm_source, ecm_port)
         if (ddt_request):
             lisp_ms_send_map_referral(lisp_sockets, map_request, ecm_source,
                 ecm_port, ddt_action, eid, group)
@@ -11180,7 +11182,7 @@ def lisp_process_map_referral(lisp_sockets, packet, source):
 # Process a received Encapsulated-Control-Message. It is assumed for right now
 # that all ECMs have a Map-Request embedded.
 #
-def lisp_process_ecm(lisp_sockets, packet, source, ecm_port):
+def lisp_process_ecm(lisp_sockets, packet, source, outer_sport):
     ecm = lisp_ecm(0)
     packet = ecm.decode(packet)
     if (packet == None):
@@ -11207,10 +11209,9 @@ def lisp_process_ecm(lisp_sockets, packet, source, ecm_port):
     #
     # Process Map-Request.
     #
-    mr_port = ecm.udp_sport
     timestamp = time.time()
-    lisp_process_map_request(lisp_sockets, packet, source, ecm_port,
-        ecm.source, mr_port, ecm.ddt, -1, timestamp)
+    lisp_process_map_request(lisp_sockets, packet, ecm.source, ecm.udp_sport,
+        source, outer_sport, ecm.ddt, -1, timestamp)
     return
 #enddef
 
