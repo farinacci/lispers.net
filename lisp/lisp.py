@@ -11338,12 +11338,14 @@ def lisp_send_ecm(lisp_sockets, packet, inner_source, inner_sport, inner_dest,
         inner_source = inner_dest
     #endif
 
+    addr_str = outer_dest.print_address_no_iid()
+
     #
     # For sending Map-Requests, if the NAT-traversal configured, use same
     # socket used to send the Info-Request.
     #
     if (lisp_nat_traversal):
-        sport = lisp_get_any_translated_port()
+        _, sport = lisp_get_translated_port_for_mr(addr_str)
         if (sport != None): inner_sport = sport
     #endif
     ecm = lisp_ecm(inner_sport)
@@ -11360,7 +11362,6 @@ def lisp_send_ecm(lisp_sockets, packet, inner_source, inner_sport, inner_dest,
 
     packet = ecm_packet + packet
 
-    addr_str = outer_dest.print_address_no_iid()
     lprint("Send Encapsulated-Control-Message to {}".format(addr_str))
     dest = lisp_convert_4to6(addr_str)
     lisp_send(lisp_sockets, dest, LISP_CTRL_PORT, packet)
@@ -14944,6 +14945,7 @@ class lisp_mr(object):
         self.map_requests_sent = 0
         self.neg_map_replies_received = 0
         self.total_rtt = 0
+        self.translated_port = 0
     #enddef
 
     def resolve_dns_name(self):
@@ -16345,6 +16347,23 @@ def lisp_get_any_translated_port():
 #enddef
 
 #
+# lisp_get_translated_port_for_mr
+#
+# When we sent a Info-Request to a map-resolver, we saved the translated port. We
+# need this port to tell the map-server in the ECM UDP header.
+#
+def lisp_get_translated_port_for_mr(mr_addr):
+    for mr in list(lisp_map_resolvers_list.values()):
+        a = mr.map_resolver.print_address_no_iid()
+        if (a == mr_addr):
+            if (mr.translated_port == 0): return(mr, lisp_get_any_translated_port())
+            return(mr, mr.translated_port)
+        #endif
+    #endfor
+    return(None, lisp_get_any_translated_port())
+#enddef
+
+#
 # lisp_get_any_translated_rloc
 #
 # Find a translated RLOC in any lisp_mapping() from the lisp_db_list. We need
@@ -16505,6 +16524,21 @@ def lisp_process_info_reply(source, packet, store):
             for iid in list(lisp_iid_to_interface.keys()):
                 lisp_update_default_routes(source, int(iid), lisp_rtr_list)
             #endfor
+        #endif
+    #endif
+
+    #
+    # Store translated control-port for map-resolver.
+    #
+    if (lisp_i_am_itr):
+        tp = info.etr_port
+        addr_str = source.print_address_no_iid()
+        mr, _ = lisp_get_translated_port_for_mr(addr_str)
+        if (mr == None):
+            lprint("Could not store translated-port {} for map-resolver {}".format(tp, addr_str))
+        else:
+            mr.translated_port = tp
+            lprint("Store translated-port {} for map-resolver {}".format(tp, addr_str))
         #endif
     #endif
 
