@@ -27,6 +27,8 @@
 cd `dirname $0`
 ls lisp-itr >& /dev/null
 set itr = $status
+ls lisp-rtr >& /dev/null
+set rtr = $status
 
 #
 # Check to see if python2 is installed and if symlink python is set in installed directory.
@@ -102,6 +104,16 @@ if ($itr == 0) then
 else
     echo "Bypass removing LISP iptables, ITR process not running"
 endif
+
+#
+# Remove host routes in the multi-homing case.
+#
+if ($itr == 0 || $rtr == 0) then
+    $PY ./remove-lisp-host-routes.$SUFFIX
+else
+    echo "Bypass removing LISP host-routes, ITR/RTR process not running"
+endif
+
 exit(0)
 
 #------------------------------------------------------------------------------
