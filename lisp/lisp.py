@@ -9012,6 +9012,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
             # translated port and store in rloc entry.
             #
             port = rloc.store_rloc_from_record(rloc_record, map_reply.nonce, source)
+            rloc.set_active_rloc_next_hop()
             rloc.echo_nonce_capable = map_reply.echo_nonce_capable
 
             if (rloc.echo_nonce_capable):
@@ -13390,6 +13391,7 @@ class lisp_rloc(object):
         self.rloc_next_hop = None
         self.next_rloc = None
         self.multicast_rloc_probe_list = {}
+        self.active_rloc_next_hop = None
 
         if (recurse == False): return
 
@@ -13410,6 +13412,18 @@ class lisp_rloc(object):
             last.next_rloc = hop
             last = hop
         #endfor
+        self.set_active_rloc_next_hop()
+    #enddef
+
+    def set_active_rloc_next_hop(self):
+        nr = self.next_rloc
+        while (nr != None):
+            if (lisp_is_active_interface(nr)):
+                self.active_rloc_next_hop = nr
+                break
+            #endif
+            nr = nr.next_rloc
+        #endwhile            
     #enddef
 
     def up_state(self):
@@ -13482,6 +13496,7 @@ class lisp_rloc(object):
     def store_rloc_from_record(self, rloc_record, nonce, source):
         port = LISP_DATA_PORT
         self.rloc.copy_address(rloc_record.rloc)
+        self.set_active_rloc_next_hop()
 
         #
         # Copy to next-hop RLOCs if they exist.
@@ -13823,6 +13838,7 @@ class lisp_rloc(object):
             lprint("    Install forwarding host-route via best {}".format(nh))
             lisp_install_host_route(addr_str, None, False)
             lisp_install_host_route(addr_str, n, True)
+            self.set_active_rloc_next_hop()
         #endif
     #enddef
 
@@ -14202,6 +14218,7 @@ class lisp_mapping(object):
         packet = lisp_packet.packet
         inner_version = lisp_packet.inner_version
         length = len(self.best_rloc_set)
+
         if (length == 0):
             self.stats.increment(len(packet))
             return([None, None, None, self.action, None, None])
@@ -14288,17 +14305,22 @@ class lisp_mapping(object):
         if (rloc.rle): return([None, None, None, None, rloc.rle, None])
 
         #
-        # We are going to use this RLOC. Increment statistics.
-        #
-        rloc.stats.increment(len(packet))
-
-        #
         # Next check if ELP is cached for this RLOC entry.
         #
         if (rloc.elp and rloc.elp.use_elp_node):
             return([rloc.elp.use_elp_node.address, None, None, None, None,
                 None])
         #endif
+
+        #
+        # For multihoming, if RLOC has next-hops, use the active one.
+        #
+        if (rloc.active_rloc_next_hop != None): rloc = rloc.active_rloc_next_hop
+
+        #
+        # We are going to use this RLOC. Increment statistics.
+        #
+        rloc.stats.increment(len(packet))
 
         #
         # Return RLOC address.
@@ -16473,6 +16495,7 @@ def lisp_update_default_routes(map_resolver, iid, rtr_list):
             nr.rloc.copy_address(rtr_addr)
             nr = nr.next_rloc
         #endwhile
+        rloc_entry.set_active_rloc_next_hop()
         rloc_entry.priority = 254
         rloc_entry.mpriority = 255
         rloc_entry.rloc_name = "RTR"
@@ -17896,6 +17919,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 if (save_nh):
                     lprint("Remove forwarding next-hop {}".format(save_nh))
                     lisp_install_host_route(addr_str, None, False)
+                    parent_rloc.set_active_rloc_next_hop()
                 #endif
             #endif
 
@@ -18004,6 +18028,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 if (rloc.rloc_next_hop != None and nh != None):
                     d, nh = rloc.rloc_next_hop
                     lisp_install_host_route(addr_str, nh, True)
+                    rloc.set_active_rloc_next_hop()
                     nh_str = ", send to nh {} on {}".format(nh, bold(d, False))
                 #endif
 
@@ -18058,7 +18083,10 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 # Remove installed host route. And install forwarding next-hop
                 # when we move to a new RLOC to test.
                 #
-                if (nh): lisp_install_host_route(addr_str, nh, False)
+                if (nh):
+                    lisp_install_host_route(addr_str, nh, False)
+                    rloc.set_active_rloc_next_hop()
+                #endif
             #endwhile
 
             #
@@ -18068,6 +18096,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             if (save_nh):
                 lprint("Reinstall forwarding next-hop {}".format(save_nh))
                 lisp_install_host_route(addr_str, save_nh, True)
+                rloc.set_active_rloc_next_hop()
             #endif
 
             #

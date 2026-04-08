@@ -912,7 +912,10 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         # Encode new LISP, UDP, and outer header.
         #
         if (packet.encode(nonce) == None): return
-        if (len(packet.packet) <= 1500): packet.print_packet("Send", True)
+        if (len(packet.packet) <= 1500):
+            send = "Send {}".format(rloc_entry.rloc_next_hop[0])
+            packet.print_packet(send, True)
+        #endif
 
         #
         # Send out on raw socket.
