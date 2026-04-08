@@ -239,6 +239,15 @@ for mc in map_cache:
             for rr in r["rle"].values():
                 rr["rle-node"] = True
                 rloc_set.append(rr)
+            #endfor
+            continue
+        #endif
+        if ("next-hop-rlocs" in r):
+            rloc_set.append(r)
+            for rr in r["next-hop-rlocs"]:
+                rr["nh-node"] = True
+                rloc_set.append(rr)
+            #endfor
             continue
         #endif
         rloc_set.append(r)
@@ -249,23 +258,30 @@ for mc in map_cache:
         if ("mrloc" in rr): rlocrle = "mRLOC"
         if ("rle-node" in rr): rlocrle = "RLE"
 
-        rloc = rr["address"]
-        if ("encap-port" in rr): rloc += ":{}".format(rr["encap-port"])
-        state = rr["state"]
-        state = green(state) if state == "up-state" else red(state)
-        rloc_str = red(rloc)
+        #
+        # Print entire RLOC, rather than a next-hop-rloc stats within an RLOC.
+        #
+        if ("nh-node" not in rr):
+            rloc = rr["address"]
+            if ("encap-port" in rr): rloc += ":{}".format(rr["encap-port"])
+            state = rr["state"]
+            state = green(state) if state == "up-state" else red(state)
+            rloc_str = red(rloc)
 
-        rloc = "  {} {}, state {} since {}".format(rlocrle, rloc_str, state, rr["uptime"])
-        if ("encap-crypto" in rr):
-            rloc += ", {}".format(rr["encap-crypto"])
+            rloc = "  {} {}, state {} since {}".format(rlocrle, rloc_str, state, rr["uptime"])
+            if ("encap-crypto" in rr):
+                rloc += ", {}".format(rr["encap-crypto"])
+            #endif
+            if ("rloc-name" in rr):
+                rloc += ", {}".format(blue(rr["rloc-name"]))
+            #endif
+            if (debug and "rloc-memory" in rr): rloc += ", " + rr["rloc-memory"]
+            print(rloc)
         #endif
-        if ("rloc-name" in rr):
-            rloc += ", {}".format(blue(rr["rloc-name"]))
-        #endif
-        if (debug and "rloc-memory" in rr): rloc += ", " + rr["rloc-memory"]
+        ifname = blue(rr["nh-interface"][0]) + ": " if ("nh-interface" in rr) else ""
+        if ("is-active" in rr and rr["is-active"] == True): ifname = "*" + ifname
 
-        print(rloc)
-        print("    {}".format(print_stats(rr)))
+        print("    {}{}".format(ifname, print_stats(rr)))
         rtt, hc, lat = format_telemetry(rr)
         print("    rtts {}, hops {}, latencies {}".format(rtt, hc, lat))
     #endfor

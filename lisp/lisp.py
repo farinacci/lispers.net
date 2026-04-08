@@ -13399,7 +13399,7 @@ class lisp_rloc(object):
         # individually.
         #
         next_hops = lisp_get_default_route_next_hops()
-        if (next_hops == [] or len(next_hops) == 1): return
+        if (next_hops == []): return
 
         self.rloc_next_hop = next_hops[0]
         last = self
@@ -13482,6 +13482,15 @@ class lisp_rloc(object):
     def store_rloc_from_record(self, rloc_record, nonce, source):
         port = LISP_DATA_PORT
         self.rloc.copy_address(rloc_record.rloc)
+
+        #
+        # Copy to next-hop RLOCs if they exist.
+        #
+        nr = self.next_rloc
+        while (nr != None):
+            nr.rloc.copy_address(rloc_record.rloc)
+            nr = nr.next_rloc
+        #endwhile
 
         if (rloc_record.rloc_name != None):
             self.rloc_name = rloc_record.rloc_name
@@ -16459,6 +16468,11 @@ def lisp_update_default_routes(map_resolver, iid, rtr_list):
         rtr_addr = rtr_list[rtr]
         rloc_entry = lisp_rloc()
         rloc_entry.rloc.copy_address(rtr_addr)
+        nr = rloc_entry.next_rloc
+        while (nr != None):
+            nr.rloc.copy_address(rtr_addr)
+            nr = nr.next_rloc
+        #endwhile
         rloc_entry.priority = 254
         rloc_entry.mpriority = 255
         rloc_entry.rloc_name = "RTR"
@@ -17230,12 +17244,34 @@ def lisp_gather_map_cache_data(mc, data):
 #enddef
 
 #
+# lisp_is_active_interface
+#
+# If there is a host route, and this rloc-next-hop matches the host route, then
+# its the active interface. Otherwise, check the first default route next-hop,
+# if it matches the RLOC's next-hop, then this is active. Otherwise, not active.
+#
+def lisp_is_active_interface(rloc):
+    rloc_str = rloc.rloc.print_address_no_iid()
+    rloc_nh = rloc.rloc_next_hop
+
+    dr_nh = lisp_get_default_route_next_hops()
+    matches_dr = (dr_nh and rloc_nh == dr_nh[0])
+
+    hr_nh = lisp_get_host_route_next_hop(rloc_str)
+    if (hr_nh == None):
+        if (matches_dr): return(True)
+    elif (rloc_nh[1] == hr_nh):
+        return(True)
+    #endif
+    return(False)
+#enddef    
+
+#
 # lisp_fill_rloc_in_json
 #
-# Fill in fields from lisp_rloc() into the JSON that is reported via the
-# restful API.
+# Fill in RLOC fields. And if this is the primary or head-of-list for next-hop-rlocs.
 #
-def lisp_fill_rloc_in_json(rloc):
+def lisp_fill_rloc_in_json(rloc, head=True):
     r = {}
     addr_str = None
     if (rloc.rloc_exists()):
@@ -17292,6 +17328,28 @@ def lisp_fill_rloc_in_json(rloc):
     recent_rtts = []
     for rtt in rloc.recent_rloc_probe_rtts: recent_rtts.append(str(rtt))
     r["recent-rloc-probe-rtts"] = recent_rtts
+
+    if (rloc.rloc_next_hop): r["nh-interface"] = rloc.rloc_next_hop
+
+    #
+    # Set is-active if this is the next-hop RLOC being used by a host route
+    # or default route.
+    #
+    r["is-active"] = lisp_is_active_interface(rloc)
+
+    #
+    # Traverse all next-hop RLOC entries if this is the head of list RLOC.
+    #
+    if (head == False): return(r)
+    
+    r["next-hop-rlocs"] = []
+    nh = rloc.next_rloc
+    while (nh != None):
+        nh_r = lisp_fill_rloc_in_json(nh, False)
+        r["next-hop-rlocs"].append(nh_r)
+        nh = nh.next_rloc
+    #endwhile
+
     return(r)
 #enddef
 
