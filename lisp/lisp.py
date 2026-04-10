@@ -13525,6 +13525,8 @@ class lisp_rloc(object):
             nh = self.next_rloc
             while (nh != None):
                 nh.rloc_name = self.rloc_name
+                nh.translated_port = self.translated_port
+                nh.translated_rloc.copy_address(self.translated_rloc)
                 nh = nh.next_rloc
             #endwhile
         #endif
@@ -13578,6 +13580,17 @@ class lisp_rloc(object):
                     lprint("    Use NAT translated RLOC {}:{} for {}". \
                         format(rloc_str, port, rloc_nstr))
                     self.store_translated_rloc(rloc, port)
+
+                    #
+                    # Copy translated RLOC information to all next-hops in multi-homing case.
+                    # This ensures NAT-traversal RLOCs use the correct translated address/port
+                    # when sending probes via each egress interface.
+                    #
+                    nh = self.next_rloc
+                    while (nh != None):
+                        nh.store_translated_rloc(self.translated_rloc, port)
+                        nh = nh.next_rloc
+                    #endwhile
                 #endif
             #endif
         #endif
@@ -13766,7 +13779,7 @@ class lisp_rloc(object):
             if (rloc == None):
                 lprint("    No matching nonce state found for nonce 0x{}". \
                     format(lisp_hex_string(nonce)))
-                return
+                return(False)
             #endif
         #endwhile
 
@@ -13814,7 +13827,7 @@ class lisp_rloc(object):
             "to-ttl/from-ttl {}{}").format(probe, red(addr_str, False), p, e,
             state_string, rtt, nh, str(hc) + "/" + str(ttl), lat))
 
-        if (rloc.rloc_next_hop == None): return
+        if (rloc.rloc_next_hop == None): return(True)
 
         #
         # Now select better RTT next-hop.
@@ -13840,6 +13853,7 @@ class lisp_rloc(object):
             lisp_install_host_route(addr_str, n, True)
             self.set_active_rloc_next_hop()
         #endif
+        return(True)
     #enddef
 
     def add_to_rloc_probe_list(self, eid, group):
@@ -13871,7 +13885,13 @@ class lisp_rloc(object):
         if (group.is_null()): group.instance_id = 0
 
         old_entry = None
+        first_rloc = None
         for r, e, g in lisp_rloc_probe_list[addr_str]:
+            #
+            # Keep track of first RLOC to copy RTT data from if needed.
+            #
+            if (first_rloc == None): first_rloc = r
+
             if (e.is_exact_match(eid) and g.is_exact_match(group)):
                 if (r == self): return
                 self.copy_rloc_probe_recents(r)
@@ -13880,6 +13900,15 @@ class lisp_rloc(object):
                 break
             #endif
         #endfor
+
+        #
+        # If no exact EID/group match found, copy RTT data from any existing RLOC
+        # for this address so new EIDs get the same telemetry data.
+        #
+        if (old_entry == None and first_rloc != None):
+            self.copy_rloc_probe_recents(first_rloc)
+            self.uptime = first_rloc.uptime
+        #endif
 
         #
         # Remove the RLOC memory pointer we are replacing with self.
@@ -14148,55 +14177,41 @@ class lisp_mapping(object):
     #enddef
 
     def build_best_rloc_set(self):
-        old_best = self.best_rloc_set
+
+        #
+        # (1) Build best_rloc_set for data-plane forwarding/load-splitting:
+        #     Only includes RLOCs with the best (lowest) priority value.
+        #
+        # (2) Put ALL RLOCs in RLOC-probe list for telemetry tracking:
+        #     This ensures we have RTT data for all RLOCs, so if we need to
+        #     switch to a lower-priority RLOC due to failures, we have
+        #     up-to-date RTT measurements.
+        #
         self.best_rloc_set = []
         if (self.rloc_set == None): return
 
         #
-        # Get best priority for first up RLOC.
+        # Find the best (lowest) priority among all UP RLOCs.
+        # If no UP RLOCs exist, use 256 (worst possible priority).
         #
-        pr = 256
+        best_priority = 256
         for rloc in self.rloc_set:
-            if (rloc.up_state()): pr = min(rloc.priority, pr)
-        #endif
-
-        #
-        # For each up RLOC with best priority, put in best-rloc for data-plane.
-        # For each unreachable RLOC that has better priority than the best
-        # computed above, we want to RLOC-probe. So put in the RLOC probe list
-        # and best list. We need to set the timestamp last_rloc_probe or
-        # lisp_process_rloc_probe_timer() will think the unreach RLOC went
-        # down and is waiting for an RLOC-probe reply (it will never get).
-        #
-        for rloc in self.rloc_set:
-            if (rloc.priority <= pr):
-                if (rloc.unreach_state() and rloc.last_rloc_probe == None):
-                    rloc.last_rloc_probe = lisp_get_timestamp()
-                #endif
-                self.best_rloc_set.append(rloc)
-            #endif
+            if (rloc.up_state() == False): continue
+            best_priority = min(rloc.priority, best_priority)
         #endfor
 
         #
-        # Put RLOC in lisp.lisp_rloc_probe_list if doesn't exist. And if
-        # we removed the RLOC out of the best list, we need to remove
-        # references.
+        # Populate best_rloc_set with RLOCs that have the best priority.
         #
-        for rloc in old_best:
-            if (rloc.priority < pr): continue
-            rloc.delete_from_rloc_probe_list(self.eid, self.group)
-
-            #
-            # Also delete RLE nodes from probe list.
-            #
-            if (rloc.rle != None):
-                for rle_node in rloc.rle.rle_forwarding_list:
-                    rle_node.rloc.delete_from_rloc_probe_list(self.eid, self.group)
-                #endfor
-            #endif
+        for rloc in self.rloc_set:
+            if (rloc.priority == best_priority): self.best_rloc_set.append(rloc)
         #endfor
 
-        for rloc in self.best_rloc_set:
+        #
+        # Register ALL RLOCs in the RLOC-probe list, regardless of priority.
+        # This allows RTT data to be collected and propagated for all RLOCs.
+        #
+        for rloc in self.rloc_set:
             if (rloc.rloc.is_null()):
 
                 #
@@ -16077,7 +16092,12 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
     # from port 4341 to translated destination address and port.
     #
     if (probe_dest != None):
-        if (rloc.is_rloc_translated()):
+        trans = rloc.is_rloc_translated()
+        if (trans == False):
+            lprint("DEBUG: RLOC {} is_rloc_translated()={}, translated_rloc={}, translated_port={}".format(
+                rloc.rloc.print_address_no_iid(), trans, rloc.translated_rloc.print_address_no_iid() if rloc.translated_rloc else "None", rloc.translated_port))
+        #endif
+        if (trans):
             rn = rloc.normalize_decent_nat_rloc_name()
             nat_info = lisp_get_nat_info(probe_dest, rn)
 
@@ -18016,16 +18036,12 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 # after the RLOC-probe goes out directed interface.
                 #
                 nh_str = ""
-                nh = None
-#               if (rloc.rloc_next_hop != None):
 
                 #
-                # Temporarily (will fix later), do not install host routes
-                # for RLOC-probes. It causes the kernel to drop Map-Requests
-                # locally. Will look at using Netlink API for better results.
-                # The "and nh != None" disables host-route installation.
+                # Install host routes for RLOC-probes so they can be sent to
+                # specific egress interfaces for multi-homing per-interface probing.
                 #
-                if (rloc.rloc_next_hop != None and nh != None):
+                if (rloc.rloc_next_hop != None):
                     d, nh = rloc.rloc_next_hop
                     lisp_install_host_route(addr_str, nh, True)
                     rloc.set_active_rloc_next_hop()
@@ -18096,7 +18112,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             if (save_nh):
                 lprint("Reinstall forwarding next-hop {}".format(save_nh))
                 lisp_install_host_route(addr_str, save_nh, True)
-                rloc.set_active_rloc_next_hop()
+                if (rloc): rloc.set_active_rloc_next_hop()
             #endif
 
             #
@@ -18243,14 +18259,66 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
     # RLOC-probe state.
     #
     if (addr not in lisp_rloc_probe_list): return
-    
+
+    #
+    # Process probe reply for all RLOCs with this address. Track which one
+    # actually matched the nonce so we can copy its RTT data to the others.
+    #
+    matched_rloc = None
     for rloc, eid, group in lisp_rloc_probe_list[addr]:
         if (lisp_i_am_rtr):
             if (rloc.translated_port != 0 and rloc.translated_port != port):
                 continue
             #endif
         #endif
-        rloc.process_rloc_probe_reply(ts, nonce, eid, group, hc, ttl, jt)
+        found = rloc.process_rloc_probe_reply(ts, nonce, eid, group, hc, ttl, jt)
+
+        #
+        # If nonce was found and matched, locate which RLOC in the chain it was
+        # so we can copy its RTT data to equivalent entries in other parent_rlocs.
+        #
+        if (found and matched_rloc == None):
+            current = rloc
+            while (current != None):
+                if (current.last_rloc_probe_nonce == nonce):
+                    matched_rloc = current
+                    break
+                #endif
+                current = current.next_rloc
+            #endwhile
+        #endif
+    #endfor
+    if (matched_rloc == None): return
+    if (matched_rloc.rloc_next_hop == None): return
+
+    #
+    # If one RLOC matched the probe reply, copy its RTT data to equivalent
+    # RLOC entries for the same rloc_next_hop/interface in all other parent_rlocs
+    # so all EIDs using the same RLOC+interface see the same telemetry.
+    #
+    matched_nh = matched_rloc.rloc_next_hop
+    for parent_rloc, eid, group in lisp_rloc_probe_list[addr]:
+
+        #
+        # Find equivalent chain entry in this parent_rloc by matching
+        # rloc_next_hop (interface tuple).
+        #
+        target_rloc = parent_rloc
+        current = parent_rloc
+        while (current != None):
+            if (current.rloc_next_hop == matched_nh):
+                target_rloc = current
+                break
+            #endif
+            current = current.next_rloc
+        #endwhile
+
+        #
+        # Copy RTT telemetry only to equivalent chain entries.
+        #
+        if (target_rloc != matched_rloc):
+            target_rloc.copy_rloc_probe_recents(matched_rloc)
+        #endif
     #endfor
     return
 #enddef
