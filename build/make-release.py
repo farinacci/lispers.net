@@ -20,7 +20,7 @@
 #
 # This python script will do a release of the lispers.net LISP code. The build
 # defaults to creating pyo files with Python version 2.7.x. If env variable
-# in calling shell has LISPERS.NET_PYTHON3 defined, then Python version 3.8.x
+# in calling shell has LISPERS.NET_PYTHON3 defined, then Python version 3.x.x
 # will be used to create pyc files are used.
 # 
 # -----------------------------------------------------------------------------
@@ -39,20 +39,22 @@ except:
 #-----------------------------------------------------------------------------
 
 use_python3 = (os.getenv("LISPERS.NET_PYTHON3") != None)
-print("This build is using python{}".format("3.8" if use_python3 else "2.7"))
+print("This build is using python{}".format("3.x" if use_python3 else "2.7"))
 
 #
 # Decide which version of python to build with. "python3" command call must
-# point to Python version 3.8.
+# point to Python version 3.x.
 #
 if (use_python3):
     PY = "py3"
-    PYTHON = "python3.8"
-    PYFLAKES = "python3.7 -m pyflakes"
+    PYTHON = "python3"
+    PYVER = getoutput("python3 --version")
+    PYFLAKES = "python -m pyflakes"
     obfuscate_on = False
 else:
     PY = "py2"
     PYTHON = "python2"
+    PYVER = getoutput("python2 --version")
     PYFLAKES = "pyflakes"
     obfuscate_on = True
 #endif
@@ -195,7 +197,7 @@ else:
 #
 # Do the compile.
 #
-print("{} compiling".format(PYTHON))
+print("Compiling with version {}".format(PYVER))
 status = os.system("cd ./{}; {} -O -m compileall *py".format(dir, PYTHON))
 if (status != 0):
     print("Compilation failed")
@@ -243,12 +245,12 @@ else:
 #endif
 
 #
-# For python3 builds, move all *38.opt-1.pyc files to just *.pyc. Just so
+# For python3 builds, move all *3*.opt-1.pyc files to just *.pyc. Just so
 # python2 and python3 releases use the same file structure.
 #
 pycache = "{}/__pycache__".format(dir)
 if (os.path.exists(pycache)):
-    trailer = ".cpython-38.opt-1.pyc"
+    trailer = ".cpython-3[0-9]+.opt-1.pyc"
     files = getoutput("ls -1 {} | egrep {}".format(pycache, trailer))
     if (files == ""):
         print("python3 did not produce any opt-1 pyc files")
@@ -257,8 +259,8 @@ if (os.path.exists(pycache)):
     files = files.split("\n")
     print("Converting pyc filenames")
     for pyc in files:
-        f = pyc.split(trailer)[0]
-        os.system("mv {}/{} {}/{}.pyc".format(pycache, pyc, dir, f))
+        f = pyc.split("cpython")[0]
+        os.system("mv {}/{} {}/{}pyc".format(pycache, pyc, dir, f))
     #endfor
     os.system("rmdir {}".format(pycache))
 else:
