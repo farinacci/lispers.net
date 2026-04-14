@@ -28,8 +28,8 @@ First time install
 
 (3) Test the install by running this python program:
 
-     python    lispers.net-test-install.pyo   (when running python2)
-     python3.8 lispers.net-test-install.pyc   (when running python3)
+     python  lispers.net-test-install.pyo   (when running python2)
+     python3 lispers.net-test-install.pyc   (when running python3)
 
 (4) From a tcsh shell, type in "./RESTART-LISP" when you want to start or 
     restart the LISP subsystem. You can use "sudo ./STOP-LISP" to take the 
