@@ -153,12 +153,12 @@ if (-f ./lisp-core.pyo) then
     set SUFFIX = "pyo"
     set VER = "2"
 else if (-f ./lisp-core.pyc) then
-    which python3.8 > /dev/null
+    which python3 > /dev/null
     if ($status != "0") then
-        echo "Requires python version 3.8.x to be installed"
+        echo "Requires python version 3.x to be installed"
         exit(1)
     endif
-    set PY = "python3.8"
+    set PY = "python3"
     set SUFFIX = "pyc"
     set VER = "3"
 endif

@@ -31,7 +31,7 @@ set FLAGS = "-W ignore -O -u"
 if (-f ./lisp-rig.pyo) then
     sudo python2 $FLAGS ./lisp-rig.pyo $*
 else if (-f ./lisp-rig.pyc) then
-    sudo python3.8 $FLAGS ./lisp-rig.pyc $*
+    sudo python3 $FLAGS ./lisp-rig.pyc $*
 else if (-f ./lisp-rig.py) then
     sudo python $FLAGS ./lisp-rig.py $*
 endif

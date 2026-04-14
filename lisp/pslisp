@@ -30,7 +30,7 @@ if ($status == "0") then
 endif
 ls ./is-lisp-running.pyc >& /dev/null
 if ($status == "0") then
-    python3.8 -O ./is-lisp-running.pyc
+    python3 -O ./is-lisp-running.pyc
     exit
 endif
 python ./is-lisp-running.py

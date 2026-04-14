@@ -73,7 +73,7 @@ sleep 1
 set PY = "python2"
 set SUFFIX = "pyo"
 if (-f ./remove-lisp-locks.pyc) then
-    set PY = "python3.8"
+    set PY = "python3"
     set SUFFIX = "pyc"
 endif
 

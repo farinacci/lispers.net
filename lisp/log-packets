@@ -30,7 +30,7 @@ if ($status == "0") then
 endif
 ls ./lisp-log-packets.pyc >& /dev/null
 if ($status == "0") then
-    python3.8 -O ./lisp-log-packets.pyc $*
+    python3 -O ./lisp-log-packets.pyc $*
     exit
 endif
 python ./lisp-log-packets.py $1

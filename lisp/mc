@@ -30,7 +30,7 @@ if ($status == "0") then
 endif
 ls ./lisp-mc.pyc >& /dev/null
 if ($status == "0") then
-    python3.8 -O ./lisp-mc.pyc $*
+    python3 -O ./lisp-mc.pyc $*
     exit
 endif
 python ./lisp-mc.py $*

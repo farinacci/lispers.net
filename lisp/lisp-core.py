@@ -575,7 +575,7 @@ def lisp_show_status_command():
     # Get LISP process status.
     #
     ps = "ps auww" if lisp.lisp_is_macos() else "ps aux"
-    grep = "egrep 'PID|python lisp|python -O lisp|python2 -O lisp|python3.8 -O lisp'"
+    grep = "egrep 'PID|python lisp|python -O lisp|python2 -O lisp|python3 -O lisp'"
     grep += "| egrep -v grep"
     status = getoutput("{} | {}".format(ps, grep))
     status = status.replace(" ", lisp.space(1))
@@ -883,7 +883,7 @@ def lisp_install_command():
         suffix = "pyo"
     #endif
     if (lisp.lisp_is_python3()):
-        py = "python3.8 -O "
+        py = "python3 -O "
         suffix = "pyc"
     #endif
     if (lisp.lisp_is_ubuntu()):
@@ -1516,7 +1516,7 @@ def lisp_lig_command():
 
     lig = ""
     if os.path.exists("lisp-lig.pyo"): lig = "python2 -O lisp-lig.pyo"
-    if os.path.exists("lisp-lig.pyc"): lig = "python3.8 -O lisp-lig.pyc"
+    if os.path.exists("lisp-lig.pyc"): lig = "python3 -O lisp-lig.pyc"
     if os.path.exists("lisp-lig.py"): lig = "python2 lisp-lig.py"
 
     #
@@ -1579,7 +1579,7 @@ def lisp_rig_command():
 
     rig = ""
     if os.path.exists("lisp-rig.pyo"): rig = "python2 -O lisp-rig.pyo"
-    if os.path.exists("lisp-rig.pyc"): rig = "python3.8 -O lisp-rig.pyo"
+    if os.path.exists("lisp-rig.pyc"): rig = "python3 -O lisp-rig.pyo"
     if os.path.exists("lisp-rig.py"): rig = "python2 lisp-rig.py"
 
     #
@@ -1610,7 +1610,7 @@ def lisp_rig_command():
 def lisp_run_geo_lig(eid1, eid2):
     lig = None
     if os.path.exists("lisp-lig.pyo"): lig = "python2 -O lisp-lig.pyo"
-    if os.path.exists("lisp-lig.pyc"): lig = "python3.8 -O lisp-lig.pyc"
+    if os.path.exists("lisp-lig.pyc"): lig = "python3 -O lisp-lig.pyc"
     if os.path.exists("lisp-lig.py"): lig = "python2 lisp-lig.py"
     if (lig == None): return([None, None])
 
