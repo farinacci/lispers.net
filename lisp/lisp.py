@@ -13388,6 +13388,7 @@ class lisp_rloc(object):
         self.last_rloc_probe_nonce = 0
         self.echo_nonce_capable = False
         self.map_notify_requested = False
+        self.probing_itr_rloc = None
         self.rloc_next_hop = None
         self.next_rloc = None
         self.multicast_rloc_probe_list = {}
@@ -15958,8 +15959,19 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
 
     #
     # If there are no RLOCs found, do not build and send the Map-Request.
+    # For RLOC-probes with chain entries (multi-homing per-interface), use the
+    # local address of the interface the probe is being sent from.
     #
     itr_rloc4, itr_rloc6, device = lisp_myrlocs
+
+    #
+    # If this is a multi-homing chain entry probe with a stored interface
+    # address, use that for the ITR-RLOC.
+    #
+    if (rloc != None and rloc.probing_itr_rloc != None and rloc.rloc.is_ipv4()):
+        itr_rloc4 = rloc.probing_itr_rloc
+    #endif
+
     if (itr_rloc4 == None):
         lprint("Suppress sending Map-Request, IPv4 RLOC not found")
         return
@@ -16093,10 +16105,6 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
     #
     if (probe_dest != None):
         trans = rloc.is_rloc_translated()
-        if (trans == False):
-            lprint("DEBUG: RLOC {} is_rloc_translated()={}, translated_rloc={}, translated_port={}".format(
-                rloc.rloc.print_address_no_iid(), trans, rloc.translated_rloc.print_address_no_iid() if rloc.translated_rloc else "None", rloc.translated_port))
-        #endif
         if (trans):
             rn = rloc.normalize_decent_nat_rloc_name()
             nat_info = lisp_get_nat_info(probe_dest, rn)
@@ -16113,7 +16121,7 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
                 nat_info = lisp_nat_info(r, g, p)
             #endif
 
-            lisp_encap_rloc_probe(lisp_sockets, probe_dest, nat_info, packet)
+            lisp_encap_rloc_probe(lisp_sockets, probe_dest, nat_info, packet, rloc.probing_itr_rloc)
             return
         #endif
 
@@ -18040,12 +18048,20 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 #
                 # Install host routes for RLOC-probes so they can be sent to
                 # specific egress interfaces for multi-homing per-interface probing.
+                # Store the interface's local address on the chain entry so
+                # lisp_send_map_request() can use it as the ITR-RLOC.
                 #
                 if (rloc.rloc_next_hop != None):
                     d, nh = rloc.rloc_next_hop
                     lisp_install_host_route(addr_str, nh, True)
                     rloc.set_active_rloc_next_hop()
                     nh_str = ", send to nh {} on {}".format(nh, bold(d, False))
+                    #
+                    # Store interface address for use as ITR-RLOC in Map-Request.
+                    # Note: probing_itr_rloc is only set for chain entries in
+                    # multihoming configurations and will never be used otherwise.
+                    #
+                    rloc.probing_itr_rloc = lisp_get_interface_address(d)
                 #endif
 
                 #
@@ -18938,13 +18954,15 @@ def lisp_clear_map_cache():
 # and a destination address and port that was translated by the NAT. That
 # information is in the lisp_nat_info() class.
 #
-def lisp_encap_rloc_probe(lisp_sockets, rloc, nat_info, packet):
+def lisp_encap_rloc_probe(lisp_sockets, rloc, nat_info, packet, source_addr=None):
     if (len(lisp_sockets) != 4): return
 
     #
     # Check if called by RTR, use the lisp_rtr_source_rloc equivalent.
+    # For RLOC-probes from different interfaces, use the interface's local
+    # address if provided.
     #
-    local_addr = lisp_myrlocs[0]
+    local_addr = source_addr if source_addr else lisp_myrlocs[0]
     if (lisp_i_am_rtr and lisp_on_aws()):
         addr = lisp_get_interface_address("eth0")
         if (addr == None): addr = lisp_get_interface_address("ens5")

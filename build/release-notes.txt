@@ -1,4 +1,35 @@
 
+               lispers.net Beta Release Version 0.624
+               --------------------------------------
+
+o Release date:
+
+o This release completes a comprehensive multi-homing feature set. We can
+  get telemetry per RLOC per outgoing interface as well as implement policies
+  to switch to encap'ing to a different outgoing interfaces. Hash-based
+  load-splitting is done across RLOCs but within an RLOC, the outgoing interfaces
+  are selected based on one-way forward latency. The last 3 RLOC-probe telemetry
+  data is used to determine a switch. So oscillation will occur no faster than
+  30 seconds.
+    
+o Display interface name with packet-count stats in lisp-mc.py. This way when
+  the system is multi-homed we can display each attached interface stats per
+  RLOC.
+
+o Have data-plane "Send" debug log messages display outgoing interface name.
+
+o Make sure RLOC-probe replies apply to the correct RLOC data structure for
+  the RLOC and outgoing interface.
+
+o Create remove-lisp-host-routes.py called by STOP-LISP so if any host routes
+  were created while LISP was running due multi-homing on output, we remove
+  them for a fresh start.
+
+o Create lisp_rloc().active_rloc_next_hop to keep track for forwarding which RLOC
+  next-hop is used to increment stats for.
+
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.623
                --------------------------------------
 

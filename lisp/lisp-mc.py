@@ -272,6 +272,9 @@ for mc in map_cache:
             if ("encap-crypto" in rr):
                 rloc += ", {}".format(rr["encap-crypto"])
             #endif
+            if ("upriority" in rr and "uweight" in rr):
+                rloc += ", p{}w{}".format(rr["upriority"], rr["uweight"])
+            #endif
             if ("rloc-name" in rr):
                 rloc += ", {}".format(blue(rr["rloc-name"]))
             #endif
@@ -283,7 +286,7 @@ for mc in map_cache:
 
         print("    {}{}".format(ifname, print_stats(rr)))
         rtt, hc, lat = format_telemetry(rr)
-        print("    rtts {}, hops {}, latencies {}".format(rtt, hc, lat))
+        print("    rtts {}, hops {}, lats {}".format(rtt, hc, lat))
     #endfor
     print()
 #endfor
