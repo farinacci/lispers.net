@@ -18189,8 +18189,7 @@ def lisp_update_rtr_updown(rtr, updown):
 #
 # We have received a RLOC-probe Map-Reply, process it.
 #
-def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
-    mrloc, rloc_name):
+def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl, mrloc, rloc_name):
     global lisp_rloc_probe_nonce_list
 
     rloc = rloc_entry.rloc
@@ -18247,10 +18246,11 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl,
             addr = source_addr
             if (addr not in pl):
                 addr += ":" + str(port)
-                lprint("    Received unsolicited {} from {}/{}, port {}". \
-                    format(probe, red(map_reply_addr, False), red(source_addr,
-                        False), port))
-                return
+                if (addr not in pl):
+                    lprint("    Received unsolicited {} from {}/{}, port {}".format(probe, \
+                        red(map_reply_addr, False), red(source_addr, False), port))
+                    return
+                #endif
             #endif
         #endif
     #endif
