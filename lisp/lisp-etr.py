@@ -719,11 +719,12 @@ def lisp_etr_process_info_timer(ms):
 
     #
     # Build Info-Requests to decentralized-NATed ETRs.
+    # Use lisp_build_info_requests() to send from each interface (multi-homing).
     #
     for etr_str in lisp_etr_nat_probe_list:
         etr = lisp_etr_nat_probe_list[etr_str]
         lisp.lprint("Send NAT-Probe to ETR {}".format(etr_str))
-        lisp.lisp_send_info_request(sockets, etr, lisp.LISP_DATA_PORT, None)
+        lisp.lisp_build_info_requests(sockets, etr, lisp.LISP_DATA_PORT)
     #endfor
 
     #
