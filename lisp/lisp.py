@@ -1514,6 +1514,49 @@ def lisp_get_interface_address(device):
 #enddef
 
 #
+# lisp_bind_interface
+#
+# Bind a socket to a specific network interface using SO_BINDTODEVICE.
+# Used for control packets (Map-Requests, Info-Requests) that need to egress
+# from a specific interface in multi-homed scenarios.
+#
+def lisp_bind_interface(sock, device):
+    if (device == None or sock == None): return
+
+    #
+    # SO_BINDTODEVICE is Linux-specific and may not be defined in all Python
+    # socket modules. Fall back to the raw value 25 if not defined. Does not work
+    # with python2 (sigh). The kernal supports it so just pass parmeter 25 to
+    # setsockopt().
+    #
+    try:
+        #sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, device.encode())
+        sock.setsockopt(socket.SOL_SOCKET, 25, device.encode())
+        lprint("Bind interface {}".format(bold(device, False)))
+    except Exception as e:
+        lprint("Failed to bind socket to device {}: {}".format(device, e))
+    #endtry
+    return
+#enddef
+
+#
+# lisp_unbind_interface
+#
+# Unbind a socket from a specific network interface.
+#
+def lisp_unbind_interface(sock):
+    if (sock == None): return
+
+    try:
+        #sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, "")
+        sock.setsockopt(socket.SOL_SOCKET, 25, "")
+    except Exception as e:
+        lprint("Failed to unbind socket: {}".format(e))
+    #endtry
+    return
+#enddef
+
+#
 # lisp_get_input_interface
 #
 # Based on destination-MAC address of incoming pcap'ed packet, index into
@@ -13795,7 +13838,17 @@ class lisp_rloc(object):
             rloc.state = LISP_RLOC_UP_STATE
             rloc.last_state_change = lisp_get_timestamp()
             mc = lisp_map_cache.lookup_cache(eid, True)
-            if (mc): lisp_write_ipc_map_cache(True, mc)
+            if (mc):
+                #
+                # RLOC just transitioned to up-state. Rebuild best_rloc_set
+                # so forwarding picks up this RLOC if it has a better
+                # priority than what was previously up. Otherwise a lower-
+                # priority RLOC (e.g. RTR at p254) that came up first stays
+                # selected even after a p0 decent-nat RLOC becomes reachable.
+                #
+                mc.build_best_rloc_set()
+                lisp_write_ipc_map_cache(True, mc)
+            #endif
         #endif
 
         #
@@ -13834,25 +13887,28 @@ class lisp_rloc(object):
         # Now select better RTT next-hop.
         #
         rloc = None
-        install = None
+        best_rloc = None
         while (True):
             rloc = self if rloc == None else rloc.next_rloc
             if (rloc == None): break
             if (rloc.up_state() == False): continue
             if (rloc.rloc_probe_rtt == -1): continue
-            if (rloc.last_rloc_probe_nonce != nonce): continue
 
-            if (install == None): install = rloc
-            if (rloc.rloc_probe_rtt < install.rloc_probe_rtt): install = rloc
+            if (best_rloc == None): best_rloc = rloc
+            if (rloc.rloc_probe_rtt < best_rloc.rloc_probe_rtt): best_rloc = rloc
         #endwhile
 
-        if (install != None):
-            d, n = install.rloc_next_hop
-            nh = bold("nh {}({})".format(n, d), False)
-            lprint("    Install forwarding host-route via best {}".format(nh))
-            lisp_install_host_route(addr_str, None, False)
-            lisp_install_host_route(addr_str, n, True)
-            self.set_active_rloc_next_hop()
+        if (best_rloc != None):
+            d, n = best_rloc.rloc_next_hop
+            od = lisp_get_host_route_device(addr_str)
+            if (od != d):
+                lisp_install_host_route(addr_str, n, d)
+                self.active_rloc_next_hop = best_rloc
+                d = bold(d, False)
+                r = red(addr_str, False)
+                rtt = best_rloc.rloc_probe_rtt
+                lprint("Change data-plane host-route {} -> {} for {}, best-rtt {}".format(od, d, r, rtt))
+            #endif
         #endif
         return(True)
     #enddef
@@ -16197,87 +16253,13 @@ def lisp_send_info_request(lisp_sockets, dest, port, device_name):
     addr_str = dest.print_address_no_iid()
 
     #
-    # Find next-hop for interface 'device_name' if supplied. The "ip route"
-    # command will produce this:
-    #
-    # pi@lisp-pi ~/lisp $ ip route | egrep "default via"
-    # default via 192.168.1.1 dev eth1
-    # default via 192.168.1.1 dev wlan0
-    #
-    # We then turn the line we want into a "ip route add" command. Then at
-    # the end of this function we remove the route.
-    #
-    # We do this on the ETR only so we don't have Info-Requests from the lisp-
-    # itr and lisp-etr process both add and delete host routes (for Info-
-    # Request sending purposes) at the same time.
-    #
-    added_route = False
-    if (device_name):
-        default_routes = lisp_get_default_route_next_hops()
-        lprint("Found default routes {}".format(default_routes))
-
-        if (len(default_routes) == 1):
-            nh = default_routes[0][0]
-            if (nh != device_name):
-                lprint("Multihoming config error, add this to your system:")
-                lprint("  'sudo ip route append default via <nh> dev {}'". \
-                       format(device_name))
-                return
-            #endif
-        #endif
-
-        save_nh = lisp_get_host_route_next_hop(addr_str)
-        if (save_nh == None):
-            lprint("No host route found for MS {}".format(addr_str))
-        else:
-            lprint("Host route found for MS {}, nh {}".format(addr_str,
-                save_nh))
-        #endif
-
-        #
-        # If we found a host route for the map-server, then both the lisp-itr
-        # and lisp-etr processes are in this routine at the same time.
-        # wait for the host route to go away before proceeding. We will use
-        # the map-server host route as a IPC lock. For the data port, only
-        # the lisp-etr processes will add host route to the RTR for Info-
-        # Requests.
-        #
-        if (port == LISP_CTRL_PORT and save_nh != None):
-            lprint("Waiting for host route {} to go away".format(addr_str))
-            while (True):
-                time.sleep(.01)
-                save_nh = lisp_get_host_route_next_hop(addr_str)
-                if (save_nh == None): break
-            #endwhile
-        #endif
-
-        for device, nh in default_routes:
-            if (device != device_name): continue
-
-            #
-            # If there is a data route pointing to same next-hop, don't
-            # change the routing table. Otherwise, remove saved next-hop,
-            # add the one we want and later undo this.
-            #
-            if (save_nh != nh):
-                if (save_nh != None):
-                    lisp_install_host_route(addr_str, save_nh, False)
-                #endif
-                lisp_install_host_route(addr_str, nh, True)
-                added_route = True
-            #endif
-            break
-        #endfor
-    #endif
-
-    #
     # Encode the Info-Request message and print it.
     #
     packet = info.encode()
     info.print_info()
 
     #
-    # Send it.
+    # Send it. Bind socket to device for multi-homing if device_name supplied.
     #
     cd = "(for control)" if port == LISP_CTRL_PORT else "(for data)"
     cd = bold(cd, False)
@@ -16285,6 +16267,12 @@ def lisp_send_info_request(lisp_sockets, dest, port, device_name):
     a = red(addr_str, False)
     rtr = "RTR " if port == LISP_DATA_PORT else "MS "
     lprint("Send Info-Request to {}{}, port {} {}".format(rtr, a, p, cd))
+
+    #
+    # Bind socket to interface if device_name is supplied for multi-homing.
+    #
+    sock = lisp_sockets[0] if port == LISP_CTRL_PORT else lisp_sockets[1]
+    lisp_bind_interface(sock, device_name)
 
     #
     # Send packet to control port via control-sockets interface. For a 4341
@@ -16314,12 +16302,9 @@ def lisp_send_info_request(lisp_sockets, dest, port, device_name):
     #endif
 
     #
-    # Remove static route to RTR if had added one and restore data route.
+    # Unbind socket from interface.
     #
-    if (added_route):
-        lisp_install_host_route(addr_str, None, False)
-        if (save_nh != None): lisp_install_host_route(addr_str, save_nh, True)
-    #endif
+    lisp_unbind_interface(sock)
     return
 #enddef
 
@@ -17919,8 +17904,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             # port state for an RLOC.
             #
             if (last_rloc):
-                parent_rloc.last_rloc_probe_nonce = \
-                    last_rloc.last_rloc_probe_nonce
+                parent_rloc.last_rloc_probe_nonce = last_rloc.last_rloc_probe_nonce
                 if (last_rloc.translated_port == parent_rloc.translated_port \
                    and last_rloc.rloc_name == parent_rloc.rloc_name):
                     e = green(lisp_print_eid_tuple(eid, group), False)
@@ -17937,19 +17921,9 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             #endif
 
             #
-            # If this RLOC has a host-route stored for forwarding, get it,
-            # and save it since we need to change nex-hops now to direct
-            # RLOC-probes.
+            # With SO_BINDTODEVICE for RLOC-probes, we don't need to manipulate
+            # forwarding routes. SO_BINDTODEVICE overrides routing table selection.
             #
-            save_nh = None
-            if (parent_rloc.rloc_next_hop != None):
-                save_nh = lisp_get_host_route_next_hop(addr_str)
-                if (save_nh):
-                    lprint("Remove forwarding next-hop {}".format(save_nh))
-                    lisp_install_host_route(addr_str, None, False)
-                    parent_rloc.set_active_rloc_next_hop()
-                #endif
-            #endif
 
             rloc = None
             while (True):
@@ -18038,24 +18012,25 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
 
                 #
                 # Send Map-Request RLOC-probe. We may have to send one for each
-                # egress interface to the same RLOC address. Install host
-                # route in RLOC so we can direct the RLOC-probe on an egress
-                # interface. Save forwarding next-hop so we can reinstall
-                # after the RLOC-probe goes out directed interface.
+                # egress interface to the same RLOC address. Bind socket to the
+                # interface so we can direct the RLOC-probe on an egress
+                # interface.
                 #
                 nh_str = ""
+                device = None
 
                 #
-                # Install host routes for RLOC-probes so they can be sent to
+                # Bind socket for RLOC-probes so they can be sent to
                 # specific egress interfaces for multi-homing per-interface probing.
                 # Store the interface's local address on the chain entry so
                 # lisp_send_map_request() can use it as the ITR-RLOC.
                 #
                 if (rloc.rloc_next_hop != None):
                     d, nh = rloc.rloc_next_hop
-                    lisp_install_host_route(addr_str, nh, True)
+                    device = d
                     rloc.set_active_rloc_next_hop()
                     nh_str = ", send to nh {} on {}".format(nh, bold(d, False))
+
                     #
                     # Store interface address for use as ITR-RLOC in Map-Request.
                     # Note: probing_itr_rloc is only set for chain entries in
@@ -18063,6 +18038,11 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                     #
                     rloc.probing_itr_rloc = lisp_get_interface_address(d)
                 #endif
+
+                #
+                # Bind UDP socket to device for RLOC-probe multi-homing.
+                #
+                if (device): lisp_bind_interface(lisp_sockets[3], device)
 
                 #
                 # Print integrated log message before sending RLOC-probe.
@@ -18103,6 +18083,11 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 last_rloc = parent_rloc
 
                 #
+                # Unbind socket from device after probe sent.
+                #
+                if (device): lisp_unbind_interface(lisp_sockets[3])
+
+                #
                 # Check mapping system to see if a translated address or port
                 # has changed. This occurs when a decent-nat RLOC has been
                 # unreachable for 1 minute.
@@ -18110,26 +18095,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 if (rloc.is_decent_nat_port() and rloc.unreach_state()):
                     rloc.refresh_decent_nat_rloc(lisp_sockets, deid)
                 #endif
-
-                #
-                # Remove installed host route. And install forwarding next-hop
-                # when we move to a new RLOC to test.
-                #
-                if (nh):
-                    lisp_install_host_route(addr_str, nh, False)
-                    rloc.set_active_rloc_next_hop()
-                #endif
             #endwhile
-
-            #
-            # And install forwarding next-hop for last RLOC now we are going
-            # to process a new RLOC.
-            #
-            if (save_nh):
-                lprint("Reinstall forwarding next-hop {}".format(save_nh))
-                lisp_install_host_route(addr_str, save_nh, True)
-                if (rloc): rloc.set_active_rloc_next_hop()
-            #endif
 
             #
             # Send 10 RLOC-probes and then sleep for 20 ms.
@@ -19023,6 +18989,25 @@ def lisp_encap_rloc_probe(lisp_sockets, rloc, nat_info, packet, source_addr=None
     packet.print_packet("Send", True)
 
     raw_socket = lisp_sockets[3]
+
+    #
+    # For multi-homing: bind the raw socket to the source address from the
+    # IP header we built. With IP_HDRINCL, the kernel's FIB lookup combines
+    # destination, source, and SO_BINDTODEVICE oif to pick the output
+    # interface. Without an explicit source bind, the kernel can resolve the
+    # destination via its preferred default route and ignore the oif hint,
+    # sending all probes out the same interface. Binding to local_addr fully
+    # constrains the route lookup so the probe leaves the correct interface.
+    #
+    if (source_addr):
+        try:
+            raw_socket.bind((local_addr.print_address_no_iid(), 0))
+        except Exception as e:
+            lprint("raw socket bind to {} failed: {}".format( \
+                local_addr.print_address_no_iid(), e))
+        #endtry
+    #endif
+
     packet.send_packet(raw_socket, packet.outer_dest)
     del(packet)
     return
@@ -19087,23 +19072,40 @@ def lisp_get_host_route_next_hop(rloc):
 #enddef
 
 #
+# lisp_get_host_route_device
+#
+# For already installed host route, get device interface.
+#
+def lisp_get_host_route_device(rloc):
+    cmd = "ip route | egrep '{} via'".format(rloc)
+    route = getoutput(cmd).split()
+
+    try: index = route.index("dev") + 1
+    except: return(None)
+
+    if (index >= len(route)): return(None)
+    return(route[index])
+#enddef
+
+#
 # lisp_install_host_route
 #
 # Install/deinstall host route.
 #
-def lisp_install_host_route(dest, nh, install):
-    install = "add" if install else "delete"
-    nh_str = "none" if nh == None else nh
+def lisp_install_host_route(dest, nh, device):
+    if (nh == None or device == None): return
 
-    lprint("{} host-route {}/32, nh {}".format(install.title(), dest, nh_str))
+    #
+    # First remove any host route.
+    #
+    os.system("sudo ip route delete {}/32".format(dest))
 
-    if (nh == None):
-        ar = "ip route {} {}/32".format(install, dest)
-    else:
-        ar = "ip route {} {}/32 via {}".format(install, dest, nh)
-    #endif
-    os.system(ar)
-    return
+    #
+    # Now install new next hop.
+    #
+    route = "ip route add {}/32 via {} dev {}".format(dest, nh, device)
+    lprint("Run '{}'".format(route))
+    os.system(route)
 #enddef
 
 #
