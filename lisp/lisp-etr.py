@@ -93,14 +93,10 @@ def lisp_etr_map_server_command(kv_pair):
     # Trigger a Info-Request if we are doing NAT-traversal if this is the
     # first Map-Server..
     #
-    first_ms = (len(lisp.lisp_map_servers_list) == 1)
-    if (first_ms):
-        ms = list(lisp.lisp_map_servers_list.values())[0]
-        if (lisp_etr_info_timer == None):
-            lisp_etr_info_timer = threading.Timer(2, lisp_etr_process_info_timer,
-                [ms.map_server])
-            lisp_etr_info_timer.start()
-        #endif
+    ms = list(lisp.lisp_map_servers_list.values())[0]
+    if (lisp_etr_info_timer == None):
+        lisp_etr_info_timer = threading.Timer(2, lisp_etr_process_info_timer, [ms.map_server])
+        lisp_etr_info_timer.start()
     else:
 
         #
