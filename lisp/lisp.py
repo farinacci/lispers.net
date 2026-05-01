@@ -13874,7 +13874,10 @@ class lisp_rloc(object):
             "to-ttl/from-ttl {}{}").format(probe, red(addr_str, False), p, e,
             state_string, rtt, nh, str(hc) + "/" + str(ttl), lat))
 
-        if (len(rloc.rloc_next_hop) == 1): return(True)
+        #
+        # No multi-homing. one default route only.
+        #
+        if (rloc.next_rloc == None): return(True)
 
         #
         # Now select better RTT next-hop.
