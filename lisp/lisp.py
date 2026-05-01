@@ -1521,7 +1521,7 @@ def lisp_get_interface_address(device):
 # from a specific interface in multi-homed scenarios.
 #
 def lisp_bind_interface(sock, device):
-    if (device == None or sock == None): return
+    if (device == None or sock == None or lisp_is_macos()): return
 
     #
     # SO_BINDTODEVICE is Linux-specific and may not be defined in all Python
@@ -1545,14 +1545,6 @@ def lisp_bind_interface(sock, device):
 # Unbind a socket from a specific network interface.
 #
 def lisp_unbind_interface(sock):
-    if (sock == None): return
-
-    try:
-        #sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, "")
-        sock.setsockopt(socket.SOL_SOCKET, 25, "")
-    except Exception as e:
-        lprint("Failed to unbind socket: {}".format(e))
-    #endtry
     return
 #enddef
 
@@ -7250,7 +7242,8 @@ def lisp_parse_packet(lisp_sockets, packet, source, udp_sport, ttl=-1):
         lisp_process_ecm(lisp_sockets, packet, source, udp_sport)
 
     else:
-        lprint("Invalid LISP control packet type {}:".format(header.type))
+        a = source.print_address()
+        lprint("Invalid LISP control packet type {} from {}:".format(header.type, a))
         lprint(lisp_format_packet(packet))
 
     #endif
@@ -13881,7 +13874,7 @@ class lisp_rloc(object):
             "to-ttl/from-ttl {}{}").format(probe, red(addr_str, False), p, e,
             state_string, rtt, nh, str(hc) + "/" + str(ttl), lat))
 
-        if (rloc.rloc_next_hop == None): return(True)
+        if (len(rloc.rloc_next_hop) == 1): return(True)
 
         #
         # Now select better RTT next-hop.
@@ -16338,6 +16331,18 @@ def lisp_process_info_request(lisp_sockets, packet, addr_str, sport, rtr_list):
     if (info.hostname != None):
         info.private_etr_rloc.afi = LISP_AFI_NAME
         info.private_etr_rloc.store_address(info.hostname)
+    #endif
+
+    #
+    # If the source-port is 0, this is an Info-Request send by a remote
+    # ITR to simply pierce the NAT. Mission accomplished. We don't need
+    # to reply.
+    #
+    if (sport == 0 and lisp_i_am_etr):
+        a = red(addr_str, False)
+        h = " ({})".format(blue(info.hostname, False)) if (info.hostname != None) else ""
+        lprint("Suppress replying to Info-Request from {}{}".format(a, h))
+        return
     #endif
 
     if (rtr_list != None): info.rtr_list = rtr_list
@@ -19093,7 +19098,7 @@ def lisp_get_host_route_device(rloc):
 # Install/deinstall host route.
 #
 def lisp_install_host_route(dest, nh, device):
-    if (nh == None or device == None): return
+    if (nh == None or device == None or lisp_is_macos()): return
 
     #
     # First remove any host route.

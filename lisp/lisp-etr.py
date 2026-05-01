@@ -1143,7 +1143,7 @@ def lisp_etr_data_plane(parms, not_used, packet):
     #
     if (packet.lisp_header.get_instance_id() == 0xffffff):
         inner_ip = packet.packet[36::]
-        inner_lisp = inner_ip[28::]
+        inner_lisp = inner_ip
         ttl = -1
         if (lisp.lisp_is_rloc_probe_request(inner_lisp[0:1])):
             ttl = struct.unpack("B", inner_ip[8:9])[0] - 1
