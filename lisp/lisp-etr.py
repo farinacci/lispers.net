@@ -94,7 +94,7 @@ def lisp_etr_map_server_command(kv_pair):
     # first Map-Server..
     #
     ms = list(lisp.lisp_map_servers_list.values())[0]
-    if (lisp_etr_info_timer == None):
+    if (lisp_etr_info_timer == None and lisp.lisp_nat_traversal):
         lisp_etr_info_timer = threading.Timer(2, lisp_etr_process_info_timer, [ms.map_server])
         lisp_etr_info_timer.start()
     else:
@@ -691,7 +691,6 @@ def lisp_etr_process_info_timer(ms):
 
     lisp.lisp_set_exception()
 
-    #
     # Build Info-Request messages if we have any private RLOCs in database-
     # mappings.
     #
@@ -773,12 +772,13 @@ def lisp_process_register_timer(lisp_sockets):
     #
     # Restart periodic timer.
     #
-    if (lisp_register_timer):
+    if (lisp_register_timer != None):
         lisp_register_timer.cancel()
-        lisp_register_timer = threading.Timer(LISP_MAP_REGISTER_INTERVAL,
-            lisp_process_register_timer, [lisp_send_sockets])
-        lisp_register_timer.start()
     #endif
+    lisp_register_timer = threading.Timer(LISP_MAP_REGISTER_INTERVAL,
+        lisp_process_register_timer, [lisp_send_sockets])
+    lisp_register_timer.start()
+
     return
 #enddef
 
