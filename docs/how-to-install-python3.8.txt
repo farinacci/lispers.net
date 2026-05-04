@@ -10,6 +10,8 @@ way to get python3.x back on your system:
 sudo apt -y update && sudo apt -y upgrade
 sudo apt install -y software-properties-common
 sudo add-apt-repository -y ppa:deadsnakes/ppa
+
+sudo apt remove python3.10
 sudo apt -y install python3
 
 cd /usr/bin
