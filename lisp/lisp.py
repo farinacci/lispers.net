@@ -1544,7 +1544,16 @@ def lisp_bind_interface(sock, device):
 #
 # Unbind a socket from a specific network interface.
 #
-def lisp_unbind_interface(sock):
+def lisp_unbind_interface(sock, device):
+    if (device == None or sock == None or lisp_is_macos()): return
+
+    try:
+        #sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, "")
+        sock.setsockopt(socket.SOL_SOCKET, 25, "")
+        lprint("Unbind interface {}".format(bold(device, False)))
+    except Exception as e:
+        lprint("Failed to unbind socket: {}".format(e))
+    #endtry
     return
 #enddef
 
@@ -18093,7 +18102,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 #
                 # Unbind socket from device after probe sent.
                 #
-                if (device): lisp_unbind_interface(lisp_sockets[3])
+                if (device): lisp_unbind_interface(lisp_sockets[3], device)
 
                 #
                 # Check mapping system to see if a translated address or port
