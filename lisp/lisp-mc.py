@@ -281,7 +281,14 @@ for mc in map_cache:
             if (debug and "rloc-memory" in rr): rloc += ", " + rr["rloc-memory"]
             print(rloc)
         #endif
-        ifname = blue(rr["nh-interface"][0]) + ": " if ("nh-interface" in rr) else ""
+
+        nhi = rr["nh-interface"][0] if ("nh-interface" in rr) else ""
+        nhs = rr["nh-interface-state"] if ("nh-interface-state" in rr) else ""
+        if (nhs == "up-state" or nhs == ""):
+            if (nhi != ""): ifname = blue(nhi) + ": "
+        else:
+            if (nhi != ""): ifname = red(nhi) + ": "
+        #endif
         if ("is-active" in rr and rr["is-active"] == True): ifname = "*" + ifname
 
         print("    {}{}".format(ifname, print_stats(rr)))

@@ -9059,7 +9059,7 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
             port = rloc.store_rloc_from_record(rloc_record, map_reply.nonce, source)
             rloc.set_active_rloc_next_hop()
             rloc.echo_nonce_capable = map_reply.echo_nonce_capable
-
+        
             if (rloc.echo_nonce_capable):
                 addr_str = rloc.rloc.print_address_no_iid()
                 if (lisp_get_echo_nonce(None, addr_str) == None):
@@ -13891,6 +13891,11 @@ class lisp_rloc(object):
         #
         # Now select better RTT next-hop.
         #
+        self.select_rloc_next_hop(addr_str)
+        return(True)
+    #enddef
+
+    def select_rloc_next_hop(self, addr_str):
         rloc = None
         best_rloc = None
         while (True):
@@ -13902,20 +13907,19 @@ class lisp_rloc(object):
             if (best_rloc == None): best_rloc = rloc
             if (rloc.rloc_probe_rtt < best_rloc.rloc_probe_rtt): best_rloc = rloc
         #endwhile
-
-        if (best_rloc != None):
-            d, n = best_rloc.rloc_next_hop
-            od = lisp_get_host_route_device(addr_str)
-            if (od != d):
-                lisp_install_host_route(addr_str, n, d)
-                self.active_rloc_next_hop = best_rloc
-                d = bold(d, False)
-                r = red(addr_str, False)
-                rtt = best_rloc.rloc_probe_rtt
-                lprint("Change data-plane host-route {} -> {} for {}, best-rtt {}".format(od, d, r, rtt))
-            #endif
+        if (best_rloc == None):
+            self.active_rloc_next_hop = None
+            return
         #endif
-        return(True)
+
+        device, nh = best_rloc.rloc_next_hop
+        old_device = lisp_get_host_route_device(addr_str)
+        if (old_device != device):
+            lisp_install_host_route(addr_str, nh, device)
+            self.active_rloc_next_hop = best_rloc
+            lprint("Change data-plane host-route {} -> {} for {}, best-rtt {}".format( \
+                old_device, bold(device, False), red(addr_str, False), best_rloc.rloc_probe_rtt))
+        #endif
     #enddef
 
     def add_to_rloc_probe_list(self, eid, group):
@@ -13949,6 +13953,7 @@ class lisp_rloc(object):
         old_entry = None
         first_rloc = None
         for r, e, g in lisp_rloc_probe_list[addr_str]:
+
             #
             # Keep track of first RLOC to copy RTT data from if needed.
             #
@@ -16309,7 +16314,7 @@ def lisp_send_info_request(lisp_sockets, dest, port, device_name):
     #
     # Unbind socket from interface.
     #
-    lisp_unbind_interface(sock)
+    lisp_unbind_interface(sock, device_name)
     return
 #enddef
 
@@ -17382,7 +17387,10 @@ def lisp_fill_rloc_in_json(rloc, head=True):
     for rtt in rloc.recent_rloc_probe_rtts: recent_rtts.append(str(rtt))
     r["recent-rloc-probe-rtts"] = recent_rtts
 
-    if (rloc.rloc_next_hop): r["nh-interface"] = rloc.rloc_next_hop
+    if (rloc.rloc_next_hop):
+        r["nh-interface"] = rloc.rloc_next_hop
+        r["nh-interface-state"] = rloc.print_state()
+    #endif
 
     #
     # Set is-active if this is the next-hop RLOC being used by a host route
@@ -17941,6 +17949,9 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             # With SO_BINDTODEVICE for RLOC-probes, we don't need to manipulate
             # forwarding routes. SO_BINDTODEVICE overrides routing table selection.
             #
+            hr_nh = lisp_get_host_route_next_hop(addr_str)
+            hr_d = lisp_get_host_route_device(addr_str)
+            lprint("Kernel HR for {} -> [{}, {}]".format(addr_str, hr_nh, hr_d))
 
             rloc = None
             while (True):
@@ -17958,6 +17969,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                             rloc.state = LISP_RLOC_UNREACH_STATE
                             rloc.last_state_change = lisp_get_timestamp()
                             lisp_update_rtr_updown(rloc.rloc, False)
+                            parent_rloc.set_rloc_next_hop(addr_str)
                         #endif
                         unreach = bold("unreachable", False)
                         lprint("Next-hop {}({}) for RLOC {} is {}".format(n, d,
@@ -18016,8 +18028,8 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                         rloc.last_state_change = lisp_get_timestamp()
                         lisp_update_rtr_updown(rloc.rloc, False)
                         unreach = bold("unreachable", False)
-                        lprint("RLOC {} went {}, probe it".format( \
-                            red(addr_str, False), unreach))
+                        lprint("RLOC {} [{}, {}] went {}, probe it".format( \
+                            red(addr_str, False), n, d, unreach))
 
                         lisp_mark_rlocs_for_other_eids(values)
                     #endif
@@ -18057,11 +18069,6 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 #endif
 
                 #
-                # Bind UDP socket to device for RLOC-probe multi-homing.
-                #
-                if (device): lisp_bind_interface(lisp_sockets[3], device)
-
-                #
                 # Print integrated log message before sending RLOC-probe.
                 #
                 rtt = rloc.print_rloc_probe_rtt()
@@ -18092,17 +18099,20 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                 #endif
 
                 #
+                # Bind UDP socket to device for RLOC-probe multi-homing.
+                #
+                if (device):
+                    lprint("RLOC HR for {} -> [{}, {}]".format(addr_str, nh, d))
+                    lisp_install_host_route(addr_str, nh, d)
+                #endif
+
+                #
                 # Send RLOC-probe Map-Request.
                 #
                 seid = None if (group.is_null()) else eid
                 deid = eid if (group.is_null()) else group
                 lisp_send_map_request(lisp_sockets, 0, seid, deid, rloc)
                 last_rloc = parent_rloc
-
-                #
-                # Unbind socket from device after probe sent.
-                #
-                if (device): lisp_unbind_interface(lisp_sockets[3], device)
 
                 #
                 # Check mapping system to see if a translated address or port
@@ -18113,6 +18123,14 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                     rloc.refresh_decent_nat_rloc(lisp_sockets, deid)
                 #endif
             #endwhile
+
+            #
+            # Done with the 
+            #
+            if (device):
+                lprint("Return Kernel HR for {} -> [{}, {}]".format(addr_str, hr_nh, hr_d))
+                lisp_install_host_route(addr_str, hr_nh, hr_d)
+            #endif
 
             #
             # Send 10 RLOC-probes and then sleep for 20 ms.
