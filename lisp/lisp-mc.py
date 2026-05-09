@@ -242,12 +242,20 @@ for mc in map_cache:
             #endfor
             continue
         #endif
+
+        #
+        # if the first RLOC is in unreach-state, print up-state if there are other next-hops
+        # that are in up-state. Note, the first RLOC contains the first next-hop data.
+        #
         if ("next-hop-rlocs" in r):
+            up_count = 1 if (r["state"] == "up-state") else 0
             rloc_set.append(r)
             for rr in r["next-hop-rlocs"]:
                 rr["nh-node"] = True
+                if (rr["state"] == "up-state"): up_count += 1
                 rloc_set.append(rr)
             #endfor
+            r["state"] = "unreach-state" if (up_count == 0) else "up-state"
             continue
         #endif
         rloc_set.append(r)

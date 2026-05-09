@@ -13472,6 +13472,20 @@ class lisp_rloc(object):
         #endwhile            
     #enddef
 
+    def print_rloc_next_hops(self):
+        a = self.rloc.print_address_no_iid()
+        banner = bold("print_rloc_next_hop({}):".format(a), False)
+        lprint(banner)
+
+        nr = self
+        while (nr != None):
+            active = ", active" if (self.active_rloc_next_hop == nr) else ""
+            lprint("  RLOC {}, {}, nh {}, state {}{}".format(a, hex(id(nr)), nr.rloc_next_hop,
+                nr.print_state(), active))
+            nr = nr.next_rloc
+        #endwhile
+    #enddef
+
     def up_state(self):
         return(self.state == LISP_RLOC_UP_STATE)
     #enddef
@@ -13671,12 +13685,24 @@ class lisp_rloc(object):
         self.mpriority = rloc_record.mpriority
         self.weight = rloc_record.weight
         self.mweight = rloc_record.mweight
-        if (rloc_record.reach_bit and rloc_record.local_bit and
-            rloc_record.probe_bit == False):
-            if (self.state != LISP_RLOC_UP_STATE):
-                self.last_state_change = lisp_get_timestamp()
-            #endif
-            self.state = LISP_RLOC_UP_STATE
+
+        #
+        # Set reachability for RLOC associated with Map-Reply nonce (and hence outgoing interface
+        # for RLOC.
+        #
+        if (rloc_record.reach_bit and rloc_record.local_bit and rloc_record.probe_bit == False):
+            nr = self
+            while (nr != None):
+                if (nonce == nr.last_rloc_probe_nonce):
+                    if (nr.state != LISP_RLOC_UP_STATE):
+                        nr.state = LISP_RLOC_UP_STATE
+                        nr.last_state_change = lisp_get_timestamp()
+                        self.select_rloc_next_hop()
+                    #endif
+                    break
+                #endif
+                nr = nr.next_rloc
+            #endwhile
         #endif
 
         #
@@ -13891,11 +13917,13 @@ class lisp_rloc(object):
         #
         # Now select better RTT next-hop.
         #
-        self.select_rloc_next_hop(addr_str)
+        self.select_rloc_next_hop()
         return(True)
     #enddef
 
-    def select_rloc_next_hop(self, addr_str):
+    def select_rloc_next_hop(self):
+        addr_str = self.rloc.print_address_no_iid()
+
         rloc = None
         best_rloc = None
         while (True):
@@ -13907,13 +13935,21 @@ class lisp_rloc(object):
             if (best_rloc == None): best_rloc = rloc
             if (rloc.rloc_probe_rtt < best_rloc.rloc_probe_rtt): best_rloc = rloc
         #endwhile
+
+        #
+        # If all next-hops are down, mark first in chain as unreachable.
+        #
         if (best_rloc == None):
             self.active_rloc_next_hop = None
+            self.state = LISP_RLOC_UNREACH_STATE
+            self.last_state_change = lisp_get_timestamp()
+            os.system("sudo ip route delete {}/32".format(addr_str))
             return
         #endif
 
         device, nh = best_rloc.rloc_next_hop
         old_device = lisp_get_host_route_device(addr_str)
+
         if (old_device != device):
             lisp_install_host_route(addr_str, nh, device)
             self.active_rloc_next_hop = best_rloc
@@ -17806,6 +17842,7 @@ def lisp_mark_rlocs_for_other_eids(eid_list):
     for rloc, e, g in eid_list[1::]:
         rloc.state = LISP_RLOC_UNREACH_STATE
         rloc.last_state_change = lisp_get_timestamp()
+        rloc.select_rloc_next_hop()
         eids.append(lisp_print_eid_tuple(e, g))
     #endfor
 
@@ -17850,6 +17887,7 @@ def lisp_process_multicast_rloc(multicast_rloc):
         #
         mrloc.state = LISP_RLOC_UNREACH_STATE
         mrloc.last_state_change = lisp_get_timestamp()
+        mrloc.select_rloc_next_hop()
 
         lprint("Multicast-RLOC {} member-RLOC {} went unreachable".format( \
             maddr, red(addr, False)))
@@ -17968,8 +18006,8 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                         if (rloc.up_state()):
                             rloc.state = LISP_RLOC_UNREACH_STATE
                             rloc.last_state_change = lisp_get_timestamp()
+                            rloc.select_rloc_next_hop()
                             lisp_update_rtr_updown(rloc.rloc, False)
-                            parent_rloc.set_rloc_next_hop(addr_str)
                         #endif
                         unreach = bold("unreachable", False)
                         lprint("Next-hop {}({}) for RLOC {} is {}".format(n, d,
@@ -18028,6 +18066,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                         rloc.last_state_change = lisp_get_timestamp()
                         lisp_update_rtr_updown(rloc.rloc, False)
                         unreach = bold("unreachable", False)
+                        d, n = rloc.rloc_next_hop
                         lprint("RLOC {} [{}, {}] went {}, probe it".format( \
                             red(addr_str, False), n, d, unreach))
 
@@ -18288,6 +18327,7 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl, mrlo
                 continue
             #endif
         #endif
+
         found = rloc.process_rloc_probe_reply(ts, nonce, eid, group, hc, ttl, jt)
 
         #
@@ -18305,6 +18345,7 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl, mrlo
             #endwhile
         #endif
     #endfor
+
     if (matched_rloc == None): return
     if (matched_rloc.rloc_next_hop == None): return
 
