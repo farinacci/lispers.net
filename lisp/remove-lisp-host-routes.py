@@ -32,7 +32,6 @@ from future import standard_library
 standard_library.install_aliases()
 import os
 from subprocess import getoutput
-import ipaddress
 
 #------------------------------------------------------------------------------
 
@@ -49,43 +48,25 @@ print("Removing LISP host-routes ...")
 # followed by via, another IP, dev, and device name at end of line.
 # Valid host routes have exactly 5 tokens: <ip> via <ip> dev <device>
 #
-try:
-    output = getoutput(r"ip route | egrep 'via'")
+output = getoutput("ip route | egrep 'via' | egrep -v 'default'")
 
-    if (output == ""):
-        print("ip route grep returned nothing")
-        exit(1)
-    #endif
+if (output == ""):
+    print("ip route grep returned nothing")
+    exit(1)
+#endif
 
-    removed_routes = []
-    for line in output.split("\n"):
-        if (line == ""): continue
-        tokens = line.split()
-        if (len(tokens) != 5): continue
-            
-        #
-        # Only clean up routes for non-private addresses that look like
-        # they could be RLOC probes. Skip private address ranges.
-        #
-        dest = tokens[0]
-        try:
-            addr = ipaddress.ip_address(unicode(dest))
-            if (addr.is_private or addr.is_loopback or
-                addr.is_link_local or addr.is_multicast):
-                continue
-            #endif
+removed_routes = []
+for line in output.split("\n"):
+    if (line == ""): continue
+    tokens = line.split()
+    if (len(tokens) != 5): continue
 
-            os.system("sudo ip route delete {}/32".format(dest))
-            removed_routes.append(dest)
-        except:
-            pass
-        #endtry
-    #endfor
+    dest = tokens[0]
+    os.system("sudo ip route delete {}/32".format(dest))
+    removed_routes.append(dest)
+#endfor
 
-    print("Removed routes:", removed_routes)
-except:
-    pass
-#endtry
+print("Removed routes:", removed_routes)
 
 exit(0)
 

@@ -13455,6 +13455,7 @@ class lisp_rloc(object):
             hop = lisp_rloc(False)
             hop = copy.deepcopy(self)
             hop.rloc_next_hop = nh
+            hop.next_rloc = None
             last.next_rloc = hop
             last = hop
         #endfor
