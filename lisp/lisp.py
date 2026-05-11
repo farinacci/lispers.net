@@ -8990,9 +8990,18 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
 
         #
         # Some RLOC-probe Map-Replies may have no EID value in the EID-record.
-        # Like from RTRs or PETRs.
+        # Like from RTRs or PETRs. Some replies may be for our own EIDs, which mean
+        # they are being looped back. Perhaps by a switched network.
         #
-        if (multicast == False and eid_record.eid.is_null()): continue
+        if (multicast == False):
+            if (eid_record.eid.is_null()): continue
+            if (lisp_is_myeid(eid_record.eid)):
+                e = eid_record.eid.print_prefix()
+                s = source.print_address_no_iid()
+                lprint("EID-record ignored, contains local eid {}, source {}".format(e, s))
+                continue
+            #endif
+        #endif
 
         #
         # Do not lose state for other RLOCs that may be stored in an already
