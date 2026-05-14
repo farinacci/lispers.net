@@ -9057,7 +9057,8 @@ def lisp_process_map_reply(lisp_sockets, packet, source, ttl, itr_in_ts):
             if (old_rloc):
                 rloc = old_rloc
             else:
-                rloc = lisp_rloc()
+                v4_nh = rloc_record.rloc.is_ipv4()
+                rloc = lisp_rloc(v4_nh, add_nh=True)
             #endif
 
             #
@@ -10638,7 +10639,8 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
                 rloc = copy.deepcopy(r)
                 replaced += 1
             else:
-                rloc = lisp_rloc()
+                v4_nh = rloc_record.rloc.is_ipv4()
+                rloc = lisp_rloc(v4_nh, add_nh=True)
                 new += 1
             #endif
 
@@ -10757,7 +10759,8 @@ def lisp_process_multicast_map_notify(packet, source):
             #
             # Create new rloc data structure and store in map-cache.
             #
-            rloc = lisp_rloc()
+            v4_nh = rloc_record.rloc.is_ipv4()
+            rloc = lisp_rloc(v4_nh, add_nh=True)
             rloc.store_rloc_from_record(rloc_record, None, mc.mapping_source)
 
             #
@@ -13409,7 +13412,7 @@ lisp_decap_stats = {
 # This a locator record definition as defined in RFCs.
 #
 class lisp_rloc(object):
-    def __init__(self, recurse=True):
+    def __init__(self, v4_nh=True, add_nh=False):
         self.rloc = lisp_address(LISP_AFI_NONE, "", 0, 0)
         self.rloc_name = None
         self.interface = None
@@ -13448,7 +13451,7 @@ class lisp_rloc(object):
         self.multicast_rloc_probe_list = {}
         self.active_rloc_next_hop = None
 
-        if (recurse == False): return
+        if (add_nh == False): return
 
         #
         # This is for a box with multiple egress interfaces. We create an
@@ -13458,14 +13461,20 @@ class lisp_rloc(object):
         next_hops = lisp_get_default_route_next_hops()
         if (next_hops == []): return
 
-        self.rloc_next_hop = next_hops[0]
-        last = self
-        for nh in next_hops[1::]:
-            hop = lisp_rloc(False)
-            hop = copy.deepcopy(self)
+        last = None
+        for nh in next_hops:
+            if (v4_nh == True and nh[1].find(":") != -1): continue
+            if (v4_nh == False and nh[1].find(".") != -1): continue
+
+            if (last == None):
+                hop = self
+            else:
+                hop = lisp_rloc(add_nh=False)
+                hop = copy.deepcopy(self)
+                last.next_rloc = hop
+            #endif
             hop.rloc_next_hop = nh
             hop.next_rloc = None
-            last.next_rloc = hop
             last = hop
         #endfor
         self.set_active_rloc_next_hop()
@@ -13953,7 +13962,7 @@ class lisp_rloc(object):
             self.active_rloc_next_hop = None
             self.state = LISP_RLOC_UNREACH_STATE
             self.last_state_change = lisp_get_timestamp()
-            os.system("sudo ip route delete {}/32".format(addr_str))
+            lisp_uninstall_host_route(addr_str)
             return
         #endif
 
@@ -16569,7 +16578,9 @@ def lisp_update_default_routes(map_resolver, iid, rtr_list):
     rloc_set = []
     for rtr in rtr_list:
         rtr_addr = rtr_list[rtr]
-        rloc_entry = lisp_rloc()
+        v4_nh = rtr_addr.is_ipv4()
+        rloc_entry = lisp_rloc(v4_nh, add_nh=True)
+
         rloc_entry.rloc.copy_address(rtr_addr)
         nr = rloc_entry.next_rloc
         while (nr != None):
@@ -17932,6 +17943,8 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
         format(len(lisp_rloc_probe_list))
     lprint(bold(msg, False))
 
+    lprint("Current default-routes {}".format(default_next_hops))
+
     #
     # Walk the list.
     #
@@ -18260,7 +18273,8 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl, mrlo
     if (mrloc != None):
         multicast_rloc = mrloc.rloc.print_address_no_iid()
         if (map_reply_addr not in mrloc.multicast_rloc_probe_list):
-            nrloc = lisp_rloc()
+            v4_nh = rloc.is_ipv4()
+            nrloc = lisp_rloc(v4_nh, add_nh=True)
             nrloc = copy.deepcopy(mrloc)
             nrloc.rloc.copy_address(rloc)
             nrloc.multicast_rloc_probe_list = {}
@@ -19124,7 +19138,7 @@ def lisp_get_default_route_next_hops():
     #
     # Get default route next-hop info for Linuxes.
     #
-    cmd = "ip route | egrep 'default via'"
+    cmd = "ip route | egrep 'default via'; ip -6 route | egrep 'default via'"
     default_routes = getoutput(cmd).split("\n")
 
     next_hops = []
@@ -19147,7 +19161,8 @@ def lisp_get_default_route_next_hops():
 # For already installed host route, get next-hop.
 #
 def lisp_get_host_route_next_hop(rloc):
-    cmd = "ip route | egrep '{} via'".format(rloc)
+    v6 = "" if (rloc.find(":") == -1) else "-6 "
+    cmd = "ip {}route | egrep '{} via'".format(v6, rloc)
     route = getoutput(cmd).split()
 
     try: index = route.index("via") + 1
@@ -19163,7 +19178,8 @@ def lisp_get_host_route_next_hop(rloc):
 # For already installed host route, get device interface.
 #
 def lisp_get_host_route_device(rloc):
-    cmd = "ip route | egrep '{} via'".format(rloc)
+    v6 = "" if (rloc.find(":") == -1) else "-6 "
+    cmd = "ip {}route | egrep '{} via'".format(v6, rloc)
     route = getoutput(cmd).split()
 
     try: index = route.index("dev") + 1
@@ -19184,14 +19200,31 @@ def lisp_install_host_route(dest, nh, device):
     #
     # First remove any host route.
     #
-    os.system("sudo ip route delete {}/32".format(dest))
+    lisp_uninstall_host_route(dest)
+
+    v6 = "" if (dest.find(":") == -1) else "-6 "
+    ml = 32 if (dest.find(":") == -1) else 128
 
     #
     # Now install new next hop.
     #
-    route = "ip route add {}/32 via {} dev {}".format(dest, nh, device)
+    route = "ip {}route add {}/{} via {} dev {}".format(v6, dest, ml, nh, device)
     lprint("Run '{}'".format(route))
     os.system(route)
+#enddef
+
+#
+# lisp_uninstall_host_route
+#
+# Install/deinstall host route.
+#
+def lisp_uninstall_host_route(dest):
+    if (lisp_is_macos()): return
+
+    v6 = "" if (dest.find(":") == -1) else "-6 "
+    ml = 32 if (dest.find(":") == -1) else 128
+
+    os.system("sudo {}ip route delete {}/{}".format(v6, dest, ml))
 #enddef
 
 #
@@ -19234,7 +19267,7 @@ def lisp_load_checkpoint():
 
         rloc_set = []
         for rloc in rlocs:
-            rloc_entry = lisp_rloc(False)
+            rloc_entry = lisp_rloc()
             r = rloc.split(" ")
             rloc_entry.rloc.store_address(r[0])
             rloc_entry.priority = int(r[1])
@@ -21357,7 +21390,9 @@ def lisp_glean_map_cache(seid, rloc, encap_port, igmp):
     # Adding RLOC to new map-cache entry or updating RLOC for existing entry..
     #
     if (rloc_change):
-        rloc_entry = lisp_rloc()
+        v4_nh = rloc.rloc.is_ipv4()
+        rloc_entry = lisp_rloc(v4_nh, add_nh=True)
+
         rloc_entry.store_translated_rloc(rloc, encap_port)
         rloc_entry.add_to_rloc_probe_list(mc.eid, mc.group)
         rloc_entry.priority = 253

@@ -49,6 +49,7 @@ print("Removing LISP host-routes ...")
 # Valid host routes have exactly 5 tokens: <ip> via <ip> dev <device>
 #
 output = getoutput("ip route | egrep 'via' | egrep -v 'default'")
+output += getoutput("ip -6 route | egrep 'via' | egrep -v 'default'")
 
 if (output == ""):
     print("ip route grep returned nothing")
@@ -59,10 +60,12 @@ removed_routes = []
 for line in output.split("\n"):
     if (line == ""): continue
     tokens = line.split()
-    if (len(tokens) != 5): continue
+    if (len(tokens) < 5): continue
 
     dest = tokens[0]
-    os.system("sudo ip route delete {}/32".format(dest))
+    v6 = "" if (dest.find(":") == -1) else "-6 "
+    ml = 32 if (dest.find(":") == -1) else 128
+    os.system("sudo ip {}route delete {}/{}".format(v6, dest, ml))
     removed_routes.append(dest)
 #endfor
 
