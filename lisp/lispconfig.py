@@ -2234,12 +2234,21 @@ def lisp_map_cache_command(kv_pair):
         prefix_set.append(mc)
     #endfor
 
+    #
+    # Do lisp-rloc allocation here at the same time as reading the address
+    # for each rloc clause. This is so, in a multi-homing environment, we
+    # can add next-hops.
+    #
     rloc_set = []
     if ("address" in kv_pair):
         if (lisp_clause_syntax_error(kv_pair, "address", "rloc")): return
-        for i in range(len(kv_pair["address"])):
-            rloc = lisp.lisp_rloc()
+        for value in kv_pair["address"]:
+            if (value == ""): continue
+            v4_nh = (value.find(".") != -1)
+            rloc = lisp.lisp_rloc(v4_nh, add_nh=True)
+            rloc.rloc.store_address(value)
             rloc_set.append(rloc)
+            rloc = lisp.lisp_rloc()
         #endfor
     #endif
 
@@ -2314,7 +2323,6 @@ def lisp_map_cache_command(kv_pair):
                 if (v != ""): rloc.rloc_name = v
             #endfor
         #endif
-
         if (kw == "priority"):
             for i in range(len(rloc_set)):
                 rloc = rloc_set[i]
@@ -2329,13 +2337,6 @@ def lisp_map_cache_command(kv_pair):
                 v = value[i]
                 if (v == ""): v = "0"
                 rloc.weight = int(v)
-            #endfor
-        #endif
-        if (kw == "address"):
-            for i in range(len(rloc_set)):
-                rloc = rloc_set[i]
-                v = value[i]
-                if (v != ""): rloc.rloc.store_address(v)
             #endfor
         #endif
     #endfor
