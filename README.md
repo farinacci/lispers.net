@@ -67,8 +67,7 @@ The lispers.net implementation supports the following IETF LISP Working Group RF
 - [RFC 9306](https://www.rfc-editor.org/rfc/rfc9306.html) — LISP Canonical Address Format (LCAF)
 - [RFC 9437](https://www.rfc-editor.org/rfc/rfc9437.html) — Publish/Subscribe Functionality for LISP
 - [RFC 9735](https://www.rfc-editor.org/rfc/rfc9735.html) — LISP Distinguished Name Encoding
-
----
+- [RFC 9962](https://www.rfc-editor.org/info/rfc9962) — A Decentralized Locator/ID Separation Protocol Mapping System (LISP-Decent)
 
 - [draft-ietf-lisp-8111bis](https://datatracker.ietf.org/doc/draft-ietf-lisp-8111bis/) — Locator/ID Separation Protocol Delegated Database Tree (LISP-DDT)
 - [draft-ietf-lisp-ecdsa-auth](https://datatracker.ietf.org/doc/draft-ietf-lisp-ecdsa-auth/) — LISP Control-Plane ECDSA Authentication and Authorization
