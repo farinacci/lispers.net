@@ -837,7 +837,6 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         # Send out on raw socket.
         #
         raw_socket = lisp_raw_v6_socket if version == 6 else lisp_raw_socket
-        lisp.debug(lisp.lisp_format_packet(packet.packet))
         packet.send_packet(raw_socket, packet.outer_dest)
 
     elif (rle):
