@@ -459,7 +459,7 @@ def lisp_itr_get_capture_info():
     cp_pfilter = None
     if (lisp.lisp_ipc_data_plane):
         lisp.lprint(lisp.bold("Data-plane packet capture disabled", False))
-        cp_pfilter = "(udp src port 4342 and ip[28] == 0x28)" + \
+        cp_pfilter = "(udp src port 4342)" + \
             " or (ip[16] >= 224 and ip[16] < 240 and (ip[28] & 0xf0) == 0x30)"
 
         lisp.lprint("Control-plane capture: '{}'".format(cp_pfilter))
@@ -1095,7 +1095,7 @@ def lisp_itr_build_pcap_filter(sources, dyn_eids, l2_overlay, pitr):
     #endif
 
     ether_pfilter = "(not ether proto 0x806)"
-    probe_pfilter = " or (udp src port 4342 and ip[28] == 0x28)"
+    probe_pfilter = " or (udp src port 4342)"
     decent_pfilter = \
         " or (ip[16] >= 224 and ip[16] < 240 and (ip[28] & 0xf0) == 0x30)"
 

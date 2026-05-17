@@ -19224,7 +19224,7 @@ def lisp_uninstall_host_route(dest):
     v6 = "" if (dest.find(":") == -1) else "-6 "
     ml = 32 if (dest.find(":") == -1) else 128
 
-    os.system("sudo {}ip route delete {}/{}".format(v6, dest, ml))
+    os.system("ip {} route delete {}/{}".format(v6, dest, ml))
 #enddef
 
 #
@@ -19806,33 +19806,53 @@ def lisp_is_rloc_probe_reply(lisp_type):
 # request or reply from ourselves, return packet pointer None and source None.
 #
 def lisp_is_rloc_probe(packet, device, rr):
-    udp = (struct.unpack("B", packet[9:10])[0] == 17)
-    if (udp == False): return([packet, None, None, None])
+    version = struct.unpack("B", packet[0:1])[0] >> 4
 
-    sport = struct.unpack("H", packet[20:22])[0]
-    dport = struct.unpack("H", packet[22:24])[0]
-    is_lisp = (socket.htons(LISP_CTRL_PORT) in [sport, dport])
-    if (is_lisp == False): return([packet, None, None, None])
-
-    if (rr == 0):
-        probe = lisp_is_rloc_probe_request(packet[28:29])
-        if (probe == False): return([packet, None, None, None])
-    elif (rr == 1):
-        probe = lisp_is_rloc_probe_reply(packet[28:29])
-        if (probe == False): return([packet, None, None, None])
-    elif (rr == -1):
-        probe = lisp_is_rloc_probe_request(packet[28:29])
-        if (probe == False):
-            probe = lisp_is_rloc_probe_reply(packet[28:29])
-            if (probe == False): return([packet, None, None, None])
-        #endif
+    if (version == 4):
+        protocol = struct.unpack("B", packet[9:10])[0]
+        if (protocol != 17): return([packet, None, None, None])
+        ttl = struct.unpack("B", packet[8:9])[0] - 1
+        source = lisp_address(LISP_AFI_IPV4, "", 32, 0)
+        source.unpack_address(packet[12:16])
+        udp = packet[20::]
+    elif (version == 6):
+        protocol = struct.unpack("B", packet[6:7])[0]
+        if (protocol != 17): return([packet, None, None, None])
+        ttl = struct.unpack("B", packet[7:8])[0] - 1
+        source = lisp_address(LISP_AFI_IPV6, "", 128, 0)
+        source.unpack_address(packet[8:24])
+        udp = packet[40::]
+    else:
+        return([packet, None, None, None])
     #endif
 
     #
-    # Get source address, source port, and TTL. Decrement TTL.
+    # Check for 4342 in source or dest UDP port.
     #
-    source = lisp_address(LISP_AFI_IPV4, "", 32, 0)
-    source.address = socket.ntohl(struct.unpack("I", packet[12:16])[0])
+    sport = struct.unpack("H", udp[0:2])[0]
+    dport = struct.unpack("H", udp[2:4])[0]
+    is_lisp = (socket.htons(LISP_CTRL_PORT) in [sport, dport])
+    if (is_lisp == False): return([packet, None, None, None])
+
+    #
+    # Point to LISP payload from here on out.
+    #
+    payload = udp[8::]
+    first_byte = payload[0:1]
+
+    if (rr == 0):
+        probe = lisp_is_rloc_probe_request(first_byte)
+        if (probe == False): return([None, None, None, None])
+    elif (rr == 1):
+        probe = lisp_is_rloc_probe_reply(first_byte)
+        if (probe == False): return([None, None, None, None])
+    elif (rr == -1):
+        probe = lisp_is_rloc_probe_request(first_byte)
+        if (probe == False):
+            probe = lisp_is_rloc_probe_reply(first_byte)
+            if (probe == False): return([None, None, None, None])
+        #endif
+    #endif
 
     #
     # If this is a RLOC-probe from ourselves, drop.
@@ -19843,16 +19863,14 @@ def lisp_is_rloc_probe(packet, device, rr):
     # Accept, and return source, port, and ttl to caller.
     #
     source = source.print_address_no_iid()
-    port = socket.ntohs(struct.unpack("H", packet[20:22])[0])
-    ttl = struct.unpack("B", packet[8:9])[0] - 1
-    packet = packet[28::]
+    port = socket.ntohs(dport)
 
     r = bold("Receive(pcap-{})".format(device), False)
     f = bold("from " + source, False)
-    p = lisp_format_packet(packet)
-    lprint("{} {} bytes {} {}, packet: {}".format(r, len(packet), f, port, p))
+    p = lisp_format_packet(payload)
+    lprint("{} {} bytes {} {}, packet: {}".format(r, len(payload), f, port, p))
 
-    return([packet, source, port, ttl])
+    return([payload, source, port, ttl])
 #enddef
 
 #

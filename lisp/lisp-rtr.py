@@ -1097,8 +1097,7 @@ def lisp_rtr_pcap_thread(lisp_thread):
     #
     afilter = afilter[0:-4]
     pfilter += (" or (not (src host {}) and " + \
-        "((udp src port 4342 and ip[28] == 0x28) or " + \
-        "(udp dst port 4342 and ip[28] == 0x12)))").format(afilter)
+        "((udp src port 4342) or (udp dst port 4342)))").format(afilter)
 
     if (lisp_nat):
         pfilter += (" or (dst net 0.0.0.0/0 and " + \

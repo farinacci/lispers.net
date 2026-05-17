@@ -1579,7 +1579,7 @@ def lisp_etr_process():
     pfilter = pfilter[0:-4]
     pfilter += ") and ((udp dst port 4341 or 8472 or 4789) or "
     pfilter += "(udp src port 4341) or "
-    pfilter += "(udp dst port 4342 and ip[28] == 0x12) or "
+    pfilter += "(udp dst port 4342) or "
     pfilter += "(proto 17 and (ip[6]&0xe0 == 0x20 or " + \
         "(ip[6]&0xe0 == 0 and ip[7] != 0)))))"
 
@@ -1697,9 +1697,10 @@ def lisp_etr_startup():
         lisp_mac_header = b'\x00\x00\x86\xdd'
         device = "lispers.net"
         try:
-            lisp_l2_socket = pytun.TunTapDevice(flags=pytun.IFF_TUN,
-                name=device)
-            os.system("ip link set dev {} up".format(device))
+            lisp_l2_socket = pytun.TunTunnel()
+            tun_name = lisp_l2_socket.name
+            lisp.lprint("Rename tunnel name from '{}' to '{}'".format(tun_name, device))
+            os.system("ip link set {} name {} up".format(tun_name, device))
         except:
             lisp.lprint("Cannot create tuntap interface")
         #endtry
