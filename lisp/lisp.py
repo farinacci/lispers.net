@@ -1976,10 +1976,12 @@ class lisp_packet(object):
         self.udp_length = len(self.packet) + 16
 
         #
-        # Swap UDP port numbers and length field since they are 16-bit values.
+        # Swap UDP port numbers and length field since they are 16-bit values. There is a
+        # weird bug with respect to the UDP destination port. You need to byte swap it
+        # for IPv4 raw sockets but not for IPv6 sockets. We need a version check here, sigh.
         #
         sport = socket.htons(self.udp_sport)
-        dport = socket.htons(self.udp_dport)
+        dport = socket.htons(self.udp_dport) if (self.outer_version == 4) else self.udp_dport
         udp_len = socket.htons(self.udp_length)
         udp = struct.pack("HHHH", sport, dport, udp_len, self.udp_checksum)
 
