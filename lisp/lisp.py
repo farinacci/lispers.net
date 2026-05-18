@@ -13968,7 +13968,7 @@ class lisp_rloc(object):
             return
         #endif
 
-        device, nh = best_rloc.rloc_next_hop
+        device, nh = best_rloc.rloc_next_hop if (best_rloc.rloc_next_hop != None) else [None, None]
         old_device = lisp_get_host_route_device(addr_str)
 
         if (old_device != device):
@@ -17370,6 +17370,7 @@ def lisp_gather_map_cache_data(mc, data):
 def lisp_is_active_interface(rloc):
     rloc_str = rloc.rloc.print_address_no_iid()
     rloc_nh = rloc.rloc_next_hop
+    if (rloc_nh == None): return(False)
 
     dr_nh = lisp_get_default_route_next_hops()
     matches_dr = (dr_nh and rloc_nh == dr_nh[0])
@@ -18091,7 +18092,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
                         rloc.last_state_change = lisp_get_timestamp()
                         lisp_update_rtr_updown(rloc.rloc, False)
                         unreach = bold("unreachable", False)
-                        d, n = rloc.rloc_next_hop
+                        d, n = rloc.rloc_next_hop if (rloc.rloc_next_hop != None) else [None, None]
                         lprint("RLOC {} [{}, {}] went {}, probe it".format( \
                             red(addr_str, False), n, d, unreach))
 
@@ -19120,6 +19121,18 @@ def lisp_encap_rloc_probe(lisp_sockets, rloc, nat_info, packet, source_addr=None
 #
 # Put the interface names of each next-hop for the IPv4 default in an array
 # and return to caller. The array has elements of [<device>, <nh>].
+#
+# It is required to configure IPv6 default routes like this:
+#
+#   ip -6 route add    default via 2001:db8:10::3 dev eth1 metric 100
+#   ip -6 route append default via 2001:db8:11::3 dev eth1 metric 101
+#   ip -6 route append default via 2001:db8:12::3 dev eth1 metric 102
+#
+# So they appear in "ip -6 route" output as:
+# 
+#   default via 2001:db8:10::3 dev eth1 metric 100 pref medium
+#   default via 2001:db8:11::3 dev eth2 metric 101 pref medium
+#   default via 2001:db8:12::3 dev eth3 metric 102 pref medium
 #
 def lisp_get_default_route_next_hops():
 

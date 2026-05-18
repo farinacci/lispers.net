@@ -829,7 +829,8 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         #
         if (packet.encode(nonce) == None): return
         if (len(packet.packet) <= 1500):
-            send = "Send {}".format(rloc_entry.rloc_next_hop[0])
+            device = rloc_entry.rloc_next_hop[0] if (rloc_entry.rloc_next_hop != None) else "?"
+            send = "Send {}".format(device)
             packet.print_packet(send, True)
         #endif
 

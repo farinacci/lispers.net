@@ -290,6 +290,7 @@ for mc in map_cache:
             print(rloc)
         #endif
 
+        ifname = red("???: ")
         nhi = rr["nh-interface"][0] if ("nh-interface" in rr) else ""
         nhs = rr["nh-interface-state"] if ("nh-interface-state" in rr) else ""
         if (nhs == "up-state" or nhs == ""):
