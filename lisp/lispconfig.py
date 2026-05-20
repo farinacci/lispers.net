@@ -678,6 +678,10 @@ def lisp_setup_kv_pairs(clause):
     if (count != 0):
         kv_pairs["register-reachable-rtrs"] = [""] * count
     #endif
+    count = clause.count("multi-home-rtt-percentage =")
+    if (count != 0):
+        kv_pairs["multi-home-rtt-percentage"] = [""] * count
+    #endif
 
     #
     # There is a special case here where there are no sub-clauses but
@@ -2976,6 +2980,9 @@ def lisp_xtr_command(kv_pair):
         #endif
         if (kw == "register-reachable-rtrs"):
             lisp.lisp_register_all_rtrs = (value == "no")
+        #endif
+        if (kw == "multi-home-rtt-percentage"):
+            lisp.lisp_mh_rtt_pct = int(value)
         #endif
     #endfor
     return

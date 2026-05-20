@@ -1568,6 +1568,7 @@ lisp_rtr_commands = {
         "decentralized-push-xtr" : [True, "yes", "no"],
         "decentralized-pull-xtr-modulus" : [True, 1, 0xff],
         "decentralized-pull-xtr-dns-suffix" : [True],
+        "multi-home-rtt-percentage" : [True, 0, 100],
         "register-reachable-rtrs" : [True, "yes", "no"],
         "program-hardware" : [True, "yes", "no"] }],
 

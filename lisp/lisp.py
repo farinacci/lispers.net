@@ -378,6 +378,21 @@ if (os.getenv("LISP_SEND_ICMP_TOO_BIG") != None):
 
 lisp_ignore_df_bit = (os.getenv("LISP_IGNORE_DF_BIT") != None)
 
+#
+# This is used to compare an RLOC-probe reply RTT with the last one received
+# to determine if we should switch over to a new egress interface within an
+# RLOC-record in a map-cache entry. The default is 10% meaning, if the new
+# RTT is 10% better than the last one calculated, the switch will happen.
+#
+# This is configurable as a "lisp xtr-parameters" sub-command:
+#
+#    multi-home-rtt-percentage = <pct>
+#
+# and used by the lisp-itr and lisp-rtr processes. Valid values for <pct> are
+# integers 0 through 100.
+#
+lisp_mh_rtt_pct = 10
+
 #------------------------------------------------------------------------------
 
 #
@@ -13944,6 +13959,8 @@ class lisp_rloc(object):
 
     def select_rloc_next_hop(self):
         addr_str = self.rloc.print_address_no_iid()
+        last_best_rloc = self.active_rloc_next_hop
+        last_best_rtt = last_best_rloc.rloc_probe_rtt if (last_best_rloc != None) else 0
 
         rloc = None
         best_rloc = None
@@ -13970,6 +13987,29 @@ class lisp_rloc(object):
 
         device, nh = best_rloc.rloc_next_hop if (best_rloc.rloc_next_hop != None) else [None, None]
         old_device = lisp_get_host_route_device(addr_str)
+
+        #
+        # Check if this RTT for the best_rloc is better than last best-rloc. It needs to be
+        # lisp_mh_rtt_pct better for the switchover.
+        #
+        ltgt = ">"
+        switch = ""
+        diff = last_best_rtt * lisp_mh_rtt_pct / 100
+
+#        lprint("RTT, last {}, diff {}, last-diff {}, best {}".format(last_best_rtt, diff, \
+#            last_best_rtt-diff, best_rloc.rloc_probe_rtt)
+
+        if (best_rloc.rloc_probe_rtt <= (last_best_rtt - diff)):
+            ltgt = "<="
+            switch = ", switch"
+        #endif
+
+        a = red(addr_str, False)
+        switch = bold(switch, False)
+        lprint("RLOC {} ({}) new rtt {} {} {}% of last rtt {}{}".format(a, device, \
+            best_rloc.rloc_probe_rtt, ltgt, lisp_mh_rtt_pct, last_best_rtt, switch))
+
+        if (ltgt == ">"): return
 
         if (old_device != device):
             lisp_install_host_route(addr_str, nh, device)
