@@ -1,0 +1,9 @@
+#/bin/bash
+#
+# iperf-rec - for receiving packets sent to multicast groups
+#
+# iperf joins the group (so we don't need to use lisp-join.py).
+#                    
+iperf -s -u -B $* -i 1
+
+    
