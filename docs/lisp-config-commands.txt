@@ -517,7 +517,8 @@ Command Description:
         ITR and RTR which manages the map-cache for multi-homing environments.
         Multi-homing is automatically enabled when 2 or more default routes exist
         in the IPv4 or IPv6 kernel routing tables. The default value is 10%. Valid
-        values are integers between 0 and 100.
+        values are integers between 0 and 100. The smaller the percentage the more
+        often an egress interface switch will occur.
 
 Example:
 
