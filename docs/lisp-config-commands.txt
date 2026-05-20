@@ -511,6 +511,14 @@ Command Description:
         "lisp map-server" commands are required with "dns-name" for each
         map-server set DNS name constructed.
 
+    multi-home-rtt-percentage
+        Sets the percentage difference when a switchover happens from one egress
+        interface to another within a map-cache RLOC-record. This occurs in an
+        ITR and RTR which manages the map-cache for multi-homing environments.
+        Multi-homing is automatically enabled when 2 or more default routes exist
+        in the IPv4 or IPv6 kernel routing tables. The default value is 10%. Valid
+        values are integers between 0 and 100.
+
 Example:
 
 lisp xtr-parameters {

@@ -64,5 +64,6 @@ lisp xtr-parameters {
     frame-logging = no
     flow-logging = no
     data-plane-logging = no
+    multi-home-rtt-percentage = 10
 }
 #-----------------------------------------------------------------------------#
