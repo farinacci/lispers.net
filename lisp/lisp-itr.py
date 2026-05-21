@@ -580,6 +580,8 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     global lisp_raw_socket, lisp_raw_v6_socket
     global lisp_ipc_listen_socket
 
+    ts = lisp.lisp_latency_debug(None, "ITR-encap")
+
     #
     # Check RLOC-probe Map-Reply. We need to grab the TTL from IP header.
     #
@@ -891,6 +893,8 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
     # Don't need packet structure anymore.
     #
     del(packet)
+
+    lisp.lisp_latency_debug(ts, "ITR-encap")
     return
 #enddef
 

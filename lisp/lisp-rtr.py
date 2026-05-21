@@ -67,7 +67,6 @@ lisp_rtr_source_rloc = None
 # Check if fast python data-plane should run.
 #
 lisp_rtr_fast_mode = (os.getenv("LISP_RTR_FAST_DATA_PLANE") != None)
-lisp_rtr_latency_debug = (os.getenv("LISP_RTR_LATENCY_DEBUG") != None)
 fb = None
 
 #------------------------------------------------------------------------------
@@ -342,30 +341,6 @@ def lisp_fast_lookup_debug(dest, mc):
 #enddef
 
 #
-# lisp_latency_debug
-#
-# Set or print latency timing. Used by both lisp_rtr_data_plane() and lisp_
-# rtr_fast_data_plane().
-#
-def lisp_latency_debug(ts, msg):
-    global lisp_rtr_latency_debug
-
-    if (lisp_rtr_latency_debug == False): return(None)
-
-    #
-    # Return the initial timestamp when requested.
-    #
-    if (ts == None): return(time.time())
-
-    #
-    # Compute elapsed time from initial timestamp.
-    #
-    ts = (time.time() - ts) * 1000000
-    lisp.lprint("{}-Latency: {} usecs".format(msg, round(ts, 1)), "force")
-    return(None)
-#enddef
-
-#
 # lisp_fast_address_to_binary
 #
 # Convert 4-byte address from packet format to binary. Used to store in
@@ -413,7 +388,7 @@ lisp_deid_cached = lisp.lisp_address(lisp.LISP_AFI_IPV4, "", 32, 0)
 def lisp_rtr_fast_data_plane(packet):
     global lisp_map_cache, lisp_raw_socket
 
-    ts = lisp_latency_debug(None, "Fast")
+    ts = lisp.lisp_latency_debug(None, "RTR-Fast")
 
     #
     # Check if UDP ports for any type of LISP packet. Strict outer headers
@@ -577,7 +552,7 @@ def lisp_rtr_fast_data_plane(packet):
     dest = dest.print_address_no_iid()
     lisp_raw_socket.sendto(packet, (dest, 0))
 
-    lisp_latency_debug(ts, "Fast")
+    lisp.lisp_latency_debug(ts, "RTR-Fast")
     return(True)
 #endif
 
@@ -594,7 +569,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     global lisp_rtr_source_rloc
     global lisp_rtr_fast_mode
 
-    ts = lisp_latency_debug(None, "RTR")
+    ts = lisp.lisp_latency_debug(None, "RTR")
 
     #
     # Try switching packet fast.
@@ -859,7 +834,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
                 r = "not an EID"
                 lisp.lisp_trace_append(packet, reason=r, lisp_socket=s)
             #endif
-            lisp_latency_debug(ts, "RTR")
+            lisp.lisp_latency_debug(ts, "RTR")
             return
         #endif
         r = "No reachable RLOCs found"
@@ -978,7 +953,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #
     del(packet)
 
-    lisp_latency_debug(ts, "RTR")
+    lisp.lisp_latency_debug(ts, "RTR")
     return
 #enddef
 

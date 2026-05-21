@@ -49,7 +49,11 @@ setenv LISP_VIRTIO_BUG
 # Faster python data-plane.
 #
 #setenv LISP_RTR_FAST_DATA_PLANE
-#setenv LISP_RTR_LATENCY_DEBUG
+
+#
+# Use to compute and print latency for encap and decap in ITRs, ETRs, and RTRs.
+#
+#setenv LISP_LATENCY_DEBUG
 
 #
 # Cipher defaults to chacha20. Comment out CHACHA line below if you want AES.

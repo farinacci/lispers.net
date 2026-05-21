@@ -393,6 +393,11 @@ lisp_ignore_df_bit = (os.getenv("LISP_IGNORE_DF_BIT") != None)
 #
 lisp_mh_rtt_pct = 10
 
+#
+# Used for temporary data-plane measurement analysis.
+#
+lisp_latency_debug_enable = (os.getenv("LISP_LATENCY_DEBUG") != None)
+
 #------------------------------------------------------------------------------
 
 #
@@ -21597,6 +21602,28 @@ def lisp_telemetry_configured():
 #
 def lisp_mr_or_pubsub(action):
     return(action in [LISP_SEND_MAP_REQUEST_ACTION, LISP_SEND_PUBSUB_ACTION])
+#enddef
+
+#
+# lisp_latency_debug
+#
+# Set or print latency timing. Used by both lisp_rtr_data_plane() and lisp_
+# rtr_fast_data_plane().
+#
+def lisp_latency_debug(ts, msg):
+    if (lisp_latency_debug_enable == False): return(None)
+
+    #
+    # Return the initial timestamp when requested.
+    #
+    if (ts == None): return(time.time())
+
+    #
+    # Compute elapsed time from initial timestamp.
+    #
+    ts = (time.time() - ts) * 1000
+    lprint("{} latency {} ms".format(msg, round(ts, 3)), "force")
+    return(None)
 #enddef
 
 #------------------------------------------------------------------------------

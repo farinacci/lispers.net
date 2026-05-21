@@ -1056,6 +1056,8 @@ def lisp_send_multicast_map_register(lisp_sockets, entries):
 def lisp_etr_data_plane(parms, not_used, packet):
     global lisp_ipc_listen_socket, lisp_send_sockets
 
+    ts = lisp.lisp_latency_debug(None, "ETR-decap")
+
     device = parms[0]
     lisp_raw_socket = parms[1]
 
@@ -1273,6 +1275,8 @@ def lisp_etr_data_plane(parms, not_used, packet):
     # Send out.
     #
     packet.send_packet(raw_socket, packet.inner_dest)
+
+    lisp.lisp_latency_debug(ts, "ETR-decap")
     return
 #enddef
 
@@ -1287,6 +1291,8 @@ def lisp_etr_data_plane(parms, not_used, packet):
 #
 def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     global lisp_ipc_listen_socket, lisp_send_sockets
+
+    ts = lisp.lisp_latency_debug(None, "ETR-NAT-decap")
 
     #
     # Decode LISP header.
@@ -1440,6 +1446,8 @@ def lisp_etr_nat_data_plane(lisp_raw_socket, packet, source):
     # Send out on raw socket.
     #
     packet.send_packet(raw_socket, packet.inner_dest)
+
+    lisp.lisp_latency_debug(ts, "ETR-NAT-decap")
     return
 #enddef
 
