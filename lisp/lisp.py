@@ -1824,15 +1824,13 @@ def lisp_get_local_addresses():
         #
         # Did we find an address? If not, loop and get the next interface.
         #
-        if (rlocs[0] == None): continue
-
+        if (rlocs[0] == None and rlocs[1] == None): continue
         rlocs[2] = device
         break
     #endfor
 
     addr1 = rlocs[0].print_address_no_iid() if rlocs[0] else "none"
     addr2 = rlocs[1].print_address_no_iid() if rlocs[1] else "none"
-    device = rlocs[2] if rlocs[2] else "none"
 
     device_select = " (user selected)" if device_select != None else ""
 
@@ -1843,7 +1841,8 @@ def lisp_get_local_addresses():
         format(addr1, addr2, device, device_select, device_iid))
 
     lisp_myrlocs = rlocs
-    return((rlocs[0] != None))
+ 
+    return((rlocs != [None, None, None]))
 #enddef
 
 #
@@ -16140,8 +16139,8 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
         itr_rloc4 = rloc.probing_itr_rloc
     #endif
 
-    if (itr_rloc4 == None):
-        lprint("Suppress sending Map-Request, IPv4 RLOC not found")
+    if (itr_rloc4 == None and itr_rloc6 == None):
+        lprint("Suppress sending Map-Request, no IPv4 or IPv6 RLOC found")
         return
     #endif
     if (itr_rloc6 == None and probe_dest != None and probe_dest.is_ipv6()):
@@ -16226,20 +16225,34 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
     # nothing to store in the ITR-RLOCs list. And we have to use an inner
     # source address of 0::0.
     #
-    if (probe_dest == None or probe_dest.is_ipv4()):
-        if (lisp_nat_traversal and probe_dest == None):
+    if (probe_dest == None):
+        if (lisp_nat_traversal):
             ir = lisp_get_any_translated_rloc()
             if (ir != None): itr_rloc4 = ir
         #endif
-        map_request.itr_rlocs.append(itr_rloc4)
-    #endif
-    if (probe_dest == None or probe_dest.is_ipv6()):
-        if (itr_rloc6 == None or itr_rloc6.is_ipv6_link_local()):
-            itr_rloc6 = None
+        if (itr_rloc4 != None):
+            map_request.itr_rlocs.append(itr_rloc4)
+            if (itr_rloc6 != None):
+                map_request.itr_rloc_count = 1
+                map_request.itr_rlocs.append(itr_rloc6)
+            #endif
         else:
-            map_request.itr_rloc_count = 1 if (probe_dest == None) else 0
             map_request.itr_rlocs.append(itr_rloc6)
         #endif
+
+    elif (probe_dest.is_ipv4()):
+        if (itr_rloc4 == None):
+            lprint("Cannot probe IPv4 RLOC with no IPv4 address on {}".format(device))
+            return
+        #endif
+        map_request.itr_rlocs.append(itr_rloc4)
+
+    elif (probe_dest.is_ipv6()):
+        if (itr_rloc6 == None or itr_rloc6.is_ipv6_link_local()):
+            lprint("Cannot probe IPv6 RLOC with no IPv6 address on {}".format(device))
+            return
+        #endif
+        map_request.itr_rlocs.append(itr_rloc6)
     #endif
 
     #
@@ -16248,15 +16261,17 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
     # is a MAC address, we will use IPv4 in the inner header with a destination
     # address of 0.0.0.0.
     #
+    itr_rloc = itr_rloc4
     if (probe_dest != None and map_request.itr_rlocs != []):
         itr_rloc = map_request.itr_rlocs[0]
     else:
         if (deid.is_ipv4()):
             itr_rloc = itr_rloc4
-        elif (deid.is_ipv6()):
+            if (itr_rloc == None): itr_rloc = itr_rloc6
+        #endif
+        if (deid.is_ipv6()):
             itr_rloc = itr_rloc6
-        else:
-            itr_rloc = itr_rloc4
+            if (itr_rloc == None): itr_rloc = itr_rloc4
         #endif
     #endif
 
