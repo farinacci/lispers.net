@@ -14005,7 +14005,7 @@ class lisp_rloc(object):
 
         if (best_rloc.rloc_probe_rtt <= (last_best_rtt - diff)):
             ltgt = "<="
-            switch = ", switch"
+            switch = ", switch" if (old_device != device) else ", same-interface"
         #endif
 
         a = red(addr_str, False)
