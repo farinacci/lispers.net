@@ -1,6 +1,0 @@
-#/bin/bash
-#
-# iperf-send - for sending packets to a multicast group.
-#            
-iperf -c $* -u -T 32 -t 10 -i 1
-    
