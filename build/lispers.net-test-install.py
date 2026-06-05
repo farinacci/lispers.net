@@ -29,7 +29,7 @@ except:
     from subprocess import getoutput
 #endtry    
 
-modules = [ "bottle", "requests", "cheroot", "pcappy", "pcapy", "netifaces", 
+modules = [ "bottle", "requests", "cheroot", "pcappy", "pcapy-ng", "netifaces", 
     "setuptools", "Crypto.Cipher", "curve25519", "geopy", "pytun", "urllib3",
     "ecdsa", "future", "builtins", "distro", "future", "builtins" ]
 

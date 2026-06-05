@@ -1,4 +1,33 @@
 
+               lispers.net Beta Release Version 0.631
+               --------------------------------------
+
+o Release date:
+
+o For the following debug message "itr: RLOC xx.xx.xx.xx (ens6) new rtt
+  0.253 <= 10% of last rtt 0.286, switch", if the RTT is better but we are
+  already on this interface, do not print "switch", print "same-interface"
+  in boldface.
+
+o Remove release directories up to and not including 0.600 to save repo space.
+
+o As of this release you can compile the lispers.net release with python 3.10.
+  But you have to uninstall pcapy if it was installed. So here is the procedure:
+
+    python3.10 -m pip uninstall pcapy
+    python3.10 -m pip uninstall pcapy-ng
+    python3.10 -m pip install   pcapy-ng
+
+  And then this will work:
+
+    python3.10 -c "import pcapy; print(pcapy.__file__)"
+
+  After verifying this, you can do your own liseprs.net build with python3.10.
+  However, for the time being, lispers.net will release tarballs compiled with
+  python3.8.
+
+-------------------------------------------------------------------------------
+
                lispers.net Beta Release Version 0.630
                --------------------------------------
 
@@ -14,7 +43,7 @@ o Suppress sending Map-Request when no RLOCs are found on startup interface.
   That means a Map-Request will be send if either an IPv4 or IPv6 address
   is configured on the startup interfae.
 
-o Allos lisp-core to startup when all address-family addresses are not
+o Allows lisp-core to startup when all address-family addresses are not
   configured. For example, if you want to run only IPv6 on the startup
   user-selected interface, you can. So the following cases occur when
   the startup interfaces have the configurations:
@@ -22,13 +51,13 @@ o Allos lisp-core to startup when all address-family addresses are not
     - No addresses, the lisp-core process exits and shows you there are
       no IPv4 and IPv6 addresses configured on the user selected interface.
 
-    - At least one IPv4 address and non IPv6 address. The subsystem will
+    - At least one IPv4 address and no IPv6 address. The subsystem will
       start up and operate the mapping system on IPv4 only. Any IPv6 RLOCs
       in map-cache entries cannot be probed and will be marked unreachable.
       IPv6 EIDs will work fine as long as RLOCs are IPv4. The itr-rloc
       field in a Map-Request will contain one IPv4 address.
 
-    - At least one IPv6 address and non IPv4 address. The subsystem will
+    - At least one IPv6 address and no IPv4 address. The subsystem will
       start up and operate the mapping system on IPv6 only. Any IPv4 RLOCs
       in map-cache entries cannot be probed and will be marked unreachable.
       IPv4 EIDs will work fine as long as RLOCs are IPv6. The itr-rloc
@@ -37,7 +66,7 @@ o Allos lisp-core to startup when all address-family addresses are not
     - Both IPv4 and IPv6 addresses are configured. The subsystem will work
       in a dual-stack mode. So you can have a mix of map-resolvers and
       map-servers in either address-family as well as a mixed RLOC-set.
-      Probing will work for all RLOCs. The itr-rloc field in a Map-Request
+      Probing will work for all RLOCs. The itr-rloc field in a Map-Request has
       two entries, one IPv4 address and one IPv6 address from the user-specified
       interface on the RESTART-LISP command.
 

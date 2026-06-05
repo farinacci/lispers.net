@@ -79,7 +79,7 @@ RUN python2 -m pip install cheroot bottle netifaces pcapy pcappy pycrypto reques
 # Install python3 modules the lispers.net directory depends on.
 #
 RUN apt-get install -y python3-pip
-RUN pip3 install cheroot bottle netifaces pcapy pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome python-pytun future distro
+RUN pip3 install cheroot bottle netifaces pcapy-ng pcappy pyOpenSSL pycrypto requests curve25519-donna geopy ecdsa pycryptodome python-pytun future distro
     
 #
 # Make prompt hostname/container name, allow web interface to work, and put us
