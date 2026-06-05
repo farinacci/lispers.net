@@ -1,6 +1,6 @@
 
-               lispers.net Beta Release Version 0.631
-               --------------------------------------
+                  lispers.net Release Version 0.631
+                  ---------------------------------
 
 o Release date: Fri Jun  5 16:35:24 PDT 2026
 
@@ -22,7 +22,13 @@ o As of this release you can compile the lispers.net release with python 3.10.
 
     python3.10 -c "import pcapy; print(pcapy.__file__)"
 
-  After verifying this, you can do your own liseprs.net build with python3.10.
+  After verifying this, you can do your own liseprs.net build with python3.10 by
+  doing this:
+
+    cd build
+    setenv LISPERS.NET_PYTHON3
+    python3 make-release.py <release> py3
+
   However, for the time being, lispers.net will release tarballs compiled with
   python3.8.
 
