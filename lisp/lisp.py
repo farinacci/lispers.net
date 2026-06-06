@@ -18078,6 +18078,7 @@ def lisp_process_rloc_probe_timer(lisp_sockets):
             lprint("Kernel HR for {} -> [{}, {}]".format(addr_str, hr_nh, hr_d))
 
             rloc = None
+            device = None
             while (True):
                 rloc = parent_rloc if rloc == None else rloc.next_rloc
                 if (rloc == None): break
