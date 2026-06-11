@@ -13865,11 +13865,16 @@ class lisp_rloc(object):
     def store_rloc_probe_latencies(self, json_telemetry):
         tel = lisp_decode_telemetry(json_telemetry)
 
-        fl = round(float(tel["etr-in"]) - float(tel["itr-out"]), 3)
-        rl = round(float(tel["itr-in"]) - float(tel["etr-out"]), 3)
+        inout = [tel["etr-in"], tel["itr-out"], tel["itr-in"], tel["etr-out"]]
+        if ("?" in inout):
+            fl = rl = "?"
+        else:
+            fl = str(round(float(tel["etr-in"]) - float(tel["itr-out"]), 3))
+            rl = str(round(float(tel["itr-in"]) - float(tel["etr-out"]), 3))
+        #endif
 
         last = self.rloc_probe_latency
-        self.rloc_probe_latency = str(fl) + "/" + str(rl)
+        self.rloc_probe_latency = fl + "/" + rl
         last_list = self.recent_rloc_probe_latencies
         self.recent_rloc_probe_latencies = [last] + last_list[0:-1]
     #enddef
