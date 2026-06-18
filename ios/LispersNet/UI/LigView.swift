@@ -100,7 +100,7 @@ struct LigView: View {
             return Text(s).font(mono).foregroundColor(.lispRed)
         case .send(let lead, let paren, let trail):
             return Text(lead).font(mono)
-                 + Text(paren).font(mono).bold()
+                 + Text(paren).font(mono).fontWeight(.heavy)
                  + Text(trail).font(mono)
         case .eidPrefix(let prefix, let rest):
             return Text("EID-prefix: ").font(mono)

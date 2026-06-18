@@ -257,7 +257,8 @@ final class LispEngine: ObservableObject {
     func mapServerFor(eid: LispAddress) -> (address: LispAddress, config: MapServerConfig)? {
         if config.decentConfigured {
             let name = LispDecent.dnsName(eid: eid, modulus: config.decentModulus,
-                                          suffix: config.decentSuffix)
+                                          suffix: config.decentSuffix,
+                                          prefixes: config.decentPrefixes)
             guard let addr = DNS.resolve(name) else {
                 log.lprint(.etr, "Cannot resolve decent map-server \(name)")
                 return nil

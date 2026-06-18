@@ -87,10 +87,26 @@ struct ConfigView: View {
                         LabeledContent("EID registers to") {
                             Text(LispDecent.dnsName(eid: eid,
                                                     modulus: config.decentModulus,
-                                                    suffix: config.decentSuffix))
+                                                    suffix: config.decentSuffix,
+                                                    prefixes: config.decentPrefixes))
                             .font(.caption.monospaced())
                             .foregroundStyle(.blue)
                         }
+                    }
+                }
+
+                Section("LISP-Decent Lookup Prefix Configuration") {
+                    ForEach($config.decentPrefixes) { $p in
+                        DecentPrefixRow(prefix: $p, keyboardUp: $keyboardUp) {
+                            config.decentPrefixes.removeAll { $0.id == p.id }
+                            config.save()
+                        }
+                    }
+                    .onDelete { config.decentPrefixes.remove(atOffsets: $0); config.save() }
+                    .onChange(of: config.decentPrefixes) { _, _ in config.save() }
+                    Button("add prefix") {
+                        config.decentPrefixes.append(DecentPrefix())
+                        config.save()
                     }
                 }
 
@@ -123,6 +139,39 @@ struct ConfigView: View {
                     Button("Done") { keyboardUp = false }
                 }
             }
+        }
+    }
+}
+
+// One row of the LISP-Decent lookup-prefix list: a delete button, the
+// eid-prefix field, and the lookup-length. Extracted to keep the Form body
+// within the SwiftUI type-checker's reach.
+private struct DecentPrefixRow: View {
+    @Binding var prefix: DecentPrefix
+    var keyboardUp: FocusState<Bool>.Binding
+    let onDelete: () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Button(action: onDelete) {
+                Image(systemName: "minus.circle.fill")
+                    .foregroundStyle(Color.lispRed)
+            }
+            .buttonStyle(.borderless)
+            TextField("eid-prefix, e.g. 240.11.0.0/16", text: $prefix.eidPrefix)
+                .keyboardType(.numbersAndPunctuation)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+                .font(.body.monospaced())
+                .focused(keyboardUp)
+            Divider()
+            Text("lookup-len:")
+            TextField("32", value: $prefix.lookupLength,
+                      format: .number.grouping(.never))
+                .keyboardType(.numberPad)
+                .font(.body.monospaced())
+                .frame(width: 36)
+                .focused(keyboardUp)
         }
     }
 }

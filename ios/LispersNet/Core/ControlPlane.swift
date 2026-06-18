@@ -71,7 +71,7 @@ extension LispEngine {
         let packet = register.encode(eidRecords: recordData, password: msConf.authKey)
 
         let decent = config.decentConfigured
-            ? ", decent-index \(LispDecent.index(eid: eid, modulus: config.decentModulus))" : ""
+            ? ", decent-index \(LispDecent.index(eid: eid, modulus: config.decentModulus, prefixes: config.decentPrefixes))" : ""
         let rlocName = rlocRecord.rlocName.map { " (\($0))" } ?? ""
         log.lprint(.etr, "Send Map-Register to map-server \(msAddr.addressString)\(decent), " +
                    "EID-prefix \(eid.prefixString), RLOC \(rlocRecord.rloc.addressString)\(rlocName)")

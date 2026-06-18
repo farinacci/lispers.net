@@ -26,8 +26,13 @@ struct ContentView: View {
             Text("version \(Self.version)")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-                .padding(.top, 26)
-                .padding(.bottom, 12)
+                .padding(.top, 2)
+                .padding(.bottom, 34)
+                .frame(maxWidth: .infinity)
+                // Form/List screens (Ping, LIG, xTR) bleed their grouped-gray
+                // background into the bottom safe area; an opaque strip keeps the
+                // version line on the same clean surface as Map-Cache and Logs.
+                .background(Color(.systemBackground))
         }
         .ignoresSafeArea(.container, edges: .bottom)
     }

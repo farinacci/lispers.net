@@ -7,7 +7,7 @@
         "key": "lispers.net xTR",
         "location": {
           "startingColumn": 30,
-          "startingLine": 118
+          "startingLine": 134
         }
       },
       {
@@ -36,10 +36,18 @@
       },
       {
         "comment": "",
+        "key": "LISP-Decent Lookup Prefix Configuration",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
         "key": "Logging",
         "location": {
           "startingColumn": 25,
-          "startingLine": 97
+          "startingLine": 113
         }
       },
       {
@@ -140,10 +148,18 @@
       },
       {
         "comment": "",
+        "key": "add prefix",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
         "key": "Control-plane (all)",
         "location": {
           "startingColumn": 28,
-          "startingLine": 98
+          "startingLine": 114
         }
       },
       {
@@ -151,7 +167,7 @@
         "key": "Data-plane",
         "location": {
           "startingColumn": 28,
-          "startingLine": 104
+          "startingLine": 120
         }
       },
       {
@@ -159,7 +175,7 @@
         "key": "RLOC-probe only",
         "location": {
           "startingColumn": 28,
-          "startingLine": 110
+          "startingLine": 126
         }
       },
       {
@@ -167,7 +183,31 @@
         "key": "Done",
         "location": {
           "startingColumn": 28,
-          "startingLine": 123
+          "startingLine": 139
+        }
+      },
+      {
+        "comment": "",
+        "key": "lookup-len:",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "eid-prefix, e.g. 240.11.0.0/16",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 161
+        }
+      },
+      {
+        "comment": "",
+        "key": "32",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 169
         }
       }
     ]

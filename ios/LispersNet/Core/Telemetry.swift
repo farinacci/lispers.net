@@ -69,17 +69,38 @@ extension Double {
 import CryptoKit
 
 enum LispDecent {
-    static func index(eid: LispAddress, modulus: Int) -> Int {
+    // lisp_get_decent_eid_string(): if the EID matches a configured decent
+    // lookup-prefix (longest match), hash the EID masked to that prefix's
+    // lookup-length instead of the full /32.
+    static func eidString(for eid: LispAddress, prefixes: [DecentPrefix]) -> String {
+        var bestLookup: Int?
+        var bestPrefixLen = -1
+        for p in prefixes {
+            guard let pa = LispAddress(string: p.eidPrefix, iid: eid.instanceID) else { continue }
+            if eid.isMoreSpecific(than: pa) && pa.maskLen > bestPrefixLen {
+                bestPrefixLen = pa.maskLen
+                bestLookup = p.lookupLength
+            }
+        }
+        guard let lookup = bestLookup else { return eid.prefixString }
+        var masked = eid
+        masked.maskLen = lookup
+        masked.zeroHostBits()
+        return masked.prefixString
+    }
+
+    static func index(eid: LispAddress, modulus: Int, prefixes: [DecentPrefix] = []) -> Int {
         let key = SymmetricKey(data: Data("lisp-decent".utf8))
         let mac = HMAC<SHA256>.authenticationCode(
-            for: Data(eid.prefixString.utf8), using: key)
+            for: Data(eidString(for: eid, prefixes: prefixes).utf8), using: key)
         let hex = Data(mac).map { String(format: "%02x", $0) }.joined()
         let slice = String(hex.prefix(12))
         let value = UInt64(slice, radix: 16) ?? 0
         return Int(value % UInt64(max(modulus, 1)))
     }
 
-    static func dnsName(eid: LispAddress, modulus: Int, suffix: String) -> String {
-        "\(index(eid: eid, modulus: modulus)).\(suffix)"
+    static func dnsName(eid: LispAddress, modulus: Int, suffix: String,
+                        prefixes: [DecentPrefix] = []) -> String {
+        "\(index(eid: eid, modulus: modulus, prefixes: prefixes)).\(suffix)"
     }
 }

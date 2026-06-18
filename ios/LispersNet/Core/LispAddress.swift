@@ -110,4 +110,12 @@ struct LispAddress: Equatable, Hashable, CustomStringConvertible {
     var isOverlayAddress: Bool {    // 240.0.0.0/4 — the only LISP-forwarded space
         isIPv4 && (v4 & LISP.overlayMask) == LISP.overlayPrefix
     }
+
+    // Zero the host bits beyond maskLen (used by the decent lookup-length mask).
+    mutating func zeroHostBits() {
+        guard isIPv4 else { return }
+        let mask: UInt32 = maskLen >= 32 ? ~0
+            : (maskLen <= 0 ? 0 : ~UInt32(0) << (32 - maskLen))
+        v4 &= mask
+    }
 }

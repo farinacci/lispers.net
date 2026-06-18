@@ -96,9 +96,15 @@ final class LigService: ObservableObject {
         let sub = pubsub ? "subscribe " : ""
         let mrName = msConf.dnsNameOrAddress.isEmpty ? mr.addressString : msConf.dnsNameOrAddress
         let eidNoMask = "[\(target.instanceID)]\(target.addressString)"
+        // lisp-lig.py prints the decent eid-string it matched (EID masked to the
+        // configured lookup-length), not the /32 — so a lookup-prefix change is
+        // visible here (get_decent_info / lisp_get_decent_eid_string).
+        let decentPrefix = engine.config.decentConfigured
+            ? LispDecent.eidString(for: target, prefixes: engine.config.decentPrefixes)
+            : target.prefixString
         append(.init(content: .send(
             lead: "Send lig \(sub)map-request to \(mr.addressString) ",
-            paren: "(\(mrName) for \(target.prefixString))",
+            paren: "(\(mrName) for \(decentPrefix))",
             trail: " for EID \(eidNoMask) ...")))
         if debug {
             append(.init(content: .plain("  nonce 0x\(String(req.nonce, radix: 16)), " +

@@ -16,6 +16,14 @@ struct MapServerConfig: Identifiable, Codable, Equatable {
     var authAlg: String = "sha2"        // sha1 | sha2
 }
 
+// "lisp decent-prefix" — an EID-prefix and the lookup-length used to mask EIDs
+// in that prefix for the decent map-resolver hash.
+struct DecentPrefix: Identifiable, Codable, Equatable {
+    var id = UUID()
+    var eidPrefix: String = ""          // e.g. "240.11.0.0/16"
+    var lookupLength: Int = 32
+}
+
 final class LispConfig: ObservableObject, Codable {
     // (1) enable/disable
     @Published var lispEnabled = false
@@ -24,6 +32,7 @@ final class LispConfig: ObservableObject, Codable {
     @Published var decentSuffix: String = ""
     @Published var decentModulus: Int = 0
     @Published var decentAuthKey: String = ""           // shared map-server key (sha2)
+    @Published var decentPrefixes: [DecentPrefix] = []  // lookup-length per prefix
     // (3) logging scopes — independent switches
     @Published var controlPlaneLog = true
     @Published var dataPlaneLog = false
@@ -49,7 +58,7 @@ final class LispConfig: ObservableObject, Codable {
     // MARK: persistence
 
     enum CodingKeys: String, CodingKey {
-        case lispEnabled, mapServers, decentSuffix, decentModulus, decentAuthKey
+        case lispEnabled, mapServers, decentSuffix, decentModulus, decentAuthKey, decentPrefixes
         case controlPlaneLog, dataPlaneLog, rlocProbeLog, eidString, instanceID
         case decentNATEnabled, natTraversalEnabled, rlocProbingEnabled
         case telemetryEnabled, siteID
@@ -64,6 +73,7 @@ final class LispConfig: ObservableObject, Codable {
         decentSuffix = try c.decodeIfPresent(String.self, forKey: .decentSuffix) ?? ""
         decentModulus = try c.decodeIfPresent(Int.self, forKey: .decentModulus) ?? 0
         decentAuthKey = try c.decodeIfPresent(String.self, forKey: .decentAuthKey) ?? ""
+        decentPrefixes = try c.decodeIfPresent([DecentPrefix].self, forKey: .decentPrefixes) ?? []
         controlPlaneLog = try c.decodeIfPresent(Bool.self, forKey: .controlPlaneLog) ?? true
         dataPlaneLog = try c.decodeIfPresent(Bool.self, forKey: .dataPlaneLog) ?? false
         rlocProbeLog = try c.decodeIfPresent(Bool.self, forKey: .rlocProbeLog) ?? false
@@ -83,6 +93,7 @@ final class LispConfig: ObservableObject, Codable {
         try c.encode(decentSuffix, forKey: .decentSuffix)
         try c.encode(decentModulus, forKey: .decentModulus)
         try c.encode(decentAuthKey, forKey: .decentAuthKey)
+        try c.encode(decentPrefixes, forKey: .decentPrefixes)
         try c.encode(controlPlaneLog, forKey: .controlPlaneLog)
         try c.encode(dataPlaneLog, forKey: .dataPlaneLog)
         try c.encode(rlocProbeLog, forKey: .rlocProbeLog)
@@ -115,6 +126,7 @@ final class LispConfig: ObservableObject, Codable {
         decentSuffix = loaded.decentSuffix
         decentModulus = loaded.decentModulus
         decentAuthKey = loaded.decentAuthKey
+        decentPrefixes = loaded.decentPrefixes
         controlPlaneLog = loaded.controlPlaneLog
         dataPlaneLog = loaded.dataPlaneLog
         rlocProbeLog = loaded.rlocProbeLog
