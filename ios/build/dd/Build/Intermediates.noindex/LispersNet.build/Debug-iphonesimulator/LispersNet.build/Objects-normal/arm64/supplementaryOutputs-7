@@ -1,0 +1,23 @@
+{
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/LogsView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LogsView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LogsView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LogsView.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LogsView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LogsView.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/MapCacheView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCacheView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCacheView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCacheView.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCacheView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCacheView.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/PingView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.swiftdeps"
+  }
+}

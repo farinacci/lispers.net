@@ -1,0 +1,200 @@
+{
+  "source": "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/PingView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Ping",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 89
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ping an EID (from %@)",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 19
+        }
+      },
+      {
+        "comment": "",
+        "key": "Active Ping",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Results",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enable LISP on the xTR tab to ping.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "No active ping",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pinging %@…",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "seq %u → %@",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "No results yet",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 72
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ (%@) seq %u",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "timeout",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lf ms",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "timeout",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit lisp-hosts",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "lisp-hosts",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "lisp-hosts (Documents/lisp-hosts)",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 111
+        }
+      },
+      {
+        "comment": "",
+        "key": "add entry",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 122
+        }
+      },
+      {
+        "comment": "",
+        "key": "name",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 114
+        }
+      },
+      {
+        "comment": "",
+        "key": "eid",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "name",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "eid address",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 125
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 128
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 141
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 144
+        }
+      }
+    ]
+  },
+  "version": 1
+}

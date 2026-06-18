@@ -1,0 +1,128 @@
+{
+  "source": "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/LigView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "LIG",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "EID Mapping System Lookup",
+        "location": {
+          "startingColumn": 17,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "Parameters",
+        "location": {
+          "startingColumn": 17,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "Output",
+        "location": {
+          "startingColumn": 17,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 39
+        }
+      },
+      {
+        "comment": "",
+        "key": "hostname or EID, e.g. lhr or 240.10.0.1",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "lig it",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "count: %lld",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 71
+        }
+      },
+      {
+        "comment": "",
+        "key": "pubsub (subscribe)",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 72
+        }
+      },
+      {
+        "comment": "",
+        "key": "no-info",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "debug",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 74
+        }
+      },
+      {
+        "comment": "",
+        "key": "No lookups yet",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "EID-prefix: ",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 106
+        }
+      },
+      {
+        "comment": "",
+        "key": "  RLOC: ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 110
+        }
+      }
+    ]
+  },
+  "version": 1
+}
