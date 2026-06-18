@@ -124,6 +124,26 @@ struct LispRLOCRecord {
         return w.data
     }
 
+    // Map-Request ITR-RLOC telemetry, matching lisp_map_request.encode_json()
+    // exactly: lcaf-len = json-len + 4 (the 2-byte json-len field + a trailing
+    // AFI 0), and NO RLOC address. The general encodeJSONLCAF() below appends the
+    // RLOC address (for Map-Reply records); using it here makes lcaf-len = json
+    // + 6, which fails the RTR's "lcaf_len == json_len + 4" check and yields
+    // "Could not decode Map-Request packet".
+    static func encodeProbeTelemetryLCAF(json: String) -> Data {
+        var w = ByteWriter()
+        let jsonBytes = Data(json.utf8)
+        w.u16(LISP.afiLCAF)
+        w.u8(0); w.u8(0)
+        w.u8(LISP.lcafJSON)
+        w.u8(0)
+        w.u16(UInt16(jsonBytes.count + 4))      // lcaf-len = json-len + 4
+        w.u16(UInt16(jsonBytes.count))          // json-len
+        w.bytes(jsonBytes)
+        w.u16(0)                                // trailing AFI 0
+        return w.data
+    }
+
     // encode_json (lisp.py:5718): HBBBBHH then json then telemetry RLOC.
     static func encodeJSONLCAF(json: String, rloc: LispAddress) -> Data {
         var w = ByteWriter()
@@ -171,6 +191,17 @@ struct LispRLOCRecord {
                     guard let innerAFI = r.u16() else { break }
                     if innerAFI == LISP.afiName {
                         rec.rlocName = r.readName()
+                    } else if innerAFI == LISP.afiLCAF {
+                        // Nested JSON-telemetry LCAF: an RLOC-probe reply carries
+                        // [addr][rloc-name][JSON] inside the AFI-List, with the
+                        // telemetry appended last (lisp_rloc_record.encode_lcaf).
+                        guard let _ = r.u8(), let _ = r.u8(), let t2 = r.u8(),
+                              let _ = r.u8(), let _ = r.u16() else { break }
+                        if t2 == LISP.lcafJSON, let jsonLen = r.u16(),
+                           let jb = r.bytes(Int(jsonLen)) {
+                            rec.jsonString = String(data: jb, encoding: .utf8)
+                        }
+                        break
                     } else if innerAFI != 0,
                               let a = LispAddress.unpack(afi: innerAFI, reader: &r) {
                         rec.rloc = a
@@ -264,6 +295,7 @@ struct LispMapRequest {
     var nonce: UInt64 = 0
     var rlocProbe = false
     var smrInvoked = false
+    var decentNATXtr = false            // N: probe is from a NAT'd xTR
     var sourceEID = LispAddress()
     var itrRLOCs: [LispAddress] = []
     var telemetryJSON: String?          // extra ITR-RLOC carrying telemetry
@@ -277,6 +309,7 @@ struct LispMapRequest {
         if rlocProbe { first |= 0x0200_0000 }       // R/probe
         if smrInvoked { first |= 0x0040_0000 }      // I
         if subscribe { first |= 0x0010_0000 }       // X (xTR-ID present)
+        if decentNATXtr { first |= 0x0000_8000 }    // N (decent-NAT xTR)
         let itrCount = itrRLOCs.count + (telemetryJSON != nil ? 1 : 0)
         first |= UInt32(max(itrCount - 1, 0)) << 8  // count is N-1 on the wire
         first |= 1                                  // one EID record
@@ -294,8 +327,8 @@ struct LispMapRequest {
             w.u16(rloc.afi)
             w.bytes(rloc.packAddress())
         }
-        if let json = telemetryJSON, let first = itrRLOCs.first {
-            w.bytes(LispRLOCRecord.encodeJSONLCAF(json: json, rloc: first))
+        if let json = telemetryJSON {
+            w.bytes(LispRLOCRecord.encodeProbeTelemetryLCAF(json: json))
         }
         // Subscribe byte + mask-len, then EID prefix.
         w.u8(subscribe ? 0x80 : 0)

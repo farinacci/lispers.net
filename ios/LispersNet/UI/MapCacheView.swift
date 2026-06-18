@@ -14,12 +14,13 @@ struct MapCacheView: View {
 
     var body: some View {
         NavigationStack {
-            // Vertical scroll; text wraps to the available width (so portrait
-            // looks as before and landscape just gives wider, fuller lines). The
-            // TimelineView refreshes the content once a second for live uptimes
-            // and the packet-count coloring.
+            // Vertical scroll; text wraps to the available width. Refreshes are
+            // driven by engine.mapCacheVersion: every 500ms while data is being
+            // encapsulated (packet-count flashes boldface), and on each RLOC-probe
+            // reply when idle.
             ScrollView {
-                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                Group {
+                    let _ = engine.mapCacheVersion
                     VStack(alignment: .leading, spacing: 14) {
                         let entries = engine.mapCache.snapshot()
                         (Text("LISP Map-Cache for ") +
@@ -27,6 +28,7 @@ struct MapCacheView: View {
                          Text(", entries \(entries.count)"))
                             .font(.caption.monospaced())
                             .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
 
                         if entries.isEmpty {
                             Text("Map-cache is empty.")
@@ -112,13 +114,20 @@ struct MapCacheView: View {
                    "bit-rate: 0.0 mbps").font(mono)
     }
 
-    private func telemetryLine(_ r: LispRLOC) -> Text {
+    // rtts / hops / lats on ONE line. Landscape has the room to show all three
+    // recents inline; in portrait the line stays single and scrolls horizontally
+    // rather than wrapping.
+    private func telemetryLine(_ r: LispRLOC) -> some View {
         let rtts = r.recentRTTs.isEmpty ? "?, ?, ?"
             : r.recentRTTs.map { fmtSecs($0) }.joined(separator: ", ")
         let hops = r.recentHops.isEmpty ? "?/?, ?/?, ?/?" : r.recentHops.joined(separator: ", ")
         let lats = r.recentLatencies.isEmpty ? "?/?, ?/?, ?/?"
             : r.recentLatencies.joined(separator: ", ")
-        return Text("    rtts [\(rtts)], hops [\(hops)], lats [\(lats)]")
-            .font(mono).foregroundStyle(.secondary)
+        return ScrollView(.horizontal, showsIndicators: false) {
+            Text("    rtts [\(rtts)], hops [\(hops)], lats [\(lats)]")
+                .font(mono).foregroundStyle(.secondary)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+        }
     }
 }

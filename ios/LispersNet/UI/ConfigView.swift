@@ -12,6 +12,11 @@ struct ConfigView: View {
     @EnvironmentObject var config: LispConfig
     @EnvironmentObject var engine: LispEngine
     @FocusState private var keyboardUp: Bool
+    @State private var editingPrefixes = false
+
+    private func centeredTitle(_ s: String) -> some View {
+        Text(s).frame(maxWidth: .infinity, alignment: .center)
+    }
 
     var body: some View {
         NavigationStack {
@@ -28,28 +33,35 @@ struct ConfigView: View {
                     .tint(.lispGreen)
                 }
 
-                Section("EID Configuration") {
-                    HStack(spacing: 6) {
-                        Text("Instance-ID:")
-                        TextField("0", value: $config.instanceID,
-                                  format: .number.grouping(.never))
-                            .keyboardType(.numberPad)
-                            .font(.body.monospaced())
-                            .frame(width: 60)
-                            .focused($keyboardUp)
-                            .onChange(of: config.instanceID) { _, _ in config.save() }
-                        Text("EID:")
-                        TextField("240.10.0.100", text: $config.eidString)
-                            .keyboardType(.numbersAndPunctuation)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                            .font(.body.monospaced())
-                            .focused($keyboardUp)
-                            .onChange(of: config.eidString) { _, _ in config.save() }
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 8) {
+                            Text("IID:").frame(width: 40, alignment: .leading)
+                            TextField("0", value: $config.instanceID,
+                                      format: .number.grouping(.never))
+                                .keyboardType(.numberPad)
+                                .font(.body.monospaced())
+                                .frame(width: 90)
+                                .focused($keyboardUp)
+                                .onChange(of: config.instanceID) { _, _ in config.save() }
+                        }
+                        HStack(spacing: 8) {
+                            Text("EID:").frame(width: 40, alignment: .leading)
+                            TextField("240.10.0.100", text: $config.eidString)
+                                .keyboardType(.numbersAndPunctuation)
+                                .autocapitalization(.none)
+                                .disableAutocorrection(true)
+                                .font(.body.monospaced())
+                                .focused($keyboardUp)
+                                .onChange(of: config.eidString) { _, _ in config.save() }
+                        }
                     }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                } header: {
+                    centeredTitle("EID Configuration")
                 }
 
-                Section("xTR Configuration") {
+                Section {
                     Toggle("RLOC-probing", isOn: Binding(
                         get: { config.rlocProbingEnabled },
                         set: { on in
@@ -67,9 +79,11 @@ struct ConfigView: View {
                             on ? engine.installDecentNATEntry()
                                : engine.removeDecentNATEntry()
                         }))
+                } header: {
+                    centeredTitle("xTR Configuration")
                 }
 
-                Section("LISP-Decent Configuration") {
+                Section {
                     TextField("suffix, e.g. ms.example.com", text: $config.decentSuffix)
                         .font(.body.monospaced())
                         .autocapitalization(.none)
@@ -93,24 +107,43 @@ struct ConfigView: View {
                             .foregroundStyle(.blue)
                         }
                     }
+                } header: {
+                    centeredTitle("LISP-Decent Configuration")
                 }
 
-                Section("LISP-Decent Lookup Prefix Configuration") {
+                Section {
                     ForEach($config.decentPrefixes) { $p in
-                        DecentPrefixRow(prefix: $p, keyboardUp: $keyboardUp) {
+                        DecentPrefixRow(prefix: $p, editing: editingPrefixes,
+                                        keyboardUp: $keyboardUp) {
                             config.decentPrefixes.removeAll { $0.id == p.id }
                             config.save()
                         }
                     }
-                    .onDelete { config.decentPrefixes.remove(atOffsets: $0); config.save() }
                     .onChange(of: config.decentPrefixes) { _, _ in config.save() }
-                    Button("add prefix") {
-                        config.decentPrefixes.append(DecentPrefix())
-                        config.save()
+                    // "add prefix" stays on the left; "edit/delete prefix" on the
+                    // right reveals the minus buttons and enables the fields. The
+                    // list is otherwise read-only so it can't be changed by
+                    // accident. Adding a prefix drops into edit mode so the new
+                    // row is immediately editable.
+                    HStack {
+                        Button("add prefix") {
+                            config.decentPrefixes.append(DecentPrefix())
+                            config.save()
+                            editingPrefixes = true
+                        }
+                        .buttonStyle(.borderless)
+                        Spacer()
+                        Button(editingPrefixes ? "done" : "edit/delete prefix") {
+                            keyboardUp = false
+                            editingPrefixes.toggle()
+                        }
+                        .buttonStyle(.borderless)
                     }
+                } header: {
+                    centeredTitle("LISP-Decent Lookup Prefix Configuration")
                 }
 
-                Section("Logging") {
+                Section {
                     Toggle("Control-plane (all)", isOn: Binding(
                         get: { config.controlPlaneLog },
                         set: { on in
@@ -129,6 +162,8 @@ struct ConfigView: View {
                             config.rlocProbeLog = on; config.save()
                             engine.log.rlocProbeLogging = on
                         }))
+                } header: {
+                    centeredTitle("Logging")
                 }
             }
             .navigationTitle("lispers.net xTR")
@@ -148,22 +183,26 @@ struct ConfigView: View {
 // within the SwiftUI type-checker's reach.
 private struct DecentPrefixRow: View {
     @Binding var prefix: DecentPrefix
+    var editing: Bool
     var keyboardUp: FocusState<Bool>.Binding
     let onDelete: () -> Void
 
     var body: some View {
         HStack(spacing: 6) {
-            Button(action: onDelete) {
-                Image(systemName: "minus.circle.fill")
-                    .foregroundStyle(Color.lispRed)
+            if editing {
+                Button(action: onDelete) {
+                    Image(systemName: "minus.circle.fill")
+                        .foregroundStyle(Color.lispRed)
+                }
+                .buttonStyle(.borderless)
             }
-            .buttonStyle(.borderless)
             TextField("eid-prefix, e.g. 240.11.0.0/16", text: $prefix.eidPrefix)
                 .keyboardType(.numbersAndPunctuation)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
                 .font(.body.monospaced())
                 .focused(keyboardUp)
+                .disabled(!editing)
             Divider()
             Text("lookup-len:")
             TextField("32", value: $prefix.lookupLength,
@@ -172,6 +211,7 @@ private struct DecentPrefixRow: View {
                 .font(.body.monospaced())
                 .frame(width: 36)
                 .focused(keyboardUp)
+                .disabled(!editing)
         }
     }
 }

@@ -45,6 +45,7 @@ final class LispEngine: ObservableObject {
     var lastMapRequestSent: [UInt32: Date] = [:]             // rate limiter
     var rtrList: [LispAddress] = []
     var lastInfoNonce: UInt64 = 0
+    var lastEncapActivity: Date?            // drives the 500ms map-cache refresh
 
     private var timers: [Timer] = []
     private let pathWatcher = PathWatcher()
@@ -77,11 +78,12 @@ final class LispEngine: ObservableObject {
         log.fprint(.core, "Using RLOC \(discovered.address.addressString) on " +
                    "interface \(discovered.interfaceName)")
 
-        // NAT-traversal uses an EPHEMERAL data source port so the NAT yields a
-        // real translated port (lisp.py sends the data Info-Request from an
-        // ephemeral port — using 4341 "will break the data-plane"). decent-NAT
-        // instead requires the fixed data port 4341.
-        let dataBind: UInt16 = config.decentNATEnabled ? LISP.dataPort : 0
+        // NAT-traversal binds the data socket to a FIXED non-4341 port so the
+        // NAT-translated @tp port stays stable across app restarts (an ephemeral
+        // port 0 changed every relaunch, stranding the RTR on a stale @tp and
+        // flapping our RLOC to unreach). Not 4341: Mac-lisp collision + "4341
+        // breaks the data-plane". decent-NAT still requires the fixed 4341.
+        let dataBind: UInt16 = config.decentNATEnabled ? LISP.dataPort : LISP.natDataPort
         guard let ctrl = UDPSocket(localPort: LISP.ctrlPort, queue: socketQueue),
               let data = UDPSocket(localPort: dataBind, queue: socketQueue) else {
             log.fprint(.core, "Could not bind UDP control/data sockets")
@@ -90,12 +92,12 @@ final class LispEngine: ObservableObject {
         ctrlSocket = ctrl
         dataSocket = data
         log.fprint(.core, "Data socket bound to local port \(data.localPort)" +
-                   (config.decentNATEnabled ? " (decent-NAT)" : " (ephemeral, NAT-traversal)"))
+                   (config.decentNATEnabled ? " (decent-NAT)" : " (fixed, NAT-traversal)"))
         ctrl.startReceiving { [weak self] d, from, port, ttl in
             self?.processControlPacket(d, from: from, sourcePort: port, receivedTTL: ttl)
         }
-        data.startReceiving { [weak self] d, from, port, _ in
-            self?.processDataPacket(d, from: from, sourcePort: port)
+        data.startReceiving { [weak self] d, from, port, ttl in
+            self?.processDataPacket(d, from: from, sourcePort: port, receivedTTL: ttl)
         }
 
         if config.decentNATEnabled { installDecentNATEntry() }
@@ -154,6 +156,15 @@ final class LispEngine: ObservableObject {
             }
             timers.append(info)
         }
+        // While data is being encapsulated, refresh the map-cache every 500ms so
+        // the packet-count flashes boldface live. When idle, this stays quiet and
+        // the display updates on RLOC-probe replies (processProbeReply bumps).
+        let ui = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            guard let self = self, let last = self.lastEncapActivity,
+                  Date().timeIntervalSince(last) < 2.0 else { return }
+            self.bumpMapCache()
+        }
+        timers.append(ui)
     }
 
     private func pathChanged() {

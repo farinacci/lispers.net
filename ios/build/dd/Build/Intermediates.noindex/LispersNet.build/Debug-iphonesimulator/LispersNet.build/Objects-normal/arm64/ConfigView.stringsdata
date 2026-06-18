@@ -7,47 +7,7 @@
         "key": "lispers.net xTR",
         "location": {
           "startingColumn": 30,
-          "startingLine": 134
-        }
-      },
-      {
-        "comment": "",
-        "key": "EID Configuration",
-        "location": {
-          "startingColumn": 25,
-          "startingLine": 31
-        }
-      },
-      {
-        "comment": "",
-        "key": "xTR Configuration",
-        "location": {
-          "startingColumn": 25,
-          "startingLine": 52
-        }
-      },
-      {
-        "comment": "",
-        "key": "LISP-Decent Configuration",
-        "location": {
-          "startingColumn": 25,
-          "startingLine": 72
-        }
-      },
-      {
-        "comment": "",
-        "key": "LISP-Decent Lookup Prefix Configuration",
-        "location": {
-          "startingColumn": 25,
-          "startingLine": 98
-        }
-      },
-      {
-        "comment": "",
-        "key": "Logging",
-        "location": {
-          "startingColumn": 25,
-          "startingLine": 113
+          "startingLine": 169
         }
       },
       {
@@ -55,39 +15,39 @@
         "key": "Enable LISP",
         "location": {
           "startingColumn": 28,
-          "startingLine": 21
+          "startingLine": 26
         }
       },
       {
         "comment": "",
-        "key": "Instance-ID:",
+        "key": "IID:",
         "location": {
-          "startingColumn": 30,
-          "startingLine": 33
-        }
-      },
-      {
-        "comment": "",
-        "key": "EID:",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 41
+          "startingColumn": 34,
+          "startingLine": 39
         }
       },
       {
         "comment": "",
         "key": "0",
         "location": {
-          "startingColumn": 35,
-          "startingLine": 34
+          "startingColumn": 39,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "EID:",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 49
         }
       },
       {
         "comment": "",
         "key": "240.10.0.100",
         "location": {
-          "startingColumn": 35,
-          "startingLine": 42
+          "startingColumn": 39,
+          "startingLine": 50
         }
       },
       {
@@ -95,7 +55,7 @@
         "key": "RLOC-probing",
         "location": {
           "startingColumn": 28,
-          "startingLine": 53
+          "startingLine": 65
         }
       },
       {
@@ -103,7 +63,7 @@
         "key": "NAT-traversal",
         "location": {
           "startingColumn": 28,
-          "startingLine": 59
+          "startingLine": 71
         }
       },
       {
@@ -111,7 +71,7 @@
         "key": "Decentralized-NAT",
         "location": {
           "startingColumn": 28,
-          "startingLine": 61
+          "startingLine": 73
         }
       },
       {
@@ -119,7 +79,7 @@
         "key": "suffix, e.g. ms.example.com",
         "location": {
           "startingColumn": 31,
-          "startingLine": 73
+          "startingLine": 87
         }
       },
       {
@@ -127,7 +87,7 @@
         "key": "Modulus: %lld",
         "location": {
           "startingColumn": 29,
-          "startingLine": 79
+          "startingLine": 93
         }
       },
       {
@@ -135,7 +95,7 @@
         "key": "authentication-key",
         "location": {
           "startingColumn": 33,
-          "startingLine": 82
+          "startingLine": 96
         }
       },
       {
@@ -143,15 +103,31 @@
         "key": "EID registers to",
         "location": {
           "startingColumn": 40,
-          "startingLine": 87
+          "startingLine": 101
         }
       },
       {
         "comment": "",
         "key": "add prefix",
         "location": {
-          "startingColumn": 28,
-          "startingLine": 107
+          "startingColumn": 32,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "done",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "edit/delete prefix",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 136
         }
       },
       {
@@ -159,7 +135,7 @@
         "key": "Control-plane (all)",
         "location": {
           "startingColumn": 28,
-          "startingLine": 114
+          "startingLine": 147
         }
       },
       {
@@ -167,7 +143,7 @@
         "key": "Data-plane",
         "location": {
           "startingColumn": 28,
-          "startingLine": 120
+          "startingLine": 153
         }
       },
       {
@@ -175,7 +151,7 @@
         "key": "RLOC-probe only",
         "location": {
           "startingColumn": 28,
-          "startingLine": 126
+          "startingLine": 159
         }
       },
       {
@@ -183,7 +159,7 @@
         "key": "Done",
         "location": {
           "startingColumn": 28,
-          "startingLine": 139
+          "startingLine": 174
         }
       },
       {
@@ -191,7 +167,7 @@
         "key": "lookup-len:",
         "location": {
           "startingColumn": 18,
-          "startingLine": 168
+          "startingLine": 207
         }
       },
       {
@@ -199,7 +175,7 @@
         "key": "eid-prefix, e.g. 240.11.0.0/16",
         "location": {
           "startingColumn": 23,
-          "startingLine": 161
+          "startingLine": 199
         }
       },
       {
@@ -207,7 +183,7 @@
         "key": "32",
         "location": {
           "startingColumn": 23,
-          "startingLine": 169
+          "startingLine": 208
         }
       }
     ]

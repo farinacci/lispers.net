@@ -12,30 +12,6 @@
       },
       {
         "comment": "",
-        "key": "EID Mapping System Lookup",
-        "location": {
-          "startingColumn": 17,
-          "startingLine": 46
-        }
-      },
-      {
-        "comment": "",
-        "key": "Parameters",
-        "location": {
-          "startingColumn": 17,
-          "startingLine": 70
-        }
-      },
-      {
-        "comment": "",
-        "key": "Output",
-        "location": {
-          "startingColumn": 17,
-          "startingLine": 79
-        }
-      },
-      {
-        "comment": "",
         "key": "Clear",
         "location": {
           "startingColumn": 53,
@@ -52,7 +28,7 @@
       },
       {
         "comment": "",
-        "key": "hostname or EID, e.g. lhr or 240.10.0.1",
+        "key": "EID or hostname",
         "location": {
           "startingColumn": 27,
           "startingLine": 48
@@ -63,7 +39,23 @@
         "key": "lig it",
         "location": {
           "startingColumn": 68,
-          "startingLine": 61
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "lig self",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "EID Mapping System Lookup",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 91
         }
       },
       {
@@ -71,7 +63,7 @@
         "key": "count: %lld",
         "location": {
           "startingColumn": 21,
-          "startingLine": 71
+          "startingLine": 98
         }
       },
       {
@@ -79,7 +71,7 @@
         "key": "pubsub (subscribe)",
         "location": {
           "startingColumn": 20,
-          "startingLine": 72
+          "startingLine": 99
         }
       },
       {
@@ -87,7 +79,7 @@
         "key": "no-info",
         "location": {
           "startingColumn": 20,
-          "startingLine": 73
+          "startingLine": 100
         }
       },
       {
@@ -95,7 +87,15 @@
         "key": "debug",
         "location": {
           "startingColumn": 20,
-          "startingLine": 74
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "Parameters",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 103
         }
       },
       {
@@ -103,7 +103,7 @@
         "key": "No lookups yet",
         "location": {
           "startingColumn": 22,
-          "startingLine": 81
+          "startingLine": 110
         }
       },
       {
@@ -111,7 +111,7 @@
         "key": "EID-prefix: ",
         "location": {
           "startingColumn": 25,
-          "startingLine": 106
+          "startingLine": 139
         }
       },
       {
@@ -119,7 +119,15 @@
         "key": "  RLOC: ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 110
+          "startingLine": 143
+        }
+      },
+      {
+        "comment": "",
+        "key": "Output",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 122
         }
       }
     ]

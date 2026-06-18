@@ -24,7 +24,9 @@ struct PingResult: Identifiable {
 final class PingService: ObservableObject {
     @Published var results: [PingResult] = []   // newest first; pending + done
     @Published var inFlight = false
-    @Published var currentTarget: String?       // target of the active ping batch
+    @Published var continuous = false           // running until the tab is left
+    @Published var currentTarget: String?       // target of the active ping
+    @Published var interval: Double = 1.0        // seconds between echoes
 
     var active: [PingResult] { results.filter { $0.status == .pending } }
     var completed: [PingResult] { results.filter { $0.status != .pending } }
@@ -33,26 +35,78 @@ final class PingService: ObservableObject {
     private let identifier = UInt16.random(in: 1...0xFFFF)
     private var sequence: UInt16 = 0
     private var outstanding: [UInt16: UUID] = [:]   // seq -> result id
+    private var pingTimer: Timer?
+    private var graceTimer: Timer?
+    private var currentEID: LispAddress?
 
     init(engine: LispEngine) { self.engine = engine }
 
     // MARK: build + send
 
-    func ping(name: String, eid: LispAddress, count: Int = 3) {
+    // Continuous ping (one echo every `interval`) until stopContinuous(). The
+    // Ping tab keeps it alive for 5s after the tab is left (so map-cache counters
+    // can be watched), and stops it at once if the app is backgrounded. Tapping
+    // another target restarts against it.
+    func startContinuous(name: String, eid: LispAddress) {
         guard let engine = engine, engine.running, let source = engine.config.eid else {
             engine?.log.fprint(.core, "Cannot ping — LISP is not enabled")
             return
         }
-        DispatchQueue.main.async { self.inFlight = true; self.currentTarget = name }
-        for i in 0..<count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i)) { [weak self] in
-                self?.sendEcho(name: name, source: source, dest: eid)
-            }
+        stopContinuous()
+        currentEID = eid
+        DispatchQueue.main.async {
+            self.inFlight = true; self.continuous = true; self.currentTarget = name
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(count) + 2.5) { [weak self] in
-            self?.reapTimeouts()
-            DispatchQueue.main.async { self?.inFlight = false; self?.currentTarget = nil }
+        sendEcho(name: name, source: source, dest: eid)
+        scheduleTimer(name: name, eid: eid)
+    }
+
+    // (Re)create the repeating echo timer at the current interval.
+    private func scheduleTimer(name: String, eid: LispAddress) {
+        pingTimer?.invalidate()
+        pingTimer = Timer.scheduledTimer(withTimeInterval: max(interval, 0.05),
+                                         repeats: true) { [weak self] _ in
+            guard let self = self, let engine = self.engine, engine.running,
+                  let source = engine.config.eid else { self?.stopContinuous(); return }
+            self.sendEcho(name: name, source: source, dest: eid)
         }
+    }
+
+    // Change the interval; if a ping is running, apply it live.
+    func setInterval(_ seconds: Double) {
+        interval = seconds
+        if continuous, let eid = currentEID, let name = currentTarget {
+            scheduleTimer(name: name, eid: eid)
+        }
+    }
+
+    func stopContinuous() {
+        pingTimer?.invalidate(); pingTimer = nil
+        graceTimer?.invalidate(); graceTimer = nil
+        currentEID = nil
+        DispatchQueue.main.async {
+            self.inFlight = false; self.continuous = false; self.currentTarget = nil
+        }
+    }
+
+    // Switching tabs keeps the ping going for `seconds` more (map-cache counters
+    // keep climbing); returning to the tab (cancelGrace) keeps it alive.
+    func keepAliveBriefly(_ seconds: TimeInterval = 5) {
+        guard continuous else { return }
+        graceTimer?.invalidate()
+        graceTimer = Timer.scheduledTimer(withTimeInterval: seconds,
+                                          repeats: false) { [weak self] _ in
+            self?.stopContinuous()
+        }
+    }
+
+    func cancelGrace() {
+        graceTimer?.invalidate(); graceTimer = nil
+    }
+
+    // Clear finished results (keeps any in-flight pings).
+    func clearResults() {
+        DispatchQueue.main.async { self.results.removeAll { $0.status != .pending } }
     }
 
     private func sendEcho(name: String, source: LispAddress, dest: LispAddress) {
@@ -72,18 +126,14 @@ final class PingService: ObservableObject {
         engine.log.lprint(.itr, "Send ICMP echo-request to \(name) " +
                           "(\(dest.addressString)), seq \(seq)")
         engine.encapAndSend(inner: inner, destEID: dest)
-    }
-
-    private func reapTimeouts() {
-        let timedOut = outstanding
-        outstanding.removeAll()
-        DispatchQueue.main.async {
-            for (seq, id) in timedOut {
-                if let idx = self.results.firstIndex(where: { $0.id == id }) {
-                    self.results[idx].status = .timeout
-                }
-                self.engine?.log.lprint(.itr, "ICMP echo seq \(seq) timed out")
+        // Per-sequence timeout so each echo resolves independently.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+            guard let self = self, self.outstanding.removeValue(forKey: seq) != nil
+            else { return }
+            if let idx = self.results.firstIndex(where: { $0.id == result.id }) {
+                self.results[idx].status = .timeout
             }
+            self.engine?.log.lprint(.itr, "ICMP echo seq \(seq) timed out")
         }
     }
 
@@ -104,7 +154,7 @@ final class PingService: ObservableObject {
             DispatchQueue.main.async {
                 guard let idx = self.results.firstIndex(where: { $0.id == id }) else { return }
                 let rtt = (Date().timeIntervalSince(self.results[idx].sentAt) * 1000)
-                    .rounded(toPlaces: 2)
+                    .rounded()
                 self.results[idx].rttMs = rtt
                 self.results[idx].address = source.addressString
                 self.results[idx].status = .reply

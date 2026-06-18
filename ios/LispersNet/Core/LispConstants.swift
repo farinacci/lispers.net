@@ -11,6 +11,12 @@ enum LISP {
     // UDP ports
     static let dataPort: UInt16 = 4341          // LISP_DATA_PORT
     static let ctrlPort: UInt16 = 4342          // LISP_CTRL_PORT
+    // Fixed local port for the data socket in NAT-traversal mode. lisp.py uses a
+    // fixed data port (4341); we can't (Mac-lisp collision + "4341 breaks the
+    // data-plane"), but a FIXED non-4341 port keeps the NAT-translated @tp port
+    // stable across app restarts so the RTR's registration doesn't go stale and
+    // flap our RLOC to unreach-state. (Ephemeral port 0 changed every relaunch.)
+    static let natDataPort: UInt16 = 41341
 
     // Control message types (high nibble of first long)
     static let typeMapRequest: UInt8 = 1

@@ -59,4 +59,17 @@ final class HostsFile: ObservableObject {
         guard let e = entries.first(where: { $0.name == name }) else { return nil }
         return LispAddress(string: e.address)
     }
+
+    // Resolve a typed target to an EID: this lisp-hosts file first, then a literal
+    // address, then a DNS name. DNS can block, so the result is delivered async on
+    // the main thread (the hosts/literal cases still return synchronously-fast).
+    func resolveTarget(_ input: String, completion: @escaping (LispAddress?) -> Void) {
+        let s = input.trimmingCharacters(in: .whitespaces)
+        if let eid = lookup(s) { completion(eid); return }
+        if let eid = LispAddress(string: s) { completion(eid); return }
+        DispatchQueue.global().async {
+            let eid = DNS.resolve(s)
+            DispatchQueue.main.async { completion(eid) }
+        }
+    }
 }

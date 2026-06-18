@@ -7,31 +7,7 @@
         "key": "Ping",
         "location": {
           "startingColumn": 30,
-          "startingLine": 89
-        }
-      },
-      {
-        "comment": "",
-        "key": "Ping an EID (from %@)",
-        "location": {
-          "startingColumn": 25,
-          "startingLine": 19
-        }
-      },
-      {
-        "comment": "",
-        "key": "Active Ping",
-        "location": {
-          "startingColumn": 25,
-          "startingLine": 44
-        }
-      },
-      {
-        "comment": "",
-        "key": "Results",
-        "location": {
-          "startingColumn": 25,
-          "startingLine": 70
+          "startingLine": 158
         }
       },
       {
@@ -39,7 +15,79 @@
         "key": "Enable LISP on the xTR tab to ping.",
         "location": {
           "startingColumn": 30,
-          "startingLine": 38
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Interval",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "1s",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "500ms",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "250ms",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "100ms",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 30
+        }
+      },
+      {
+        "comment": "",
+        "key": "EID or hostname",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ping",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit hosts",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 84
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ping an EID (from %@)",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 87
         }
       },
       {
@@ -47,7 +95,7 @@
         "key": "No active ping",
         "location": {
           "startingColumn": 30,
-          "startingLine": 66
+          "startingLine": 120
         }
       },
       {
@@ -55,7 +103,15 @@
         "key": "Pinging %@…",
         "location": {
           "startingColumn": 34,
-          "startingLine": 48
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stop",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 99
         }
       },
       {
@@ -63,7 +119,15 @@
         "key": "seq %u → %@",
         "location": {
           "startingColumn": 42,
-          "startingLine": 55
+          "startingLine": 109
+        }
+      },
+      {
+        "comment": "",
+        "key": "Active Ping",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 123
         }
       },
       {
@@ -71,15 +135,15 @@
         "key": "No results yet",
         "location": {
           "startingColumn": 30,
-          "startingLine": 72
+          "startingLine": 128
         }
       },
       {
         "comment": "",
-        "key": "%@ (%@) seq %u",
+        "key": "%@ seq %u",
         "location": {
           "startingColumn": 34,
-          "startingLine": 79
+          "startingLine": 135
         }
       },
       {
@@ -87,31 +151,47 @@
         "key": "timeout",
         "location": {
           "startingColumn": 34,
-          "startingLine": 82
+          "startingLine": 138
         }
       },
       {
         "comment": "",
-        "key": "%lf ms",
+        "key": "%lld ms",
         "location": {
           "startingColumn": 48,
-          "startingLine": 82
+          "startingLine": 138
         }
       },
       {
         "comment": "",
         "key": "timeout",
         "location": {
-          "startingColumn": 64,
-          "startingLine": 82
+          "startingColumn": 69,
+          "startingLine": 138
         }
       },
       {
         "comment": "",
-        "key": "Edit lisp-hosts",
+        "key": "Results",
         "location": {
-          "startingColumn": 24,
-          "startingLine": 92
+          "startingColumn": 30,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 166
         }
       },
       {
@@ -119,7 +199,7 @@
         "key": "lisp-hosts",
         "location": {
           "startingColumn": 30,
-          "startingLine": 137
+          "startingLine": 221
         }
       },
       {
@@ -127,7 +207,7 @@
         "key": "lisp-hosts (Documents/lisp-hosts)",
         "location": {
           "startingColumn": 25,
-          "startingLine": 111
+          "startingLine": 191
         }
       },
       {
@@ -135,7 +215,7 @@
         "key": "add entry",
         "location": {
           "startingColumn": 25,
-          "startingLine": 122
+          "startingLine": 204
         }
       },
       {
@@ -143,7 +223,7 @@
         "key": "name",
         "location": {
           "startingColumn": 39,
-          "startingLine": 114
+          "startingLine": 194
         }
       },
       {
@@ -151,7 +231,7 @@
         "key": "eid",
         "location": {
           "startingColumn": 39,
-          "startingLine": 115
+          "startingLine": 197
         }
       },
       {
@@ -159,7 +239,7 @@
         "key": "name",
         "location": {
           "startingColumn": 35,
-          "startingLine": 124
+          "startingLine": 206
         }
       },
       {
@@ -167,7 +247,7 @@
         "key": "eid address",
         "location": {
           "startingColumn": 35,
-          "startingLine": 125
+          "startingLine": 209
         }
       },
       {
@@ -175,7 +255,7 @@
         "key": "Add",
         "location": {
           "startingColumn": 32,
-          "startingLine": 128
+          "startingLine": 212
         }
       },
       {
@@ -183,7 +263,7 @@
         "key": "Cancel",
         "location": {
           "startingColumn": 28,
-          "startingLine": 141
+          "startingLine": 225
         }
       },
       {
@@ -191,7 +271,7 @@
         "key": "Save",
         "location": {
           "startingColumn": 28,
-          "startingLine": 144
+          "startingLine": 228
         }
       }
     ]

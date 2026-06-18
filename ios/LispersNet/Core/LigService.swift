@@ -16,7 +16,8 @@ struct LigLine: Identifiable {
     enum Content {
         case plain(String)                                  // black text
         case error(String)                                  // red text
-        case send(lead: String, paren: String, trail: String)   // paren bold
+        // paren bold; eid bold dark-green (the EID being ligged)
+        case send(lead: String, paren: String, midTrail: String, eid: String, endTrail: String)
         case eidPrefix(prefix: String, rest: String)            // prefix green
         case rloc(addr: String, beforeName: String, name: String?, afterName: String)
     }
@@ -105,7 +106,9 @@ final class LigService: ObservableObject {
         append(.init(content: .send(
             lead: "Send lig \(sub)map-request to \(mr.addressString) ",
             paren: "(\(mrName) for \(decentPrefix))",
-            trail: " for EID \(eidNoMask) ...")))
+            midTrail: " for EID ",
+            eid: eidNoMask,
+            endTrail: " ...")))
         if debug {
             append(.init(content: .plain("  nonce 0x\(String(req.nonce, radix: 16)), " +
                          "ECM \(ecm.count) bytes")))

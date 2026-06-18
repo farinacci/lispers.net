@@ -199,11 +199,20 @@ extension LispEngine {
 
     func sendRLOCProbes() {
         guard running, config.rlocProbingEnabled,
-              let sourceEID = config.eid, let myRLOC = rloc else { return }
+              config.eid != nil, let myRLOC = rloc else { return }
         // Probe every entry's RLOCs, including the static RTR defaults — that's
         // how the RTRs get telemetry (rtts/hops/lats). The send-map-request
-        // 240/8 entry has no RLOCs, so it contributes nothing.
-        for entry in mapCache.snapshot() {
+        // 240/8 entry has no RLOCs, so it contributes nothing. The same RTR
+        // appears under both the unicast 0/0 and multicast (0/0,224/4) default
+        // entries; probe each unique RLOC once per cycle (lisp.py suppresses
+        // duplicate-RLOC probes) and share the nonce so one reply updates both.
+        let snapshot = mapCache.snapshot()
+        var probedKeys = Set<UInt64>()
+        func probeKey(_ rl: LispRLOC) -> UInt64 {
+            let p = rl.encapPort != LISP.dataPort ? rl.encapPort : LISP.ctrlPort
+            return UInt64(rl.rloc.v4) << 16 | UInt64(p)
+        }
+        for entry in snapshot {
             for r in entry.rlocSet {
                 // Mark unreachable if no reply within the wait window.
                 if let sent = r.lastProbeSent,
@@ -216,14 +225,24 @@ extension LispEngine {
                     bumpMapCache()
                 }
 
+                // Skip if we already probed this RLOC (same address:port) this
+                // cycle under another default entry.
+                if probedKeys.contains(probeKey(r)) { continue }
+                probedKeys.insert(probeKey(r))
+
                 var probe = LispMapRequest()
                 probe.nonce = lispGetControlNonce()
                 probe.rlocProbe = true
-                probe.sourceEID = sourceEID
-                // Advertise our GLOBAL RLOC so the probe reply comes back to a
-                // routable address, not our private one (lisp.py:16217).
-                probe.itrRLOCs = [behindNAT ? (translatedRLOC ?? myRLOC.address)
-                                            : myRLOC.address]
+                // RLOC-probes carry no source-EID (lisp_send_map_request uses
+                // seid=None for unicast), and set the N flag when we are a NAT'd
+                // xTR — matching the wire format of a working decent-NAT probe.
+                probe.decentNATXtr = behindNAT
+                // Advertise our PRIVATE RLOC, exactly like the working xTRs
+                // (itr-rloc 10.x). lisp_rtr_process_map_request replaces a private
+                // itr-rloc with the packet `source`, so the RTR replies to the
+                // public address:port our probe actually came from — which routes
+                // straight back to the control socket that sent it.
+                probe.itrRLOCs = [myRLOC.address]
                 var target = entry.eid
                 target.maskLen = entry.eid.maskLen
                 probe.targetEID = target
@@ -231,11 +250,23 @@ extension LispEngine {
                     probe.telemetryJSON = Telemetry.encode(
                         Telemetry.configTemplate, itrOut: Telemetry.timestamp())
                 }
-                r.lastProbeNonce = probe.nonce
-                r.lastProbeSent = Date()
+                // Stamp this nonce/time on every sibling RLOC with the same
+                // address:port so the single reply updates them all.
+                let sentAt = Date()
+                for e2 in snapshot {
+                    for s in e2.rlocSet where probeKey(s) == probeKey(r) {
+                        s.lastProbeNonce = probe.nonce
+                        s.lastProbeSent = sentAt
+                    }
+                }
                 let packet = probe.encode()
-                let port = r.encapPort != LISP.dataPort ? r.encapPort : LISP.ctrlPort
                 let tel = config.telemetryEnabled ? ", with telemetry" : ""
+
+                // Send the RLOC-probe from the control socket to the RTR's
+                // control port 4342, exactly like the working xTRs — no data port
+                // involved. The RTR replies (raw Map-Reply) to the packet source,
+                // i.e. our control socket's translation, so it returns on 4342.
+                let port = r.encapPort != LISP.dataPort ? r.encapPort : LISP.ctrlPort
                 log.pprint(.itr, "Send RLOC-probe to \(r.rloc.addressString):\(port), " +
                            "for EID \(entry.eid.prefixString)\(tel), nonce 0x" +
                            String(probe.nonce, radix: 16))
@@ -245,42 +276,48 @@ extension LispEngine {
     }
 
     func processProbeReply(_ reply: LispMapReply, from: LispAddress, replyTTL: Int) {
+        let now = Date()
+        // Telemetry rides back as a JSON RLOC-record — decode it once.
+        var latency: String?
+        for (_, rlocs) in reply.records {
+            for rl in rlocs {
+                guard let json = rl.jsonString, Telemetry.isTelemetry(json) else { continue }
+                let stamped = Telemetry.encode(json, itrIn: Telemetry.timestamp())
+                if let (fwd, rev) = Telemetry.latencies(stamped) {
+                    latency = "\(fwd)/\(rev)"
+                    log.lprint(.itr, "Telemetry for \(from.addressString): " +
+                               "fwd \(fwd) secs, rev \(rev) secs")
+                }
+            }
+        }
+        // Update every RLOC carrying this nonce (the same RTR appears under both
+        // the unicast and multicast default entries), so they stay in sync.
+        var matched = false, loggedRTT = false
         for entry in mapCache.snapshot() {
             for r in entry.rlocSet where r.lastProbeNonce == reply.nonce {
-                let now = Date()
+                matched = true
                 r.lastProbeReply = now
                 if let sent = r.lastProbeSent {
                     let rtt = now.timeIntervalSince(sent).rounded(toPlaces: 3)
                     r.storeRTT(rtt)
-                    log.pprint(.itr, "Received RLOC-probe reply from \(from.addressString), " +
-                               "RTT \(rtt) secs, nonce 0x\(String(reply.nonce, radix: 16))")
+                    if !loggedRTT {
+                        log.pprint(.itr, "Received RLOC-probe reply from \(from.addressString), " +
+                                   "RTT \(rtt) secs, nonce 0x\(String(reply.nonce, radix: 16))")
+                        loggedRTT = true
+                    }
                 }
                 // to-hops from the responder's echoed received-TTL (Map-Reply
-                // hop-count); from-hops needs the reply's own received TTL
-                // (captured via IP_RECVTTL — wired through below).
+                // hop-count); from-hops from the reply's own received TTL.
                 r.storeHops(toReceivedTTL: Int(reply.hopCount), fromReceivedTTL: replyTTL)
                 if !r.isUp {
                     r.state = "up-state"
                     r.stateChange = now
                     log.pprint(.itr, "RLOC \(from.addressString) is reachable again")
                 }
-                // Telemetry rides back as a JSON RLOC-record.
-                for (_, rlocs) in reply.records {
-                    for rl in rlocs {
-                        guard let json = rl.jsonString, Telemetry.isTelemetry(json)
-                        else { continue }
-                        let stamped = Telemetry.encode(json, itrIn: Telemetry.timestamp())
-                        if let (fwd, rev) = Telemetry.latencies(stamped) {
-                            r.storeLatency("\(fwd)/\(rev)")
-                            log.lprint(.itr, "Telemetry for \(from.addressString): " +
-                                       "fwd \(fwd) secs, rev \(rev) secs")
-                        }
-                    }
-                }
-                bumpMapCache()
-                return
+                if let l = latency { r.storeLatency(l) }
             }
         }
+        if matched { bumpMapCache() }
     }
 
     // Answer RLOC-probes aimed at us so peers' telemetry works

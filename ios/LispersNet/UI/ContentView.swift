@@ -9,6 +9,7 @@ import SwiftUI
 
 extension Color {
     static let lispGreen = Color(red: 0.16, green: 0.55, blue: 0.16)
+    static let lispDarkGreen = Color(red: 0.0, green: 0.35, blue: 0.0)
     static let lispRed = Color(red: 0.78, green: 0.12, blue: 0.12)
     static let lispBlue = Color(red: 0.20, green: 0.40, blue: 0.95)
 }
@@ -18,7 +19,7 @@ struct ContentView: View {
     @EnvironmentObject var config: LispConfig
 
     // App version string — bump on request.
-    static let version = "0.0"
+    static let version = "0.1"
 
     var body: some View {
         VStack(spacing: 0) {

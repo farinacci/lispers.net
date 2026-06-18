@@ -22,7 +22,7 @@ final class LispRLOC {
     var lastProbeNonce: UInt64 = 0
     var lastProbeSent: Date?
     var lastProbeReply: Date?
-    var recentRTTs: [Double] = []               // last 10, seconds
+    var recentRTTs: [Double] = []               // last 3, seconds
     var recentHops: [String] = []
     var recentLatencies: [String] = []          // "fwd/rev"
 
@@ -31,7 +31,7 @@ final class LispRLOC {
     var isUp: Bool { state == "up-state" }
 
     func storeRTT(_ rtt: Double) {
-        recentRTTs = [rtt] + recentRTTs.prefix(9)
+        recentRTTs = [rtt] + recentRTTs.prefix(2)
     }
     // Hops each way from the received TTLs, "to/from" (store_rloc_probe_hops,
     // lisp.py:13845): 64 - received-TTL, with "?"/"!" for unknown/too-far.
@@ -41,10 +41,10 @@ final class LispRLOC {
             if ttl < LISP.rlocProbeTTL / 2 { return "!" }
             return String(LISP.rlocProbeTTL - ttl)
         }
-        recentHops = ["\(h(toReceivedTTL))/\(h(fromReceivedTTL))"] + recentHops.prefix(9)
+        recentHops = ["\(h(toReceivedTTL))/\(h(fromReceivedTTL))"] + recentHops.prefix(2)
     }
     func storeLatency(_ l: String) {
-        recentLatencies = [l] + recentLatencies.prefix(9)
+        recentLatencies = [l] + recentLatencies.prefix(2)
     }
 }
 

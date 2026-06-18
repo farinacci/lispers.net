@@ -18,8 +18,15 @@ enum Telemetry {
     static func parse(_ json: String) -> [String: String]? {
         guard let data = json.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data),
-              let dict = obj as? [String: String] else { return nil }
-        return dict
+              let dict = obj as? [String: Any] else { return nil }
+        // The RTR's lisp_encode_telemetry may emit timestamps as unquoted JSON
+        // numbers rather than strings, so accept both and normalize to strings.
+        var out: [String: String] = [:]
+        for (k, v) in dict {
+            if let s = v as? String { out[k] = s }
+            else if let n = v as? NSNumber { out[k] = String(n.doubleValue) }
+        }
+        return out
     }
 
     // lisp_is_json_telemetry()

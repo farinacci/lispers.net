@@ -42,6 +42,7 @@ extension LispEngine {
         rlocEntry.packetCount += 1
         rlocEntry.byteCount += UInt64(inner.count)
         rlocEntry.lastPacket = Date()
+        lastEncapActivity = rlocEntry.lastPacket
 
         log.dprint(.itr, "Encapsulate \(inner.count) bytes EID " +
                    "\(destEID.addressString) -> RLOC \(rlocEntry.rloc.addressString):" +
@@ -58,7 +59,8 @@ extension LispEngine {
 
     // MARK: - decap (lisp-etr.py:1056 flow)
 
-    func processDataPacket(_ data: Data, from: LispAddress, sourcePort: UInt16) {
+    func processDataPacket(_ data: Data, from: LispAddress, sourcePort: UInt16,
+                           receivedTTL: Int = -1) {
         guard data.count >= 4 else { return }
         log.dprint(.etr, "data-socket rx \(data.count) bytes from " +
                    "\(from.addressString):\(sourcePort), first=" +
@@ -72,6 +74,19 @@ extension LispEngine {
             if let info = LispInfo.decode(data), info.isReply {
                 processInfoReply(info, fromDataPort: true)
             }
+            return
+        }
+
+        // RLOC-probe replies from an RTR arrive here, not on the control socket:
+        // the RTR replies FROM its data port 4341 TO our translated data RLOC:port
+        // so the answer traverses the firewall. They are raw control messages
+        // (Map-Reply, or a probe Map-Request), so hand them to the control plane.
+        // Real data packets carry a data header whose first byte has the N-bit
+        // set (high nibble >= 8), so type 1/2 here is unambiguously control.
+        let firstNibble = data[data.startIndex] >> 4
+        if firstNibble == LISP.typeMapReply || firstNibble == LISP.typeMapRequest {
+            processControlPacket(data, from: from, sourcePort: sourcePort,
+                                 receivedTTL: receivedTTL)
             return
         }
 
