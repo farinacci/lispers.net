@@ -179,6 +179,9 @@ extension LispEngine {
         req.nonce = lispGetControlNonce()
         req.sourceEID = sourceEID
         req.itrRLOCs = [myRLOC.address]
+        // N flag: ask the map-server to skip lisp_get_partial_rloc_set and return
+        // the FULL registered RLOC-set (public ETR + RTRs), not just the RTRs.
+        req.decentNATXtr = true
         var target = destEID
         target.maskLen = 32
         req.targetEID = target

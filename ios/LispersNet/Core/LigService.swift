@@ -86,6 +86,10 @@ final class LigService: ObservableObject {
         req.itrRLOCs = [engine.behindNAT ? (engine.translatedRLOC ?? myRLOC.address)
                                          : myRLOC.address]
         req.targetEID = target
+        // Set the N flag like lisp-lig.py (map_request.decent_nat_xtr = True): the
+        // map-server then skips lisp_get_partial_rloc_set and returns the FULL
+        // registered RLOC-set instead of just the RTRs.
+        req.decentNATXtr = true
         req.subscribe = pubsub
         req.xtrID = pubsub ? engine.xtrID : nil
 

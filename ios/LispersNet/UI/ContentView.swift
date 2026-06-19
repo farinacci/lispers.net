@@ -14,12 +14,26 @@ extension Color {
     static let lispBlue = Color(red: 0.20, green: 0.40, blue: 0.95)
 }
 
+// Tracks whether the software keyboard is on screen so the tab bar can hide
+// while typing (it otherwise overlaps the keyboard / its accessory).
+final class KeyboardObserver: ObservableObject {
+    @Published var isVisible = false
+    init() {
+        let nc = NotificationCenter.default
+        nc.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil,
+                       queue: .main) { [weak self] _ in self?.isVisible = true }
+        nc.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil,
+                       queue: .main) { [weak self] _ in self?.isVisible = false }
+    }
+}
+
 struct ContentView: View {
     @EnvironmentObject var engine: LispEngine
     @EnvironmentObject var config: LispConfig
+    @StateObject private var keyboard = KeyboardObserver()
 
     // App version string — bump on request.
-    static let version = "0.1"
+    static let version = "0.2"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -38,17 +52,26 @@ struct ContentView: View {
         .ignoresSafeArea(.container, edges: .bottom)
     }
 
+    // Hide the tab bar while the keyboard is up so it doesn't float over the
+    // input. The modifier must sit on each tab's content (not the TabView).
+    private var tabBarVisibility: Visibility { keyboard.isVisible ? .hidden : .visible }
+
     private var tabs: some View {
         TabView {
             MapCacheView()
+                .toolbar(tabBarVisibility, for: .tabBar)
                 .tabItem { Label("Map-Cache", systemImage: "tablecells") }
             LogsView()
+                .toolbar(tabBarVisibility, for: .tabBar)
                 .tabItem { Label("Logs", systemImage: "doc.plaintext") }
             PingView()
+                .toolbar(tabBarVisibility, for: .tabBar)
                 .tabItem { Label("Ping", systemImage: "dot.radiowaves.left.and.right") }
             LigView()
+                .toolbar(tabBarVisibility, for: .tabBar)
                 .tabItem { Label("LIG", systemImage: "magnifyingglass") }
             ConfigView()
+                .toolbar(tabBarVisibility, for: .tabBar)
                 .tabItem { Label("xTR", systemImage: "gearshape") }
         }
         .onAppear {

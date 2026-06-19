@@ -10,7 +10,17 @@ import SwiftUI
 
 struct MapCacheView: View {
     @EnvironmentObject var engine: LispEngine
-    private let mono = Font.system(size: 11, design: .monospaced)
+    @State private var fontScale: CGFloat = 1.0
+    @GestureState private var pinch: CGFloat = 1.0
+    // Pinch-to-zoom by scaling the monospaced font size, so the ScrollView
+    // re-flows and scrolling stays correct (unlike .scaleEffect).
+    private var zoom: CGFloat { min(max(fontScale * pinch, 0.6), 3.0) }
+    private var mono: Font { .system(size: 11 * zoom, design: .monospaced) }
+    private var magnify: some Gesture {
+        MagnifyGesture()
+            .updating($pinch) { v, state, _ in state = v.magnification }
+            .onEnded { v in fontScale = min(max(fontScale * v.magnification, 0.6), 3.0) }
+    }
 
     var body: some View {
         NavigationStack {
@@ -26,7 +36,7 @@ struct MapCacheView: View {
                         (Text("LISP Map-Cache for ") +
                          Text(engine.config.eidString.isEmpty ? "xTR" : engine.config.eidString).bold() +
                          Text(", entries \(entries.count)"))
-                            .font(.caption.monospaced())
+                            .font(.system(size: 12 * zoom, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
 
@@ -42,6 +52,7 @@ struct MapCacheView: View {
                     .padding()
                 }
             }
+            .simultaneousGesture(magnify)
             .navigationTitle("Map-Cache")
             .navigationBarTitleDisplayMode(.inline)
         }

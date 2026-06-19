@@ -205,8 +205,11 @@ private struct DecentPrefixRow: View {
                 .disabled(!editing)
             Divider()
             Text("lookup-len:")
-            TextField("32", value: $prefix.lookupLength,
-                      format: .number.grouping(.never))
+            // Bound as text (not a numeric format) so it can be cleared to empty
+            // and must be typed in — no default value.
+            TextField("?", text: Binding(
+                get: { prefix.lookupLength.map(String.init) ?? "" },
+                set: { prefix.lookupLength = Int($0) }))
                 .keyboardType(.numberPad)
                 .font(.body.monospaced())
                 .frame(width: 36)

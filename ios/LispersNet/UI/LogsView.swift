@@ -11,6 +11,15 @@ import SwiftUI
 struct LogsView: View {
     @ObservedObject var log = LispLog.shared
     @State private var component: LogComponent = .core
+    @State private var fontScale: CGFloat = 1.0
+    @GestureState private var pinch: CGFloat = 1.0
+    // Pinch-to-zoom the log font; the LazyVStack re-flows so scrolling stays good.
+    private var zoom: CGFloat { min(max(fontScale * pinch, 0.6), 3.0) }
+    private var magnify: some Gesture {
+        MagnifyGesture()
+            .updating($pinch) { v, state, _ in state = v.magnification }
+            .onEnded { v in fontScale = min(max(fontScale * v.magnification, 0.6), 3.0) }
+    }
 
     var body: some View {
         NavigationStack {
@@ -31,7 +40,7 @@ struct LogsView: View {
                             let lines = log.lines[component] ?? []
                             ForEach(Array(lines.enumerated()), id: \.offset) { i, line in
                                 Self.colored(line)
-                                    .font(.system(size: 11, design: .monospaced))
+                                    .font(.system(size: 11 * zoom, design: .monospaced))
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .id(i)
                             }
@@ -47,6 +56,7 @@ struct LogsView: View {
                     .onChange(of: (log.lines[component] ?? []).count) { _, count in
                         if count > 0 { proxy.scrollTo(count - 1, anchor: .bottom) }
                     }
+                    .simultaneousGesture(magnify)
                 }
             }
             .navigationTitle("Logs")

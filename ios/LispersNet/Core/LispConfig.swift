@@ -21,7 +21,7 @@ struct MapServerConfig: Identifiable, Codable, Equatable {
 struct DecentPrefix: Identifiable, Codable, Equatable {
     var id = UUID()
     var eidPrefix: String = ""          // e.g. "240.11.0.0/16"
-    var lookupLength: Int = 32
+    var lookupLength: Int?              // nil = not yet entered (no default)
 }
 
 final class LispConfig: ObservableObject, Codable {

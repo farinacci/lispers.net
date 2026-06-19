@@ -7,7 +7,7 @@
         "key": "Logs",
         "location": {
           "startingColumn": 30,
-          "startingLine": 52
+          "startingLine": 62
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "log",
         "location": {
           "startingColumn": 24,
-          "startingLine": 18
+          "startingLine": 27
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "lisp-core.log",
         "location": {
           "startingColumn": 26,
-          "startingLine": 19
+          "startingLine": 28
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "lisp-itr.log",
         "location": {
           "startingColumn": 26,
-          "startingLine": 20
+          "startingLine": 29
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "lisp-etr.log",
         "location": {
           "startingColumn": 26,
-          "startingLine": 21
+          "startingLine": 30
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "(no log lines — enable logging on the xTR tab)",
         "location": {
           "startingColumn": 38,
-          "startingLine": 39
+          "startingLine": 48
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": "",
         "location": {
           "startingColumn": 26,
-          "startingLine": 70
+          "startingLine": 80
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "Clear",
         "location": {
           "startingColumn": 24,
-          "startingLine": 55
+          "startingLine": 65
         }
       },
       {
@@ -71,7 +71,7 @@
         "key": "",
         "location": {
           "startingColumn": 24,
-          "startingLine": 83
+          "startingLine": 93
         }
       }
     ]

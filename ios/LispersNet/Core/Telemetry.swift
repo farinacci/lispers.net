@@ -83,10 +83,11 @@ enum LispDecent {
         var bestLookup: Int?
         var bestPrefixLen = -1
         for p in prefixes {
-            guard let pa = LispAddress(string: p.eidPrefix, iid: eid.instanceID) else { continue }
+            guard let len = p.lookupLength,
+                  let pa = LispAddress(string: p.eidPrefix, iid: eid.instanceID) else { continue }
             if eid.isMoreSpecific(than: pa) && pa.maskLen > bestPrefixLen {
                 bestPrefixLen = pa.maskLen
-                bestLookup = p.lookupLength
+                bestLookup = len
             }
         }
         guard let lookup = bestLookup else { return eid.prefixString }

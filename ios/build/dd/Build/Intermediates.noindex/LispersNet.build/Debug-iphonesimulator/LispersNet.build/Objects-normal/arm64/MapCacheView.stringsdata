@@ -7,7 +7,7 @@
         "key": "Map-Cache",
         "location": {
           "startingColumn": 30,
-          "startingLine": 45
+          "startingLine": 56
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "LISP Map-Cache for ",
         "location": {
           "startingColumn": 31,
-          "startingLine": 26
+          "startingLine": 36
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": ", entries %lld",
         "location": {
           "startingColumn": 31,
-          "startingLine": 28
+          "startingLine": 38
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "Map-cache is empty.",
         "location": {
           "startingColumn": 34,
-          "startingLine": 34
+          "startingLine": 44
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "EID ",
         "location": {
           "startingColumn": 22,
-          "startingLine": 72
+          "startingLine": 83
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": ", uptime %@, ttl %@",
         "location": {
           "startingColumn": 20,
-          "startingLine": 74
+          "startingLine": 85
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": ", action ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 76
+          "startingLine": 87
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "  RLOC ",
         "location": {
           "startingColumn": 22,
-          "startingLine": 87
+          "startingLine": 98
         }
       },
       {
@@ -71,7 +71,7 @@
         "key": ", state ",
         "location": {
           "startingColumn": 20,
-          "startingLine": 89
+          "startingLine": 100
         }
       },
       {
@@ -79,7 +79,7 @@
         "key": " since %@, p%u/w%u",
         "location": {
           "startingColumn": 20,
-          "startingLine": 91
+          "startingLine": 102
         }
       },
       {
@@ -87,7 +87,7 @@
         "key": ", ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 93
+          "startingLine": 104
         }
       },
       {
@@ -95,7 +95,7 @@
         "key": "%llu",
         "location": {
           "startingColumn": 26,
-          "startingLine": 103
+          "startingLine": 114
         }
       },
       {
@@ -103,7 +103,7 @@
         "key": "    ",
         "location": {
           "startingColumn": 21,
-          "startingLine": 109
+          "startingLine": 120
         }
       },
       {
@@ -111,7 +111,7 @@
         "key": "%@%@",
         "location": {
           "startingColumn": 20,
-          "startingLine": 110
+          "startingLine": 121
         }
       },
       {
@@ -119,7 +119,7 @@
         "key": ": packet-count: ",
         "location": {
           "startingColumn": 20,
-          "startingLine": 111
+          "startingLine": 122
         }
       },
       {
@@ -127,7 +127,7 @@
         "key": "    rtts [%@], hops [%@], lats [%@]",
         "location": {
           "startingColumn": 18,
-          "startingLine": 127
+          "startingLine": 138
         }
       }
     ]
