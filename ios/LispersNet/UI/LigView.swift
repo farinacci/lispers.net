@@ -18,8 +18,17 @@ struct LigView: View {
     @State private var noInfo = false
     @State private var debug = false
     @FocusState private var keyboardUp: Bool
+    @State private var fontScale: CGFloat = 1.0
+    @GestureState private var pinch: CGFloat = 1.0
 
-    private let mono = Font.system(size: 12, design: .monospaced)
+    // Pinch-to-zoom the lig output by scaling its monospaced font size.
+    private var zoom: CGFloat { min(max(fontScale * pinch, 0.6), 3.0) }
+    private var mono: Font { .system(size: 12 * zoom, design: .monospaced) }
+    private var magnify: some Gesture {
+        MagnifyGesture()
+            .updating($pinch) { v, state, _ in state = v.magnification }
+            .onEnded { v in fontScale = min(max(fontScale * v.magnification, 0.6), 3.0) }
+    }
 
     var body: some View {
         NavigationStack {
@@ -28,15 +37,13 @@ struct LigView: View {
                 parametersSection
                 outputSection
             }
+            .listRowSeparatorTint(.lispSeparator)
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("LIG")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !lig.output.isEmpty { Button("Clear") { lig.output = [] } }
-                }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") { keyboardUp = false }
                 }
             }
         }
@@ -96,7 +103,6 @@ struct LigView: View {
     private var parametersSection: some View {
         Section {
             Stepper("count: \(count)", value: $count, in: 1...5)
-            Toggle("pubsub (subscribe)", isOn: $pubsub)
             Toggle("no-info", isOn: $noInfo)
             Toggle("debug", isOn: $debug)
         } header: {
@@ -117,6 +123,7 @@ struct LigView: View {
                             .textSelection(.enabled)
                     }
                 }
+                .simultaneousGesture(magnify)
             }
         } header: {
             Text("Output").frame(maxWidth: .infinity, alignment: .center)

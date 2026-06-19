@@ -58,7 +58,6 @@ final class LispEngine: ObservableObject {
         ligService = LigService(engine: self)
         log.controlPlaneLogging = config.controlPlaneLog
         log.dataPlaneLogging = config.dataPlaneLog
-        log.rlocProbeLogging = config.rlocProbeLog
     }
 
     // MARK: lifecycle
@@ -67,8 +66,12 @@ final class LispEngine: ObservableObject {
         guard !running else { return }
         log.controlPlaneLogging = config.controlPlaneLog
         log.dataPlaneLogging = config.dataPlaneLog
-        log.rlocProbeLogging = config.rlocProbeLog
-        log.fprint(.core, "lispers.net LISP xTR starting up")
+        // Banner at the top of each component log, naming the build that's running
+        // (mirrors lisp.py's "lispers.net LISP <proc> starting up ..., version ...").
+        let banner = "version \(ContentView.version), hostname \(xtrName)"
+        log.fprint(.core, "lispers.net IOS xTR starting up, \(banner)")
+        log.lprint(.itr, "lispers.net IOS ITR starting up, \(banner)")
+        log.lprint(.etr, "lispers.net IOS ETR starting up, \(banner)")
 
         guard let discovered = Interfaces.discoverRLOC() else {
             log.fprint(.core, "No usable RLOC interface found — cannot start")
@@ -78,12 +81,14 @@ final class LispEngine: ObservableObject {
         log.fprint(.core, "Using RLOC \(discovered.address.addressString) on " +
                    "interface \(discovered.interfaceName)")
 
-        // NAT-traversal binds the data socket to a FIXED non-4341 port so the
-        // NAT-translated @tp port stays stable across app restarts (an ephemeral
-        // port 0 changed every relaunch, stranding the RTR on a stale @tp and
-        // flapping our RLOC to unreach). Not 4341: Mac-lisp collision + "4341
-        // breaks the data-plane". decent-NAT still requires the fixed 4341.
-        let dataBind: UInt16 = config.decentNATEnabled ? LISP.dataPort : LISP.natDataPort
+        // With a NAT in the path (NAT-traversal, and decent-NAT which is just
+        // NAT-traversal + the full-RLOC-set request) bind the data socket to a
+        // FIXED non-4341 port so the NAT-translated @tp port stays stable across
+        // app restarts (an ephemeral port 0 changed every relaunch, stranding the
+        // RTR on a stale @tp and flapping our RLOC to unreach). Not 4341: Mac-lisp
+        // collision + "4341 breaks the data-plane". No NAT → use the real 4341.
+        let behindNATConfigured = config.natTraversalEnabled || config.decentNATEnabled
+        let dataBind: UInt16 = behindNATConfigured ? LISP.natDataPort : LISP.dataPort
         guard let ctrl = UDPSocket(localPort: LISP.ctrlPort, queue: socketQueue),
               let data = UDPSocket(localPort: dataBind, queue: socketQueue) else {
             log.fprint(.core, "Could not bind UDP control/data sockets")
@@ -92,7 +97,7 @@ final class LispEngine: ObservableObject {
         ctrlSocket = ctrl
         dataSocket = data
         log.fprint(.core, "Data socket bound to local port \(data.localPort)" +
-                   (config.decentNATEnabled ? " (decent-NAT)" : " (fixed, NAT-traversal)"))
+                   (behindNATConfigured ? " (fixed, NAT-traversal)" : " (no NAT)"))
         ctrl.startReceiving { [weak self] d, from, port, ttl in
             self?.processControlPacket(d, from: from, sourcePort: port, receivedTTL: ttl)
         }
@@ -104,8 +109,9 @@ final class LispEngine: ObservableObject {
         running = true
 
         // Initial NAT discovery, then registration (mirrors the 2-second
-        // lisp_etr_info_timer kick in lisp-etr.py:96).
-        if config.natTraversalEnabled {
+        // lisp_etr_info_timer kick in lisp-etr.py:96). decent-NAT needs NAT
+        // discovery too — it learns the translated DATA port for @tp-<port>.
+        if config.natTraversalEnabled || config.decentNATEnabled {
             sendInfoRequests()
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
                 self?.sendMapRegisters()
@@ -149,7 +155,7 @@ final class LispEngine: ObservableObject {
             self?.sendRLOCProbes()
         }
         timers = [register, probe]
-        if config.natTraversalEnabled {
+        if config.natTraversalEnabled || config.decentNATEnabled {
             let info = Timer.scheduledTimer(withTimeInterval: LISP.infoInterval,
                                             repeats: true) { [weak self] _ in
                 self?.sendInfoRequests()
@@ -176,7 +182,9 @@ final class LispEngine: ObservableObject {
                 self.log.fprint(.core, "RLOC change: \(self.rloc?.address.addressString ?? "none") -> " +
                                 "\(newRLOC?.address.addressString ?? "none"), re-registering")
                 self.rloc = newRLOC
-                if self.config.natTraversalEnabled { self.sendInfoRequests() }
+                if self.config.natTraversalEnabled || self.config.decentNATEnabled {
+                    self.sendInfoRequests()
+                }
                 self.sendMapRegisters()
             }
         }

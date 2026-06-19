@@ -12,6 +12,8 @@ extension Color {
     static let lispDarkGreen = Color(red: 0.0, green: 0.35, blue: 0.0)
     static let lispRed = Color(red: 0.78, green: 0.12, blue: 0.12)
     static let lispBlue = Color(red: 0.20, green: 0.40, blue: 0.95)
+    // Slightly darker than the default row separator (but not heavy).
+    static let lispSeparator = Color.gray.opacity(0.55)
 }
 
 // Tracks whether the software keyboard is on screen so the tab bar can hide
@@ -31,9 +33,10 @@ struct ContentView: View {
     @EnvironmentObject var engine: LispEngine
     @EnvironmentObject var config: LispConfig
     @StateObject private var keyboard = KeyboardObserver()
+    @Environment(\.verticalSizeClass) private var vSizeClass
 
     // App version string — bump on request.
-    static let version = "0.2"
+    static let version = "0.3"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -52,9 +55,12 @@ struct ContentView: View {
         .ignoresSafeArea(.container, edges: .bottom)
     }
 
-    // Hide the tab bar while the keyboard is up so it doesn't float over the
-    // input. The modifier must sit on each tab's content (not the TabView).
-    private var tabBarVisibility: Visibility { keyboard.isVisible ? .hidden : .visible }
+    // Hide the tab bar while the keyboard is up (so it doesn't float over the
+    // input) and in landscape (compact height) to free vertical space; it
+    // reappears in portrait. The modifier must sit on each tab's content.
+    private var tabBarVisibility: Visibility {
+        (keyboard.isVisible || vSizeClass == .compact) ? .hidden : .visible
+    }
 
     private var tabs: some View {
         TabView {

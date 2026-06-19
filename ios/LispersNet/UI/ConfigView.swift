@@ -68,12 +68,26 @@ struct ConfigView: View {
                             config.rlocProbingEnabled = on; config.save()
                             if !on { engine.rlocProbingDisabled() }
                         }))
-                    Toggle("NAT-traversal", isOn: $config.natTraversalEnabled)
-                        .onChange(of: config.natTraversalEnabled) { _, _ in config.save() }
+                    Toggle("NAT-traversal", isOn: Binding(
+                        get: { config.natTraversalEnabled },
+                        set: { on in
+                            config.natTraversalEnabled = on
+                            // decent-NAT requires a NAT in the path; turning
+                            // NAT-traversal off turns decent-NAT off too.
+                            if !on && config.decentNATEnabled {
+                                config.decentNATEnabled = false
+                                if engine.running { engine.removeDecentNATEntry() }
+                            }
+                            config.save()
+                        }))
                     Toggle("Decentralized-NAT", isOn: Binding(
                         get: { config.decentNATEnabled },
                         set: { on in
                             config.decentNATEnabled = on
+                            // decent-NAT is just NAT-traversal + asking the
+                            // map-server for the full RLOC-set, so it implies
+                            // NAT-traversal — flip that bar on too.
+                            if on { config.natTraversalEnabled = true }
                             config.save()
                             guard engine.running else { return }
                             on ? engine.installDecentNATEntry()
@@ -84,19 +98,26 @@ struct ConfigView: View {
                 }
 
                 Section {
-                    TextField("suffix, e.g. ms.example.com", text: $config.decentSuffix)
-                        .font(.body.monospaced())
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .focused($keyboardUp)
-                        .onChange(of: config.decentSuffix) { _, _ in config.save() }
+                    HStack(spacing: 8) {
+                        Text("Suffix:").frame(width: 72, alignment: .leading)
+                        TextField("suffix, e.g. ms.example.com", text: $config.decentSuffix)
+                            .font(.body.monospaced())
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .focused($keyboardUp)
+                            .onChange(of: config.decentSuffix) { _, _ in config.save() }
+                    }
                     Stepper("Modulus: \(config.decentModulus)",
                             value: $config.decentModulus, in: 0...255)
                         .onChange(of: config.decentModulus) { _, _ in config.save() }
-                    SecureField("authentication-key", text: $config.decentAuthKey)
-                        .font(.body.monospaced())
-                        .focused($keyboardUp)
-                        .onChange(of: config.decentAuthKey) { _, _ in config.save() }
+                    HStack(spacing: 8) {
+                        Text("Auth-key:")
+                        SecureField("authentication-key", text: $config.decentAuthKey)
+                            .font(.body.monospaced())
+                            .multilineTextAlignment(.trailing)
+                            .focused($keyboardUp)
+                            .onChange(of: config.decentAuthKey) { _, _ in config.save() }
+                    }
                     if config.decentConfigured, let eid = config.eid {
                         LabeledContent("EID registers to") {
                             Text(LispDecent.dnsName(eid: eid,
@@ -144,7 +165,7 @@ struct ConfigView: View {
                 }
 
                 Section {
-                    Toggle("Control-plane (all)", isOn: Binding(
+                    Toggle("Control-plane", isOn: Binding(
                         get: { config.controlPlaneLog },
                         set: { on in
                             config.controlPlaneLog = on; config.save()
@@ -156,24 +177,14 @@ struct ConfigView: View {
                             config.dataPlaneLog = on; config.save()
                             engine.log.dataPlaneLogging = on
                         }))
-                    Toggle("RLOC-probe only", isOn: Binding(
-                        get: { config.rlocProbeLog },
-                        set: { on in
-                            config.rlocProbeLog = on; config.save()
-                            engine.log.rlocProbeLogging = on
-                        }))
                 } header: {
                     centeredTitle("Logging")
                 }
             }
+            .listRowSeparatorTint(.lispSeparator)
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("lispers.net xTR")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") { keyboardUp = false }
-                }
-            }
         }
     }
 }

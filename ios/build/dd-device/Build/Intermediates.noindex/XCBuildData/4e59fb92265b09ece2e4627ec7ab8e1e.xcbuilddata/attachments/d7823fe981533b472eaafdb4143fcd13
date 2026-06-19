@@ -1,0 +1,259 @@
+{
+  "" : {
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNet-primary.dia",
+    "emit-module-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNet-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNet-primary-emit-module.dia",
+    "pch" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNet-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNet-primary.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/ByteBuffer.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ByteBuffer.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ByteBuffer.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ByteBuffer.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ByteBuffer.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ByteBuffer.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ByteBuffer.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ByteBuffer.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ByteBuffer~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/ControlPlane.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ControlPlane.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ControlPlane.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ControlPlane.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ControlPlane.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ControlPlane.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ControlPlane.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ControlPlane.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ControlPlane~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/DataPlane.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/DataPlane.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/DataPlane.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/DataPlane.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/DataPlane.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/DataPlane.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/DataPlane.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/DataPlane.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/DataPlane~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/HostsFile.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/HostsFile.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/HostsFile.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/HostsFile.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/HostsFile.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/HostsFile.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/HostsFile.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/HostsFile.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/HostsFile~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/Interfaces.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Interfaces.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Interfaces.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Interfaces.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Interfaces.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Interfaces.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Interfaces.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Interfaces.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Interfaces~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/LigService.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigService.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigService.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigService.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigService.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigService.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigService.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigService.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigService~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispAddress.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispAddress.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispAddress.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispAddress.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispAddress.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispAddress.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispAddress.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispAddress.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispAddress~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispConfig.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispConstants.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConstants.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConstants.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConstants.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConstants.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConstants.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConstants.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConstants.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConstants~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispControlMessages.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispControlMessages.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispControlMessages.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispControlMessages.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispControlMessages.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispControlMessages.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispControlMessages.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispControlMessages.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispControlMessages~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispDataHeader.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispEngine.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispEngine.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispEngine.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispEngine.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispEngine.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispEngine.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispEngine.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispEngine.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispEngine~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispLog.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispLog.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispLog.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispLog.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispLog.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispLog.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispLog.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispLog.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispLog~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/MapCache.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/PingService.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingService.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingService.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingService.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingService.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingService.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingService.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingService.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingService~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/Sockets.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Sockets.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Sockets.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Sockets.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Sockets.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Sockets.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Sockets.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Sockets.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Sockets~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/Telemetry.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Telemetry.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Telemetry.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Telemetry.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Telemetry.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Telemetry.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Telemetry.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Telemetry.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/Telemetry~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/LispersNetApp.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNetApp.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNetApp.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNetApp.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNetApp.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNetApp.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNetApp.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNetApp.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispersNetApp~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/ConfigView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/ContentView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/LigView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigView.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigView.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigView.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigView.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LigView~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/LogsView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LogsView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LogsView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LogsView.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LogsView.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LogsView.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LogsView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LogsView.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LogsView~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/MapCacheView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCacheView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCacheView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCacheView.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCacheView.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCacheView.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCacheView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCacheView.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCacheView~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/PingView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingView.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingView.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingView.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingView.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/PingView~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

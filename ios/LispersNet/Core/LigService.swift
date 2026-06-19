@@ -114,8 +114,23 @@ final class LigService: ObservableObject {
             eid: eidNoMask,
             endTrail: " ...")))
         if debug {
-            append(.init(content: .plain("  nonce 0x\(String(req.nonce, radix: 16)), " +
-                         "ECM \(ecm.count) bytes")))
+            // Mirror lisp-lig.py's debug (lisp_debug_logging => print_map_request()
+            // breakdown + packet hex). Flags order matches lisp.py: a d r s p i m
+            // x n l d; lig sets the N (decent_nat) flag and X when subscribing.
+            let flags = "adrspim" + (pubsub ? "X" : "x") + "Nld"
+            let irc = max(req.itrRLOCs.count - 1, 0)
+            let srcStr = source.isNull ? "[\(target.instanceID)]no-address"
+                                       : source.prefixString
+            append(.init(content: .plain(
+                "Map-Request -> flags: \(flags), itr-rloc-count: \(irc) (+1), " +
+                "record-count: 1, nonce: 0x\(String(req.nonce, radix: 16)), " +
+                "source-eid: afi \(source.afi), \(srcStr), target-eid: afi " +
+                "\(target.afi), \(target.prefixString), ITR-RLOCs:")))
+            for itr in req.itrRLOCs {
+                append(.init(content: .plain("  itr-rloc: afi \(itr.afi) \(itr.addressString)")))
+            }
+            append(.init(content: .plain(
+                "Send ECM \(ecm.count) bytes: \(lispFormatPacket(ecm))")))
         }
         engine.ctrlSocket?.send(ecm, to: mr, port: LISP.ctrlPort)
 
@@ -148,7 +163,12 @@ final class LigService: ObservableObject {
                 if rl.rlocName != nil { before += ", rloc-name: " }
                 append(.init(content: .rloc(addr: rl.rloc.addressString, beforeName: before,
                              name: rl.rlocName, afterName: rtr ? ", RTR" : "")))
+                // Registered JSON (e.g. telemetry) on the RLOC — lisp-lig.py:235.
+                if let json = rl.jsonString {
+                    append(.init(content: .plain("        json: \(json)")))
+                }
             }
+            append(.init(content: .plain("")))     // blank line per record (lisp-lig.py)
         }
         next()
         return true

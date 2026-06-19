@@ -77,9 +77,24 @@ final class LispMapCacheEntry {
         return Date().timeIntervalSince(lastRefresh) >= ttl
     }
 
-    func selectRLOC() -> LispRLOC? {
+    func selectRLOC(for inner: Data? = nil) -> LispRLOC? {
         let up = rlocSet.filter { $0.isUp }
-        return up.min { ($0.priority, 255 - $0.weight) < ($1.priority, 255 - $1.weight) }
+        // best_rloc_set (lisp.py): the up RLOCs at the best (lowest) priority.
+        guard let bestPri = up.map({ $0.priority }).min() else { return nil }
+        let best = up.filter { $0.priority == bestPri }
+        if best.count == 1 { return best[0] }
+        // Per-packet load-split across the best tier (LISP_LOAD_SPLIT_PINGS,
+        // default on). Hash inner src/dst + 4 L4 bytes; for ICMP those include the
+        // per-ping checksum, so successive pings spread across the RLOCs — e.g.
+        // both RTRs stay active when the direct RLOC is down.
+        if let inner = inner, inner.count >= 24, inner.first.map({ $0 >> 4 }) == 4 {
+            let b = inner.startIndex
+            let n = LISP.loadSplitPings ? 12 : 8        // src+dst(+4 L4 for split)
+            var h: UInt8 = 0
+            for i in 12..<(12 + n) { h ^= inner[b + i] }
+            return best[Int(h) % best.count]
+        }
+        return best.max { $0.weight < $1.weight }
     }
 }
 

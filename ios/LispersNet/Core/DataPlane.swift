@@ -23,7 +23,7 @@ extension LispEngine {
             return
         }
         guard let entry = mapCache.lookup(destEID), entry.action == LISP.noAction,
-              let rlocEntry = entry.selectRLOC() else {
+              let rlocEntry = entry.selectRLOC(for: inner) else {
             // Miss or send-map-request action: request the mapping and queue.
             log.lprint(.itr, "Map-cache lookup \(destEID.addressString) -> miss, " +
                        "send Map-Request")
@@ -35,7 +35,8 @@ extension LispEngine {
         }
 
         var header = LispDataHeader()
-        header.setNonce(UInt32.random(in: 0...0xFFFFFF))
+        let nonce = UInt32.random(in: 0...0xFFFFFF)
+        header.setNonce(nonce)
         header.setInstanceID(destEID.instanceID)
         let packet = header.encode() + inner
 
@@ -44,10 +45,31 @@ extension LispEngine {
         rlocEntry.lastPacket = Date()
         lastEncapActivity = rlocEntry.lastPacket
 
-        log.dprint(.itr, "Encapsulate \(inner.count) bytes EID " +
-                   "\(destEID.addressString) -> RLOC \(rlocEntry.rloc.addressString):" +
-                   "\(rlocEntry.encapPort)")
+        // lisp.py print_packet("Send") — full outer/inner detail.
+        let ip = innerIPInfo(inner)
+        log.dprint(.itr, "Encap LISP packet, outer RLOCs: " +
+                   "\(rloc?.address.addressString ?? "?") -> \(rlocEntry.rloc.addressString), " +
+                   "outer tos/ttl: 0/64, outer UDP: \(dataSocket?.localPort ?? 0) -> " +
+                   "\(rlocEntry.encapPort), inner EIDs: [\(destEID.instanceID)]\(ip.src) -> " +
+                   "[\(destEID.instanceID)]\(ip.dst), " +
+                   "inner tos/ttl: \(ip.tos)/\(ip.ttl), length: \(packet.count), " +
+                   "encap iid \(destEID.instanceID) nonce 0x\(String(nonce, radix: 16)), " +
+                   "packet: \(lispFormatPacket(packet))")
         dataSocket?.send(packet, to: rlocEntry.rloc, port: rlocEntry.encapPort)
+    }
+
+    // Parse an inner IPv4 packet's EIDs + tos/ttl for the encap/decap log lines
+    // (mirrors lisp.py print_packet's inner-EID and inner-tos/ttl fields).
+    func innerIPInfo(_ p: Data) -> (src: String, dst: String, tos: Int, ttl: Int) {
+        guard p.count >= 20, let v = p.first, v >> 4 == 4 else { return ("?", "?", 0, 0) }
+        let b = p.startIndex
+        func u32(_ o: Int) -> UInt32 {
+            (UInt32(p[b+o]) << 24) | (UInt32(p[b+o+1]) << 16)
+                | (UInt32(p[b+o+2]) << 8) | UInt32(p[b+o+3])
+        }
+        return (LispAddress(v4: u32(12)).addressString,
+                LispAddress(v4: u32(16)).addressString,
+                Int(p[b + 1]), Int(p[b + 8]))
     }
 
     func flushQueuedPackets(for eid: LispAddress) {
@@ -62,9 +84,9 @@ extension LispEngine {
     func processDataPacket(_ data: Data, from: LispAddress, sourcePort: UInt16,
                            receivedTTL: Int = -1) {
         guard data.count >= 4 else { return }
-        log.dprint(.etr, "data-socket rx \(data.count) bytes from " +
-                   "\(from.addressString):\(sourcePort), first=" +
-                   lispFormatPacket(data.prefix(8)))
+        log.dprint(.etr, "Receive \(data.count) bytes from " +
+                   "\(from.addressString) \(sourcePort), packet: " +
+                   lispFormatPacket(data))
 
         // The reply to a data-port Info-Request comes back RAW (unwrapped) on
         // the data port — lisp_process_info_request sends it straight to our
@@ -72,7 +94,8 @@ extension LispEngine {
         // translated DATA port used in the "@tp-<port>" RLOC-name.
         if data[data.startIndex] >> 4 == LISP.typeNatInfo {
             if let info = LispInfo.decode(data), info.isReply {
-                processInfoReply(info, fromDataPort: true)
+                processInfoReply(info, from: from, sourcePort: sourcePort,
+                                 fromDataPort: true)
             }
             return
         }
@@ -108,11 +131,13 @@ extension LispEngine {
             switch type {
             case LISP.typeNatInfo:
                 if let info = LispInfo.decode(inner), info.isReply {
-                    processInfoReply(info, fromDataPort: true)
+                    processInfoReply(info, from: from, sourcePort: sourcePort,
+                                     fromDataPort: true)
                 }
             case LISP.typeMapRequest:
                 if let req = LispMapRequest.decode(inner), req.rlocProbe {
-                    answerEncapsulatedProbe(req, fromRTR: from, innerTTL: innerTTL)
+                    answerEncapsulatedProbe(req, fromRTR: from, sourcePort: sourcePort,
+                                            innerTTL: innerTTL)
                 }
             case LISP.typeMapReply:
                 if let reply = LispMapReply.decode(inner) {
@@ -124,17 +149,18 @@ extension LispEngine {
             return
         }
 
-        // decent-NAT rule: encapsulated packets must come from source port
-        // 4341; anything else is dropped.
-        if config.decentNATEnabled && sourcePort != LISP.dataPort {
-            log.dprint(.etr, "Drop packet from \(from.addressString):\(sourcePort) " +
-                       "— decent-NAT requires source port \(LISP.dataPort)")
-            return
-        }
-
         let inner = Data(data.dropFirst(8))
-        log.dprint(.etr, "Decapsulate \(inner.count) bytes from RLOC " +
-                   "\(from.addressString):\(sourcePort), iid \(header.instanceID)")
+        // lisp.py print_packet("Receive"/decap) — full outer/inner detail. The raw
+        // hex was already logged by the receive line at the top of this function.
+        let ip = innerIPInfo(inner)
+        let outTTL = receivedTTL >= 0 ? String(receivedTTL) : "?"
+        log.dprint(.etr, "Decap LISP packet, outer RLOCs: " +
+                   "\(from.addressString) -> \(rloc?.address.addressString ?? "?"), " +
+                   "outer tos/ttl: 0/\(outTTL), outer UDP: \(sourcePort) -> " +
+                   "\(dataSocket?.localPort ?? 0), inner EIDs: [\(header.instanceID)]\(ip.src) -> " +
+                   "[\(header.instanceID)]\(ip.dst), inner tos/ttl: \(ip.tos)/\(ip.ttl), " +
+                   "length: \(data.count), decap iid \(header.instanceID) " +
+                   "nonce 0x\(String(header.nonce, radix: 16))")
         deliverInner(inner)
     }
 

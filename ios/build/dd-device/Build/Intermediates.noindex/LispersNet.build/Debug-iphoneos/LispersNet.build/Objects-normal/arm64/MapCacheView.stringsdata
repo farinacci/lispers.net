@@ -1,0 +1,136 @@
+{
+  "source": "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/MapCacheView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Map-Cache",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "LISP Map-Cache for ",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": ", entries %lld",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Map-cache is empty.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "EID ",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 83
+        }
+      },
+      {
+        "comment": "",
+        "key": ", uptime %@, ttl %@",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 85
+        }
+      },
+      {
+        "comment": "",
+        "key": ", action ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "  RLOC ",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": ", state ",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": " since %@, p%u/w%u",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": ", ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "%llu",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 114
+        }
+      },
+      {
+        "comment": "",
+        "key": "    ",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@%@",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 121
+        }
+      },
+      {
+        "comment": "",
+        "key": ": packet-count: ",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 122
+        }
+      },
+      {
+        "comment": "",
+        "key": "    rtts [%@], hops [%@], lats [%@]",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 138
+        }
+      }
+    ]
+  },
+  "version": 1
+}

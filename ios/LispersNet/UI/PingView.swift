@@ -155,16 +155,12 @@ struct PingView: View {
                     }
                 }
             }
+            .listRowSeparatorTint(.lispSeparator)
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Ping")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $editingHosts) {
                 HostsEditor()
-            }
-            .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") { eidFocused = false }
-                }
             }
             // Switching tabs keeps the ping running 5s longer so the map-cache
             // counters can be watched climbing; returning cancels that.
@@ -218,6 +214,7 @@ struct HostsEditor: View {
                     }
                 }
             }
+            .listRowSeparatorTint(.lispSeparator)
             .navigationTitle("lisp-hosts")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

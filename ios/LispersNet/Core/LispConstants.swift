@@ -40,6 +40,10 @@ enum LISP {
 
     static let tpPrefix = "@tp-"                // LISP_TP (translated-port tag)
 
+    // LISP_LOAD_SPLIT_PINGS — spread per-ping traffic across the best-priority
+    // RLOC tier (e.g. both RTRs) instead of pinning to one. Default on here.
+    static let loadSplitPings = true
+
     // Map-cache actions (lisp.py:429)
     static let noAction = 0
     static let nativeForwardAction = 1

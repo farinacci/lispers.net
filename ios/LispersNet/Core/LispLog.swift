@@ -22,10 +22,10 @@ enum LogComponent: String, CaseIterable {
 final class LispLog: ObservableObject {
     static let shared = LispLog()
 
-    // Independent logging scopes — each is its own UI switch.
-    var controlPlaneLogging = true      // all control-plane lines + probes + key events
+    // Independent logging scopes — each is its own UI switch. Control-plane
+    // covers everything control-related, including RLOC-probing.
+    var controlPlaneLogging = true      // all control-plane lines (incl. probes) + key events
     var dataPlaneLogging = false        // data-plane (encap/decap) lines + key events
-    var rlocProbeLogging = false        // RLOC-probe lines
 
     @Published private(set) var lines: [LogComponent: [String]] = [
         .core: [], .itr: [], .etr: []
@@ -63,9 +63,9 @@ final class LispLog: ObservableObject {
         if dataPlaneLogging { emit(component, message) }
     }
 
-    // pprint() — RLOC-probe line (control-plane includes it, or probe-only switch).
+    // pprint() — RLOC-probe line; folded into the control-plane scope.
     func pprint(_ component: LogComponent, _ message: String) {
-        if controlPlaneLogging || rlocProbeLogging { emit(component, message) }
+        if controlPlaneLogging { emit(component, message) }
     }
 
     // fprint() — key event (registration, NAT, lifecycle).

@@ -10,6 +10,83 @@ import Foundation
 
 extension LispEngine {
 
+    // Send a packet and log it like lisp.py's lisp_send() dprint: "Send N bytes
+    // to <addr>:<port>, packet: <full hex>". Centralizes per-packet hex logging so
+    // every send matches the detail in lisp-itr.log / lisp-etr.log.
+    func loggedSend(_ data: Data, to dest: LispAddress, port: UInt16,
+                    on socket: UDPSocket?, _ comp: LogComponent) {
+        // lisp_send(): "Send <n> bytes to <addr> <port>, packet: <hex>".
+        log.dprint(comp, "Send \(data.count) bytes to \(dest.addressString) " +
+                   "\(port), packet: \(lispFormatPacket(data))")
+        socket?.send(data, to: dest, port: port)
+    }
+
+    // MARK: - lisp.py print_record() parity
+    //
+    // These reproduce the exact text the Python daemon writes to lisp-itr.log /
+    // lisp-etr.log so the Logs tab reads the same (sans ANSI color).
+
+    // print_ttl(): seconds if the high bit is set, else whole hours or minutes.
+    func ttlString(_ ttl: UInt32) -> String {
+        if ttl & 0x8000_0000 != 0 { return "\(ttl & 0x7fff_ffff) secs" }
+        return ttl % 60 == 0 ? "\(ttl / 60) hours" : "\(ttl) mins"
+    }
+
+    private func rlocFlags(_ r: LispRLOCRecord) -> String {
+        (r.localBit ? "L" : "l") + (r.probeBit ? "P" : "p") + (r.reachBit ? "R" : "r")
+    }
+
+    // print_record(): one EID-record line followed by its RLOC-record lines.
+    func logEIDRecords(_ comp: LogComponent,
+                       _ records: [(eid: LispEIDRecord, rlocs: [LispRLOCRecord])]) {
+        for (eidRec, rlocs) in records {
+            log.lprint(comp, "  EID-record -> record-ttl: \(ttlString(eidRec.recordTTL)), " +
+                       "rloc-count: \(rlocs.count), action: \(LISP.actionString(eidRec.action)), " +
+                       "\(eidRec.authoritative ? "auth" : "non-auth"), map-version: 0, " +
+                       "afi: \(eidRec.eid.afi), [iid]eid/ml: \(eidRec.eid.prefixString)")
+            for r in rlocs {
+                var line = "    RLOC-record -> flags: \(rlocFlags(r)), " +
+                           "\(r.priority)/\(r.weight)/\(r.mpriority)/\(r.mweight), " +
+                           "afi: \(r.rloc.afi), rloc: \(r.rloc.addressString)"
+                if let n = r.rlocName { line += ", rloc-name: \(n)" }
+                if let j = r.jsonString { line += ", json: \(j)" }
+                log.lprint(comp, line)
+            }
+        }
+    }
+
+    // print_map_reply(): header line + the EID/RLOC record breakdown.
+    func logMapReply(_ comp: LogComponent, _ reply: LispMapReply) {
+        let flags = (reply.rlocProbe ? "R" : "r") + "es"
+        log.lprint(comp, "Map-Reply -> flags: \(flags), hop-count: \(reply.hopCount), " +
+                   "record-count: \(reply.records.count), " +
+                   "nonce: 0x\(String(reply.nonce, radix: 16))")
+        logEIDRecords(comp, reply.records)
+    }
+
+    // print_map_request(): header + ITR-RLOC list (telemetry as the extra +1).
+    func logMapRequest(_ comp: LogComponent, _ req: LispMapRequest) {
+        // Flag order: A D R S P I M X N L D (only R/I/X/N are modeled here).
+        let flags = "ad" + (req.rlocProbe ? "R" : "r") + "sp"
+                  + (req.smrInvoked ? "I" : "i") + "m"
+                  + (req.subscribe ? "X" : "x")
+                  + (req.decentNATXtr ? "N" : "n") + "ld"
+        let itrCount = max(req.itrRLOCs.count + (req.telemetryJSON != nil ? 1 : 0) - 1, 0)
+        let src = req.sourceEID.isNull
+            ? "[\(req.targetEID.instanceID)]no-address"
+            : "[\(req.sourceEID.instanceID)]\(req.sourceEID.addressString)"
+        log.lprint(comp, "Map-Request -> flags: \(flags), itr-rloc-count: \(itrCount) (+1), " +
+                   "record-count: 1, nonce: 0x\(String(req.nonce, radix: 16)), " +
+                   "source-eid: afi \(req.sourceEID.afi), \(src), target-eid: afi " +
+                   "\(req.targetEID.afi), \(req.targetEID.prefixString), ITR-RLOCs:")
+        for itr in req.itrRLOCs {
+            log.lprint(comp, "  itr-rloc: afi \(itr.afi) \(itr.addressString)")
+        }
+        if let tel = req.telemetryJSON {
+            log.lprint(comp, "  itr-rloc: afi \(LISP.afiLCAF) telemetry: \(tel)")
+        }
+    }
+
     // MARK: - Map-Register (lisp_build_map_register, lisp-etr.py:480)
 
     func sendMapRegisters() {
@@ -75,9 +152,21 @@ extension LispEngine {
         let rlocName = rlocRecord.rlocName.map { " (\($0))" } ?? ""
         log.lprint(.etr, "Send Map-Register to map-server \(msAddr.addressString)\(decent), " +
                    "EID-prefix \(eid.prefixString), RLOC \(rlocRecord.rloc.addressString)\(rlocName)")
-        log.dprint(.etr, "Send \(packet.count) bytes to \(msAddr.addressString):" +
-                   "\(LISP.ctrlPort), packet: \(lispFormatPacket(packet.prefix(64)))")
-        ctrlSocket?.send(packet, to: msAddr, port: LISP.ctrlPort)
+        // print_map_register() breakdown — header + the EID/RLOC record list.
+        let regFlags = (register.proxyReply ? "P" : "p") + "s"
+                     + (register.xtrIDPresent ? "I" : "i")
+                     + (register.useTTLForTimeout ? "T" : "t")
+                     + (register.mergeRegister ? "R" : "r") + "m"
+                     + (register.wantMapNotify ? "N" : "n") + "fe"
+        let algName = register.algID == LISP.sha1AlgID ? " (sha1)" : " (sha2)"
+        let authLen = register.algID == LISP.sha1AlgID ? 20 : 32
+        let xtrHex = String(format: "%016llx%016llx", register.xtrID.0, register.xtrID.1)
+        log.lprint(.etr, "Map-Register -> flags: \(regFlags), record-count: 1, " +
+                   "nonce: 0x\(String(register.nonce, radix: 16)), " +
+                   "key/alg-id: \(register.keyID)/\(register.algID)\(algName), " +
+                   "auth-len: \(authLen), xtr-id: 0x\(xtrHex), site-id: \(register.siteID)")
+        logEIDRecords(.etr, [(eid: eidRecord, rlocs: records)])
+        loggedSend(packet, to: msAddr, port: LISP.ctrlPort, on: ctrlSocket, .etr)
         DispatchQueue.main.async { self.registrationsSent += 1 }
     }
 
@@ -96,7 +185,7 @@ extension LispEngine {
         // Control-port Info-Request from the 4342 socket.
         log.lprint(.etr, "Send Info-Request to MS \(msAddr.addressString), " +
                    "port \(LISP.ctrlPort) (for control)")
-        ctrlSocket?.send(packet, to: msAddr, port: LISP.ctrlPort)
+        loggedSend(packet, to: msAddr, port: LISP.ctrlPort, on: ctrlSocket, .etr)
 
         // Data-port Info-Request from the 4341 socket, wrapped in a LISP
         // data header with IID 0xffffff, so the NAT creates/refreshes the
@@ -106,14 +195,14 @@ extension LispEngine {
         let dataWrapped = header.encode() + packet
         log.lprint(.etr, "Send Info-Request to RTR \(msAddr.addressString), " +
                    "port \(LISP.dataPort) (for data)")
-        dataSocket?.send(dataWrapped, to: msAddr, port: LISP.dataPort)
+        loggedSend(dataWrapped, to: msAddr, port: LISP.dataPort, on: dataSocket, .etr)
 
         // Send the data-port Info-Request to each RTR — their reply carries the
         // translated DATA port we register as "@tp-<port>".
         for rtr in rtrList {
             log.lprint(.etr, "Send Info-Request to RTR \(rtr.addressString), " +
                        "port \(LISP.dataPort) (for data)")
-            dataSocket?.send(dataWrapped, to: rtr, port: LISP.dataPort)
+            loggedSend(dataWrapped, to: rtr, port: LISP.dataPort, on: dataSocket, .etr)
         }
 
         // Also send a RAW Info-Request from the DATA socket to each responder's
@@ -121,16 +210,20 @@ extension LispEngine {
         // data translation and reply from 4342 — and because we sent TO 4342,
         // that reply traverses a port-restricted NAT back to our data socket,
         // giving us the real translated data port in its etr-port field.
-        dataSocket?.send(packet, to: msAddr, port: LISP.ctrlPort)
+        loggedSend(packet, to: msAddr, port: LISP.ctrlPort, on: dataSocket, .etr)
         for rtr in rtrList {
-            dataSocket?.send(packet, to: rtr, port: LISP.ctrlPort)
+            loggedSend(packet, to: rtr, port: LISP.ctrlPort, on: dataSocket, .etr)
         }
     }
 
-    func processInfoReply(_ info: LispInfo, fromDataPort: Bool) {
+    func processInfoReply(_ info: LispInfo, from source: LispAddress,
+                          sourcePort: UInt16, fromDataPort: Bool) {
         guard let myRLOC = rloc else { return }
         let global = info.globalETRRLOC
-        log.lprint(.etr, "Info-Reply -> nonce 0x\(String(info.nonce, radix: 16)), " +
+        let isRTR = rtrList.contains { $0.v4 == source.v4 }
+        log.lprint(.etr, "Info-Reply from \(source.addressString) \(sourcePort) " +
+                   "(\(fromDataPort ? "data" : "control")\(isRTR ? ", RTR" : "")) -> " +
+                   "nonce 0x\(String(info.nonce, radix: 16)), " +
                    "global-rloc: \(global.addressString), etr-port: \(info.etrPort), " +
                    "ms-port: \(info.msPort), RTR-list: " +
                    (info.rtrList.isEmpty ? "empty"
@@ -148,10 +241,18 @@ extension LispEngine {
             self.behindNAT = natted
             if natted {
                 self.translatedRLOC = global
-                // Only the data-port (ephemeral) Info-Reply carries the
-                // translated DATA port peers encapsulate to. The control reply's
-                // etr-port is the control-port translation and must not be used.
-                if fromDataPort { self.translatedPort = info.etrPort }
+                // Learn the translated DATA port from the data-socket Info-Reply,
+                // exactly like lisp_process_info_reply()'s store=True path — no
+                // special-casing by responder or mode. The control-socket reply
+                // (fromDataPort == false) carries the control-port translation and
+                // is not used for @tp.
+                if fromDataPort {
+                    if self.translatedPort != info.etrPort {
+                        self.log.fprint(.etr, "Translated DATA port \(info.etrPort) " +
+                            "from \(source.addressString) (was \(self.translatedPort))")
+                    }
+                    self.translatedPort = info.etrPort
+                }
             } else {
                 self.translatedRLOC = nil
                 self.translatedPort = 0
@@ -178,7 +279,11 @@ extension LispEngine {
         var req = LispMapRequest()
         req.nonce = lispGetControlNonce()
         req.sourceEID = sourceEID
-        req.itrRLOCs = [myRLOC.address]
+        // Advertise the TRANSLATED (public) RLOC as our ITR-RLOC when behind a
+        // NAT — the map-server proxy-replies TO the itr-rloc, so a private RLOC
+        // here sends the Map-Reply to an unroutable address and it never arrives.
+        // (lig does the same; this is why lig got replies and ping didn't.)
+        req.itrRLOCs = [behindNAT ? (translatedRLOC ?? myRLOC.address) : myRLOC.address]
         // N flag: ask the map-server to skip lisp_get_partial_rloc_set and return
         // the FULL registered RLOC-set (public ETR + RTRs), not just the RTRs.
         req.decentNATXtr = true
@@ -191,11 +296,9 @@ extension LispEngine {
         let ecm = LispECM.wrap(control: inner, innerSource: sourceEID,
                                innerDest: target, sourcePort: LISP.ctrlPort,
                                destPort: LISP.ctrlPort, toMS: true)
-        log.lprint(.itr, "Send Map-Request (ECM) for EID \(target.prefixString) " +
-                   "to \(msAddr.addressString), nonce 0x\(String(req.nonce, radix: 16))")
-        log.dprint(.itr, "Send \(ecm.count) bytes to \(msAddr.addressString):" +
-                   "\(LISP.ctrlPort), packet: \(lispFormatPacket(ecm.prefix(64)))")
-        ctrlSocket?.send(ecm, to: msAddr, port: LISP.ctrlPort)
+        log.lprint(.itr, "Send Map-Request (ECM) to map-resolver \(msAddr.addressString)")
+        logMapRequest(.itr, req)
+        loggedSend(ecm, to: msAddr, port: LISP.ctrlPort, on: ctrlSocket, .itr)
     }
 
     // MARK: - RLOC-probing (non-ECM Map-Request, probe bit + telemetry)
@@ -273,7 +376,8 @@ extension LispEngine {
                 log.pprint(.itr, "Send RLOC-probe to \(r.rloc.addressString):\(port), " +
                            "for EID \(entry.eid.prefixString)\(tel), nonce 0x" +
                            String(probe.nonce, radix: 16))
-                ctrlSocket?.send(packet, to: r.rloc, port: port)
+                logMapRequest(.itr, probe)
+                loggedSend(packet, to: r.rloc, port: port, on: ctrlSocket, .itr)
             }
         }
     }
@@ -335,6 +439,7 @@ extension LispEngine {
         let etrIn = Telemetry.timestamp()
         log.lprint(.etr, "Receive RLOC-probe from \(from.addressString), " +
                    "nonce 0x\(String(req.nonce, radix: 16))")
+        logMapRequest(.etr, req)
 
         var eidRec = LispEIDRecord()
         eidRec.recordTTL = LISP.registerTTL
@@ -365,7 +470,8 @@ extension LispEngine {
         reply.records = [(eidRec, records)]
         let packet = reply.encode()
         log.lprint(.etr, "Send RLOC-probe Map-Reply to \(from.addressString):\(sourcePort)")
-        ctrlSocket?.send(packet, to: from, port: sourcePort)
+        logMapReply(.etr, reply)
+        loggedSend(packet, to: from, port: sourcePort, on: ctrlSocket, .etr)
     }
 
     // Answer a data-encapsulated RLOC-probe relayed by an RTR: build the probe
@@ -373,11 +479,11 @@ extension LispEngine {
     // lisp_encap_rloc_probe (lisp.py:7555/19092). Without this the RTR marks our
     // RLOC unreach-state.
     func answerEncapsulatedProbe(_ req: LispMapRequest, fromRTR rtr: LispAddress,
-                                 innerTTL: Int) {
+                                 sourcePort: UInt16, innerTTL: Int) {
         guard let eid = config.eid, let myRLOC = rloc else { return }
         let etrIn = Telemetry.timestamp()
-        log.pprint(.etr, "Received RLOC-probe (encap) from RTR \(rtr.addressString), " +
-                   "nonce 0x\(String(req.nonce, radix: 16)) — replying via RTR")
+        log.pprint(.etr, "Received RLOC-probe (encap) from \(rtr.addressString):\(sourcePort), " +
+                   "nonce 0x\(String(req.nonce, radix: 16)) — replying to source")
 
         var eidRec = LispEIDRecord()
         eidRec.recordTTL = LISP.registerTTL
@@ -409,8 +515,17 @@ extension LispEngine {
         reply.hopCount = innerTTL >= 0 ? UInt8(clamping: innerTTL) : 0
         reply.records = [(eidRec, records)]
 
-        let encap = encapForRTR(control: reply.encode(), src: myRLOC.address, dst: rtr)
-        dataSocket?.send(encap, to: rtr, port: LISP.dataPort)
+        // lisp_etr_process_map_request: data-encapsulate the RLOC-probe reply
+        // ONLY back to an RTR. For a direct prober (a public xTR like lhr) send a
+        // RAW Map-Reply out the control socket to itr_rloc:sport (the default
+        // lisp_send_map_reply path) — a public ITR ignores a data-encap'd reply,
+        // which is why lhr stayed unreach while the RTR went up.
+        if rtrList.contains(where: { $0.v4 == rtr.v4 }) {
+            let encap = encapForRTR(control: reply.encode(), src: myRLOC.address, dst: rtr)
+            loggedSend(encap, to: rtr, port: sourcePort, on: dataSocket, .etr)
+        } else {
+            loggedSend(reply.encode(), to: rtr, port: sourcePort, on: ctrlSocket, .etr)
+        }
     }
 
     // Data-encapsulate a control message to an RTR: data header (IID 0xffffff) +
@@ -443,6 +558,9 @@ extension LispEngine {
     // MARK: - Map-Reply processing → map-cache install
 
     func processMapReply(_ reply: LispMapReply, from: LispAddress, receivedTTL: Int = -1) {
+        // lisp.py logs the full Map-Reply breakdown for every reply received,
+        // before deciding whether it's a probe / lig / map-cache reply.
+        logMapReply(.itr, reply)
         if reply.rlocProbe {
             processProbeReply(reply, from: from, replyTTL: receivedTTL)
             return
@@ -463,13 +581,19 @@ extension LispEngine {
                 r.priority = rr.priority
                 r.weight = rr.weight
                 r.state = rr.reachBit ? "up-state" : "unreach-state"
+                r.rlocName = rr.rlocName
+                // Parse "<name>@tp-<port>" and encapsulate to that NAT-translated
+                // data port (lisp.py store_decent_nat_port). Otherwise we'd encap
+                // to 4341 and the peer's NAT would drop it.
+                if let name = rr.rlocName, let tp = name.range(of: LISP.tpPrefix),
+                   let port = UInt16(name[tp.upperBound...]) {
+                    r.encapPort = port
+                }
                 entry.rlocSet.append(r)
             }
             mapCache.add(entry)
-            let rlocs = entry.rlocSet.map { $0.rloc.addressString }
-                .joined(separator: ", ")
-            log.lprint(.itr, "Add map-cache entry EID \(eidRec.eid.prefixString), " +
-                       "RLOCs [\(rlocs)], ttl \(entry.ttlString)")
+            log.lprint(.itr, "Replace \(eidRec.eid.prefixString) map-cache with " +
+                       "\(entry.rlocSet.count) RLOCs")
             bumpMapCache()
             flushQueuedPackets(for: eidRec.eid)
         }
@@ -481,8 +605,8 @@ extension LispEngine {
                               receivedTTL: Int = -1) {
         guard data.count >= 4 else { return }
         let type = data[data.startIndex] >> 4
-        log.dprint(.core, "Receive \(data.count) bytes from \(from.addressString):" +
-                   "\(sourcePort), packet: \(lispFormatPacket(data.prefix(64)))")
+        log.dprint(.core, "Receive \(data.count) bytes from \(from.addressString) " +
+                   "\(sourcePort), packet: \(lispFormatPacket(data))")
         switch type {
         case LISP.typeMapReply:
             if let reply = LispMapReply.decode(data) {
@@ -500,7 +624,8 @@ extension LispEngine {
         case LISP.typeNatInfo:
             log.dprint(.etr, "Info-Reply raw \(data.count) bytes: \(lispFormatPacket(data))")
             if let info = LispInfo.decode(data), info.isReply {
-                processInfoReply(info, fromDataPort: false)
+                processInfoReply(info, from: from, sourcePort: sourcePort,
+                                 fromDataPort: false)
             }
         case LISP.typeECM:
             if let inner = LispECM.unwrap(data), inner.count >= 4 {
