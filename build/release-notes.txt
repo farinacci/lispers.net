@@ -1,4 +1,21 @@
 
+                  lispers.net Release Version 0.633
+                  ---------------------------------
+
+o Release date: Fri Jun 19 08:51:19 PDT 2026
+
+o Fix crash in store_rloc_probe_latencies(). We are trying to convert a
+  non-existence latency (encoded as "?") to float.
+
+o Commit in this release a lisper.net iOS implementation. This is a
+  checkpoint commit and not ready for use. See future release announcements
+  for more details. The goal is to have a lispers.net xTR Swift implementation
+  that runs on an iOS device. The versioning will be separate from the python
+  release version numbers. This iOS LISP version is 0.0 with this commit. As
+  of this commit, the code has only run in an iPhone simulator on MacOS.
+
+-------------------------------------------------------------------------------
+
                   lispers.net Release Version 0.632
                   ---------------------------------
 
