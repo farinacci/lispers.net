@@ -346,6 +346,8 @@ extern "C" {
 #if __has_warning("-Watimport-in-framework-header")
 #pragma clang diagnostic ignored "-Watimport-in-framework-header"
 #endif
+@import CoreLocation;
+@import ObjectiveC;
 #endif
 
 #endif // defined(__OBJC__)
@@ -367,6 +369,17 @@ extern "C" {
 #endif
 
 #if defined(__OBJC__)
+
+SWIFT_CLASS("_TtC10LispersNet11NetworkName")
+@interface NetworkName : NSObject
+- (nonnull instancetype)init SWIFT_UNAVAILABLE;
++ (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
+@end
+
+@class CLLocationManager;
+@interface NetworkName (SWIFT_EXTENSION(LispersNet)) <CLLocationManagerDelegate>
+- (void)locationManagerDidChangeAuthorization:(CLLocationManager * _Nonnull)m;
+@end
 
 #endif // defined(__OBJC__)
 #if __has_attribute(external_source_symbol)

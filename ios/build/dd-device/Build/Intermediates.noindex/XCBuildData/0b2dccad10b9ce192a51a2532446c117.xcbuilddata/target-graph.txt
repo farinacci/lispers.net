@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'LispersNet' in project 'LispersNet' (no dependencies)

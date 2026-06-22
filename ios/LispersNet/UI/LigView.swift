@@ -130,10 +130,35 @@ struct LigView: View {
         }
     }
 
+    // Color EID (green), rloc-name (blue), RLOC (red) tokens — same scheme as the
+    // Logs / Map-Cache views — so the debug lines match lisp-lig.py's coloring.
+    private static let tokenRegex = try? NSRegularExpression(
+        pattern: #"(\[\d+\][\d.]+(?:/\d+)?)|([\w.-]+@tp-\d+)|(\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?)"#)
+
+    private static func coloredTokens(_ s: String, font: Font) -> Text {
+        guard let regex = tokenRegex else { return Text(s).font(font) }
+        let ns = s as NSString
+        var out = Text("")
+        var last = 0
+        for m in regex.matches(in: s, range: NSRange(location: 0, length: ns.length)) {
+            if m.range.location > last {
+                out = out + Text(ns.substring(with: NSRange(location: last,
+                                  length: m.range.location - last))).font(font)
+            }
+            let token = ns.substring(with: m.range)
+            let color: Color = m.range(at: 1).location != NSNotFound ? .lispGreen
+                : m.range(at: 2).location != NSNotFound ? .lispBlue : .lispRed
+            out = out + Text(token).font(font).foregroundColor(color)
+            last = m.range.location + m.range.length
+        }
+        if last < ns.length { out = out + Text(ns.substring(from: last)).font(font) }
+        return out
+    }
+
     private func lineView(_ line: LigLine) -> Text {
         switch line.content {
         case .plain(let s):
-            return Text(s).font(mono)
+            return Self.coloredTokens(s, font: mono)
         case .error(let s):
             return Text(s).font(mono).foregroundColor(.lispRed)
         case .send(let lead, let paren, let midTrail, let eid, let endTrail):

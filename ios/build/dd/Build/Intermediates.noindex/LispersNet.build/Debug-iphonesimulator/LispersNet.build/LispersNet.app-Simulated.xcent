@@ -4,5 +4,7 @@
 <dict>
 	<key>application-identifier</key>
 	<string>KV8AVA749G.net.lispers.xtr</string>
+	<key>com.apple.developer.networking.wifi-info</key>
+	<true/>
 </dict>
 </plist>

@@ -55,7 +55,7 @@
         "key": "behind NAT",
         "location": {
           "startingColumn": 26,
-          "startingLine": 105
+          "startingLine": 120
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "LISP enabled",
         "location": {
           "startingColumn": 39,
-          "startingLine": 101
+          "startingLine": 116
         }
       },
       {
@@ -71,7 +71,7 @@
         "key": "LISP disabled",
         "location": {
           "startingColumn": 56,
-          "startingLine": 101
+          "startingLine": 116
         }
       },
       {
@@ -79,7 +79,7 @@
         "key": "EID ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 114
+          "startingLine": 129
         }
       },
       {
@@ -87,15 +87,7 @@
         "key": "RLOC ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 117
-        }
-      },
-      {
-        "comment": "",
-        "key": "none",
-        "location": {
-          "startingColumn": 26,
-          "startingLine": 118
+          "startingLine": 132
         }
       },
       {
@@ -103,7 +95,7 @@
         "key": "translated RLOC:port ",
         "location": {
           "startingColumn": 30,
-          "startingLine": 122
+          "startingLine": 136
         }
       },
       {
@@ -111,7 +103,7 @@
         "key": "%@:%@",
         "location": {
           "startingColumn": 30,
-          "startingLine": 123
+          "startingLine": 137
         }
       },
       {
@@ -119,23 +111,7 @@
         "key": "registers sent ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 126
-        }
-      },
-      {
-        "comment": "",
-        "key": "%@ (%@)",
-        "location": {
-          "startingColumn": 25,
-          "startingLine": 119
-        }
-      },
-      {
-        "comment": "",
-        "key": "none",
-        "location": {
-          "startingColumn": 26,
-          "startingLine": 120
+          "startingLine": 140
         }
       }
     ]

@@ -36,7 +36,7 @@ struct ContentView: View {
     @Environment(\.verticalSizeClass) private var vSizeClass
 
     // App version string — bump on request.
-    static let version = "0.3"
+    static let version = "0.3-12"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -91,6 +91,21 @@ struct ContentView: View {
 struct StatusHeader: View {
     @EnvironmentObject var engine: LispEngine
     @EnvironmentObject var config: LispConfig
+    @ObservedObject var netName = NetworkName.shared
+
+    // "<addr> (en0 -> MyWiFi)" / "<addr> (pdp_ip0 -> Carrier)" — the network name
+    // is appended when iOS lets us read it (Wi-Fi needs the wifi-info entitlement +
+    // location permission; cellular carrier is usually unavailable on modern iOS).
+    private func rlocLabel(_ rloc: DiscoveredRLOC) -> String {
+        let iface = rloc.interfaceName
+        var suffix = ""
+        if iface == "en0", let s = netName.wifiSSID, !s.isEmpty {
+            suffix = " \u{2192} \(s)"
+        } else if iface.hasPrefix("pdp_ip"), let c = netName.cellularName, !c.isEmpty {
+            suffix = " \u{2192} \(c)"
+        }
+        return "\(rloc.address.addressString) (\(iface)\(suffix))"
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -115,9 +130,8 @@ struct StatusHeader: View {
                     Text(config.eidString.isEmpty ? "unconfigured" : config.eidString)
                         .foregroundStyle(Color.lispGreen).bold()
                     Text("RLOC ").foregroundStyle(.secondary) +
-                    Text(engine.rloc.map {
-                        "\($0.address.addressString) (\($0.interfaceName))"
-                    } ?? "none").foregroundStyle(Color.lispRed)
+                    Text(engine.rloc.map { rlocLabel($0) } ?? "none")
+                        .foregroundStyle(Color.lispRed)
                     if let t = engine.translatedRLOC {
                         Text("translated RLOC:port ").foregroundStyle(.secondary) +
                         Text("\(t.addressString):\(String(engine.translatedPort))")

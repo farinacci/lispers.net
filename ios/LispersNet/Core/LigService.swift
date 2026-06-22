@@ -1,10 +1,12 @@
 //
 // LigService.swift
 //
-// LISP Internet Groper (lisp-lig.py) — a mapping-system lookup. Sends an
-// ECM-encapsulated Map-Request to the LISP-Decent map-resolver (same hash the
-// rest of the app uses) for a destination EID and renders the returned
-// Map-Reply in lisp-lig.py's output format.
+// LISP Internet Groper (lisp-lig.py) — a mapping-system lookup. Uses a DEDICATED
+// ephemeral UDP socket: the Info-Request and the ECM Map-Request both go out that
+// one socket to the map-resolver:4342, so the NAT keeps a single consistent
+// mapping and the proxy Map-Reply comes straight back to us (the engine's shared
+// 4342/4341 sockets translate inconsistently toward the MS, which dropped the
+// reply). Renders the returned Map-Reply in lisp-lig.py's output format.
 //
 
 import Foundation
@@ -34,6 +36,14 @@ final class LigService: ObservableObject {
     private var pubsub = false
     private var debug = false
 
+    // Dedicated ephemeral socket + the translation the map-resolver sees for it.
+    private let socketQueue = DispatchQueue(label: "lisp.lig")
+    private var ligSocket: UDPSocket?
+    private var mrAddr = LispAddress()
+    private var ephemRLOC = LispAddress()    // our translated RLOC (Info-Reply)
+    private var ephemPort: UInt16 = 0         // our translated source port
+    private var waitingForInfo = false
+
     init(engine: LispEngine) { self.engine = engine }
 
     func lookup(eidString: String, count: Int, pubsub: Bool, noInfo: Bool, debug: Bool) {
@@ -54,56 +64,130 @@ final class LigService: ObservableObject {
         output = []
         inFlight = true
 
+        guard let (mr, _) = engine.mapServerFor(eid: target) else {
+            set([LigLine(content: .error("No map-resolver for \(target.prefixString) " +
+                                         "— configure LISP-Decent."))])
+            return
+        }
+        mrAddr = mr
+
+        // (Re)open the dedicated lig socket on an OS-assigned ephemeral port.
+        ligSocket?.shutdown()
+        guard let sock = UDPSocket(localPort: 0, queue: socketQueue) else {
+            set([LigLine(content: .error("Could not open lig socket."))])
+            return
+        }
+        ligSocket = sock
+        sock.startReceiving { [weak self] data, from, port, _ in
+            DispatchQueue.main.async { self?.ligReceive(data, from: from, port: port) }
+        }
+
+        // Fallback translation if we skip / time out the Info-Request.
+        ephemRLOC = engine.translatedRLOC ?? (engine.rloc?.address ?? LispAddress())
+        ephemPort = engine.behindNAT ? engine.translatedPort : LISP.ctrlPort
+
         if !noInfo {
+            waitingForInfo = true
             append(.init(content: .plain("Possible NAT in path, sending Info-Request ...")))
-            engine.sendInfoRequests()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { [weak self] in
-                guard let self = self, let engine = self.engine else { return }
-                if engine.behindNAT, let t = engine.translatedRLOC {
-                    self.append(.init(content: .plain("Info-Reply received, public address " +
-                                "\(t.addressString), translated port \(engine.translatedPort)")))
-                }
-                self.append(.init(content: .plain("")))
-                self.sendOne()
-            }
+            sendLigInfo(mr, attempt: 1)
         } else {
             sendOne()
         }
     }
 
-    private func sendOne() {
-        guard let engine = engine, let source = engine.config.eid,
-              let myRLOC = engine.rloc else { finish(); return }
-        guard let (mr, msConf) = engine.mapServerFor(eid: target) else {
-            append(.init(content: .error("No map-resolver for \(target.prefixString) " +
-                                         "— configure LISP-Decent.")))
-            finish(); return
+    // Send the Info-Request out the dedicated socket and retry a few times — the
+    // map-resolver may be far (e.g. 4.sm-ms in Singapore) and we MUST learn this
+    // socket's translation before the ECM, or the reply can't route back.
+    private func sendLigInfo(_ mr: LispAddress, attempt: Int) {
+        guard let engine = engine, let sock = ligSocket, waitingForInfo else { return }
+        var info = LispInfo()
+        info.nonce = lispGetControlNonce()
+        info.hostname = engine.xtrName
+        if attempt == 1, debug {
+            append(.init(content: .plain("")))
+            append(.init(content: .plain("Info-Request -> nonce: 0x" +
+                "\(String(info.nonce, radix: 16)), hostname: \(engine.xtrName)")))
+            append(.init(content: .plain("Send Info-Request to MS \(mr.addressString), " +
+                "port \(LISP.ctrlPort) (for control)")))
         }
+        LispLog.shared.lprint(.itr, "lig: Send Info-Request to \(mr.addressString):" +
+            "\(LISP.ctrlPort) (attempt \(attempt)), nonce 0x\(String(info.nonce, radix: 16))")
+        _ = sock.send(info.encodeRequest(), to: mr, port: LISP.ctrlPort)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { [weak self] in
+            guard let self = self, self.waitingForInfo else { return }
+            if attempt < 4 {
+                self.sendLigInfo(mr, attempt: attempt + 1)
+            } else {
+                self.waitingForInfo = false
+                LispLog.shared.lprint(.itr, "lig: No Info-Reply after \(attempt) attempts " +
+                    "from \(mr.addressString) — falling back to xTR translation")
+                self.append(.init(content: .plain("(no Info-Reply — using xTR translation)")))
+                self.append(.init(content: .plain("")))
+                self.sendOne()
+            }
+        }
+    }
+
+    // All replies land on the dedicated socket: first the Info-Reply (which gives
+    // us our translation), then the proxy Map-Reply.
+    private func ligReceive(_ data: Data, from: LispAddress, port: UInt16) {
+        guard let first = data.first else { return }
+        LispLog.shared.lprint(.itr, "lig: Received \(data.count) bytes from " +
+            "\(from.addressString):\(port), type \(first >> 4)")
+        switch first >> 4 {
+        case LISP.typeNatInfo:
+            guard waitingForInfo, let info = LispInfo.decode(data), info.isReply else { return }
+            waitingForInfo = false
+            if !info.globalETRRLOC.isNull { ephemRLOC = info.globalETRRLOC }
+            if info.etrPort != 0 { ephemPort = info.etrPort }
+            LispLog.shared.lprint(.itr, "lig: Info-Reply from \(from.addressString) — " +
+                "global \(ephemRLOC.addressString), etr-port \(ephemPort)")
+            if debug {
+                let rtrs = info.rtrList.isEmpty ? "empty"
+                    : info.rtrList.map { $0.addressString }.joined(separator: ", ")
+                append(.init(content: .plain("Info-Reply -> nonce: 0x" +
+                    "\(String(info.nonce, radix: 16)), ms-port: \(info.msPort), etr-port: " +
+                    "\(info.etrPort), global-rloc: \(info.globalETRRLOC.addressString), " +
+                    "ms-rloc: no-address, private-rloc: '\(engine?.xtrName ?? "")', " +
+                    "RTR-list: \(rtrs)")))
+                append(.init(content: .plain("")))
+            }
+            append(.init(content: .plain("Info-Reply received, public address " +
+                "\(ephemRLOC.addressString), translated port \(ephemPort)")))
+            append(.init(content: .plain("")))
+            sendOne()
+        case LISP.typeMapReply:
+            guard let reply = LispMapReply.decode(data) else { return }
+            _ = handleReply(reply, from: from)
+        default:
+            break
+        }
+    }
+
+    private func sendOne() {
+        guard let engine = engine, let sock = ligSocket else { finish(); return }
+        guard let (mr, msConf) = engine.mapServerFor(eid: target) else { finish(); return }
 
         var req = LispMapRequest()
         req.nonce = lispGetControlNonce()
-        req.sourceEID = source
-        req.itrRLOCs = [engine.behindNAT ? (engine.translatedRLOC ?? myRLOC.address)
-                                         : myRLOC.address]
+        req.sourceEID = LispAddress()           // lisp-lig.py sends no source-EID
+        req.itrRLOCs = [ephemRLOC]
         req.targetEID = target
-        // Set the N flag like lisp-lig.py (map_request.decent_nat_xtr = True): the
-        // map-server then skips lisp_get_partial_rloc_set and returns the FULL
-        // registered RLOC-set instead of just the RTRs.
+        // N flag (decent_nat_xtr) → map-server returns the FULL registered RLOC-set.
         req.decentNATXtr = true
         req.subscribe = pubsub
         req.xtrID = pubsub ? engine.xtrID : nil
 
         let inner = req.encode()
-        let ecm = LispECM.wrap(control: inner, innerSource: source, innerDest: target,
-                               sourcePort: LISP.ctrlPort, destPort: LISP.ctrlPort, toMS: true)
+        // ECM inner IP src = our translated RLOC, inner UDP src = our translated
+        // ephemeral port — so the proxy Map-Reply routes back to THIS socket.
+        let ecm = LispECM.wrap(control: inner, innerSource: ephemRLOC, innerDest: target,
+                               sourcePort: ephemPort, destPort: LISP.ctrlPort, toMS: false)
         pending[req.nonce] = Date()
 
         let sub = pubsub ? "subscribe " : ""
         let mrName = msConf.dnsNameOrAddress.isEmpty ? mr.addressString : msConf.dnsNameOrAddress
         let eidNoMask = "[\(target.instanceID)]\(target.addressString)"
-        // lisp-lig.py prints the decent eid-string it matched (EID masked to the
-        // configured lookup-length), not the /32 — so a lookup-prefix change is
-        // visible here (get_decent_info / lisp_get_decent_eid_string).
         let decentPrefix = engine.config.decentConfigured
             ? LispDecent.eidString(for: target, prefixes: engine.config.decentPrefixes)
             : target.prefixString
@@ -114,25 +198,30 @@ final class LigService: ObservableObject {
             eid: eidNoMask,
             endTrail: " ...")))
         if debug {
-            // Mirror lisp-lig.py's debug (lisp_debug_logging => print_map_request()
-            // breakdown + packet hex). Flags order matches lisp.py: a d r s p i m
-            // x n l d; lig sets the N (decent_nat) flag and X when subscribing.
+            append(.init(content: .plain("")))
             let flags = "adrspim" + (pubsub ? "X" : "x") + "Nld"
             let irc = max(req.itrRLOCs.count - 1, 0)
-            let srcStr = source.isNull ? "[\(target.instanceID)]no-address"
-                                       : source.prefixString
+            let srcStr = req.sourceEID.isNull ? "[\(target.instanceID)]no-address"
+                                              : req.sourceEID.prefixString
             append(.init(content: .plain(
                 "Map-Request -> flags: \(flags), itr-rloc-count: \(irc) (+1), " +
                 "record-count: 1, nonce: 0x\(String(req.nonce, radix: 16)), " +
-                "source-eid: afi \(source.afi), \(srcStr), target-eid: afi " +
+                "source-eid: afi \(req.sourceEID.afi), \(srcStr), target-eid: afi " +
                 "\(target.afi), \(target.prefixString), ITR-RLOCs:")))
             for itr in req.itrRLOCs {
                 append(.init(content: .plain("  itr-rloc: afi \(itr.afi) \(itr.addressString)")))
             }
             append(.init(content: .plain(
+                "ECM -> flags: sdem, inner IP: [\(target.instanceID)]\(ephemRLOC.addressString) -> " +
+                "[\(target.instanceID)]\(target.addressString), inner UDP: " +
+                "\(ephemPort) -> \(LISP.ctrlPort)")))
+            append(.init(content: .plain(
+                "Send Encapsulated-Control-Message to \(mr.addressString)")))
+            append(.init(content: .plain(
                 "Send ECM \(ecm.count) bytes: \(lispFormatPacket(ecm))")))
+            append(.init(content: .plain("")))
         }
-        engine.ctrlSocket?.send(ecm, to: mr, port: LISP.ctrlPort)
+        _ = sock.send(ecm, to: mr, port: LISP.ctrlPort)
 
         let nonce = req.nonce
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
@@ -147,9 +236,23 @@ final class LigService: ObservableObject {
         let rtt = Date().timeIntervalSince(sentAt).rounded(toPlaces: 3)
         append(.init(content: .plain("Received map-reply from \(from.addressString) " +
                      "with rtt \(rtt) secs:")))
+        if debug {
+            append(.init(content: .plain("")))
+            let flags = (reply.rlocProbe ? "R" : "r") + "es"
+            append(.init(content: .plain("Map-Reply -> flags: \(flags), hop-count: " +
+                "\(reply.hopCount), record-count: \(reply.records.count), " +
+                "nonce: 0x\(String(reply.nonce, radix: 16))")))
+        }
         for (eidRec, rlocs) in reply.records {
             append(.init(content: .eidPrefix(prefix: eidRec.eid.prefixString,
                          rest: ", ttl: \(ttlString(eidRec.recordTTL)), rloc-set:")))
+            if debug {
+                append(.init(content: .plain("  EID-record -> record-ttl: " +
+                    "\(ttlString(eidRec.recordTTL)), rloc-count: \(rlocs.count), action: " +
+                    "\(LISP.actionString(eidRec.action)), " +
+                    "\(eidRec.authoritative ? "auth" : "non-auth"), map-version: 0, afi: " +
+                    "\(eidRec.eid.afi), [iid]eid/ml: \(eidRec.eid.prefixString)")))
+            }
             if rlocs.isEmpty {
                 append(.init(content: .plain("  Empty, map-reply action: " +
                              "\(LISP.actionString(eidRec.action))")))
@@ -163,7 +266,12 @@ final class LigService: ObservableObject {
                 if rl.rlocName != nil { before += ", rloc-name: " }
                 append(.init(content: .rloc(addr: rl.rloc.addressString, beforeName: before,
                              name: rl.rlocName, afterName: rtr ? ", RTR" : "")))
-                // Registered JSON (e.g. telemetry) on the RLOC — lisp-lig.py:235.
+                if debug {
+                    let name = rl.rlocName.map { ", rloc-name: \($0)" } ?? ""
+                    append(.init(content: .plain("    RLOC-record -> flags: \(flags), " +
+                        "\(rl.priority)/\(rl.weight)/\(rl.mpriority)/\(rl.mweight), afi: " +
+                        "\(rl.rloc.afi), rloc: \(rl.rloc.addressString)\(name)")))
+                }
                 if let json = rl.jsonString {
                     append(.init(content: .plain("        json: \(json)")))
                 }
@@ -190,7 +298,10 @@ final class LigService: ObservableObject {
         }
     }
 
-    private func finish() { DispatchQueue.main.async { self.inFlight = false } }
+    private func finish() {
+        ligSocket?.shutdown(); ligSocket = nil
+        DispatchQueue.main.async { self.inFlight = false }
+    }
     private func append(_ l: LigLine) { DispatchQueue.main.async { self.output.append(l) } }
     private func set(_ ls: [LigLine]) {
         DispatchQueue.main.async { self.output = ls; self.inFlight = false }

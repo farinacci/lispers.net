@@ -93,7 +93,14 @@ struct PingView: View {
                     if ping.inFlight || !ping.active.isEmpty {
                         HStack(spacing: 8) {
                             ProgressView()
-                            Text("Pinging \(ping.currentTarget ?? "")…").bold()
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Pinging ...").bold()
+                                Text("\(engine.config.eidString) \u{2192} " +
+                                     "\(ping.currentTarget ?? "")")
+                                    .font(.callout.monospaced())
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.5)
+                            }
                             Spacer()
                             if ping.continuous {
                                 Button("Stop") { ping.stopContinuous() }

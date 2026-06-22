@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>LispersNet.ipa</key>
+	<array>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>arm64</string>
+			</array>
+			<key>buildNumber</key>
+			<string>1</string>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>6FAE91495C1229321F7FD9F62DEE06BB294E767B</string>
+				<key>dateExpires</key>
+				<string>6/18/27</string>
+				<key>type</key>
+				<string>Apple Development</string>
+			</dict>
+			<key>entitlements</key>
+			<dict>
+				<key>application-identifier</key>
+				<string>KV8AVA749G.net.lispers.xtr</string>
+				<key>com.apple.developer.team-identifier</key>
+				<string>KV8AVA749G</string>
+				<key>get-task-allow</key>
+				<true/>
+			</dict>
+			<key>name</key>
+			<string>LispersNet.app</string>
+			<key>profile</key>
+			<dict>
+				<key>UUID</key>
+				<string>b6c693af-957c-4120-b4c1-2f66afaf8f8e</string>
+				<key>dateExpires</key>
+				<string>6/18/27</string>
+				<key>name</key>
+				<string>iOS Team Provisioning Profile: net.lispers.xtr</string>
+			</dict>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>KV8AVA749G</string>
+				<key>name</key>
+				<string></string>
+			</dict>
+			<key>versionNumber</key>
+			<string>0.3</string>
+		</dict>
+	</array>
+</dict>
+</plist>

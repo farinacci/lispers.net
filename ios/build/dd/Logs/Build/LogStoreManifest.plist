@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>078EE081-D917-4CCC-B485-9E11E507857C</key>
+		<key>D637A5BA-1E35-4B6E-98F2-AD7488D2DE42</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,13 +15,13 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>078EE081-D917-4CCC-B485-9E11E507857C.xcactivitylog</string>
+			<string>D637A5BA-1E35-4B6E-98F2-AD7488D2DE42.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
 			<dict>
 				<key>highLevelStatus</key>
-				<string>S</string>
+				<string>W</string>
 				<key>totalNumberOfAnalyzerIssues</key>
 				<integer>0</integer>
 				<key>totalNumberOfErrors</key>
@@ -29,7 +29,7 @@
 				<key>totalNumberOfTestFailures</key>
 				<integer>0</integer>
 				<key>totalNumberOfWarnings</key>
-				<integer>0</integer>
+				<integer>2</integer>
 			</dict>
 			<key>schemeIdentifier-containerName</key>
 			<string>LispersNet project</string>
@@ -40,55 +40,13 @@
 			<key>signature</key>
 			<string>Building project LispersNet with scheme LispersNet</string>
 			<key>timeStartedRecording</key>
-			<real>803602527.95752096</real>
+			<real>803780416.23785102</real>
 			<key>timeStoppedRecording</key>
-			<real>803602531.53785205</real>
+			<real>803780420.07570302</real>
 			<key>title</key>
 			<string>Building project LispersNet with scheme LispersNet</string>
 			<key>uniqueIdentifier</key>
-			<string>078EE081-D917-4CCC-B485-9E11E507857C</string>
-		</dict>
-		<key>E082F548-7F4C-4668-BDD8-8A6D23111737</key>
-		<dict>
-			<key>className</key>
-			<string>IDECommandLineBuildLog</string>
-			<key>documentTypeString</key>
-			<string>&lt;nil&gt;</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
-			<key>fileName</key>
-			<string>E082F548-7F4C-4668-BDD8-8A6D23111737.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-				<key>totalNumberOfAnalyzerIssues</key>
-				<integer>0</integer>
-				<key>totalNumberOfErrors</key>
-				<integer>0</integer>
-				<key>totalNumberOfTestFailures</key>
-				<integer>0</integer>
-				<key>totalNumberOfWarnings</key>
-				<integer>0</integer>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>LispersNet project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>LispersNet</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Building project LispersNet with scheme LispersNet</string>
-			<key>timeStartedRecording</key>
-			<real>803601024.77739704</real>
-			<key>timeStoppedRecording</key>
-			<real>803601027.78655601</real>
-			<key>title</key>
-			<string>Building project LispersNet with scheme LispersNet</string>
-			<key>uniqueIdentifier</key>
-			<string>E082F548-7F4C-4668-BDD8-8A6D23111737</string>
+			<string>D637A5BA-1E35-4B6E-98F2-AD7488D2DE42</string>
 		</dict>
 	</dict>
 </dict>

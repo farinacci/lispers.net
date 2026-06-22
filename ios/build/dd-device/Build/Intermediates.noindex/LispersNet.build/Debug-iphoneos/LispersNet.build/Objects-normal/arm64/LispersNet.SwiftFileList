@@ -12,6 +12,7 @@
 /Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispEngine.swift
 /Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispLog.swift
 /Users/dino/code/git/lispers.net/ios/LispersNet/Core/MapCache.swift
+/Users/dino/code/git/lispers.net/ios/LispersNet/Core/NetworkName.swift
 /Users/dino/code/git/lispers.net/ios/LispersNet/Core/PingService.swift
 /Users/dino/code/git/lispers.net/ios/LispersNet/Core/Sockets.swift
 /Users/dino/code/git/lispers.net/ios/LispersNet/Core/Telemetry.swift
