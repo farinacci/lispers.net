@@ -7,7 +7,7 @@
         "key": "Logs",
         "location": {
           "startingColumn": 34,
-          "startingLine": 88
+          "startingLine": 96
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "log",
         "location": {
           "startingColumn": 28,
-          "startingLine": 41
+          "startingLine": 44
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "lisp-core.log",
         "location": {
           "startingColumn": 30,
-          "startingLine": 42
+          "startingLine": 45
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "lisp-itr.log",
         "location": {
           "startingColumn": 30,
-          "startingLine": 43
+          "startingLine": 46
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "lisp-etr.log",
         "location": {
           "startingColumn": 30,
-          "startingLine": 44
+          "startingLine": 47
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "(no log lines — enable logging on the xTR tab)",
         "location": {
           "startingColumn": 38,
-          "startingLine": 65
+          "startingLine": 68
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": "",
         "location": {
           "startingColumn": 26,
-          "startingLine": 192
+          "startingLine": 227
         }
       },
       {
@@ -63,7 +63,23 @@
         "key": "Clear",
         "location": {
           "startingColumn": 32,
-          "startingLine": 127
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Plain text (.log)",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "Colored (.html)",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 153
         }
       },
       {
@@ -71,7 +87,7 @@
         "key": "%lld/%lld",
         "location": {
           "startingColumn": 22,
-          "startingLine": 151
+          "startingLine": 184
         }
       },
       {
@@ -79,7 +95,7 @@
         "key": "search",
         "location": {
           "startingColumn": 23,
-          "startingLine": 139
+          "startingLine": 172
         }
       },
       {
@@ -87,7 +103,7 @@
         "key": "",
         "location": {
           "startingColumn": 24,
-          "startingLine": 205
+          "startingLine": 260
         }
       }
     ]

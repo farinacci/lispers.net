@@ -2,6 +2,6 @@
   "tables" : {
 
   },
-  "version" : 2,
-  "source" : "ExtractedAppShortcutsMetadata"
+  "source" : "ExtractedAppShortcutsMetadata",
+  "version" : 2
 }

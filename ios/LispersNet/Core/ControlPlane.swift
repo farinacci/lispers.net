@@ -15,8 +15,10 @@ extension LispEngine {
     // every send matches the detail in lisp-itr.log / lisp-etr.log.
     func loggedSend(_ data: Data, to dest: LispAddress, port: UInt16,
                     on socket: UDPSocket?, _ comp: LogComponent) {
-        // lisp_send(): "Send <n> bytes to <addr> <port>, packet: <hex>".
-        log.dprint(comp, "Send \(data.count) bytes to \(dest.addressString) " +
+        // lisp_send() — this is CONTROL traffic (Map-Reg/Req/Reply, Info, probes,
+        // ECM); data-plane encap bypasses loggedSend. lprint() => control-plane
+        // scope, so it doesn't show when only data-plane logging is on.
+        log.lprint(comp, "Send \(data.count) bytes to \(dest.addressString) " +
                    "\(port), packet: \(lispFormatPacket(data))")
         socket?.send(data, to: dest, port: port)
     }
@@ -156,7 +158,8 @@ extension LispEngine {
         let regFlags = (register.proxyReply ? "P" : "p") + "s"
                      + (register.xtrIDPresent ? "I" : "i")
                      + (register.useTTLForTimeout ? "T" : "t")
-                     + (register.mergeRegister ? "R" : "r") + "m"
+                     + (register.mergeRegister ? "R" : "r")
+                     + (register.mobileNode ? "M" : "m")
                      + (register.wantMapNotify ? "N" : "n") + "fe"
         let algName = register.algID == LISP.sha1AlgID ? " (sha1)" : " (sha2)"
         let authLen = register.algID == LISP.sha1AlgID ? 20 : 32
@@ -391,9 +394,7 @@ extension LispEngine {
                 guard let json = rl.jsonString, Telemetry.isTelemetry(json) else { continue }
                 let stamped = Telemetry.encode(json, itrIn: Telemetry.timestamp())
                 if let (fwd, rev) = Telemetry.latencies(stamped) {
-                    latency = "\(fwd)/\(rev)"
-                    log.lprint(.itr, "Telemetry for \(from.addressString): " +
-                               "fwd \(fwd) secs, rev \(rev) secs")
+                    latency = "\(fwd)/\(rev)"   // shown in the RLOC-probe reply line
                 }
             }
         }
@@ -408,8 +409,15 @@ extension LispEngine {
                     let rtt = now.timeIntervalSince(sent).rounded(toPlaces: 3)
                     r.storeRTT(rtt)
                     if !loggedRTT {
-                        log.pprint(.itr, "Received RLOC-probe reply from \(from.addressString), " +
-                                   "RTT \(rtt) secs, nonce 0x\(String(reply.nonce, radix: 16))")
+                        // Full lisp.py-style line: rtt, hop counts (to-ttl/from-ttl),
+                        // and latency (fwd/rev) all in one message.
+                        let fromTTL = replyTTL >= 0 ? "\(replyTTL)" : "?"
+                        let st = r.isUp ? "up-state" : "unreach-state"
+                        log.pprint(.itr, "Received RLOC-probe reply from \(from.addressString) " +
+                                   "for \(entry.eid.prefixString), \(st) -> up, rtt \(rtt) secs, " +
+                                   "to-ttl/from-ttl \(reply.hopCount)/\(fromTTL), " +
+                                   "latency \(latency ?? "?/?"), " +
+                                   "nonce 0x\(String(reply.nonce, radix: 16))")
                         loggedRTT = true
                     }
                 }
@@ -433,13 +441,13 @@ extension LispEngine {
                            receivedTTL: Int = -1) {
         guard let eid = config.eid, let myRLOC = rloc else { return }
         guard req.rlocProbe else {
-            log.lprint(.etr, "Ignoring non-probe Map-Request from \(from.addressString)")
+            log.lprint(.itr, "Ignoring non-probe Map-Request from \(from.addressString)")
             return
         }
         let etrIn = Telemetry.timestamp()
-        log.lprint(.etr, "Receive RLOC-probe from \(from.addressString), " +
+        log.lprint(.itr, "Receive RLOC-probe from \(from.addressString), " +
                    "nonce 0x\(String(req.nonce, radix: 16))")
-        logMapRequest(.etr, req)
+        logMapRequest(.itr, req)
 
         var eidRec = LispEIDRecord()
         eidRec.recordTTL = LISP.registerTTL
@@ -469,9 +477,9 @@ extension LispEngine {
         reply.hopCount = receivedTTL >= 0 ? UInt8(clamping: receivedTTL) : 0
         reply.records = [(eidRec, records)]
         let packet = reply.encode()
-        log.lprint(.etr, "Send RLOC-probe Map-Reply to \(from.addressString):\(sourcePort)")
-        logMapReply(.etr, reply)
-        loggedSend(packet, to: from, port: sourcePort, on: ctrlSocket, .etr)
+        log.lprint(.itr, "Send RLOC-probe Map-Reply to \(from.addressString):\(sourcePort)")
+        logMapReply(.itr, reply)
+        loggedSend(packet, to: from, port: sourcePort, on: ctrlSocket, .itr)
     }
 
     // Answer a data-encapsulated RLOC-probe relayed by an RTR: build the probe
@@ -482,7 +490,7 @@ extension LispEngine {
                                  sourcePort: UInt16, innerTTL: Int) {
         guard let eid = config.eid, let myRLOC = rloc else { return }
         let etrIn = Telemetry.timestamp()
-        log.pprint(.etr, "Received RLOC-probe (encap) from \(rtr.addressString):\(sourcePort), " +
+        log.pprint(.itr, "Received RLOC-probe (encap) from \(rtr.addressString):\(sourcePort), " +
                    "nonce 0x\(String(req.nonce, radix: 16)) — replying to source")
 
         var eidRec = LispEIDRecord()
@@ -522,9 +530,9 @@ extension LispEngine {
         // which is why lhr stayed unreach while the RTR went up.
         if rtrList.contains(where: { $0.v4 == rtr.v4 }) {
             let encap = encapForRTR(control: reply.encode(), src: myRLOC.address, dst: rtr)
-            loggedSend(encap, to: rtr, port: sourcePort, on: dataSocket, .etr)
+            loggedSend(encap, to: rtr, port: sourcePort, on: dataSocket, .itr)
         } else {
-            loggedSend(reply.encode(), to: rtr, port: sourcePort, on: ctrlSocket, .etr)
+            loggedSend(reply.encode(), to: rtr, port: sourcePort, on: ctrlSocket, .itr)
         }
     }
 
@@ -605,7 +613,7 @@ extension LispEngine {
                               receivedTTL: Int = -1) {
         guard data.count >= 4 else { return }
         let type = data[data.startIndex] >> 4
-        log.dprint(.core, "Receive \(data.count) bytes from \(from.addressString) " +
+        log.lprint(.core, "Receive \(data.count) bytes from \(from.addressString) " +
                    "\(sourcePort), packet: \(lispFormatPacket(data))")
         switch type {
         case LISP.typeMapReply:
@@ -622,7 +630,7 @@ extension LispEngine {
             log.lprint(.etr, "Receive Map-Notify from \(from.addressString) " +
                        "(registration acknowledged)")
         case LISP.typeNatInfo:
-            log.dprint(.etr, "Info-Reply raw \(data.count) bytes: \(lispFormatPacket(data))")
+            log.lprint(.etr, "Info-Reply raw \(data.count) bytes: \(lispFormatPacket(data))")
             if let info = LispInfo.decode(data), info.isReply {
                 processInfoReply(info, from: from, sourcePort: sourcePort,
                                  fromDataPort: false)

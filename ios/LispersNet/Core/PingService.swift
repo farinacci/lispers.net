@@ -123,7 +123,7 @@ final class PingService: ObservableObject {
             self.results.insert(result, at: 0)
             if self.results.count > 50 { self.results.removeLast() }
         }
-        engine.log.lprint(.itr, "Send ICMP echo-request to \(name) " +
+        engine.log.dprint(.itr, "Send ICMP echo-request to \(name) " +
                           "(\(dest.addressString)), seq \(seq)")
         engine.encapAndSend(inner: inner, destEID: dest)
         // Per-sequence timeout so each echo resolves independently.
@@ -133,7 +133,7 @@ final class PingService: ObservableObject {
             if let idx = self.results.firstIndex(where: { $0.id == result.id }) {
                 self.results[idx].status = .timeout
             }
-            self.engine?.log.lprint(.itr, "ICMP echo seq \(seq) timed out")
+            self.engine?.log.dprint(.itr, "ICMP echo seq \(seq) timed out")
         }
     }
 
@@ -149,7 +149,7 @@ final class PingService: ObservableObject {
         if type == 0 {                      // echo-reply
             guard ident == identifier,
                   let id = outstanding.removeValue(forKey: seq) else { return }
-            engine.log.fprint(.itr, "ICMP echo-reply from \(source.addressString), " +
+            engine.log.dprint(.itr, "ICMP echo-reply from \(source.addressString), " +
                               "seq \(seq)")
             DispatchQueue.main.async {
                 guard let idx = self.results.firstIndex(where: { $0.id == id }) else { return }

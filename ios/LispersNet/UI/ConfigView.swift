@@ -13,6 +13,9 @@ struct ConfigView: View {
     @EnvironmentObject var engine: LispEngine
     @FocusState private var keyboardUp: Bool
     @State private var editingPrefixes = false
+    // Share the whole xTR configuration as one image (even the off-screen part).
+    @State private var shareImage: UIImage?
+    @State private var showShare = false
 
     private func centeredTitle(_ s: String) -> some View {
         Text(s).frame(maxWidth: .infinity, alignment: .center)
@@ -34,27 +37,26 @@ struct ConfigView: View {
                 }
 
                 Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 8) {
-                            Text("IID:").frame(width: 40, alignment: .leading)
-                            TextField("0", value: $config.instanceID,
-                                      format: .number.grouping(.never))
-                                .keyboardType(.numberPad)
-                                .font(.body.monospaced())
-                                .frame(width: 90)
-                                .focused($keyboardUp)
-                                .onChange(of: config.instanceID) { _, _ in config.save() }
-                        }
-                        HStack(spacing: 8) {
-                            Text("EID:").frame(width: 40, alignment: .leading)
-                            TextField("240.10.0.100", text: $config.eidString)
-                                .keyboardType(.numbersAndPunctuation)
-                                .autocapitalization(.none)
-                                .disableAutocorrection(true)
-                                .font(.body.monospaced())
-                                .focused($keyboardUp)
-                                .onChange(of: config.eidString) { _, _ in config.save() }
-                        }
+                    HStack(spacing: 8) {
+                        Text("EID:")
+                        TextField("240.10.0.100", text: $config.eidString)
+                            .keyboardType(.numbersAndPunctuation)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .font(.body.monospaced())
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity)
+                            .focused($keyboardUp)
+                            .onChange(of: config.eidString) { _, _ in config.save() }
+                        Text("IID:")
+                        TextField("0", value: $config.instanceID,
+                                  format: .number.grouping(.never))
+                            .keyboardType(.numberPad)
+                            .font(.body.monospaced())
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 56)
+                            .focused($keyboardUp)
+                            .onChange(of: config.instanceID) { _, _ in config.save() }
                     }
                     .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                 } header: {
@@ -98,6 +100,23 @@ struct ConfigView: View {
                 }
 
                 Section {
+                    Toggle("Control-plane", isOn: Binding(
+                        get: { config.controlPlaneLog },
+                        set: { on in
+                            config.controlPlaneLog = on; config.save()
+                            engine.log.controlPlaneLogging = on
+                        }))
+                    Toggle("Data-plane", isOn: Binding(
+                        get: { config.dataPlaneLog },
+                        set: { on in
+                            config.dataPlaneLog = on; config.save()
+                            engine.log.dataPlaneLogging = on
+                        }))
+                } header: {
+                    centeredTitle("Logging")
+                }
+
+                Section {
                     HStack(spacing: 8) {
                         Text("Suffix:").frame(width: 72, alignment: .leading)
                         TextField("suffix, e.g. ms.example.com", text: $config.decentSuffix)
@@ -129,7 +148,7 @@ struct ConfigView: View {
                         }
                     }
                 } header: {
-                    centeredTitle("LISP-Decent Configuration")
+                    centeredTitle("LISP-Decent MS Configuration")
                 }
 
                 Section {
@@ -163,29 +182,97 @@ struct ConfigView: View {
                 } header: {
                     centeredTitle("LISP-Decent Lookup Prefix Configuration")
                 }
-
-                Section {
-                    Toggle("Control-plane", isOn: Binding(
-                        get: { config.controlPlaneLog },
-                        set: { on in
-                            config.controlPlaneLog = on; config.save()
-                            engine.log.controlPlaneLogging = on
-                        }))
-                    Toggle("Data-plane", isOn: Binding(
-                        get: { config.dataPlaneLog },
-                        set: { on in
-                            config.dataPlaneLog = on; config.save()
-                            engine.log.dataPlaneLogging = on
-                        }))
-                } header: {
-                    centeredTitle("Logging")
-                }
             }
             .listRowSeparatorTint(.lispSeparator)
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle("lispers.net xTR")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    // Render the entire configuration (not just what's on screen)
+                    // to one image and hand it to the share sheet.
+                    Button {
+                        let snap = XTRSnapshot()
+                            .environmentObject(config)
+                            .environmentObject(engine)
+                        let r = ImageRenderer(content: snap)
+                        r.scale = UIScreen.main.scale
+                        if let ui = r.uiImage { shareImage = ui; showShare = true }
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }
+            }
+            .sheet(isPresented: $showShare) {
+                if let img = shareImage { ShareSheet(items: [img]) }
+            }
         }
+    }
+}
+
+// A read-only, non-scrolling rendering of the xTR configuration, sized to a
+// fixed width so ImageRenderer captures the whole thing (including the parts
+// scrolled off screen) as a single shareable image.
+private struct XTRSnapshot: View {
+    @EnvironmentObject var config: LispConfig
+    @EnvironmentObject var engine: LispEngine
+
+    private func line(_ label: String, _ value: String, _ color: Color = .primary) -> some View {
+        HStack(alignment: .top, spacing: 6) {
+            Text(label).foregroundStyle(.secondary)
+            Text(value).foregroundStyle(color).bold()
+            Spacer(minLength: 0)
+        }
+        .font(.system(size: 13, design: .monospaced))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("lispers.net xTR — \(ContentView.version)")
+                .font(.headline)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.bottom, 2)
+
+            // Reuse the live status block so the snapshot always matches the
+            // screen — hostname, EID, RLOC, translated RLOC, registers, NAT —
+            // and automatically picks up anything added to it later.
+            StatusHeader()
+
+            Divider()
+            line("IID:", "\(config.instanceID)")
+            line("EID:", config.eidString.isEmpty ? "—" : config.eidString, .lispGreen)
+
+            Divider()
+            line("RLOC-probing:", config.rlocProbingEnabled ? "on" : "off")
+            line("NAT-traversal:", config.natTraversalEnabled ? "on" : "off")
+            line("Decentralized-NAT:", config.decentNATEnabled ? "on" : "off")
+
+            Divider()
+            line("Control-plane log:", config.controlPlaneLog ? "on" : "off")
+            line("Data-plane log:", config.dataPlaneLog ? "on" : "off")
+
+            Divider()
+            line("Suffix:", config.decentSuffix.isEmpty ? "—" : config.decentSuffix, .lispBlue)
+            line("Modulus:", "\(config.decentModulus)")
+            line("Auth-key:", config.decentAuthKey.isEmpty ? "—"
+                 : String(repeating: "*", count: config.decentAuthKey.count))
+            if config.decentConfigured, let eid = config.eid {
+                line("registers to:", LispDecent.dnsName(eid: eid,
+                        modulus: config.decentModulus, suffix: config.decentSuffix,
+                        prefixes: config.decentPrefixes), .lispBlue)
+            }
+            if !config.decentPrefixes.isEmpty {
+                Divider()
+                Text("Lookup prefixes:")
+                    .font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
+                ForEach(config.decentPrefixes) { p in
+                    line("  •", "\(p.eidPrefix) lookup-len: \(p.lookupLength.map(String.init) ?? "?")", .lispGreen)
+                }
+            }
+        }
+        .padding(16)
+        .frame(width: 390, alignment: .leading)
+        .background(Color(.systemBackground))
     }
 }
 

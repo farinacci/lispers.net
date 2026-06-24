@@ -21,6 +21,9 @@ struct LogsView: View {
     @State private var searchText = ""
     @State private var matchIdx = 0
     @FocusState private var searchFocused: Bool
+    // Colored HTML export (the share sheet for the .html version).
+    @State private var htmlShareURL: URL?
+    @State private var showHTMLShare = false
     @GestureState private var pinch: CGFloat = 1.0
     // Pinch-to-zoom the log font; the LazyVStack re-flows so scrolling stays good.
     private var zoom: CGFloat { min(max(fontScale * pinch, 0.6), 3.0) }
@@ -83,7 +86,12 @@ struct LogsView: View {
                     }
                     .simultaneousGesture(magnify)
                     .simultaneousGesture(
-                        DragGesture().onChanged { _ in if follow { follow = false } })
+                        DragGesture().onChanged { _ in
+                            if follow { follow = false }
+                            // Scrolling while searching hides the keyboard to give
+                            // the log more screen real estate.
+                            if searching { searchFocused = false }
+                        })
                 }
                 .navigationTitle("Logs")
                 .navigationBarTitleDisplayMode(.inline)
@@ -91,13 +99,17 @@ struct LogsView: View {
                     // Normal: up = top, down = bottom (bar-tipped arrows). Search:
                     // chevrons that step through matches. Magnifier toggles search.
                     ToolbarItem(placement: .topBarLeading) {
-                        HStack(spacing: 8) {
+                        // Small glyphs, but each gets a ~44pt thumb-sized hit area
+                        // via a frame + contentShape so taps don't miss/collide.
+                        HStack(spacing: 2) {
                             Button {
                                 if searching { gotoMatch(matchIdx - 1, proxy) }
                                 else { follow = false; withAnimation { proxy.scrollTo(0, anchor: .top) } }
                             } label: {
                                 Image(systemName: searching ? "chevron.up" : "arrow.up.to.line")
                                     .font(.caption2)
+                                    .frame(width: 44, height: 38)
+                                    .contentShape(Rectangle())
                             }
                             .tint(.primary)
                             Button {
@@ -111,6 +123,8 @@ struct LogsView: View {
                             } label: {
                                 Image(systemName: searching ? "chevron.down" : "arrow.down.to.line")
                                     .font(.caption2)
+                                    .frame(width: 44, height: 38)
+                                    .contentShape(Rectangle())
                             }
                             .tint(.primary)
                             Button {
@@ -118,14 +132,33 @@ struct LogsView: View {
                                 if searching { follow = false; searchFocused = true }
                                 else { searchText = "" }
                             } label: {
-                                Image(systemName: "magnifyingglass").font(.caption2)
+                                Image(systemName: "magnifyingglass")
+                                    .font(.caption2)
+                                    .frame(width: 44, height: 38)
+                                    .contentShape(Rectangle())
                             }
                             .tint(searching ? .lispGreen : .primary)
                         }
                     }
-                    ToolbarItem(placement: .topBarTrailing) {
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        // Share the current log: plain .log, or a colored .html
+                        // export that preserves the on-screen syntax coloring.
+                        Menu {
+                            ShareLink("Plain text (.log)",
+                                      item: LispLog.logsDirectory
+                                        .appendingPathComponent(component.filename))
+                            Button {
+                                htmlShareURL = Self.htmlFile(for: component)
+                                showHTMLShare = true
+                            } label: { Label("Colored (.html)", systemImage: "paintpalette") }
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
                         Button("Clear") { log.clear(component) }
                     }
+                }
+                .sheet(isPresented: $showHTMLShare) {
+                    if let u = htmlShareURL { ShareSheet(items: [u]) }
                 }
             }
         }
@@ -182,8 +215,10 @@ struct LogsView: View {
     // Color EID tokens "[<iid>]<addr>[/<mask>]" green, rloc-names "<x>@tp-<port>"
     // blue, and RLOC tokens "<addr>[:<port>]" red. Alternatives are ordered so
     // an EID's address / a name's digits aren't also flagged as an RLOC.
+    // Group 4 colors the startup banner's "hostname <name>" blue (it has no
+    // @tp-port, so it wouldn't otherwise match the rloc-name rule).
     private static let tokenRegex = try? NSRegularExpression(
-        pattern: #"(\[\d+\][\d.]+(?:/\d+)?)|([\w.-]+@tp-\d+)|(\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?)"#)
+        pattern: #"(\[\d+\][\d.]+(?:/\d+)?)|([\w.-]+@tp-\d+)|(\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?)|((?<=hostname )[\w.-]+)"#)
 
     static func colored(_ line: String) -> Text {
         // Bold the leading "MM/dd/yy HH:mm:ss.SSS" timestamp (heavier than the
@@ -195,8 +230,28 @@ struct LogsView: View {
             stamp = Text(String(line[r])).bold()
             body = String(line[r.upperBound...])
         }
-        return stamp + tokens(body)
+        // Boldface every protocol keyword in the line (a line can have more than
+        // one, e.g. "Send Map-Request (ECM) ..."); gaps keep token coloring.
+        guard let bold = boldRegex else { return stamp + tokens(body) }
+        let ns = body as NSString
+        var out = stamp
+        var last = 0
+        for m in bold.matches(in: body, range: NSRange(location: 0, length: ns.length)) {
+            if m.range.location > last {
+                out = out + tokens(ns.substring(with: NSRange(location: last,
+                                   length: m.range.location - last)))
+            }
+            out = out + Text(ns.substring(with: m.range)).fontWeight(.black)
+            last = m.range.location + m.range.length
+        }
+        if last < ns.length { out = out + tokens(ns.substring(from: last)) }
+        return out
     }
+
+    // Keywords to boldface. Encap/Decap use a lookahead so only the keyword (not
+    // "Encapsulated…") bolds; longer alternatives precede shorter ones.
+    private static let boldRegex = try? NSRegularExpression(pattern:
+        #"Encap(?= LISP packet)|Decap(?= LISP packet)|RLOC-probe reply|RLOC-probe|Map-Register|Map-Request|Map-Reply|Info-Request|Info-Reply|ECM"#)
 
     // Color EID (green), rloc-name (blue), and RLOC (red) tokens within text.
     private static func tokens(_ s: String) -> Text {
@@ -211,11 +266,104 @@ struct LogsView: View {
             }
             let token = ns.substring(with: m.range)
             let color: Color = m.range(at: 1).location != NSNotFound ? .lispGreen
-                : m.range(at: 2).location != NSNotFound ? .lispBlue : .lispRed
+                : m.range(at: 3).location != NSNotFound ? .lispRed : .lispBlue
             out = out + Text(token).foregroundColor(color)
             last = m.range.location + m.range.length
         }
         if last < ns.length { out = out + Text(ns.substring(from: last)) }
         return out
     }
+
+    // MARK: colored HTML export
+    // Render the on-disk log to an .html file that preserves the same coloring
+    // (EID green, RLOC red, name/hostname blue, bold timestamp + keywords) so a
+    // shared log keeps its syntax highlighting — plain .log/.txt cannot.
+
+    private static func esc(_ s: String) -> String {
+        var r = ""
+        for c in s {
+            switch c {
+            case "&": r += "&amp;"
+            case "<": r += "&lt;"
+            case ">": r += "&gt;"
+            default:  r.append(c)
+            }
+        }
+        return r
+    }
+
+    // HTML for a gap with no keywords: color EID/rloc/name tokens (mirrors tokens()).
+    private static func htmlTokens(_ s: String) -> String {
+        guard let regex = tokenRegex else { return esc(s) }
+        let ns = s as NSString
+        var out = ""
+        var last = 0
+        for m in regex.matches(in: s, range: NSRange(location: 0, length: ns.length)) {
+            if m.range.location > last {
+                out += esc(ns.substring(with: NSRange(location: last,
+                                        length: m.range.location - last)))
+            }
+            let cls = m.range(at: 1).location != NSNotFound ? "eid"
+                : m.range(at: 3).location != NSNotFound ? "rloc" : "name"
+            out += "<span class=\"\(cls)\">\(esc(ns.substring(with: m.range)))</span>"
+            last = m.range.location + m.range.length
+        }
+        if last < ns.length { out += esc(ns.substring(from: last)) }
+        return out
+    }
+
+    // HTML for one log line (mirrors colored(): bold timestamp + keywords).
+    private static func htmlLine(_ line: String) -> String {
+        var body = line
+        var out = ""
+        if let r = line.range(of: #"^\d\d/\d\d/\d\d \d\d:\d\d:\d\d\.\d\d\d"#,
+                              options: .regularExpression) {
+            out = "<span class=\"ts\">\(esc(String(line[r])))</span>"
+            body = String(line[r.upperBound...])
+        }
+        guard let bold = boldRegex else { return out + htmlTokens(body) }
+        let ns = body as NSString
+        var last = 0
+        for m in bold.matches(in: body, range: NSRange(location: 0, length: ns.length)) {
+            if m.range.location > last {
+                out += htmlTokens(ns.substring(with: NSRange(location: last,
+                                  length: m.range.location - last)))
+            }
+            out += "<b>\(esc(ns.substring(with: m.range)))</b>"
+            last = m.range.location + m.range.length
+        }
+        if last < ns.length { out += htmlTokens(ns.substring(from: last)) }
+        return out
+    }
+
+    static func htmlFile(for component: LogComponent) -> URL? {
+        let src = LispLog.logsDirectory.appendingPathComponent(component.filename)
+        let text = (try? String(contentsOf: src, encoding: .utf8)) ?? ""
+        var rows = ""
+        text.enumerateLines { line, _ in rows += Self.htmlLine(line) + "\n" }
+        let doc = """
+        <!DOCTYPE html><html><head><meta charset="utf-8">\
+        <meta name="viewport" content="width=device-width, initial-scale=1">\
+        <title>\(component.filename)</title>\
+        <style>body{background:#fff;color:#111;\
+        font:12px ui-monospace,Menlo,monospace;white-space:pre-wrap;\
+        word-break:break-word;padding:10px}.ts{font-weight:700}\
+        .eid{color:#298C29}.rloc{color:#C71F1F}.name{color:#3366F2}\
+        b{font-weight:800}</style></head><body>\(rows)</body></html>
+        """
+        let out = FileManager.default.temporaryDirectory
+            .appendingPathComponent(component.filename.replacingOccurrences(
+                of: ".log", with: ".html"))
+        try? doc.data(using: .utf8)?.write(to: out)
+        return out
+    }
+}
+
+// UIActivityViewController bridge for sharing the generated .html file.
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
 }

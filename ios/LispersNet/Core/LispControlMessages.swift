@@ -238,6 +238,7 @@ struct LispMapRegister {
     var proxyReply = true
     var wantMapNotify = true
     var mergeRegister = false
+    var mobileNode = true                       // M: this xTR is a mobile node
     var useTTLForTimeout = true
     var xtrIDPresent = true
     var xtrID: (UInt64, UInt64) = (0, 0)        // 128-bit
@@ -253,6 +254,7 @@ struct LispMapRegister {
         if xtrIDPresent { first |= 0x0200_0000 }    // I
         if useTTLForTimeout { first |= 0x800 }      // T
         if mergeRegister { first |= 0x400 }         // R
+        if mobileNode { first |= 0x200 }            // M (mobile-node)
         if wantMapNotify { first |= 0x100 }         // N
         first |= UInt32(recordCount)
         w.u32(first)

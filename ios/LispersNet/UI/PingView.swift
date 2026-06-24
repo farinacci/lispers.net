@@ -20,7 +20,12 @@ struct PingView: View {
 
     var body: some View {
         NavigationStack {
+            ScrollViewReader { proxy in
             List {
+                // While a ping is running, float the live section to the very top
+                // (no header, so the first row lands crisply under the nav bar and
+                // is reachable regardless of how much content is below it).
+                if ping.continuous { activePingSection(floated: true) }
                 Section {
                     Picker("Interval", selection: Binding(
                         get: { ping.interval }, set: { ping.setInterval($0) })) {
@@ -88,47 +93,10 @@ struct PingView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
 
-                // Middle section: live feedback while a ping is in flight.
-                Section {
-                    if ping.inFlight || !ping.active.isEmpty {
-                        HStack(spacing: 8) {
-                            ProgressView()
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Pinging ...").bold()
-                                Text("\(engine.config.eidString) \u{2192} " +
-                                     "\(ping.currentTarget ?? "")")
-                                    .font(.callout.monospaced())
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.5)
-                            }
-                            Spacer()
-                            if ping.continuous {
-                                Button("Stop") { ping.stopContinuous() }
-                                    .buttonStyle(.borderless)
-                                    .foregroundStyle(Color.lispRed)
-                            }
-                        }
-                        TimelineView(.periodic(from: .now, by: 0.2)) { _ in
-                            ForEach(ping.active) { r in
-                                HStack {
-                                    Image(systemName: "dot.radiowaves.left.and.right")
-                                        .foregroundStyle(Color.lispBlue)
-                                    Text("seq \(r.sequence) → \(r.target)")
-                                        .font(.caption.monospaced())
-                                    Spacer()
-                                    Text(String(format: "waiting %.1fs",
-                                                Date().timeIntervalSince(r.sentAt)))
-                                        .font(.caption.monospaced())
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    } else {
-                        Text("No active ping").font(.caption).foregroundStyle(.secondary)
-                    }
-                } header: {
-                    Text("Active Ping").frame(maxWidth: .infinity, alignment: .center)
-                }
+                // In its resting position (not pinging) the live section sits here
+                // in the middle, with its header. While pinging it is floated to
+                // the top of the List instead (see the top of this List).
+                if !ping.continuous { activePingSection(floated: false) }
 
                 Section {
                     if ping.completed.isEmpty {
@@ -176,6 +144,69 @@ struct PingView: View {
             // Backgrounding the app stops the ping immediately.
             .onChange(of: scenePhase) { _, phase in
                 if phase != .active { ping.stopContinuous() }
+            }
+            // When a ping starts, pin the (now top, header-less) live section to
+            // the top of the window so it's seen without manual scrolling.
+            .onChange(of: ping.currentTarget) { _, target in
+                if target != nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation { proxy.scrollTo("activePing", anchor: .top) }
+                    }
+                }
+            }
+            }
+        }
+    }
+
+    // The live-ping rows (or the idle placeholder). The "Pinging ..." row carries
+    // the "activePing" scroll id.
+    @ViewBuilder private var activePingContent: some View {
+        if ping.inFlight || !ping.active.isEmpty {
+            HStack(spacing: 8) {
+                ProgressView()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Pinging ...").bold()
+                    Text("\(engine.config.eidString) \u{2192} \(ping.currentTarget ?? "")")
+                        .font(.callout.monospaced())
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                }
+                Spacer()
+                if ping.continuous {
+                    Button("Stop") { ping.stopContinuous() }
+                        .buttonStyle(.borderless)
+                        .foregroundStyle(Color.lispRed)
+                }
+            }
+            .id("activePing")
+            TimelineView(.periodic(from: .now, by: 0.2)) { _ in
+                ForEach(ping.active) { r in
+                    HStack {
+                        Image(systemName: "dot.radiowaves.left.and.right")
+                            .foregroundStyle(Color.lispBlue)
+                        Text("seq \(r.sequence) → \(r.target)")
+                            .font(.caption.monospaced())
+                        Spacer()
+                        Text(String(format: "waiting %.1fs",
+                                    Date().timeIntervalSince(r.sentAt)))
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        } else {
+            Text("No active ping").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    // Floated == true: no header, so the first row sits crisply at the very top.
+    // Floated == false: resting position in the middle, with the "Active Ping" header.
+    @ViewBuilder private func activePingSection(floated: Bool) -> some View {
+        if floated {
+            Section { activePingContent }
+        } else {
+            Section { activePingContent } header: {
+                Text("Active Ping").frame(maxWidth: .infinity, alignment: .center)
             }
         }
     }

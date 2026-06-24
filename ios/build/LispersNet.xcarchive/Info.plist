@@ -13,9 +13,9 @@
 		<key>CFBundleIdentifier</key>
 		<string>net.lispers.xtr</string>
 		<key>CFBundleShortVersionString</key>
-		<string>0.3</string>
+		<string>0.4</string>
 		<key>CFBundleVersion</key>
-		<string>1</string>
+		<string>2</string>
 		<key>SigningIdentity</key>
 		<string>Apple Development: Dino Farinacci (4NJPLD8H35)</string>
 		<key>Team</key>
@@ -24,7 +24,7 @@
 	<key>ArchiveVersion</key>
 	<integer>2</integer>
 	<key>CreationDate</key>
-	<date>2026-06-19T23:45:07Z</date>
+	<date>2026-06-24T17:43:17Z</date>
 	<key>Name</key>
 	<string>LispersNet</string>
 	<key>SchemeName</key>

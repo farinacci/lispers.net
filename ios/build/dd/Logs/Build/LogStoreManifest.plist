@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>D637A5BA-1E35-4B6E-98F2-AD7488D2DE42</key>
+		<key>B7DD2E1E-FF61-44D2-8157-CF5D5E076040</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,7 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>D637A5BA-1E35-4B6E-98F2-AD7488D2DE42.xcactivitylog</string>
+			<string>B7DD2E1E-FF61-44D2-8157-CF5D5E076040.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -40,13 +40,55 @@
 			<key>signature</key>
 			<string>Building project LispersNet with scheme LispersNet</string>
 			<key>timeStartedRecording</key>
-			<real>803780416.23785102</real>
+			<real>804015662.87065601</real>
 			<key>timeStoppedRecording</key>
-			<real>803780420.07570302</real>
+			<real>804015668.73711395</real>
 			<key>title</key>
 			<string>Building project LispersNet with scheme LispersNet</string>
 			<key>uniqueIdentifier</key>
-			<string>D637A5BA-1E35-4B6E-98F2-AD7488D2DE42</string>
+			<string>B7DD2E1E-FF61-44D2-8157-CF5D5E076040</string>
+		</dict>
+		<key>FF3576E2-BA9A-4CC4-AC60-ED7039CDE333</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>FF3576E2-BA9A-4CC4-AC60-ED7039CDE333.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>2</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>LispersNet project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>LispersNet</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project LispersNet with scheme LispersNet</string>
+			<key>timeStartedRecording</key>
+			<real>804013678.11965001</real>
+			<key>timeStoppedRecording</key>
+			<real>804013681.97648394</real>
+			<key>title</key>
+			<string>Building project LispersNet with scheme LispersNet</string>
+			<key>uniqueIdentifier</key>
+			<string>FF3576E2-BA9A-4CC4-AC60-ED7039CDE333</string>
 		</dict>
 	</dict>
 </dict>

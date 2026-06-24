@@ -7,7 +7,7 @@
         "key": "version %@",
         "location": {
           "startingColumn": 18,
-          "startingLine": 44
+          "startingLine": 54
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "Map-Cache",
         "location": {
           "startingColumn": 34,
-          "startingLine": 69
+          "startingLine": 79
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "Logs",
         "location": {
           "startingColumn": 34,
-          "startingLine": 72
+          "startingLine": 82
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "Ping",
         "location": {
           "startingColumn": 34,
-          "startingLine": 75
+          "startingLine": 85
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "LIG",
         "location": {
           "startingColumn": 34,
-          "startingLine": 78
+          "startingLine": 88
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "xTR",
         "location": {
           "startingColumn": 34,
-          "startingLine": 81
+          "startingLine": 91
         }
       },
       {
@@ -55,23 +55,31 @@
         "key": "behind NAT",
         "location": {
           "startingColumn": 26,
-          "startingLine": 120
+          "startingLine": 130
         }
       },
       {
         "comment": "",
-        "key": "LISP enabled",
+        "key": "LISP is active",
         "location": {
           "startingColumn": 39,
-          "startingLine": 116
+          "startingLine": 126
         }
       },
       {
         "comment": "",
-        "key": "LISP disabled",
+        "key": "LISP is inactive",
         "location": {
-          "startingColumn": 56,
-          "startingLine": 116
+          "startingColumn": 58,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hostname ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 139
         }
       },
       {
@@ -79,7 +87,7 @@
         "key": "EID ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 129
+          "startingLine": 141
         }
       },
       {
@@ -87,7 +95,7 @@
         "key": "RLOC ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 132
+          "startingLine": 144
         }
       },
       {
@@ -95,7 +103,7 @@
         "key": "translated RLOC:port ",
         "location": {
           "startingColumn": 30,
-          "startingLine": 136
+          "startingLine": 148
         }
       },
       {
@@ -103,7 +111,7 @@
         "key": "%@:%@",
         "location": {
           "startingColumn": 30,
-          "startingLine": 137
+          "startingLine": 149
         }
       },
       {
@@ -111,7 +119,7 @@
         "key": "registers sent ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 140
+          "startingLine": 152
         }
       }
     ]

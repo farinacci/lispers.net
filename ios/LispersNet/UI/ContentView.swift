@@ -22,8 +22,18 @@ final class KeyboardObserver: ObservableObject {
     @Published var isVisible = false
     init() {
         let nc = NotificationCenter.default
-        nc.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil,
-                       queue: .main) { [weak self] _ in self?.isVisible = true }
+        // Derive visibility from the keyboard's END FRAME rather than pairing
+        // willShow/willHide events: interactive dismissal (scrollDismissesKeyboard)
+        // and rapid focus changes — as happens after a lig — can drop a "hide",
+        // which left isVisible stuck true and the tab bar permanently hidden.
+        nc.addObserver(forName: UIResponder.keyboardWillChangeFrameNotification,
+                       object: nil, queue: .main) { [weak self] note in
+            guard let end = (note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey]
+                                as? NSValue)?.cgRectValue else { return }
+            let screenH = UIScreen.main.bounds.height
+            self?.isVisible = end.minY < screenH - 1      // keyboard on screen
+        }
+        // Belt-and-suspenders: an explicit hide always clears the flag.
         nc.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil,
                        queue: .main) { [weak self] _ in self?.isVisible = false }
     }
@@ -36,7 +46,7 @@ struct ContentView: View {
     @Environment(\.verticalSizeClass) private var vSizeClass
 
     // App version string — bump on request.
-    static let version = "0.3-12"
+    static let version = "0.4"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -113,7 +123,7 @@ struct StatusHeader: View {
                 Circle()
                     .fill(engine.running ? Color.lispGreen : Color.gray)
                     .frame(width: 10, height: 10)
-                Text(engine.running ? "LISP enabled" : "LISP disabled")
+                Text(engine.running ? "LISP is active" : "LISP is inactive")
                     .font(.headline)
                 Spacer()
                 if engine.behindNAT {
@@ -126,6 +136,8 @@ struct StatusHeader: View {
             }
             if engine.running {
                 Group {
+                    Text("Hostname ").foregroundStyle(.secondary) +
+                    Text(engine.xtrName).foregroundStyle(Color.lispBlue).bold()
                     Text("EID ").foregroundStyle(.secondary) +
                     Text(config.eidString.isEmpty ? "unconfigured" : config.eidString)
                         .foregroundStyle(Color.lispGreen).bold()

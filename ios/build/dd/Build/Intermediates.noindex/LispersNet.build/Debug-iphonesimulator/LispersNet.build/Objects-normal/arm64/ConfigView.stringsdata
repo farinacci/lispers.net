@@ -7,7 +7,7 @@
         "key": "lispers.net xTR",
         "location": {
           "startingColumn": 30,
-          "startingLine": 186
+          "startingLine": 188
         }
       },
       {
@@ -15,39 +15,39 @@
         "key": "Enable LISP",
         "location": {
           "startingColumn": 28,
-          "startingLine": 26
-        }
-      },
-      {
-        "comment": "",
-        "key": "IID:",
-        "location": {
-          "startingColumn": 34,
-          "startingLine": 39
-        }
-      },
-      {
-        "comment": "",
-        "key": "0",
-        "location": {
-          "startingColumn": 39,
-          "startingLine": 40
+          "startingLine": 29
         }
       },
       {
         "comment": "",
         "key": "EID:",
         "location": {
-          "startingColumn": 34,
-          "startingLine": 49
+          "startingColumn": 30,
+          "startingLine": 41
+        }
+      },
+      {
+        "comment": "",
+        "key": "IID:",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 51
         }
       },
       {
         "comment": "",
         "key": "240.10.0.100",
         "location": {
-          "startingColumn": 39,
-          "startingLine": 50
+          "startingColumn": 35,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "0",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 52
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": "RLOC-probing",
         "location": {
           "startingColumn": 28,
-          "startingLine": 65
+          "startingLine": 67
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "NAT-traversal",
         "location": {
           "startingColumn": 28,
-          "startingLine": 71
+          "startingLine": 73
         }
       },
       {
@@ -71,79 +71,7 @@
         "key": "Decentralized-NAT",
         "location": {
           "startingColumn": 28,
-          "startingLine": 83
-        }
-      },
-      {
-        "comment": "",
-        "key": "Modulus: %lld",
-        "location": {
-          "startingColumn": 29,
-          "startingLine": 110
-        }
-      },
-      {
-        "comment": "",
-        "key": "EID registers to",
-        "location": {
-          "startingColumn": 40,
-          "startingLine": 122
-        }
-      },
-      {
-        "comment": "",
-        "key": "Suffix:",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 102
-        }
-      },
-      {
-        "comment": "",
-        "key": "suffix, e.g. ms.example.com",
-        "location": {
-          "startingColumn": 35,
-          "startingLine": 103
-        }
-      },
-      {
-        "comment": "",
-        "key": "Auth-key:",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 114
-        }
-      },
-      {
-        "comment": "",
-        "key": "authentication-key",
-        "location": {
-          "startingColumn": 37,
-          "startingLine": 115
-        }
-      },
-      {
-        "comment": "",
-        "key": "add prefix",
-        "location": {
-          "startingColumn": 32,
-          "startingLine": 150
-        }
-      },
-      {
-        "comment": "",
-        "key": "done",
-        "location": {
-          "startingColumn": 50,
-          "startingLine": 157
-        }
-      },
-      {
-        "comment": "",
-        "key": "edit/delete prefix",
-        "location": {
-          "startingColumn": 59,
-          "startingLine": 157
+          "startingLine": 85
         }
       },
       {
@@ -151,7 +79,7 @@
         "key": "Control-plane",
         "location": {
           "startingColumn": 28,
-          "startingLine": 168
+          "startingLine": 103
         }
       },
       {
@@ -159,7 +87,95 @@
         "key": "Data-plane",
         "location": {
           "startingColumn": 28,
-          "startingLine": 174
+          "startingLine": 109
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modulus: %lld",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "EID registers to",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 141
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suffix:",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 121
+        }
+      },
+      {
+        "comment": "",
+        "key": "suffix, e.g. ms.example.com",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 122
+        }
+      },
+      {
+        "comment": "",
+        "key": "Auth-key:",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "authentication-key",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 134
+        }
+      },
+      {
+        "comment": "",
+        "key": "add prefix",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 169
+        }
+      },
+      {
+        "comment": "",
+        "key": "done",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 176
+        }
+      },
+      {
+        "comment": "",
+        "key": "edit/delete prefix",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 176
+        }
+      },
+      {
+        "comment": "",
+        "key": "lispers.net xTR — %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 231
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lookup prefixes:",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 266
         }
       },
       {
@@ -167,7 +183,7 @@
         "key": "lookup-len:",
         "location": {
           "startingColumn": 18,
-          "startingLine": 218
+          "startingLine": 305
         }
       },
       {
@@ -175,7 +191,7 @@
         "key": "eid-prefix, e.g. 240.11.0.0/16",
         "location": {
           "startingColumn": 23,
-          "startingLine": 210
+          "startingLine": 297
         }
       },
       {
@@ -183,7 +199,7 @@
         "key": "?",
         "location": {
           "startingColumn": 23,
-          "startingLine": 221
+          "startingLine": 308
         }
       }
     ]

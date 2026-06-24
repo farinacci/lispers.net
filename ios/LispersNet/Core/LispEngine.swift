@@ -209,8 +209,14 @@ final class LispEngine: ObservableObject {
         guard var eid = LispAddress(string: LISP.decentNatEID) else { return }
         eid.maskLen = LISP.decentNatMaskLen
         eid.instanceID = UInt32(config.instanceID)
-        mapCache.remove(eidPrefix: eid)
-        log.fprint(.core, "Removed static map-cache entry \(LISP.decentNatEID)/\(LISP.decentNatMaskLen)")
+        mapCache.remove(eidPrefix: eid)         // the 240/8 send-map-request entry
+        // Disabling decent-NAT invalidates everything we learned through it — flush
+        // the dynamic (learned) entries but keep the static defaults (RTR 0/0, ::/0,
+        // and the (S,G) multicast defaults).
+        mapCache.clearDynamic()
+        log.fprint(.core, "Removed decent-NAT \(LISP.decentNatEID)/" +
+                   "\(LISP.decentNatMaskLen) entry and flushed learned map-cache entries " +
+                   "(kept defaults)")
         bumpMapCache()
     }
 

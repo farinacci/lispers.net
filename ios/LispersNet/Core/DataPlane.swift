@@ -84,9 +84,22 @@ extension LispEngine {
     func processDataPacket(_ data: Data, from: LispAddress, sourcePort: UInt16,
                            receivedTTL: Int = -1) {
         guard data.count >= 4 else { return }
-        log.dprint(.etr, "Receive \(data.count) bytes from " +
-                   "\(from.addressString) \(sourcePort), packet: " +
-                   lispFormatPacket(data))
+        // The data socket carries both real data packets AND control (Info-Replies,
+        // RLOC-probe replies, 0xffffff relays). Log a real data packet under the
+        // data-plane scope; log control under control-plane. (Map-Req/Reply (type
+        // 1/2) are handed to processControlPacket, which logs its own receive.)
+        let nibble = data[data.startIndex] >> 4
+        let isRelay = data.count > 8 && LispDataHeader.decode(data)?.instanceID == LISP.infoIID
+        let recvMsg = "Receive \(data.count) bytes from \(from.addressString) " +
+                      "\(sourcePort), packet: \(lispFormatPacket(data))"
+        if isRelay {
+            log.lprint(.itr, recvMsg)         // 0xffffff relay = RLOC-probe traffic -> itr
+        } else if nibble >= 8 {
+            log.dprint(.etr, recvMsg)         // real data packet -> data-plane (etr)
+        } else if nibble == LISP.typeNatInfo {
+            log.lprint(.etr, recvMsg)         // raw Info-Reply -> etr (register/NAT)
+        }
+        // raw type 1/2 (RLOC-probe) -> processControlPacket logs its own receive
 
         // The reply to a data-port Info-Request comes back RAW (unwrapped) on
         // the data port — lisp_process_info_request sends it straight to our
