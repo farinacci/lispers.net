@@ -1,3 +1,36 @@
+    
+                  lispers.net IOS Release Version 0.4
+                  -----------------------------------
+
+o Release date: Wed Jun 24 11:30:03 PDT 2026
+
+o Commit IOS version 0.3 which is a lispers.net IOS implementation with IPv4 xTR support
+  for NAT-traversal, decentralize-NAT, in-app pings from EID to EID, lig support,
+  viewing logs and map-cache in your favorite lispers.net format and coloring. Uses
+  the LISP-Decent mapping system only and assumes the EID address range is 240.0.0.0/8.
+  Interoperates with the lispers.net python xTR, RTR, and Map-Server implementations.
+  The app, right now, only supports ping packet originattion and reception within
+  the app. Other external apps can't send on the overlay just yet.
+
+o Commit IOS version 0.4 with these changes:
+  - Fix intermittent lig failures, especially through cellular networks.    
+  - Put spacing in lig output when debug switch enabled.
+  - Put wifi name on xTR page.
+  - Add more detail to "Pinging ..." message.
+  - When changing from decent-nat enabled to disabled, remove all map-cache
+    entries other the than unicast and multicast default entries.
+  - Make some log file changes to emphasize important events. Boldface message types.
+  - Have the xTR register with M-bit set indicating to the mapping system the
+    xTR is a mobile-node. We can use this fact to have remote ITRs send
+    subscribe-requests for fast changing RLOC translated addresses/ports.
+  - Put share button in Logs display to share a particular log file. The file shared
+    can be in txt or html colored format.
+  - Have Active Ping jump to the top so yo can see more of the ping action.
+  - Put a share button on the xTR tab display so a user can share the configuration
+    with development support.
+  - Put hostname on "LISP is active" in summary of xTR tab display.
+  
+-------------------------------------------------------------------------------
 
                   lispers.net Release Version 0.633
                   ---------------------------------
