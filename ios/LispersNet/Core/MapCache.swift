@@ -77,19 +77,19 @@ final class LispMapCacheEntry {
         return Date().timeIntervalSince(lastRefresh) >= ttl
     }
 
-    func selectRLOC(for inner: Data? = nil) -> LispRLOC? {
+    // hashL4 false → hash inner src+dst ONLY (consistent per flow). Multicast uses
+    // this so a given (S,G) always picks the SAME RTR (the RTR then replicates);
+    // unicast defaults to LISP_LOAD_SPLIT_PINGS (adds 4 L4 bytes so successive
+    // pings spread across the best tier).
+    func selectRLOC(for inner: Data? = nil, hashL4: Bool = LISP.loadSplitPings) -> LispRLOC? {
         let up = rlocSet.filter { $0.isUp }
         // best_rloc_set (lisp.py): the up RLOCs at the best (lowest) priority.
         guard let bestPri = up.map({ $0.priority }).min() else { return nil }
         let best = up.filter { $0.priority == bestPri }
         if best.count == 1 { return best[0] }
-        // Per-packet load-split across the best tier (LISP_LOAD_SPLIT_PINGS,
-        // default on). Hash inner src/dst + 4 L4 bytes; for ICMP those include the
-        // per-ping checksum, so successive pings spread across the RLOCs — e.g.
-        // both RTRs stay active when the direct RLOC is down.
-        if let inner = inner, inner.count >= 24, inner.first.map({ $0 >> 4 }) == 4 {
+        let n = hashL4 ? 12 : 8                          // src+dst(+4 L4 for split)
+        if let inner = inner, inner.count >= 12 + n, inner.first.map({ $0 >> 4 }) == 4 {
             let b = inner.startIndex
-            let n = LISP.loadSplitPings ? 12 : 8        // src+dst(+4 L4 for split)
             var h: UInt8 = 0
             for i in 12..<(12 + n) { h ^= inner[b + i] }
             return best[Int(h) % best.count]
@@ -110,6 +110,21 @@ final class LispMapCache {
             .max { $0.eid.maskLen < $1.eid.maskLen }
     }
 
+    // (S,G) lookup: longest match on the GROUP (destination) first, then on the
+    // SOURCE within the matched group — lisp_map_cache_lookup, lisp.py:11674.
+    func lookupMulticast(source: LispAddress, group: LispAddress) -> LispMapCacheEntry? {
+        lock.lock(); defer { lock.unlock() }
+        return entries
+            .filter { $0.isMulticast && !$0.hasExpired
+                && group.isMoreSpecific(than: $0.group)
+                && source.isMoreSpecific(than: $0.eid) }
+            .max { a, b in
+                a.group.maskLen != b.group.maskLen
+                    ? a.group.maskLen < b.group.maskLen
+                    : a.eid.maskLen < b.eid.maskLen
+            }
+    }
+
     func add(_ entry: LispMapCacheEntry) {
         lock.lock(); defer { lock.unlock() }
         entries.removeAll { $0.eid == entry.eid && $0.group == entry.group }
@@ -117,9 +132,11 @@ final class LispMapCache {
         entries.sort { ($0.eid.maskLen, $0.eid.v4) < ($1.eid.maskLen, $1.eid.v4) }
     }
 
-    func remove(eidPrefix: LispAddress) {
+    // Remove the entry for this (eid, group) pair. Default null group removes the
+    // unicast entry without disturbing (eid, *) multicast variants.
+    func remove(eidPrefix: LispAddress, group: LispAddress = LispAddress()) {
         lock.lock(); defer { lock.unlock() }
-        entries.removeAll { $0.eid == eidPrefix }
+        entries.removeAll { $0.eid == eidPrefix && $0.group == group }
     }
 
     func clearDynamic() {

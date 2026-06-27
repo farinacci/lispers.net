@@ -22,6 +22,9 @@ final class LispEngine: ObservableObject {
     @Published var registrationsSent = 0
     @Published var lastMapNotify: Date?
     @Published var mapCacheVersion = 0      // bumped to refresh the UI
+    // group addressString -> "<decent dns> (<resolved addr>)" of its map-server,
+    // shown under each joined group in the Ping tab.
+    @Published var groupMapServers: [String: String] = [:]
 
     // Sockets — control bound to 4342, data bound to 4341.
     var ctrlSocket: UDPSocket?
@@ -115,9 +118,11 @@ final class LispEngine: ObservableObject {
             sendInfoRequests()
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
                 self?.sendMapRegisters()
+                self?.sendGroupRegisters()
             }
         } else {
             sendMapRegisters()
+            sendGroupRegisters()
         }
 
         startTimers()
@@ -145,10 +150,63 @@ final class LispEngine: ObservableObject {
         log.fprint(.core, "LISP xTR disabled")
     }
 
+    // MARK: app-background lifecycle
+    //
+    // iOS reclaims our UDP sockets while the app is suspended. If we leave the
+    // DispatchSourceRead and the repeating timers live across a suspend, on resume
+    // they touch a dead/reused fd and the app crashes (EXC_GUARD/EXC_BAD_ACCESS) —
+    // the "screen blanks, swipe up, crash" signature. So on .background we proactively
+    // tear down the network (cancel sources+timers, close sockets) BEFORE iOS suspends
+    // us, and on .active we rebuild it. Learned state (map-cache, RTR list, NAT info)
+    // is preserved — only the transport is recycled.
+    private var networkSuspended = false
+
+    func suspendNetwork() {
+        guard running, !networkSuspended else { return }
+        networkSuspended = true
+        timers.forEach { $0.invalidate() }
+        timers.removeAll()
+        pathWatcher.stop()
+        ctrlSocket?.shutdown(); ctrlSocket = nil
+        dataSocket?.shutdown(); dataSocket = nil
+        log.fprint(.core, "Network suspended (app backgrounded)")
+    }
+
+    func resumeNetwork() {
+        guard running, networkSuspended else { return }
+        networkSuspended = false
+        let behindNATConfigured = config.natTraversalEnabled || config.decentNATEnabled
+        let dataBind: UInt16 = behindNATConfigured ? LISP.natDataPort : LISP.dataPort
+        guard let ctrl = UDPSocket(localPort: LISP.ctrlPort, queue: socketQueue),
+              let data = UDPSocket(localPort: dataBind, queue: socketQueue) else {
+            log.fprint(.core, "Could not re-bind UDP sockets on resume — disabling")
+            disable()
+            return
+        }
+        ctrlSocket = ctrl
+        dataSocket = data
+        ctrl.startReceiving { [weak self] d, from, port, ttl in
+            self?.processControlPacket(d, from: from, sourcePort: port, receivedTTL: ttl)
+        }
+        data.startReceiving { [weak self] d, from, port, ttl in
+            self?.processDataPacket(d, from: from, sourcePort: port, receivedTTL: ttl)
+        }
+        startTimers()
+        pathWatcher.start { [weak self] in self?.pathChanged() }
+        // NAT bindings expired while suspended — refresh registration/NAT state on
+        // the fresh sockets (this is what the App used to do on .active, but it was
+        // sending on the DEAD sockets).
+        if behindNATConfigured { sendInfoRequests() }
+        sendMapRegisters()
+        sendGroupRegisters()
+        log.fprint(.core, "Network resumed (app foregrounded)")
+    }
+
     private func startTimers() {
         let register = Timer.scheduledTimer(withTimeInterval: LISP.mapRegisterInterval,
                                             repeats: true) { [weak self] _ in
             self?.sendMapRegisters()
+            self?.sendGroupRegisters()
         }
         let probe = Timer.scheduledTimer(withTimeInterval: LISP.rlocProbeInterval,
                                          repeats: true) { [weak self] _ in
@@ -186,6 +244,7 @@ final class LispEngine: ObservableObject {
                     self.sendInfoRequests()
                 }
                 self.sendMapRegisters()
+                self.sendGroupRegisters()
             }
         }
     }

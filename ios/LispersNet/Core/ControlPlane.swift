@@ -42,11 +42,25 @@ extension LispEngine {
     func logEIDRecords(_ comp: LogComponent,
                        _ records: [(eid: LispEIDRecord, rlocs: [LispRLOCRecord])]) {
         for (eidRec, rlocs) in records {
+            let eidStr = eidRec.group.isNull ? eidRec.eid.prefixString
+                : "[\(eidRec.eid.instanceID)](\(eidRec.eid.addressString)/\(eidRec.eid.maskLen), " +
+                  "\(eidRec.group.addressString)/\(eidRec.group.maskLen))"
             log.lprint(comp, "  EID-record -> record-ttl: \(ttlString(eidRec.recordTTL)), " +
                        "rloc-count: \(rlocs.count), action: \(LISP.actionString(eidRec.action)), " +
                        "\(eidRec.authoritative ? "auth" : "non-auth"), map-version: 0, " +
-                       "afi: \(eidRec.eid.afi), [iid]eid/ml: \(eidRec.eid.prefixString)")
+                       "afi: \(eidRec.eid.afi), [iid]eid/ml: \(eidStr)")
             for r in rlocs {
+                if !r.rle.isEmpty {
+                    let nm = r.rlocName.map { ", rloc-name: \($0)" } ?? ""
+                    log.lprint(comp, "    RLOC-record -> flags: \(rlocFlags(r)), " +
+                               "\(r.priority)/\(r.weight)/\(r.mpriority)/\(r.mweight), " +
+                               "no-address\(nm)")
+                    for n in r.rle {
+                        let nnm = n.rlocName.map { " \($0)" } ?? ""
+                        log.lprint(comp, "      rle: \(n.rloc.addressString)\(nnm)")
+                    }
+                    continue
+                }
                 var line = "    RLOC-record -> flags: \(rlocFlags(r)), " +
                            "\(r.priority)/\(r.weight)/\(r.mpriority)/\(r.mweight), " +
                            "afi: \(r.rloc.afi), rloc: \(r.rloc.addressString)"
@@ -110,11 +124,17 @@ extension LispEngine {
         rlocRecord.localBit = true
         rlocRecord.reachBit = true
         if behindNAT {
-            // Translated RLOC carries "<xtr>@tp-<translated-data-port>" so peers
-            // know which NAT-translated port to send encapsulated data to
-            // (store_translated_rloc, lisp.py:13765).
-            let port = translatedPort != 0 ? translatedPort : LISP.dataPort
-            rlocRecord.rlocName = "\(xtrName)\(LISP.tpPrefix)\(port)"
+            // Advertise "<xtr>@tp-<data-socket-port>" = LISP.natDataPort (41341),
+            // the port our DATA plane sends encap + RLOC-probe traffic FROM, hence
+            // what an RTR/peer observes it arriving ON. lisp.py parses this @tp port
+            // and uses it as the RLOC port for probe-reply matching (lisp.py:18367),
+            // so it MUST equal the RTR's data-path observation. Do NOT use the port
+            // learned from Info-Replies: those reflect the CONTROL path (sent to
+            // :4342) and under symmetric NAT differ per-destination from the data
+            // path (MS sees 29292 while the RTR's data path sees 41341) — which read
+            // our RLOC unreach despite data flowing. (store_translated_rloc,
+            // lisp.py:13765.)
+            rlocRecord.rlocName = "\(xtrName)\(LISP.tpPrefix)\(LISP.natDataPort)"
         }
 
         var records = [rlocRecord]
@@ -171,6 +191,139 @@ extension LispEngine {
         logEIDRecords(.etr, [(eid: eidRecord, rlocs: records)])
         loggedSend(packet, to: msAddr, port: LISP.ctrlPort, on: ctrlSocket, .etr)
         DispatchQueue.main.async { self.registrationsSent += 1 }
+    }
+
+    // MARK: - Multicast group registration (lisp_send_multicast_map_register)
+
+    // Register every joined group as (0.0.0.0/0, G/32) so ITRs/RTRs can find the
+    // replication list. One Map-Register per group (each hashes to its own decent
+    // map-server, on the GROUP — lisp-etr.py: "use group address and no source as
+    // part of hash").
+    func sendGroupRegisters() {
+        guard running, rloc != nil else { return }
+        let iid = UInt32(config.instanceID)
+        for gstr in config.joinedGroups {
+            guard var group = LispAddress(string: gstr, iid: iid), group.isMulticast
+            else { continue }
+            group.maskLen = 32
+            sendGroupRegister(group: group, ttl: LISP.multicastRegisterTTL)
+        }
+    }
+
+    // Build/send one group Map-Register (merge bit + an RLE locator with this xTR
+    // at level 128). ttl 0 de-registers the group.
+    func sendGroupRegister(group: LispAddress, ttl: UInt32) {
+        guard let myRLOC = rloc else { return }
+        guard let (msAddr, msConf) = mapServerFor(eid: group) else {
+            log.lprint(.etr, "No map-server for group \(group.addressString), deferring")
+            return
+        }
+        // Surface the destination map-server (DNS name) in the Ping tab's group row.
+        let msName = msConf.dnsNameOrAddress.isEmpty ? msAddr.addressString
+            : msConf.dnsNameOrAddress
+        let gKey = group.addressString
+        DispatchQueue.main.async { self.groupMapServers[gKey] = msName }
+        var src = LispAddress(string: "0.0.0.0", iid: group.instanceID)!
+        src.maskLen = 0                                 // source 0.0.0.0/0
+
+        var eidRec = LispEIDRecord()
+        eidRec.recordTTL = ttl
+        eidRec.eid = src
+        eidRec.group = group
+        eidRec.authoritative = true
+
+        // The receiver RLOC-record: an RLE node at level 128 with our (NAT-
+        // translated) RLOC, main RLOC null, priorities 255/0/1/100 — unusable for
+        // unicast, usable for multicast (lisp_send_multicast_map_register). The
+        // receiver hostname (plain, no @tp) goes on the RLOC RECORD, and the RLE
+        // node stays nameless. The map-server's RLE merge (merge_rles_in_site_eid)
+        // SOURCES the per-node name from registered_rlocs[0].rloc_name — the RECORD
+        // name — and promotes it onto each merged node, then clears the record name.
+        // So a record-level name is what makes the merged-reply / lig show the name
+        // per member (matching frt/cmh / lisp-etr.py:940). A node-level name is NOT
+        // read by the merge and would come back empty.
+        var node = RLENode()
+        node.level = 128
+        node.rloc = behindNAT ? (translatedRLOC ?? myRLOC.address) : myRLOC.address
+        var rleRec = LispRLOCRecord()
+        rleRec.priority = 255; rleRec.weight = 0
+        rleRec.mpriority = 1; rleRec.mweight = 100
+        rleRec.localBit = true; rleRec.reachBit = true
+        rleRec.rloc = LispAddress()                     // no-address main RLOC
+        rleRec.rlocName = xtrName                        // hostname; merge promotes to node
+        rleRec.rle = [node]
+
+        // The RTRs at priority 254 (rloc-count = 1 + rtr-count). The MS/RTR uses
+        // these to replicate; without them the register's RLOC-set is incomplete.
+        var rtrRecs: [LispRLOCRecord] = []
+        for rtr in rtrList {
+            var r = LispRLOCRecord()
+            r.rloc = rtr
+            r.priority = 254; r.weight = 0
+            r.mpriority = 255; r.mweight = 0
+            r.localBit = false; r.reachBit = true
+            r.rlocName = "RTR"
+            rtrRecs.append(r)
+        }
+
+        let allRecs = [rleRec] + rtrRecs
+        eidRec.rlocCount = UInt8(allRecs.count)
+
+        var recordData = eidRec.encode()
+        for r in allRecs { recordData.append(r.encode()) }
+
+        var register = LispMapRegister()
+        register.nonce = lispGetControlNonce()
+        register.recordCount = 1
+        register.wantMapNotify = false
+        register.mergeRegister = true                   // merge receivers into one RLE
+        register.mobileNode = false                     // m clear (match the ETR)
+        register.useTTLForTimeout = false               // t clear
+        register.xtrID = xtrID
+        register.siteID = config.siteID
+        register.algID = msConf.authAlg == "sha1" ? LISP.sha1AlgID : LISP.sha2AlgID
+        register.keyID = 0
+        let packet = register.encode(eidRecords: recordData, password: msConf.authKey)
+
+        let act = ttl == 0 ? "de-register" : "register"
+        log.lprint(.etr, "Send group Map-Register (\(act), merge) to map-server " +
+                   "\(msAddr.addressString), (\(src.addressString)/0, \(group.addressString)/32), " +
+                   "RLE-node \(node.rloc.addressString), + \(rtrRecs.count) RTR(s)")
+        logEIDRecords(.etr, [(eid: eidRec, rlocs: allRecs)])
+        loggedSend(packet, to: msAddr, port: LISP.ctrlPort, on: ctrlSocket, .etr)
+    }
+
+    // The joined groups parsed as /32 host addresses (data-plane accept check).
+    var joinedGroupAddresses: [LispAddress] {
+        let iid = UInt32(config.instanceID)
+        return config.joinedGroups.compactMap { s in
+            guard var a = LispAddress(string: s, iid: iid), a.isMulticast else { return nil }
+            a.maskLen = 32
+            return a
+        }
+    }
+
+    func joinGroup(_ groupString: String) {
+        guard let g = LispAddress(string: groupString), g.isMulticast else { return }
+        let canon = g.addressString
+        if !config.joinedGroups.contains(canon) {
+            config.joinedGroups.append(canon)
+            config.save()
+        }
+        guard running else { return }
+        var grp = g; grp.maskLen = 32; grp.instanceID = UInt32(config.instanceID)
+        sendGroupRegister(group: grp, ttl: LISP.multicastRegisterTTL)
+    }
+
+    func leaveGroup(_ groupString: String) {
+        guard let g = LispAddress(string: groupString), g.isMulticast else { return }
+        if running {
+            var grp = g; grp.maskLen = 32; grp.instanceID = UInt32(config.instanceID)
+            sendGroupRegister(group: grp, ttl: 0)       // de-register
+        }
+        config.joinedGroups.removeAll { $0 == g.addressString }
+        groupMapServers[g.addressString] = nil
+        config.save()
     }
 
     // MARK: - Info-Request (lisp_send_info_request, lisp.py:16376)
@@ -504,9 +657,12 @@ extension LispEngine {
         rlocRec.localBit = true
         rlocRec.probeBit = true
         rlocRec.reachBit = true
+        // Same "<xtr>@tp-<data-socket-port>" the register advertises (see
+        // sendMapRegister): the @tp port must be our DATA-path port (LISP.natDataPort)
+        // so lisp.py's probe-reply matching (lisp.py:18367) lands on the port the RTR
+        // observes our traffic on (41341), not the control-path Info-Reply port.
         if behindNAT {
-            let port = translatedPort != 0 ? translatedPort : LISP.dataPort
-            rlocRec.rlocName = "\(xtrName)\(LISP.tpPrefix)\(port)"
+            rlocRec.rlocName = "\(xtrName)\(LISP.tpPrefix)\(LISP.natDataPort)"
         }
 
         var records: [LispRLOCRecord] = [rlocRec]
@@ -613,7 +769,17 @@ extension LispEngine {
                               receivedTTL: Int = -1) {
         guard data.count >= 4 else { return }
         let type = data[data.startIndex] >> 4
-        log.lprint(.core, "Receive \(data.count) bytes from \(from.addressString) " +
+        // Log the raw receive under the scope that will process it, so an
+        // RLOC-probe reply (Map-Reply) — or an incoming probe (Map-Request) —
+        // shows a "Receive ..." line in lisp-itr.log right above its Map-Reply
+        // breakdown, the way Info-Replies / data packets do in lisp-etr.log.
+        let recvComp: LogComponent
+        switch type {
+        case LISP.typeMapReply, LISP.typeMapRequest: recvComp = .itr
+        case LISP.typeMapNotify, LISP.typeNatInfo:    recvComp = .etr
+        default:                                      recvComp = .core
+        }
+        log.lprint(recvComp, "Receive \(data.count) bytes from \(from.addressString) " +
                    "\(sourcePort), packet: \(lispFormatPacket(data))")
         switch type {
         case LISP.typeMapReply:

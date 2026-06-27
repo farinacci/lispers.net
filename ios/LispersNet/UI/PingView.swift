@@ -9,12 +9,16 @@ import SwiftUI
 
 struct PingView: View {
     @EnvironmentObject var engine: LispEngine
+    @EnvironmentObject var config: LispConfig
     @EnvironmentObject var hosts: HostsFile
     @EnvironmentObject var ping: PingService
     @State private var editingHosts = false
     @State private var customEID = ""
     @FocusState private var eidFocused: Bool
+    @State private var showAllResults = false
     @Environment(\.scenePhase) private var scenePhase
+
+    private static let resultsCollapsedCount = 10
 
     private var customTrimmed: String { customEID.trimmingCharacters(in: .whitespaces) }
 
@@ -22,10 +26,29 @@ struct PingView: View {
         NavigationStack {
             ScrollViewReader { proxy in
             List {
+                // Zero-height true-top anchor. Scrolling here on stop lands at
+                // content-offset 0, where List keeps the nav-bar safe-area inset —
+                // so the "Ping an EID" header rests cleanly below the bar instead of
+                // tucking up under its translucent blur (the "ghosted header" bug).
+                // Wrapped in a zero-spacing Section so it adds no visible gap.
+                Section {
+                    Color.clear
+                        .frame(height: 0)
+                        .id("list-top")
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                }
+                .listSectionSpacing(0)
+
                 // While a ping is running, float the live section to the very top
                 // (no header, so the first row lands crisply under the nav bar and
-                // is reachable regardless of how much content is below it).
-                if ping.continuous { activePingSection(floated: true) }
+                // is reachable regardless of how much content is below it), with the
+                // Results right beneath it so replies stream in under "Pinging…".
+                if ping.continuous {
+                    activePingSection(floated: true)
+                    resultsSection
+                }
                 Section {
                     Picker("Interval", selection: Binding(
                         get: { ping.interval }, set: { ping.setInterval($0) })) {
@@ -92,42 +115,13 @@ struct PingView: View {
                     Text("Ping an EID (from \(engine.config.eidString.isEmpty ? "our EID" : "EID \(engine.config.eidString)"))")
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
+                .id("ping-top")
 
-                // In its resting position (not pinging) the live section sits here
-                // in the middle, with its header. While pinging it is floated to
-                // the top of the List instead (see the top of this List).
-                if !ping.continuous { activePingSection(floated: false) }
-
-                Section {
-                    if ping.completed.isEmpty {
-                        Text("No results yet").foregroundStyle(.secondary)
-                    }
-                    ForEach(ping.completed) { r in
-                        let ok = r.status == .reply
-                        HStack {
-                            Image(systemName: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundStyle(ok ? Color.lispGreen : Color.lispRed)
-                            Text("\(r.address) seq \(r.sequence)")
-                                .font(.caption.monospaced())
-                            Spacer()
-                            Text(r.rttMs.map { "\(Int($0)) ms" } ?? "timeout")
-                                .font(.caption.monospaced().bold())
-                                .foregroundStyle(ok ? .primary : Color.lispRed)
-                        }
-                    }
-                } header: {
-                    ZStack {
-                        Text("Results").frame(maxWidth: .infinity, alignment: .center)
-                        if !ping.completed.isEmpty {
-                            HStack {
-                                Spacer()
-                                Button("Clear") { ping.clearResults() }
-                                    .font(.caption)
-                                    .textCase(nil)
-                                    .foregroundStyle(.primary)
-                            }
-                        }
-                    }
+                // When idle (stopped, or after the tab-switch grace expires), the
+                // live section + Results rest at the END in reading order.
+                if !ping.continuous {
+                    activePingSection(floated: false)
+                    resultsSection
                 }
             }
             .listRowSeparatorTint(.lispSeparator)
@@ -152,8 +146,74 @@ struct PingView: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         withAnimation { proxy.scrollTo("activePing", anchor: .top) }
                     }
+                } else {
+                    // Stopped: the header-less floated section is removed. Snap to
+                    // the true top (offset 0) so the "Ping an EID" header rests below
+                    // the nav bar, not ghosted under its blur. Defer past the reflow.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        proxy.scrollTo("list-top", anchor: .top)
+                    }
                 }
             }
+            // Don't cross-fade the section reflow when the ping starts/stops.
+            .animation(nil, value: ping.continuous)
+            }
+        }
+    }
+
+    // Completed ping replies. Floats up under the live "Pinging…" section while a
+    // ping runs (easy to watch), drops to the end when idle.
+    private var resultsSection: some View {
+        let all = ping.completed
+        let limit = Self.resultsCollapsedCount
+        // completed is newest-first, so prefix() is the most-recent N.
+        let shown = showAllResults ? all : Array(all.prefix(limit))
+        return Section {
+            if all.isEmpty {
+                Text("No results yet").foregroundStyle(.secondary)
+            }
+            ForEach(shown) { r in
+                let ok = r.status == .reply
+                HStack {
+                    Image(systemName: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundStyle(ok ? Color.lispGreen : Color.lispRed)
+                    Text("\(r.address) seq \(r.sequence)")
+                        .font(.caption.monospaced())
+                    Spacer()
+                    Text(r.rttMs.map { "\(Int($0)) ms" } ?? "timeout")
+                        .font(.caption.monospaced().bold())
+                        .foregroundStyle(ok ? .primary : Color.lispRed)
+                }
+            }
+            // Pull-down to reveal the rest; only when more than the last N exist.
+            if all.count > limit {
+                Button {
+                    withAnimation { showAllResults.toggle() }
+                } label: {
+                    HStack {
+                        Spacer()
+                        Text(showAllResults ? "Show last \(limit)" : "Show all \(all.count)")
+                            .font(.caption)
+                        Image(systemName: showAllResults ? "chevron.up" : "chevron.down")
+                            .font(.caption.bold())
+                        Spacer()
+                    }
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(Color.lispBlue)
+            }
+        } header: {
+            ZStack {
+                Text("Results").frame(maxWidth: .infinity, alignment: .center)
+                if !ping.completed.isEmpty {
+                    HStack {
+                        Spacer()
+                        Button("Clear") { ping.clearResults() }
+                            .font(.caption)
+                            .textCase(nil)
+                            .foregroundStyle(.primary)
+                    }
+                }
             }
         }
     }

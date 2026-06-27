@@ -73,6 +73,13 @@ struct ByteReader {
         return s
     }
     mutating func skip(_ n: Int) { offset = min(offset + n, data.count) }
+    // Read the next u16 WITHOUT advancing (used to tell an RLE node's optional
+    // AFI-17 rloc-name from the start of the following node).
+    func peekU16() -> UInt16? {
+        guard remaining >= 2 else { return nil }
+        let b = data.startIndex + offset
+        return UInt16(data[b]) << 8 | UInt16(data[b + 1])
+    }
 }
 
 // One's-complement checksum used for inner IPv4 headers and ICMP

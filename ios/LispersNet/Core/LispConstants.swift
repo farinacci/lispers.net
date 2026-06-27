@@ -36,6 +36,8 @@ enum LISP {
     static let lcafAFIList: UInt8 = 1           // LISP_LCAF_AFI_LIST_TYPE
     static let lcafInstanceID: UInt8 = 2
     static let lcafNAT: UInt8 = 7               // LISP_LCAF_NAT_TYPE
+    static let lcafMcastInfo: UInt8 = 9         // LISP_LCAF_MCAST_INFO_TYPE (S,G)
+    static let lcafRLE: UInt8 = 13              // LISP_LCAF_RLE_TYPE (replication list)
     static let lcafJSON: UInt8 = 14             // LISP_LCAF_JSON_TYPE
 
     static let tpPrefix = "@tp-"                // LISP_TP (translated-port tag)
@@ -71,6 +73,8 @@ enum LISP {
     static let rlocProbeReplyWait: TimeInterval = 15    // LISP_RLOC_PROBE_REPLY_WAIT
     static let rlocProbeTTL = 64                        // LISP_RLOC_PROBE_TTL
     static let registerTTL: UInt32 = 1440               // minutes (LISP_REGISTER_TTL)
+    static let multicastRegisterTTL: UInt32 = 1440      // minutes (24h) — group membership
+                                                        // (refreshed every 60s register)
     static let mapRequestRateLimit: TimeInterval = 2
 
     // The overlay EID space requirement: only 240.0.0.0/4 uses LISP.

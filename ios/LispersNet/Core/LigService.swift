@@ -12,6 +12,8 @@
 import Foundation
 import Combine
 
+struct RLEMember { let rloc: String; let name: String? }
+
 struct LigLine: Identifiable {
     let id = UUID()
     let content: Content
@@ -21,7 +23,12 @@ struct LigLine: Identifiable {
         // paren bold; eid bold dark-green (the EID being ligged)
         case send(lead: String, paren: String, midTrail: String, eid: String, endTrail: String)
         case eidPrefix(prefix: String, rest: String)            // prefix green
-        case rloc(addr: String, beforeName: String, name: String?, afterName: String)
+        // addrIsRLE: this RLOC-record is a replication list — render the address
+        // label ("RLEs") in black instead of a red rloc address.
+        case rloc(addr: String, beforeName: String, name: String?, afterName: String,
+                  addrIsRLE: Bool = false)
+        // one replication-list member per line: "        rle: <ip>(<name>)"
+        case rle(member: RLEMember)
     }
 }
 
@@ -157,7 +164,16 @@ final class LigService: ObservableObject {
             append(.init(content: .plain("")))
             sendOne()
         case LISP.typeMapReply:
-            guard let reply = LispMapReply.decode(data) else { return }
+            guard let reply = LispMapReply.decode(data) else {
+                LispLog.shared.lprint(.itr, "lig: undecodable map-reply (\(data.count) " +
+                                      "bytes): \(lispFormatPacket(data))")
+                pending.removeAll()
+                append(.init(content: .error("*** Received a map-reply we can't decode " +
+                    "(\(data.count) bytes) — the map-server likely has no (S,G) " +
+                    "registration for this group ***")))
+                next()
+                return
+            }
             _ = handleReply(reply, from: from)
         default:
             break
@@ -172,7 +188,16 @@ final class LigService: ObservableObject {
         req.nonce = lispGetControlNonce()
         req.sourceEID = LispAddress()           // lisp-lig.py sends no source-EID
         req.itrRLOCs = [ephemRLOC]
-        req.targetEID = target
+        if target.isMulticast {
+            // Group lookup: (S=0/0, G=target). The map-resolver was already hashed
+            // on the group (target), matching how receivers register.
+            var src = LispAddress(string: "0.0.0.0", iid: target.instanceID)!
+            src.maskLen = 0
+            req.targetEID = src
+            req.targetGroup = target
+        } else {
+            req.targetEID = target
+        }
         // N flag (decent_nat_xtr) → map-server returns the FULL registered RLOC-set.
         req.decentNATXtr = true
         req.subscribe = pubsub
@@ -187,7 +212,10 @@ final class LigService: ObservableObject {
 
         let sub = pubsub ? "subscribe " : ""
         let mrName = msConf.dnsNameOrAddress.isEmpty ? mr.addressString : msConf.dnsNameOrAddress
-        let eidNoMask = "[\(target.instanceID)]\(target.addressString)"
+        // A group lookup is an (S,G): source 0.0.0.0/0, group G/<ml>.
+        let sgDisplay = "[\(target.instanceID)](0.0.0.0/0, \(target.addressString)/\(target.maskLen))"
+        let eidNoMask = target.isMulticast ? sgDisplay
+            : "[\(target.instanceID)]\(target.addressString)"
         let decentPrefix = engine.config.decentConfigured
             ? LispDecent.eidString(for: target, prefixes: engine.config.decentPrefixes)
             : target.prefixString
@@ -207,7 +235,8 @@ final class LigService: ObservableObject {
                 "Map-Request -> flags: \(flags), itr-rloc-count: \(irc) (+1), " +
                 "record-count: 1, nonce: 0x\(String(req.nonce, radix: 16)), " +
                 "source-eid: afi \(req.sourceEID.afi), \(srcStr), target-eid: afi " +
-                "\(target.afi), \(target.prefixString), ITR-RLOCs:")))
+                "\(target.afi), \(target.isMulticast ? sgDisplay : target.prefixString), " +
+                "ITR-RLOCs:")))
             for itr in req.itrRLOCs {
                 append(.init(content: .plain("  itr-rloc: afi \(itr.afi) \(itr.addressString)")))
             }
@@ -244,7 +273,10 @@ final class LigService: ObservableObject {
                 "nonce: 0x\(String(reply.nonce, radix: 16))")))
         }
         for (eidRec, rlocs) in reply.records {
-            append(.init(content: .eidPrefix(prefix: eidRec.eid.prefixString,
+            let prefix = eidRec.group.isNull ? eidRec.eid.prefixString
+                : "[\(eidRec.eid.instanceID)](\(eidRec.eid.addressString)/\(eidRec.eid.maskLen), " +
+                  "\(eidRec.group.addressString)/\(eidRec.group.maskLen))"
+            append(.init(content: .eidPrefix(prefix: prefix,
                          rest: ", ttl: \(ttlString(eidRec.recordTTL)), rloc-set:")))
             if debug {
                 append(.init(content: .plain("  EID-record -> record-ttl: " +
@@ -261,11 +293,24 @@ final class LigService: ObservableObject {
                 let flags = (rl.localBit ? "L" : "l") + (rl.probeBit ? "P" : "p")
                           + (rl.reachBit ? "R" : "r")
                 let rtr = rl.priority == 254 && rl.mpriority == 255
+                let isRLE = !rl.rle.isEmpty
+                // A replication-list record shows "RLEs" (black) in place of an
+                // address; its member names ride on the "rle:" lines below. A plain
+                // RLOC-record with no address still shows the usual red "no-address".
+                let addr = isRLE ? "RLEs"
+                    : (rl.rloc.afi == 0 ? "no-address" : rl.rloc.addressString)
+                let name = isRLE ? nil : rl.rlocName
                 var before = ", up/uw/mp/mw: \(rl.priority)/\(rl.weight)/" +
                              "\(rl.mpriority)/\(rl.mweight), flags: \(flags)"
-                if rl.rlocName != nil { before += ", rloc-name: " }
-                append(.init(content: .rloc(addr: rl.rloc.addressString, beforeName: before,
-                             name: rl.rlocName, afterName: rtr ? ", RTR" : "")))
+                if name != nil { before += ", rloc-name: " }
+                append(.init(content: .rloc(addr: addr, beforeName: before,
+                             name: name, afterName: rtr ? ", RTR" : "", addrIsRLE: isRLE)))
+                if isRLE {
+                    for m in rl.rle {
+                        append(.init(content: .rle(member: RLEMember(
+                            rloc: m.rloc.addressString, name: m.rlocName))))
+                    }
+                }
                 if debug {
                     let name = rl.rlocName.map { ", rloc-name: \($0)" } ?? ""
                     append(.init(content: .plain("    RLOC-record -> flags: \(flags), " +

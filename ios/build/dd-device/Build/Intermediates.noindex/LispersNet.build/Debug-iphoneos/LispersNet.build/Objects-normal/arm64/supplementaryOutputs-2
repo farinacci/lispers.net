@@ -19,5 +19,12 @@
     "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispAddress.dia",
     "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispAddress.o",
     "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispAddress.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispConfig.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispConfig.swiftdeps"
   }
 }

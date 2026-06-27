@@ -217,8 +217,10 @@ struct LogsView: View {
     // an EID's address / a name's digits aren't also flagged as an RLOC.
     // Group 4 colors the startup banner's "hostname <name>" blue (it has no
     // @tp-port, so it wouldn't otherwise match the rloc-name rule).
+    // Group 1 is the multicast (S,G) tuple "[iid](S/ml, G/ml)" — colored green
+    // (it's an EID) before the RLOC rule can grab its dotted-quads as red.
     private static let tokenRegex = try? NSRegularExpression(
-        pattern: #"(\[\d+\][\d.]+(?:/\d+)?)|([\w.-]+@tp-\d+)|(\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?)|((?<=hostname )[\w.-]+)"#)
+        pattern: #"((?:\[\d+\])?\(\d{1,3}(?:\.\d{1,3}){3}/\d+,\s*\d{1,3}(?:\.\d{1,3}){3}/\d+\))|(\[\d+\][\d.]+(?:/\d+)?)|([\w.-]+@tp-\d+)|(\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?)|((?<=hostname )[\w.-]+)"#)
 
     static func colored(_ line: String) -> Text {
         // Bold the leading "MM/dd/yy HH:mm:ss.SSS" timestamp (heavier than the
@@ -265,8 +267,9 @@ struct LogsView: View {
                                               length: m.range.location - last)))
             }
             let token = ns.substring(with: m.range)
-            let color: Color = m.range(at: 1).location != NSNotFound ? .lispGreen
-                : m.range(at: 3).location != NSNotFound ? .lispRed : .lispBlue
+            let color: Color = (m.range(at: 1).location != NSNotFound
+                                || m.range(at: 2).location != NSNotFound) ? .lispGreen
+                : m.range(at: 4).location != NSNotFound ? .lispRed : .lispBlue
             out = out + Text(token).foregroundColor(color)
             last = m.range.location + m.range.length
         }
@@ -303,8 +306,9 @@ struct LogsView: View {
                 out += esc(ns.substring(with: NSRange(location: last,
                                         length: m.range.location - last)))
             }
-            let cls = m.range(at: 1).location != NSNotFound ? "eid"
-                : m.range(at: 3).location != NSNotFound ? "rloc" : "name"
+            let cls = (m.range(at: 1).location != NSNotFound
+                       || m.range(at: 2).location != NSNotFound) ? "eid"
+                : m.range(at: 4).location != NSNotFound ? "rloc" : "name"
             out += "<span class=\"\(cls)\">\(esc(ns.substring(with: m.range)))</span>"
             last = m.range.location + m.range.length
         }

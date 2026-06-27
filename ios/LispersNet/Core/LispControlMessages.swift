@@ -20,17 +20,43 @@ struct LispEIDRecord {
     var action: Int = LISP.noAction
     var authoritative = false
     var eid = LispAddress()
+    var group = LispAddress()           // non-null = multicast (S,G); eid = source
+
+    // Multicast-Info LCAF body (lcaf_encode_sg, lisp.py:12643) — written after the
+    // AFI-LCAF marker. Carries iid, source (=eid) and group with both mask lengths.
+    static func encodeMcastInfoLCAF(source: LispAddress, group: LispAddress) -> Data {
+        var w = ByteWriter()
+        w.u8(0); w.u8(0)                            // rsvd, flags
+        w.u8(LISP.lcafMcastInfo)                    // type 9
+        w.u8(0)                                     // rsvd
+        // len = lcaf_length(MCAST) = (addr_len+2)*2+8 = 20 for IPv4 (lisp.py).
+        let len = (source.addressLength + 2) * 2 + 8
+        w.u16(UInt16(len))
+        w.u32(source.instanceID)
+        w.u16(0); w.u16(0)                          // 4 reserved bytes after iid (the
+                                                    // running map-server's mcast-info
+                                                    // LCAF — NOT the 2-byte BBBBHIHBB)
+        w.u8(UInt8(source.maskLen))                 // source mask-len
+        w.u8(UInt8(group.maskLen))                  // group mask-len
+        w.u16(source.afi); w.bytes(source.packAddress())
+        w.u16(group.afi);  w.bytes(group.packAddress())
+        return w.data
+    }
 
     func encode() -> Data {
         var w = ByteWriter()
         w.u32(recordTTL)
         w.u8(rlocCount)
-        w.u8(UInt8(eid.maskLen))
+        w.u8(UInt8(eid.maskLen))                    // source mask for (S,G); prefix-len otherwise
         var af: UInt16 = UInt16(action) << 13
         if authoritative { af |= 0x1000 }
         w.u16(af)
         w.u16(0)                        // sig-count(4) | map-version(12)
-        if eid.instanceID != 0 {
+        if !group.isNull {
+            // Multicast (S,G): AFI-LCAF marker + Multicast-Info LCAF (type 9).
+            w.u16(LISP.afiLCAF)
+            w.bytes(Self.encodeMcastInfoLCAF(source: eid, group: group))
+        } else if eid.instanceID != 0 {
             // LCAF Instance-ID (lcaf_encode_iid, lisp.py:12521)
             w.u16(LISP.afiLCAF)
             w.u8(0); w.u8(0)
@@ -60,9 +86,23 @@ struct LispEIDRecord {
         if afi == LISP.afiLCAF {
             guard let _ = r.u8(), let _ = r.u8(), let type = r.u8(),
                   let _ = r.u8(), let _ = r.u16() else { return nil }
-            guard type == LISP.lcafInstanceID else { return nil }
-            guard let i = r.u32(), let innerAFI = r.u16() else { return nil }
-            iid = i; afi = innerAFI
+            if type == LISP.lcafInstanceID {
+                guard let i = r.u32(), let innerAFI = r.u16() else { return nil }
+                iid = i; afi = innerAFI
+            } else if type == LISP.lcafMcastInfo {
+                // (S,G): iid, 4-byte rsvd, src-mask, grp-mask, src AFI+addr, grp AFI+addr.
+                guard let i = r.u32(), let _ = r.u32(),
+                      let sml = r.u8(), let gml = r.u8(), let sAfi = r.u16(),
+                      var src = LispAddress.unpack(afi: sAfi, reader: &r),
+                      let gAfi = r.u16(),
+                      var grp = LispAddress.unpack(afi: gAfi, reader: &r) else { return nil }
+                src.maskLen = Int(sml); src.instanceID = i
+                grp.maskLen = Int(gml); grp.instanceID = i
+                rec.eid = src; rec.group = grp
+                return rec
+            } else {
+                return nil
+            }
         }
         guard var eid = LispAddress.unpack(afi: afi, reader: &r) else { return nil }
         eid.maskLen = Int(ml)
@@ -73,6 +113,14 @@ struct LispEIDRecord {
 }
 
 // MARK: - RLOC record (lisp_rloc_record, lisp.py:5597)
+
+// One replication-list entry: a receiver RLOC at a replication level
+// (lisp_rle_node, lisp.py:13080). Local receiver level = 128.
+struct RLENode {
+    var level: UInt8 = 128
+    var rloc = LispAddress()
+    var rlocName: String?
+}
 
 struct LispRLOCRecord {
     var priority: UInt8 = 1
@@ -85,6 +133,56 @@ struct LispRLOCRecord {
     var rloc = LispAddress()
     var jsonString: String?             // telemetry rides here (LCAF JSON)
     var rlocName: String?               // e.g. "RTR" or "<xtr>@tp-<port>"
+    var rle: [RLENode] = []             // non-empty = locator is an RLE (type 13)
+
+    // Replication-List-Entry LCAF (type 13, lisp.py:5777). The RLOC-record's
+    // locator is the replication list: per node [rsvd:2][rsvd:1][level:1][AFI:2]
+    // [rloc][optional AFI-17 name].
+    static func encodeRLELCAF(_ rle: [RLENode]) -> Data {
+        var body = ByteWriter()
+        for n in rle {
+            body.u16(0); body.u8(0)                 // rsvd
+            body.u8(n.level)
+            body.u16(n.rloc.afi)
+            body.bytes(n.rloc.packAddress())
+            if let name = n.rlocName {
+                body.u16(LISP.afiName)
+                body.bytes(Data(name.utf8)); body.u8(0)
+            }
+        }
+        var w = ByteWriter()
+        w.u16(LISP.afiLCAF)
+        w.u8(0); w.u8(0)
+        w.u8(LISP.lcafRLE)
+        w.u8(0)
+        w.u16(UInt16(body.data.count))
+        w.bytes(body.data)
+        return w.data
+    }
+
+    // A replication-list locator the way lisp_rloc_record.encode_lcaf builds it:
+    // an AFI-List LCAF (type 1) wrapping the (usually null) main RLOC, an optional
+    // rloc-name, then the RLE LCAF. apkt_len covers rloc-afi(2)+rloc+name+RLE.
+    static func encodeRLEAFIList(rloc: LispAddress, name: String?, rle: [RLENode]) -> Data {
+        var npkt = ByteWriter()
+        if let name = name {
+            npkt.u16(LISP.afiName)
+            npkt.bytes(Data(name.utf8)); npkt.u8(0)
+        }
+        let rpkt = encodeRLELCAF(rle)
+        let apktLen = 2 + rloc.addressLength + npkt.data.count + rpkt.count
+        var w = ByteWriter()
+        w.u16(LISP.afiLCAF)
+        w.u8(0); w.u8(0)
+        w.u8(LISP.lcafAFIList)                  // type 1
+        w.u8(0)
+        w.u16(UInt16(apktLen))
+        w.u16(rloc.afi)                         // main rloc AFI (0 = no-address)
+        w.bytes(rloc.packAddress())
+        w.bytes(npkt.data)                      // rloc-name
+        w.bytes(rpkt)                           // RLE LCAF
+        return w.data
+    }
 
     func encode() -> Data {
         var w = ByteWriter()
@@ -94,7 +192,18 @@ struct LispRLOCRecord {
         if probeBit { flags |= 0x0002 }
         if reachBit { flags |= 0x0001 }
         w.u16(flags)
-        if let json = jsonString {
+        if !rle.isEmpty {
+            w.bytes(Self.encodeRLEAFIList(rloc: rloc, name: rlocName, rle: rle))
+        } else if let json = jsonString, let name = rlocName {
+            // Both an rloc-name AND telemetry: one AFI-List LCAF carrying the
+            // address, the name, then the JSON LCAF (lisp.py encode_lcaf order:
+            // apkt + npkt + jpkt). A NAT'd RLOC-probe reply needs both — the name
+            // so the RTR can resolve our per-RTR translated port from its own NAT
+            // state, the JSON for latency telemetry. Emitting only one (the old
+            // if/else dropped the name when json was set) made the RTR fall back
+            // to our registered "@tp-<port>" name and reject the reply.
+            w.bytes(Self.encodeNameJSONLCAF(name: name, json: json, rloc: rloc))
+        } else if let json = jsonString {
             w.bytes(Self.encodeJSONLCAF(json: json, rloc: rloc))
         } else if let name = rlocName {
             w.bytes(Self.encodeNameLCAF(name: name, rloc: rloc))
@@ -121,6 +230,28 @@ struct LispRLOCRecord {
         w.bytes(rloc.packAddress())
         w.u16(LISP.afiName)
         w.bytes(nameBytes); w.u8(0)
+        return w.data
+    }
+
+    // RLOC-name + telemetry together, as one AFI-List LCAF (type 1). Mirrors
+    // lisp_rloc_record.encode_lcaf: AFI-List header, then [rloc-afi + addr], then
+    // the AFI-17 distinguished name, then the JSON LCAF (apkt + npkt + jpkt).
+    static func encodeNameJSONLCAF(name: String, json: String, rloc: LispAddress) -> Data {
+        let nameBytes = Data(name.utf8)
+        let npktLen = 2 + nameBytes.count + 1               // AFI-17 + name + null
+        let jpkt = encodeJSONLCAF(json: json, rloc: rloc)   // nested JSON LCAF
+        let apktLen = 2 + rloc.addressLength + npktLen + jpkt.count
+        var w = ByteWriter()
+        w.u16(LISP.afiLCAF)
+        w.u8(0); w.u8(0)
+        w.u8(LISP.lcafAFIList)
+        w.u8(0)
+        w.u16(UInt16(apktLen))
+        w.u16(rloc.afi)                                     // first sub-AFI: rloc
+        w.bytes(rloc.packAddress())
+        w.u16(LISP.afiName)                                 // name sub-AFI
+        w.bytes(nameBytes); w.u8(0)
+        w.bytes(jpkt)                                       // json sub-AFI (LCAF)
         return w.data
     }
 
@@ -192,14 +323,26 @@ struct LispRLOCRecord {
                     if innerAFI == LISP.afiName {
                         rec.rlocName = r.readName()
                     } else if innerAFI == LISP.afiLCAF {
-                        // Nested JSON-telemetry LCAF: an RLOC-probe reply carries
-                        // [addr][rloc-name][JSON] inside the AFI-List, with the
-                        // telemetry appended last (lisp_rloc_record.encode_lcaf).
+                        // Nested LCAF inside the AFI-List: JSON telemetry (probe
+                        // reply) or an RLE replication-list (group reply).
                         guard let _ = r.u8(), let _ = r.u8(), let t2 = r.u8(),
-                              let _ = r.u8(), let _ = r.u16() else { break }
+                              let _ = r.u8(), let l2 = r.u16() else { break }
                         if t2 == LISP.lcafJSON, let jsonLen = r.u16(),
                            let jb = r.bytes(Int(jsonLen)) {
                             rec.jsonString = String(data: jb, encoding: .utf8)
+                        } else if t2 == LISP.lcafRLE {
+                            let rend = r.offset + Int(l2)
+                            while r.offset + 6 <= rend {
+                                guard let _ = r.u16(), let _ = r.u8(), let level = r.u8(),
+                                      let naf = r.u16(),
+                                      let addr = LispAddress.unpack(afi: naf, reader: &r)
+                                else { break }
+                                var node = RLENode(level: level, rloc: addr, rlocName: nil)
+                                if r.peekU16() == LISP.afiName {
+                                    _ = r.u16(); node.rlocName = r.readName()
+                                }
+                                rec.rle.append(node)
+                            }
                         }
                         break
                     } else if innerAFI != 0,
@@ -210,6 +353,21 @@ struct LispRLOCRecord {
                     } else {
                         break
                     }
+                }
+                if r.offset < end { r.skip(end - r.offset) }
+            } else if type == LISP.lcafRLE {
+                // Replication list: the joined-receiver RLOCs (lig of a group).
+                let end = r.offset + Int(lcafLen)
+                while r.offset + 6 <= end {
+                    guard let _ = r.u16(), let _ = r.u8(), let level = r.u8(),
+                          let nodeAFI = r.u16(),
+                          let addr = LispAddress.unpack(afi: nodeAFI, reader: &r)
+                    else { break }
+                    var node = RLENode(level: level, rloc: addr, rlocName: nil)
+                    if r.peekU16() == LISP.afiName {
+                        _ = r.u16(); node.rlocName = r.readName()
+                    }
+                    rec.rle.append(node)
                 }
                 if r.offset < end { r.skip(end - r.offset) }
             } else {
@@ -302,6 +460,7 @@ struct LispMapRequest {
     var itrRLOCs: [LispAddress] = []
     var telemetryJSON: String?          // extra ITR-RLOC carrying telemetry
     var targetEID = LispAddress()
+    var targetGroup = LispAddress()     // non-null = (S,G) lookup; targetEID = source
     var subscribe = false               // pubsub: subscribe bit + xTR-ID
     var xtrID: (UInt64, UInt64)?
 
@@ -332,11 +491,17 @@ struct LispMapRequest {
         if let json = telemetryJSON {
             w.bytes(LispRLOCRecord.encodeProbeTelemetryLCAF(json: json))
         }
-        // Subscribe byte + mask-len, then EID prefix.
+        // Subscribe byte + mask-len, then EID prefix — or a Multicast-Info LCAF
+        // when looking up a group (lig <group>), lisp.py:4627.
         w.u8(subscribe ? 0x80 : 0)
         w.u8(UInt8(targetEID.maskLen))
-        w.u16(targetEID.afi)
-        w.bytes(targetEID.packAddress())
+        if !targetGroup.isNull {
+            w.u16(LISP.afiLCAF)
+            w.bytes(LispEIDRecord.encodeMcastInfoLCAF(source: targetEID, group: targetGroup))
+        } else {
+            w.u16(targetEID.afi)
+            w.bytes(targetEID.packAddress())
+        }
         // pubsub xTR-ID trailer (lisp.py encode_xtr_id, big-endian on the wire).
         if subscribe, let xid = xtrID {
             w.u32(UInt32(xid.0 >> 32)); w.u32(UInt32(truncatingIfNeeded: xid.0))

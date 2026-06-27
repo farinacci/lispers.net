@@ -1,11 +1,4 @@
 {
-  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispDataHeader.swift" : {
-    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.swiftconstvalues",
-    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.d",
-    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.dia",
-    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.o",
-    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispDataHeader.swiftdeps"
-  },
   "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/LispEngine.swift" : {
     "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispEngine.swiftconstvalues",
     "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispEngine.d",
@@ -19,5 +12,12 @@
     "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispLog.dia",
     "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispLog.o",
     "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/LispLog.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/MapCache.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd-device/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/MapCache.swiftdeps"
   }
 }

@@ -34,7 +34,18 @@ final class PingService: ObservableObject {
     private weak var engine: LispEngine?
     private let identifier = UInt16.random(in: 1...0xFFFF)
     private var sequence: UInt16 = 0
-    private var outstanding: [UInt16: UUID] = [:]   // seq -> result id
+    // Per-sequence outstanding request. A multicast echo yields MANY replies
+    // (one per group member), so we keep the seq open and track which sources
+    // already answered. Accessed only on the main queue.
+    private struct Outstanding {
+        let id: UUID                    // the placeholder result row
+        let target: String
+        let sentAt: Date
+        let multicast: Bool
+        var gotReply = false
+        var sources: Set<UInt32> = []   // responder EIDs already recorded
+    }
+    private var outstanding: [UInt16: Outstanding] = [:]
     private var pingTimer: Timer?
     private var graceTimer: Timer?
     private var currentEID: LispAddress?
@@ -52,6 +63,10 @@ final class PingService: ObservableObject {
             engine?.log.fprint(.core, "Cannot ping — LISP is not enabled")
             return
         }
+        var eid = eid
+        // A group is looked up/encapsulated in our instance-id (the default
+        // (0/0, 224/4) entry lives there).
+        if eid.isMulticast { eid.instanceID = UInt32(engine.config.instanceID); eid.maskLen = 32 }
         stopContinuous()
         currentEID = eid
         DispatchQueue.main.async {
@@ -118,22 +133,27 @@ final class PingService: ObservableObject {
                                    payload: icmp)
         // Insert a pending row immediately so the UI shows the in-flight echo.
         let result = PingResult(sequence: seq, target: name, address: dest.addressString)
-        outstanding[seq] = result.id
+        let multicast = dest.isMulticast
         DispatchQueue.main.async {
+            self.outstanding[seq] = Outstanding(id: result.id, target: name,
+                                                sentAt: result.sentAt, multicast: multicast)
             self.results.insert(result, at: 0)
             if self.results.count > 50 { self.results.removeLast() }
         }
         engine.log.dprint(.itr, "Send ICMP echo-request to \(name) " +
                           "(\(dest.addressString)), seq \(seq)")
         engine.encapAndSend(inner: inner, destEID: dest)
-        // Per-sequence timeout so each echo resolves independently.
+        // Per-sequence timeout. For multicast the seq stays open until here so
+        // every group member can answer; only mark timeout if nobody did.
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
-            guard let self = self, self.outstanding.removeValue(forKey: seq) != nil
+            guard let self = self, let o = self.outstanding.removeValue(forKey: seq)
             else { return }
-            if let idx = self.results.firstIndex(where: { $0.id == result.id }) {
-                self.results[idx].status = .timeout
+            if !o.gotReply {
+                if let idx = self.results.firstIndex(where: { $0.id == o.id }) {
+                    self.results[idx].status = .timeout
+                }
+                self.engine?.log.dprint(.itr, "ICMP echo seq \(seq) timed out")
             }
-            self.engine?.log.dprint(.itr, "ICMP echo seq \(seq) timed out")
         }
     }
 
@@ -147,19 +167,32 @@ final class PingService: ObservableObject {
         guard let ident = r.u16(), let seq = r.u16() else { return }
 
         if type == 0 {                      // echo-reply
-            guard ident == identifier,
-                  let id = outstanding.removeValue(forKey: seq) else { return }
-            engine.log.dprint(.itr, "ICMP echo-reply from \(source.addressString), " +
-                              "seq \(seq)")
+            guard ident == identifier else { return }
+            engine.log.dprint(.itr, "ICMP echo-reply from \(source.addressString), seq \(seq)")
+            let srcStr = source.addressString
+            let srcV4 = source.v4
             DispatchQueue.main.async {
-                guard let idx = self.results.firstIndex(where: { $0.id == id }) else { return }
-                let rtt = (Date().timeIntervalSince(self.results[idx].sentAt) * 1000)
-                    .rounded()
-                self.results[idx].rttMs = rtt
-                self.results[idx].address = source.addressString
-                self.results[idx].status = .reply
+                guard var o = self.outstanding[seq], !o.sources.contains(srcV4) else { return }
+                o.sources.insert(srcV4)
+                let rtt = (Date().timeIntervalSince(o.sentAt) * 1000).rounded()
+                if !o.gotReply {
+                    o.gotReply = true
+                    if let idx = self.results.firstIndex(where: { $0.id == o.id }) {
+                        self.results[idx].rttMs = rtt
+                        self.results[idx].address = srcStr
+                        self.results[idx].status = .reply
+                    }
+                } else {
+                    // Additional responder (multicast group) — one row per source.
+                    var r = PingResult(sequence: seq, target: o.target, address: srcStr)
+                    r.rttMs = rtt; r.status = .reply
+                    self.results.insert(r, at: 0)
+                    if self.results.count > 50 { self.results.removeLast() }
+                }
+                // Unicast: done. Multicast: keep open for more until the timeout.
+                self.outstanding[seq] = o.multicast ? o : nil
             }
-        } else if type == 8 {               // echo-request aimed at our EID
+        } else if type == 8 {               // echo-request (unicast EID or joined group)
             guard let myEID = engine.config.eid else { return }
             engine.log.lprint(.etr, "ICMP echo-request from \(source.addressString), " +
                               "seq \(seq) — replying")

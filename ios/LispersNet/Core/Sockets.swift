@@ -94,6 +94,11 @@ final class UDPSocket {
             let port = UInt16(bigEndian: from.sin_port)
             handler(Data(buf[0..<n]), LispAddress(v4: host), port, ttl)
         }
+        // Close the fd ONLY from the cancel handler, i.e. after the source is fully
+        // torn down — never while an event handler may be mid-recvmsg, and exactly
+        // once. (A bare close() right after cancel() can race the in-flight handler
+        // or double-close an fd iOS already reclaimed → EXC_GUARD.)
+        src.setCancelHandler { [fd] in close(fd) }
         src.resume()
         source = src
     }
@@ -118,9 +123,12 @@ final class UDPSocket {
     }
 
     func shutdown() {
-        source?.cancel()
-        source = nil
-        close(fd)
+        if let s = source {
+            s.cancel()          // cancel handler closes fd after teardown completes
+            source = nil
+        } else {
+            close(fd)           // never started receiving — close directly
+        }
     }
 }
 

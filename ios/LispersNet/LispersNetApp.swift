@@ -30,10 +30,13 @@ struct LispersNetApp: App {
                 .environmentObject(engine.pingService)
                 .environmentObject(engine.ligService)
                 .onChange(of: scenePhase) { _, phase in
-                    if phase == .active && engine.running && config.natTraversalEnabled {
-                        // NAT bindings likely expired while suspended.
-                        engine.sendInfoRequests()
-                        engine.sendMapRegisters()
+                    // iOS reclaims our sockets while suspended; tear the network down
+                    // before that happens and rebuild it on return. Re-sending on the
+                    // suspended sockets (the old behavior) crashed on foreground.
+                    switch phase {
+                    case .background: engine.suspendNetwork()
+                    case .active:     engine.resumeNetwork()
+                    default:          break
                     }
                 }
         }

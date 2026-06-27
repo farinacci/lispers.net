@@ -111,6 +111,10 @@ struct LispAddress: Equatable, Hashable, CustomStringConvertible {
         isIPv4 && (v4 & LISP.overlayMask) == LISP.overlayPrefix
     }
 
+    var isMulticast: Bool {         // 224.0.0.0/4 (group addresses)
+        isIPv4 && (v4 & 0xF000_0000) == 0xE000_0000
+    }
+
     // Zero the host bits beyond maskLen (used by the decent lookup-length mask).
     mutating func zeroHostBits() {
         guard isIPv4 else { return }

@@ -1,10 +1,10 @@
 {
-  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/MapCache.swift" : {
-    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCache.swiftconstvalues",
-    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCache.d",
-    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCache.dia",
-    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCache.o",
-    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCache.swiftdeps"
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/NetworkName.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/NetworkName.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/NetworkName.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/NetworkName.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/NetworkName.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/NetworkName.swiftdeps"
   },
   "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/PingService.swift" : {
     "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingService.swiftconstvalues",

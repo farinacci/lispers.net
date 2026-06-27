@@ -6,48 +6,16 @@
         "comment": "",
         "key": "LIG",
         "location": {
-          "startingColumn": 30,
-          "startingLine": 42
+          "startingColumn": 34,
+          "startingLine": 50
         }
       },
       {
         "comment": "",
         "key": "Clear",
         "location": {
-          "startingColumn": 53,
-          "startingLine": 46
-        }
-      },
-      {
-        "comment": "",
-        "key": "EID or hostname",
-        "location": {
-          "startingColumn": 27,
-          "startingLine": 55
-        }
-      },
-      {
-        "comment": "",
-        "key": "lig it",
-        "location": {
-          "startingColumn": 68,
-          "startingLine": 73
-        }
-      },
-      {
-        "comment": "",
-        "key": "lig self",
-        "location": {
-          "startingColumn": 26,
-          "startingLine": 87
-        }
-      },
-      {
-        "comment": "",
-        "key": "EID Mapping System Lookup",
-        "location": {
-          "startingColumn": 18,
-          "startingLine": 98
+          "startingColumn": 57,
+          "startingLine": 54
         }
       },
       {
@@ -55,7 +23,7 @@
         "key": "count: %lld",
         "location": {
           "startingColumn": 21,
-          "startingLine": 105
+          "startingLine": 87
         }
       },
       {
@@ -63,7 +31,7 @@
         "key": "no-info",
         "location": {
           "startingColumn": 20,
-          "startingLine": 106
+          "startingLine": 88
         }
       },
       {
@@ -71,15 +39,39 @@
         "key": "debug",
         "location": {
           "startingColumn": 20,
-          "startingLine": 107
+          "startingLine": 89
         }
       },
       {
         "comment": "",
-        "key": "Parameters",
+        "key": "EID or hostname",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "lig it",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "lig self",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "EID Mapping System Lookup",
         "location": {
           "startingColumn": 18,
-          "startingLine": 109
+          "startingLine": 110
         }
       },
       {
@@ -87,7 +79,7 @@
         "key": "No lookups yet",
         "location": {
           "startingColumn": 22,
-          "startingLine": 116
+          "startingLine": 118
         }
       },
       {
@@ -95,7 +87,7 @@
         "key": "EID-prefix: ",
         "location": {
           "startingColumn": 25,
-          "startingLine": 171
+          "startingLine": 176
         }
       },
       {
@@ -103,7 +95,23 @@
         "key": "  RLOC: ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 175
+          "startingLine": 180
+        }
+      },
+      {
+        "comment": "",
+        "key": "        rle: ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 187
+        }
+      },
+      {
+        "comment": "",
+        "key": " %@",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 189
         }
       },
       {
@@ -111,7 +119,7 @@
         "key": "Output",
         "location": {
           "startingColumn": 18,
-          "startingLine": 129
+          "startingLine": 132
         }
       },
       {
@@ -119,7 +127,7 @@
         "key": "",
         "location": {
           "startingColumn": 24,
-          "startingLine": 141
+          "startingLine": 145
         }
       }
     ]

@@ -16,10 +16,15 @@ struct ConfigView: View {
     // Share the whole xTR configuration as one image (even the off-screen part).
     @State private var shareImage: UIImage?
     @State private var showShare = false
+    // Multicast group join/leave field (section sits between xTR config and Logging).
+    @State private var groupField = ""
 
     private func centeredTitle(_ s: String) -> some View {
         Text(s).frame(maxWidth: .infinity, alignment: .center)
     }
+
+    private var groupTrimmed: String { groupField.trimmingCharacters(in: .whitespaces) }
+    private var groupIsValid: Bool { LispAddress(string: groupTrimmed)?.isMulticast == true }
 
     var body: some View {
         NavigationStack {
@@ -98,6 +103,8 @@ struct ConfigView: View {
                 } header: {
                     centeredTitle("xTR Configuration")
                 }
+
+                multicastSection
 
                 Section {
                     Toggle("Control-plane", isOn: Binding(
@@ -206,6 +213,59 @@ struct ConfigView: View {
             .sheet(isPresented: $showShare) {
                 if let img = shareImage { ShareSheet(items: [img]) }
             }
+        }
+    }
+
+    // Join/leave multicast groups. Joining registers (0/0, G/32) so an RTR
+    // replicates the group's traffic to us; pinging a 224.x address just works
+    // via the default (0/0, 224/4) map-cache entry.
+    private var multicastSection: some View {
+        Section {
+            HStack {
+                TextField("Join/Leave group address", text: $groupField)
+                    .font(.body.monospaced())
+                    .keyboardType(.numbersAndPunctuation)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                    .focused($keyboardUp)
+                Button("Join") {
+                    keyboardUp = false
+                    engine.joinGroup(groupTrimmed)
+                    groupField = ""
+                }
+                .buttonStyle(.borderless)
+                .disabled(!engine.running || !groupIsValid)
+            }
+            ForEach(config.joinedGroups, id: \.self) { g in
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Image(systemName: "dot.radiowaves.up.forward")
+                            .foregroundStyle(Color.lispGreen)
+                        Text(g).font(.callout.monospaced()).foregroundStyle(Color.lispGreen)
+                        Spacer()
+                        Button("Leave") { engine.leaveGroup(g) }
+                            .buttonStyle(.borderless)
+                            .foregroundStyle(Color.lispRed)
+                    }
+                    Group {
+                        if let ms = engine.groupMapServers[g] {
+                            Text("registers to ").foregroundStyle(.primary)
+                                + Text(ms).foregroundStyle(Color.lispBlue)
+                        } else {
+                            Text(engine.running ? "registering…" : "register when LISP is active")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .font(.caption2.monospaced())
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                }
+            }
+            if config.joinedGroups.isEmpty {
+                Text("No groups joined")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        } header: {
+            centeredTitle("Multicast Groups")
         }
     }
 }

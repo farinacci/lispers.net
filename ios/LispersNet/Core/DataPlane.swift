@@ -16,14 +16,28 @@ extension LispEngine {
 
     func encapAndSend(inner: Data, destEID: LispAddress) {
         guard running else { return }
-        guard destEID.isOverlayAddress else {
-            // Requirement: only 240/4 uses the overlay.
+        let multicast = destEID.isMulticast
+        guard destEID.isOverlayAddress || multicast else {
+            // Requirement: only 240/4 (unicast) and 224/4 (multicast) use the overlay.
             log.dprint(.itr, "Destination \(destEID.addressString) not in " +
-                       "240.0.0.0/4, native-forward (underlay)")
+                       "240.0.0.0/4 or 224.0.0.0/4, native-forward (underlay)")
             return
         }
-        guard let entry = mapCache.lookup(destEID), entry.action == LISP.noAction,
-              let rlocEntry = entry.selectRLOC(for: inner) else {
+        // Multicast: (S,G) lookup (source = our EID); the default (0/0, 224/4)
+        // entry's RLOC-set is the RTRs, and selectRLOC hashes (S,G) -> one RTR,
+        // which then replicates to the joined receivers.
+        let entry = multicast
+            ? mapCache.lookupMulticast(source: config.eid ?? LispAddress(), group: destEID)
+            : mapCache.lookup(destEID)
+        // Multicast: hash the (S,G) consistently → ONE RTR (it replicates). Unicast
+        // keeps the default per-ping load-split.
+        guard let entry = entry, entry.action == LISP.noAction,
+              let rlocEntry = entry.selectRLOC(for: inner, hashL4: multicast ? false : LISP.loadSplitPings) else {
+            if multicast {
+                log.lprint(.itr, "No multicast map-cache entry for group " +
+                           "\(destEID.addressString), dropping")
+                return
+            }
             // Miss or send-map-request action: request the mapping and queue.
             log.lprint(.itr, "Map-cache lookup \(destEID.addressString) -> miss, " +
                        "send Map-Request")
@@ -195,13 +209,21 @@ extension LispEngine {
         let srcAddr = LispAddress(v4: src)
         let dstAddr = LispAddress(v4: dst)
 
-        guard let myEID = config.eid, dstAddr.v4 == myEID.v4 else {
-            log.dprint(.etr, "Inner destination \(dstAddr.addressString) is not " +
-                       "our EID, discarding")
+        let forUs = config.eid.map { dstAddr.v4 == $0.v4 } ?? false
+        let forGroup = dstAddr.isMulticast
+            && joinedGroupAddresses.contains { $0.v4 == dstAddr.v4 }
+        guard forUs || forGroup else {
+            log.dprint(.etr, "Inner destination \(dstAddr.addressString) is not our EID " +
+                       "or a joined group, discarding")
             return
         }
+        if forGroup {
+            // A multicast packet the RTR replicated to us (we joined the group).
+            log.lprint(.etr, "Receive multicast EID packet, group " +
+                       "\(dstAddr.addressString) from \(srcAddr.addressString)")
+        }
 
-        if proto == 1 {                     // ICMP
+        if proto == 1 {                     // ICMP — echo-request replies unicast to src
             let icmp = packet.subdata(in: (packet.startIndex + ihl)..<packet.endIndex)
             pingService.processInboundICMP(icmp, from: srcAddr)
         }

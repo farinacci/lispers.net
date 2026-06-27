@@ -30,20 +30,29 @@ struct LigView: View {
             .onEnded { v in fontScale = min(max(fontScale * v.magnification, 0.6), 3.0) }
     }
 
+    private static let outputAnchor = "lig-output-top"
+
     var body: some View {
         NavigationStack {
-            Form {
-                lookupSection
-                parametersSection
-                outputSection
-            }
-            .listRowSeparatorTint(.lispSeparator)
-            .scrollDismissesKeyboard(.interactively)
-            .navigationTitle("LIG")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    if !lig.output.isEmpty { Button("Clear") { lig.output = [] } }
+            ScrollViewReader { proxy in
+                Form {
+                    lookupSection
+                    outputSection
+                }
+                .listRowSeparatorTint(.lispSeparator)
+                .scrollDismissesKeyboard(.interactively)
+                // On a fresh lig, jump the screen to the output so the rloc-set is
+                // visible without scrolling past the lookup/params sections.
+                .onChange(of: lig.output.count) { _, count in
+                    guard count > 0 else { return }
+                    withAnimation { proxy.scrollTo(Self.outputAnchor, anchor: .top) }
+                }
+                .navigationTitle("LIG")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        if !lig.output.isEmpty { Button("Clear") { lig.output = [] } }
+                    }
                 }
             }
         }
@@ -75,8 +84,11 @@ struct LigView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(!engine.running || eid.isEmpty || lig.inFlight)
             }
+            Stepper("count: \(count)", value: $count, in: 1...5)
+            Toggle("no-info", isOn: $noInfo)
+            Toggle("debug", isOn: $debug)
             // Map-Request for our own EID, to see what the mapping system has
-            // registered for us.
+            // registered for us — last line of the section.
             Button {
                 keyboardUp = false
                 lig.lookup(eidString: engine.config.eidString, count: count,
@@ -100,16 +112,6 @@ struct LigView: View {
         }
     }
 
-    private var parametersSection: some View {
-        Section {
-            Stepper("count: \(count)", value: $count, in: 1...5)
-            Toggle("no-info", isOn: $noInfo)
-            Toggle("debug", isOn: $debug)
-        } header: {
-            Text("Parameters").frame(maxWidth: .infinity, alignment: .center)
-        }
-    }
-
     private var outputSection: some View {
         Section {
             if lig.output.isEmpty {
@@ -123,6 +125,7 @@ struct LigView: View {
                             .textSelection(.enabled)
                     }
                 }
+                .id(Self.outputAnchor)              // scroll target for auto-jump
                 .simultaneousGesture(magnify)
             }
         } header: {
@@ -132,8 +135,9 @@ struct LigView: View {
 
     // Color EID (green), rloc-name (blue), RLOC (red) tokens — same scheme as the
     // Logs / Map-Cache views — so the debug lines match lisp-lig.py's coloring.
+    // Group 1 = multicast (S,G) tuple "[iid](S/ml, G/ml)" -> green (an EID).
     private static let tokenRegex = try? NSRegularExpression(
-        pattern: #"(\[\d+\][\d.]+(?:/\d+)?)|([\w.-]+@tp-\d+)|(\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?)"#)
+        pattern: #"((?:\[\d+\])?\(\d{1,3}(?:\.\d{1,3}){3}/\d+,\s*\d{1,3}(?:\.\d{1,3}){3}/\d+\))|(\[\d+\][\d.]+(?:/\d+)?)|([\w.-]+@tp-\d+)|(\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?)"#)
 
     private static func coloredTokens(_ s: String, font: Font) -> Text {
         guard let regex = tokenRegex else { return Text(s).font(font) }
@@ -146,8 +150,9 @@ struct LigView: View {
                                   length: m.range.location - last))).font(font)
             }
             let token = ns.substring(with: m.range)
-            let color: Color = m.range(at: 1).location != NSNotFound ? .lispGreen
-                : m.range(at: 2).location != NSNotFound ? .lispBlue : .lispRed
+            let color: Color = (m.range(at: 1).location != NSNotFound
+                                || m.range(at: 2).location != NSNotFound) ? .lispGreen
+                : m.range(at: 3).location != NSNotFound ? .lispBlue : .lispRed
             out = out + Text(token).font(font).foregroundColor(color)
             last = m.range.location + m.range.length
         }
@@ -171,12 +176,18 @@ struct LigView: View {
             return Text("EID-prefix: ").font(mono)
                  + Text(prefix).font(mono).foregroundColor(.lispGreen)
                  + Text(rest).font(mono)
-        case .rloc(let addr, let before, let name, let after):
+        case .rloc(let addr, let before, let name, let after, let addrIsRLE):
             var t = Text("  RLOC: ").font(mono)
-                  + Text(addr).font(mono).foregroundColor(.lispRed)
+                  + Text(addr).font(mono).foregroundColor(addrIsRLE ? .primary : .lispRed)
                   + Text(before).font(mono)
             if let n = name { t = t + Text(n).font(mono).foregroundColor(.lispBlue) }
             return t + Text(after).font(mono)
+        case .rle(let m):
+            // one member per line: "        rle: <ip> <name>" — ip red, name blue.
+            var t = Text("        rle: ").font(mono)
+                  + Text(m.rloc).font(mono).foregroundColor(.lispRed)
+            if let n = m.name { t = t + Text(" \(n)").font(mono).foregroundColor(.lispBlue) }
+            return t
         }
     }
 }

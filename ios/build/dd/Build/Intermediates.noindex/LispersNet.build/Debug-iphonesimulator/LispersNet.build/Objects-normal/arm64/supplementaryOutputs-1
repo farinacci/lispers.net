@@ -19,5 +19,12 @@
     "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/DataPlane.dia",
     "object" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/DataPlane.o",
     "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/DataPlane.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/Core/HostsFile.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/HostsFile.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/HostsFile.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/HostsFile.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/HostsFile.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/dd/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/HostsFile.swiftdeps"
   }
 }

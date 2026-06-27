@@ -45,6 +45,7 @@ final class LispConfig: ObservableObject, Codable {
     @Published var rlocProbingEnabled = true
     @Published var telemetryEnabled = true          // "lisp json" telemetry
     @Published var siteID: UInt64 = 0
+    @Published var joinedGroups: [String] = []      // multicast groups we receive
 
     var decentConfigured: Bool { !decentSuffix.isEmpty && decentModulus > 0 }
 
@@ -61,7 +62,7 @@ final class LispConfig: ObservableObject, Codable {
         case lispEnabled, mapServers, decentSuffix, decentModulus, decentAuthKey, decentPrefixes
         case controlPlaneLog, dataPlaneLog, rlocProbeLog, eidString, instanceID
         case decentNATEnabled, natTraversalEnabled, rlocProbingEnabled
-        case telemetryEnabled, siteID
+        case telemetryEnabled, siteID, joinedGroups
     }
 
     init() { load() }
@@ -84,6 +85,7 @@ final class LispConfig: ObservableObject, Codable {
         rlocProbingEnabled = try c.decodeIfPresent(Bool.self, forKey: .rlocProbingEnabled) ?? true
         telemetryEnabled = try c.decodeIfPresent(Bool.self, forKey: .telemetryEnabled) ?? true
         siteID = try c.decodeIfPresent(UInt64.self, forKey: .siteID) ?? 0
+        joinedGroups = try c.decodeIfPresent([String].self, forKey: .joinedGroups) ?? []
     }
 
     func encode(to encoder: Encoder) throws {
@@ -104,6 +106,7 @@ final class LispConfig: ObservableObject, Codable {
         try c.encode(rlocProbingEnabled, forKey: .rlocProbingEnabled)
         try c.encode(telemetryEnabled, forKey: .telemetryEnabled)
         try c.encode(siteID, forKey: .siteID)
+        try c.encode(joinedGroups, forKey: .joinedGroups)
     }
 
     private static var fileURL: URL {
@@ -137,6 +140,7 @@ final class LispConfig: ObservableObject, Codable {
         rlocProbingEnabled = loaded.rlocProbingEnabled
         telemetryEnabled = loaded.telemetryEnabled
         siteID = loaded.siteID
+        joinedGroups = loaded.joinedGroups
 
         // Migrate a legacy map-server auth-key into the decent key, once.
         if decentAuthKey.isEmpty, let key = mapServers.first?.authKey, !key.isEmpty {

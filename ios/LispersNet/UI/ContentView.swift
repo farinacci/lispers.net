@@ -28,6 +28,11 @@ final class KeyboardObserver: ObservableObject {
         // which left isVisible stuck true and the tab bar permanently hidden.
         nc.addObserver(forName: UIResponder.keyboardWillChangeFrameNotification,
                        object: nil, queue: .main) { [weak self] note in
+            // Ignore frame changes posted while we're not the active app: iOS emits
+            // spurious keyboard-frame notifications during the background/foreground
+            // transition that would otherwise latch isVisible=true and leave the tab
+            // bar hidden after returning from the lock screen.
+            guard UIApplication.shared.applicationState == .active else { return }
             guard let end = (note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey]
                                 as? NSValue)?.cgRectValue else { return }
             let screenH = UIScreen.main.bounds.height
@@ -35,6 +40,10 @@ final class KeyboardObserver: ObservableObject {
         }
         // Belt-and-suspenders: an explicit hide always clears the flag.
         nc.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil,
+                       queue: .main) { [weak self] _ in self?.isVisible = false }
+        // Returning to foreground with the keyboard down must always restore the tab
+        // bar — clear any stale "visible" a dropped hide or transition artifact left.
+        nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil,
                        queue: .main) { [weak self] _ in self?.isVisible = false }
     }
 }
@@ -46,7 +55,7 @@ struct ContentView: View {
     @Environment(\.verticalSizeClass) private var vSizeClass
 
     // App version string — bump on request.
-    static let version = "0.4"
+    static let version = "0.4-36"
 
     var body: some View {
         VStack(spacing: 0) {
