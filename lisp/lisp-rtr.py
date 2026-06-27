@@ -900,7 +900,6 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         packet.send_packet(raw_socket, packet.outer_dest)
 
     elif (rle):
-        raw_socket = lisp_raw_v6_socket if version == 6 else lisp_raw_socket
 
         #
         # Do replication of RLE is returned.
@@ -934,6 +933,7 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
             #
             node.rloc.stats.increment(len(packet.packet))
 
+            raw_socket = lisp_raw_v6_socket if version == 6 else lisp_raw_socket
             packet.print_packet("Replicate-to-L{}".format(node.level), True)
             packet.send_packet(raw_socket, packet.outer_dest)
 

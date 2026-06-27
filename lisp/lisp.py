@@ -13704,7 +13704,23 @@ class lisp_rloc(object):
         #
         self.rle = rloc_record.rle
         if (self.rle):
+
+            #
+            # RLE node rlocs are built with add_nh=False, so they never get a
+            # next-hop set and would display as "???". The RTR reaches an RLE
+            # member out its default-route egress, the same as a unicast NAT'd
+            # RLOC, so set each node's next-hop to the default v4 next-hop. This
+            # gives the RLE its interface (no more "???") and a source-bind for
+            # data-encapsulation.
+            #
+            next_hops = lisp_get_default_route_next_hops()
             for rle_node in self.rle.rle_nodes:
+                for nh in next_hops:
+                    if (nh[1].find(":") != -1): continue
+                    rle_node.rloc.rloc_next_hop = nh
+                    break
+                #endfor
+
                 rloc_name = rle_node.rloc.rloc_name
                 nat_info = lisp_get_nat_info(rle_node.rloc.rloc, rloc_name)
                 if (nat_info == None): continue

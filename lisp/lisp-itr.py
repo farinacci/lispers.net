@@ -843,7 +843,6 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
         packet.send_packet(raw_socket, packet.outer_dest)
 
     elif (rle):
-        raw_socket = lisp_raw_v6_socket if version == 6 else lisp_raw_socket
 
         #
         # Do replication of RLE is returned. Since we are an ITR, replicate to
@@ -877,6 +876,7 @@ def lisp_itr_data_plane(packet, device, input_interface, macs, my_sa):
             #
             # Replicate out on raw socket.
             #
+            raw_socket = lisp_raw_v6_socket if version == 6 else lisp_raw_socket
             packet.print_packet("Replicate-to-L{}".format(node.level), True)
             packet.send_packet(raw_socket, packet.outer_dest)
 
