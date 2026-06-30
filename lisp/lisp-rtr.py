@@ -655,13 +655,23 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         else:
             source = packet.outer_source.print_address_no_iid()
             ttl = packet.outer_ttl
+            sport = packet.udp_sport
             packet = packet.packet
-            if (lisp.lisp_is_rloc_probe_request(packet[28:29]) == False and
+            is_probe_req = lisp.lisp_is_rloc_probe_request(packet[28:29])
+            if (is_probe_req == False and
                 lisp.lisp_is_rloc_probe_reply(packet[28:29]) == False):
                 ttl = -1
             #endif
+            #
+            # For a data-encapsulated RLOC-probe REQUEST from a NAT'd xTR, pass
+            # the outer (translated) source port so the RTR can data-encap the
+            # reply back to the exact NAT port the probe came from. This is the
+            # only way to disambiguate multiple xTRs behind one NAT (same RLOC,
+            # different ports). All other data-plane control keeps sport=0.
+            #
+            sport = sport if is_probe_req else 0
             packet = packet[28::]
-            lisp.lisp_parse_packet(lisp_send_sockets, packet, source, 0, ttl)
+            lisp.lisp_parse_packet(lisp_send_sockets, packet, source, sport, ttl)
         #endif
         return
     #endif

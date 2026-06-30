@@ -7633,6 +7633,24 @@ def lisp_rtr_process_map_request(lisp_sockets, map_request, source, sport,
 
     packet = lisp_build_map_reply(eid, group, rloc_set, nonce, LISP_NO_ACTION,
         1440, map_request, keys, enc, True, ttl)
+
+    #
+    # If this RLOC-probe Map-Request arrived data-encapsulated from a NAT'd xTR,
+    # lisp-rtr passes the outer (translated) source port as sport. A raw control-
+    # port Map-Reply cannot get back through the xTR's NAT, so data-encapsulate
+    # the RLOC-probe reply to the EXACT translated RLOC:port the probe came from.
+    # Using the arrival port (not an address-only nat_info lookup) is what lets
+    # multiple xTRs behind one NAT (same RLOC, different ports) each get their
+    # own reply. nat_info presence just confirms the source is a NAT'd xTR.
+    #
+    if (map_request.rloc_probe and sport != 0 and len(lisp_sockets) == 4):
+        if (lisp_get_nat_info(itr_rloc, None) != None):
+            ni = lisp_nat_info(itr_rloc.print_address_no_iid(), "", sport)
+            lisp_encap_rloc_probe(lisp_sockets, itr_rloc, ni, packet)
+            return
+        #endif
+    #endif
+
     lisp_send_map_reply(lisp_sockets, packet, itr_rloc, sport)
     return
 #enddef
