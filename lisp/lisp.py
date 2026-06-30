@@ -18377,10 +18377,15 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl, mrlo
     #endif
 
     #
-    # For decent-NAT cases, get the translated ephermal port from the
-    # rloc-name. Use it to find RLOC-probe state.
+    # For decent-NAT cases, get the translated ephermal port from the rloc-name.
+    # Only do this when NAT state did not already resolve a port (store_rloc_
+    # from_record leaves port == LISP_DATA_PORT in that case). Otherwise keep the
+    # per-RTR NAT-observed port, so an xTR behind a symmetric NAT - where each RTR
+    # sees a different translated port but the xTR can only advertise one @tp -
+    # still matches on every RTR instead of going unreach on all but the one whose
+    # port happens to equal the @tp.
     #
-    if (rloc_name and rloc_name.find(LISP_TP) != -1):
+    if (rloc_name and rloc_name.find(LISP_TP) != -1 and port == LISP_DATA_PORT):
         port = int(rloc_name.split(LISP_TP)[-1])
     #endif
 
