@@ -10681,6 +10681,7 @@ def lisp_process_unicast_map_notify(lisp_sockets, packet, source):
         mc.build_best_rloc_set()
         lisp_write_ipc_map_cache(True, mc)
     #endfor
+    if (eid_records == None): return
 
     #
     # Find map-server data structure from source address of Map-Notify then
