@@ -13,9 +13,9 @@
 		<key>CFBundleIdentifier</key>
 		<string>net.lispers.xtr</string>
 		<key>CFBundleShortVersionString</key>
-		<string>0.4</string>
+		<string>0.5</string>
 		<key>CFBundleVersion</key>
-		<string>2</string>
+		<string>3</string>
 		<key>SigningIdentity</key>
 		<string>Apple Development: Dino Farinacci (4NJPLD8H35)</string>
 		<key>Team</key>
@@ -24,7 +24,64 @@
 	<key>ArchiveVersion</key>
 	<integer>2</integer>
 	<key>CreationDate</key>
-	<date>2026-06-24T17:43:17Z</date>
+	<date>2026-07-01T03:02:41Z</date>
+	<key>Distributions</key>
+	<array>
+		<dict>
+			<key>adamId</key>
+			<string>6782220263</string>
+			<key>certificateSHA1</key>
+			<string>3FF0FC6159AAAB68A7FF743E1435E21F4C0194BF</string>
+			<key>destination</key>
+			<string>upload</string>
+			<key>identifier</key>
+			<string>74378679-6f87-434f-9192-c8e483f350a0</string>
+			<key>preparationEvent</key>
+			<dict>
+				<key>date</key>
+				<string>2026-07-01T03:03:20Z</string>
+				<key>errors</key>
+				<array/>
+				<key>infoMessages</key>
+				<array/>
+				<key>shortTitle</key>
+				<string>Prepared</string>
+				<key>state</key>
+				<string>success</string>
+				<key>title</key>
+				<string>Prepared archive for uploading</string>
+				<key>warnings</key>
+				<array/>
+			</dict>
+			<key>providerId</key>
+			<string>febdccd0-3ce1-46a5-a455-2d3434fdc035</string>
+			<key>task</key>
+			<string>distribute</string>
+			<key>teamID</key>
+			<string>KV8AVA749G</string>
+			<key>uploadDestination</key>
+			<string>App Store</string>
+			<key>uploadEvent</key>
+			<dict>
+				<key>date</key>
+				<string>2026-07-01T03:04:56Z</string>
+				<key>errors</key>
+				<array/>
+				<key>infoMessages</key>
+				<array/>
+				<key>shortTitle</key>
+				<string>Uploaded</string>
+				<key>state</key>
+				<string>success</string>
+				<key>title</key>
+				<string>Uploaded to Apple</string>
+				<key>warnings</key>
+				<array/>
+			</dict>
+			<key>uploadedBuildNumber</key>
+			<string>3</string>
+		</dict>
+	</array>
 	<key>Name</key>
 	<string>LispersNet</string>
 	<key>SchemeName</key>
