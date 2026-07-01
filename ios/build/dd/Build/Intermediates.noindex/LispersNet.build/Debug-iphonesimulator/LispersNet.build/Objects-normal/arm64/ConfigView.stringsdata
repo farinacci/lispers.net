@@ -172,7 +172,7 @@
       },
       {
         "comment": "",
-        "key": "Join/Leave group address",
+        "key": "Join group address",
         "location": {
           "startingColumn": 27,
           "startingLine": 225

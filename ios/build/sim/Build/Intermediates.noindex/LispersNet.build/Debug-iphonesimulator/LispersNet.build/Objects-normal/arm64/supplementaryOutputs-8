@@ -1,0 +1,23 @@
+{
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/LispersNetApp.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LispersNetApp.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LispersNetApp.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LispersNetApp.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LispersNetApp.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LispersNetApp.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/PingView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/build/sim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps"
+  }
+}

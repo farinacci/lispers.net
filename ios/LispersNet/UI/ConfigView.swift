@@ -222,7 +222,7 @@ struct ConfigView: View {
     private var multicastSection: some View {
         Section {
             HStack {
-                TextField("Join/Leave group address", text: $groupField)
+                TextField("Join group address", text: $groupField)
                     .font(.body.monospaced())
                     .keyboardType(.numbersAndPunctuation)
                     .autocapitalization(.none)

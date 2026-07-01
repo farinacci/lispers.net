@@ -194,8 +194,8 @@ final class PingService: ObservableObject {
             }
         } else if type == 8 {               // echo-request (unicast EID or joined group)
             guard let myEID = engine.config.eid else { return }
-            engine.log.lprint(.etr, "ICMP echo-request from \(source.addressString), " +
-                              "seq \(seq) — replying")
+            engine.log.lprint(.etr, "Receive ICMP echo-request from " +
+                              "\(source.addressString), seq \(seq)")
             var reply = Data(icmp)
             reply[reply.startIndex] = 0     // type 0 echo-reply
             reply[reply.startIndex + 2] = 0
@@ -205,6 +205,12 @@ final class PingService: ObservableObject {
             reply[reply.startIndex + 3] = UInt8(cksum & 0xff)
             let inner = Self.buildIPv4(source: myEID, dest: source,
                                        protocol: 1, payload: reply)
+            // Explicit ETR log confirming the echo-reply is sent — including for a
+            // joined multicast group (the reply goes unicast to the pinger EID in
+            // `source`). encapAndSend then logs the actual encap, or a drop if the
+            // return-path RLOCs are all unreach.
+            engine.log.lprint(.etr, "Send ICMP echo-reply \(myEID.addressString) -> " +
+                              "\(source.addressString), seq \(seq)")
             engine.encapAndSend(inner: inner, destEID: source)
         }
     }

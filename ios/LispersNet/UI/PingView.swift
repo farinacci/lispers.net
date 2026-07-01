@@ -22,6 +22,21 @@ struct PingView: View {
 
     private var customTrimmed: String { customEID.trimmingCharacters(in: .whitespaces) }
 
+    // A capsule toggle-button for the load-split row: green filled when on, gray
+    // outline when off; tapping flips it.
+    private func splitButton(_ title: String, isOn: Bool,
+                             _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.callout)
+                .padding(.horizontal, 12).padding(.vertical, 5)
+                .background(isOn ? Color.lispGreen : Color.gray.opacity(0.18))
+                .foregroundColor(isOn ? .white : .primary)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.borderless)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
@@ -49,6 +64,8 @@ struct PingView: View {
                     activePingSection(floated: true)
                     resultsSection
                 }
+                // Timer + load-split toggles float to the very top so they sit
+                // right under the "Ping" title, above the hosts list.
                 Section {
                     Picker("Interval", selection: Binding(
                         get: { ping.interval }, set: { ping.setInterval($0) })) {
@@ -59,6 +76,23 @@ struct PingView: View {
                     }
                     .pickerStyle(.segmented)
 
+                    // "load-split" with unicast/multicast as independent toggle-
+                    // buttons on one line (green = on). On = spread packets across
+                    // the up RTRs; off = a single RTR (no spread).
+                    HStack {
+                        Text("load-split")
+                        Spacer()
+                        splitButton("unicast", isOn: config.loadSplitUnicast) {
+                            config.loadSplitUnicast.toggle(); config.save()
+                        }
+                        splitButton("multicast", isOn: config.loadSplitMulticast) {
+                            config.loadSplitMulticast.toggle(); config.save()
+                        }
+                    }
+                }
+                .id("ping-top")
+
+                Section {
                     // Ping an arbitrary EID not in the hosts list.
                     HStack {
                         TextField("EID or hostname", text: $customEID)
@@ -115,7 +149,6 @@ struct PingView: View {
                     Text("Ping an EID (from \(engine.config.eidString.isEmpty ? "our EID" : "EID \(engine.config.eidString)"))")
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
-                .id("ping-top")
 
                 // When idle (stopped, or after the tab-switch grace expires), the
                 // live section + Results rest at the END in reading order.
@@ -125,6 +158,10 @@ struct PingView: View {
                 }
             }
             .listRowSeparatorTint(.lispSeparator)
+            // Pull the first section up tight under the nav bar (past the List's
+            // default top content inset) so the timer/toggle pill sits right below
+            // "Ping". Negative margin closes the remaining gap.
+            .contentMargins(.top, -44, for: .scrollContent)
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Ping")
             .navigationBarTitleDisplayMode(.inline)

@@ -55,7 +55,7 @@ struct ContentView: View {
     @Environment(\.verticalSizeClass) private var vSizeClass
 
     // App version string — bump on request.
-    static let version = "0.4-36"
+    static let version = "0.4-70"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -111,6 +111,9 @@ struct StatusHeader: View {
     @EnvironmentObject var engine: LispEngine
     @EnvironmentObject var config: LispConfig
     @ObservedObject var netName = NetworkName.shared
+    // Snapshot time the uptimes are measured against; refreshed each time this
+    // view appears (tab switch) so the values update on (re)entry, not live.
+    @State private var asOf = Date()
 
     // "<addr> (en0 -> MyWiFi)" / "<addr> (pdp_ip0 -> Carrier)" — the network name
     // is appended when iOS lets us read it (Wi-Fi needs the wifi-info entitlement +
@@ -134,6 +137,14 @@ struct StatusHeader: View {
                     .frame(width: 10, height: 10)
                 Text(engine.running ? "LISP is active" : "LISP is inactive")
                     .font(.headline)
+                // LISP uptime — since the Enable LISP toggle was last turned on.
+                // Snapshotted on appear (asOf); it refreshes when you leave and
+                // return to this tab, not every second.
+                if engine.running, let s = engine.lispStart {
+                    Text(formatHMS(s, asOf: asOf))
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
                 if engine.behindNAT {
                     Text("behind NAT")
@@ -142,6 +153,16 @@ struct StatusHeader: View {
                         .background(Color.orange.opacity(0.25))
                         .clipShape(Capsule())
                 }
+            }
+            // LISP app uptime — since the app process launched. Only shown when
+            // it differs from the LISP uptime (i.e. LISP was re-enabled after
+            // launch); if LISP came up with the app the two are equal, so the
+            // separate line would be redundant. Also snapshotted on appear.
+            if engine.running, let s = engine.lispStart,
+               s.timeIntervalSince(engine.appStart) >= 2 {
+                (Text("LISP app uptime ").foregroundStyle(.secondary)
+                 + Text(formatHMS(engine.appStart, asOf: asOf)))
+                    .font(.caption.monospaced())
             }
             if engine.running {
                 Group {
@@ -154,16 +175,21 @@ struct StatusHeader: View {
                     Text(engine.rloc.map { rlocLabel($0) } ?? "none")
                         .foregroundStyle(Color.lispRed)
                     if let t = engine.translatedRLOC {
+                        // The RTR-reported translated DATA port (engine.advertisedPort)
+                        // — the same value we put in @tp and the RTRs use to forward.
                         Text("translated RLOC:port ").foregroundStyle(.secondary) +
-                        Text("\(t.addressString):\(String(engine.translatedPort))")
+                        Text("\(t.addressString):\(String(engine.advertisedPort))")
                             .foregroundStyle(Color.lispRed)
                     }
                     Text("registers sent ").foregroundStyle(.secondary) +
-                    Text(String(engine.registrationsSent))
+                    Text(String(engine.registrationsSent)) +
+                    Text(", groups joined ").foregroundStyle(.secondary) +
+                    Text(String(config.joinedGroups.count))
                 }
                 .font(.caption.monospaced())
             }
         }
         .padding(.vertical, 4)
+        .onAppear { asOf = Date() }
     }
 }

@@ -103,7 +103,7 @@
         "key": "translated RLOC:port ",
         "location": {
           "startingColumn": 30,
-          "startingLine": 157
+          "startingLine": 159
         }
       },
       {
@@ -111,7 +111,7 @@
         "key": "%@:%@",
         "location": {
           "startingColumn": 30,
-          "startingLine": 158
+          "startingLine": 160
         }
       },
       {
@@ -119,7 +119,15 @@
         "key": "registers sent ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 161
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": ", groups joined ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 165
         }
       }
     ]

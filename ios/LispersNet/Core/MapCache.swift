@@ -22,6 +22,12 @@ final class LispRLOC {
     var lastProbeNonce: UInt64 = 0
     var lastProbeSent: Date?
     var lastProbeReply: Date?
+    // When the CURRENT run of unanswered probes began. Set on the first probe
+    // after a reply (or from creation) and NOT reset by subsequent re-sends, so
+    // the unreach timer measures "outstanding for > wait" instead of "since the
+    // last send" — the latter never exceeds the probe interval and so could
+    // never fire. Cleared on a probe-reply.
+    var probeOutstandingSince: Date?
     var recentRTTs: [Double] = []               // last 3, seconds
     var recentHops: [String] = []
     var recentLatencies: [String] = []          // "fwd/rev"
@@ -53,6 +59,7 @@ final class LispMapCacheEntry {
     var group = LispAddress()                   // non-null = multicast (S,G)
     var rlocSet: [LispRLOC]
     var action = LISP.noAction
+    var loadSplitIndex = 0                       // round-robin cursor (load-split)
     var uptime = Date()
     var ttl: TimeInterval?                      // seconds; nil = forever
     var lastRefresh = Date()
@@ -81,17 +88,29 @@ final class LispMapCacheEntry {
     // this so a given (S,G) always picks the SAME RTR (the RTR then replicates);
     // unicast defaults to LISP_LOAD_SPLIT_PINGS (adds 4 L4 bytes so successive
     // pings spread across the best tier).
-    func selectRLOC(for inner: Data? = nil, hashL4: Bool = LISP.loadSplitPings) -> LispRLOC? {
+    // loadSplit == true: strict ROUND-ROBIN — this packet to one RTR, the NEXT to
+    // another, cycling through the up RTRs (one copy per packet; the xTR does not
+    // replicate). loadSplit == false: a single STABLE RTR (hash of src+dst, so a
+    // flow always uses the same one — no spread across RTRs).
+    func selectRLOC(for inner: Data? = nil, hashL4 loadSplit: Bool = LISP.loadSplitPings) -> LispRLOC? {
         let up = rlocSet.filter { $0.isUp }
         // best_rloc_set (lisp.py): the up RLOCs at the best (lowest) priority.
         guard let bestPri = up.map({ $0.priority }).min() else { return nil }
         let best = up.filter { $0.priority == bestPri }
         if best.count == 1 { return best[0] }
-        let n = hashL4 ? 12 : 8                          // src+dst(+4 L4 for split)
-        if let inner = inner, inner.count >= 12 + n, inner.first.map({ $0 >> 4 }) == 4 {
+
+        if loadSplit {
+            let r = best[loadSplitIndex % best.count]
+            loadSplitIndex &+= 1
+            return r
+        }
+
+        // No load-split: deterministic single RTR — hash the src+dst (bytes 12..20)
+        // only, so every packet of a flow lands on the same RTR.
+        if let inner = inner, inner.count >= 20, inner.first.map({ $0 >> 4 }) == 4 {
             let b = inner.startIndex
             var h: UInt8 = 0
-            for i in 12..<(12 + n) { h ^= inner[b + i] }
+            for i in 12..<20 { h ^= inner[b + i] }
             return best[Int(h) % best.count]
         }
         return best.max { $0.weight < $1.weight }
@@ -167,8 +186,10 @@ func formatUptime(_ since: Date) -> String {
 }
 
 // Map-cache elapsed time, lisp-mc.py style: "H:MM:SS" or "N days, H:MM:SS".
-func formatHMS(_ since: Date) -> String {
-    let t = Int(Date().timeIntervalSince(since))
+// asOf defaults to now (live, for map-cache rows); callers can pass a snapshot
+// time to freeze the value (the xTR-tab uptimes update only on (re)appear).
+func formatHMS(_ since: Date, asOf: Date = Date()) -> String {
+    let t = Int(asOf.timeIntervalSince(since))
     let days = t / 86400
     let hms = String(format: "%d:%02d:%02d", (t % 86400) / 3600, (t % 3600) / 60, t % 60)
     return days > 0 ? "\(days) days, \(hms)" : hms

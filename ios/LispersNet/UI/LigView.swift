@@ -176,6 +176,13 @@ struct LigView: View {
             return Text("EID-prefix: ").font(mono)
                  + Text(prefix).font(mono).foregroundColor(.lispGreen)
                  + Text(rest).font(mono)
+        case .mapReply(let from, let rtt):
+            // from-RLOC red, rtt value orange + bold (between "rtt" and "secs").
+            return Text("Received map-reply from ").font(mono)
+                 + Text(from).font(mono).foregroundColor(.lispRed)
+                 + Text(" with rtt ").font(mono)
+                 + Text(rtt).font(mono).fontWeight(.heavy).foregroundColor(.orange)
+                 + Text(" secs:").font(mono)
         case .rloc(let addr, let before, let name, let after, let addrIsRLE):
             var t = Text("  RLOC: ").font(mono)
                   + Text(addr).font(mono).foregroundColor(addrIsRLE ? .primary : .lispRed)

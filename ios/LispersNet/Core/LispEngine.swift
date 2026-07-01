@@ -18,10 +18,20 @@ final class LispEngine: ObservableObject {
     @Published private(set) var rloc: DiscoveredRLOC?
     @Published var behindNAT = false
     @Published var translatedRLOC: LispAddress?
+    // Translated DATA port, learned from the RTRs' Info-Replies only (NOT the
+    // map-server's — the map-server's path translates to a different port, e.g.
+    // 41341, that the RTRs don't use for forwarding). This is the port we
+    // advertise in @tp and display. Fallback to natDataPort until an RTR replies.
     @Published var translatedPort: UInt16 = 0
+    var advertisedPort: UInt16 { translatedPort != 0 ? translatedPort : LISP.natDataPort }
     @Published var registrationsSent = 0
     @Published var lastMapNotify: Date?
     @Published var mapCacheVersion = 0      // bumped to refresh the UI
+    // When the app process launched (this object is created once at launch) and
+    // when LISP was last enabled (reset each time the Enable LISP toggle is
+    // turned on). Shown as "LISP app uptime" / "LISP uptime" in the status header.
+    let appStart = Date()
+    @Published var lispStart: Date?
     // group addressString -> "<decent dns> (<resolved addr>)" of its map-server,
     // shown under each joined group in the Ping tab.
     @Published var groupMapServers: [String: String] = [:]
@@ -67,14 +77,15 @@ final class LispEngine: ObservableObject {
 
     func enable() {
         guard !running else { return }
+        lispStart = Date()          // reset LISP uptime each time we enable
         log.controlPlaneLogging = config.controlPlaneLog
         log.dataPlaneLogging = config.dataPlaneLog
         // Banner at the top of each component log, naming the build that's running
         // (mirrors lisp.py's "lispers.net LISP <proc> starting up ..., version ...").
         let banner = "version \(ContentView.version), hostname \(xtrName)"
-        log.fprint(.core, "lispers.net IOS xTR starting up, \(banner)")
-        log.lprint(.itr, "lispers.net IOS ITR starting up, \(banner)")
-        log.lprint(.etr, "lispers.net IOS ETR starting up, \(banner)")
+        log.aprint(.core, "lispers.net IOS xTR starting up, \(banner)")
+        log.aprint(.itr, "lispers.net IOS ITR starting up, \(banner)")
+        log.aprint(.etr, "lispers.net IOS ETR starting up, \(banner)")
 
         guard let discovered = Interfaces.discoverRLOC() else {
             log.fprint(.core, "No usable RLOC interface found — cannot start")
@@ -210,6 +221,13 @@ final class LispEngine: ObservableObject {
         }
         let probe = Timer.scheduledTimer(withTimeInterval: LISP.rlocProbeInterval,
                                          repeats: true) { [weak self] _ in
+            // Re-evaluate the best RLOC interface every cycle, not just on the
+            // NWPathMonitor callback — that callback doesn't reliably fire when
+            // Wi-Fi comes up while cellular stays the primary path, so without this
+            // the xTR stays on 5G even though en0 (preferred) is now available.
+            // discoverRLOC is cheap (getifaddrs); pathChanged only re-registers
+            // when the chosen address actually changes.
+            self?.pathChanged()
             self?.sendRLOCProbes()
         }
         timers = [register, probe]
@@ -293,7 +311,12 @@ final class LispEngine: ObservableObject {
                 r.priority = 254
                 r.weight = 0
                 r.rlocName = "RTR"
-                r.state = "up-state"
+                // With RLOC-probing on we don't yet know the RTR is reachable —
+                // start unreach so we never show reach-state without telemetry; a
+                // probe reply promotes it to up. With probing off we can't measure
+                // reachability, so assume up (and forward), matching how turning
+                // probing off promotes everything to up-state.
+                r.state = config.rlocProbingEnabled ? "unreach-state" : "up-state"
                 return r
             }
         }

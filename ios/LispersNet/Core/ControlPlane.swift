@@ -124,17 +124,12 @@ extension LispEngine {
         rlocRecord.localBit = true
         rlocRecord.reachBit = true
         if behindNAT {
-            // Advertise "<xtr>@tp-<data-socket-port>" = LISP.natDataPort (41341),
-            // the port our DATA plane sends encap + RLOC-probe traffic FROM, hence
-            // what an RTR/peer observes it arriving ON. lisp.py parses this @tp port
-            // and uses it as the RLOC port for probe-reply matching (lisp.py:18367),
-            // so it MUST equal the RTR's data-path observation. Do NOT use the port
-            // learned from Info-Replies: those reflect the CONTROL path (sent to
-            // :4342) and under symmetric NAT differ per-destination from the data
-            // path (MS sees 29292 while the RTR's data path sees 41341) — which read
-            // our RLOC unreach despite data flowing. (store_translated_rloc,
-            // lisp.py:13765.)
-            rlocRecord.rlocName = "\(xtrName)\(LISP.tpPrefix)\(LISP.natDataPort)"
+            // Advertise "<xtr>@tp-<port>" where port is the translated DATA port the
+            // RTRs reported in their Info-Replies (engine.advertisedPort) — that's
+            // the port the RTRs use to forward/probe us, so lisp.py's @tp parse
+            // (lisp.py:18367) matches the RTR's probe-list key. NOT the map-server's
+            // path port (e.g. 41341), which the RTRs don't use.
+            rlocRecord.rlocName = "\(xtrName)\(LISP.tpPrefix)\(advertisedPort)"
         }
 
         var records = [rlocRecord]
@@ -242,6 +237,12 @@ extension LispEngine {
         // So a record-level name is what makes the merged-reply / lig show the name
         // per member (matching frt/cmh / lisp-etr.py:940). A node-level name is NOT
         // read by the merge and would come back empty.
+        // The record name carries "@tp-<port>" behind a NAT — it MUST match the
+        // name our RLOC-probe reply sends (answerEncapsulatedProbe), otherwise the
+        // RTR can't match the probe reply to this registered RLE member and it
+        // stays unreach. (Registering plain while probe-replying with @tp — 0.4-69
+        // — is exactly what broke it.) Consistency wins over matching lisp.py's
+        // plain RLE name. The map-server merge promotes this name onto the node.
         var node = RLENode()
         node.level = 128
         node.rloc = behindNAT ? (translatedRLOC ?? myRLOC.address) : myRLOC.address
@@ -250,7 +251,9 @@ extension LispEngine {
         rleRec.mpriority = 1; rleRec.mweight = 100
         rleRec.localBit = true; rleRec.reachBit = true
         rleRec.rloc = LispAddress()                     // no-address main RLOC
-        rleRec.rlocName = xtrName                        // hostname; merge promotes to node
+        rleRec.rlocName = behindNAT
+            ? "\(xtrName)\(LISP.tpPrefix)\(advertisedPort)"
+            : xtrName                                    // merge promotes to node
         rleRec.rle = [node]
 
         // The RTRs at priority 254 (rloc-count = 1 + rtr-count). The MS/RTR uses
@@ -402,10 +405,14 @@ extension LispEngine {
                 // special-casing by responder or mode. The control-socket reply
                 // (fromDataPort == false) carries the control-port translation and
                 // is not used for @tp.
-                if fromDataPort {
+                // Learn the translated DATA port from an RTR's data-socket Info-Reply
+                // ONLY. The map-server's reply carries its own path's translation
+                // (e.g. 41341) which the RTRs don't use for forwarding/probing, so it
+                // must not set the port we advertise.
+                if fromDataPort && isRTR {
                     if self.translatedPort != info.etrPort {
                         self.log.fprint(.etr, "Translated DATA port \(info.etrPort) " +
-                            "from \(source.addressString) (was \(self.translatedPort))")
+                            "from RTR \(source.addressString) (was \(self.translatedPort))")
                     }
                     self.translatedPort = info.etrPort
                 }
@@ -476,12 +483,22 @@ extension LispEngine {
         }
         for entry in snapshot {
             for r in entry.rlocSet {
-                // Mark unreachable if no reply within the wait window.
-                if let sent = r.lastProbeSent,
-                   Date().timeIntervalSince(sent) > LISP.rlocProbeReplyWait,
-                   (r.lastProbeReply ?? .distantPast) < sent, r.isUp {
+                // Mark unreachable if probes have been outstanding (no reply)
+                // for longer than the wait window. We measure from when the
+                // CURRENT unanswered run began (probeOutstandingSince), NOT from
+                // the last send: re-sends happen every probe interval (< wait),
+                // so "now - lastProbeSent" never crosses the wait and could
+                // never fire while we keep probing.
+                if let out = r.probeOutstandingSince,
+                   Date().timeIntervalSince(out) > LISP.rlocProbeReplyWait, r.isUp {
                     r.state = "unreach-state"
                     r.stateChange = Date()
+                    // Drop the now-stale telemetry: showing the last good rtts/
+                    // hops/lats next to an unreachable RLOC reads as "still being
+                    // answered" when it isn't. They repopulate on the next reply.
+                    r.recentRTTs = []
+                    r.recentHops = []
+                    r.recentLatencies = []
                     log.pprint(.itr, "RLOC \(r.rloc.addressString) went unreachable, " +
                                "no RLOC-probe reply")
                     bumpMapCache()
@@ -519,21 +536,47 @@ extension LispEngine {
                     for s in e2.rlocSet where probeKey(s) == probeKey(r) {
                         s.lastProbeNonce = probe.nonce
                         s.lastProbeSent = sentAt
+                        // Begin the unanswered run on the first send after a
+                        // reply (or from creation); leave it alone once set so
+                        // the unreach timer keeps counting across re-sends.
+                        if s.probeOutstandingSince == nil {
+                            s.probeOutstandingSince = sentAt
+                        }
                     }
                 }
                 let packet = probe.encode()
                 let tel = config.telemetryEnabled ? ", with telemetry" : ""
 
-                // Send the RLOC-probe from the control socket to the RTR's
-                // control port 4342, exactly like the working xTRs — no data port
-                // involved. The RTR replies (raw Map-Reply) to the packet source,
-                // i.e. our control socket's translation, so it returns on 4342.
-                let port = r.encapPort != LISP.dataPort ? r.encapPort : LISP.ctrlPort
-                log.pprint(.itr, "Send RLOC-probe to \(r.rloc.addressString):\(port), " +
-                           "for EID \(entry.eid.prefixString)\(tel), nonce 0x" +
-                           String(probe.nonce, radix: 16))
-                logMapRequest(.itr, probe)
-                loggedSend(packet, to: r.rloc, port: port, on: ctrlSocket, .itr)
+                // Behind a NAT, probing an RTR: DATA-ENCAPSULATE the probe to the
+                // RTR's data port 4341 (just like the RTR probes us, and like
+                // answerEncapsulatedProbe). A raw probe to the RTR's control port
+                // gets a raw reply aimed at our control-port translation, which
+                // many NATs won't return (observed: 0 replies on 4342). The RTR
+                // sees sport==0 on a data-encap'd probe and data-encaps the reply
+                // back to our translated :<dataport> mapping — which IS kept open
+                // by registers + the RTR's own probes — so the reply (with rtt/
+                // hops/lats telemetry) returns on the data socket. The reply rides
+                // the existing relay path in processDataPacket -> processProbeReply.
+                if behindNAT, rtrList.contains(where: { $0.v4 == r.rloc.v4 }) {
+                    let encap = encapForRTR(control: packet, src: myRLOC.address,
+                                            dst: r.rloc)
+                    log.pprint(.itr, "Send RLOC-probe (encap) to " +
+                               "\(r.rloc.addressString):\(LISP.dataPort), for EID " +
+                               "\(entry.eid.prefixString)\(tel), nonce 0x" +
+                               String(probe.nonce, radix: 16))
+                    logMapRequest(.itr, probe)
+                    loggedSend(encap, to: r.rloc, port: LISP.dataPort,
+                               on: dataSocket, .itr)
+                } else {
+                    // Not NAT'd (or a direct xTR RLOC): raw probe to the control
+                    // port; the reply returns raw on 4342.
+                    let port = r.encapPort != LISP.dataPort ? r.encapPort : LISP.ctrlPort
+                    log.pprint(.itr, "Send RLOC-probe to \(r.rloc.addressString):\(port), " +
+                               "for EID \(entry.eid.prefixString)\(tel), nonce 0x" +
+                               String(probe.nonce, radix: 16))
+                    logMapRequest(.itr, probe)
+                    loggedSend(packet, to: r.rloc, port: port, on: ctrlSocket, .itr)
+                }
             }
         }
     }
@@ -558,6 +601,7 @@ extension LispEngine {
             for r in entry.rlocSet where r.lastProbeNonce == reply.nonce {
                 matched = true
                 r.lastProbeReply = now
+                r.probeOutstandingSince = nil   // reply ends the unanswered run
                 if let sent = r.lastProbeSent {
                     let rtt = now.timeIntervalSince(sent).rounded(toPlaces: 3)
                     r.storeRTT(rtt)
@@ -657,12 +701,11 @@ extension LispEngine {
         rlocRec.localBit = true
         rlocRec.probeBit = true
         rlocRec.reachBit = true
-        // Same "<xtr>@tp-<data-socket-port>" the register advertises (see
-        // sendMapRegister): the @tp port must be our DATA-path port (LISP.natDataPort)
-        // so lisp.py's probe-reply matching (lisp.py:18367) lands on the port the RTR
-        // observes our traffic on (41341), not the control-path Info-Reply port.
+        // Same "<xtr>@tp-<port>" the register advertises (see sendMapRegister): the
+        // RTR-reported translated DATA port, so lisp.py's probe-reply matching
+        // (lisp.py:18367) lands on the port the RTR uses, not the map-server's.
         if behindNAT {
-            rlocRec.rlocName = "\(xtrName)\(LISP.tpPrefix)\(LISP.natDataPort)"
+            rlocRec.rlocName = "\(xtrName)\(LISP.tpPrefix)\(advertisedPort)"
         }
 
         var records: [LispRLOCRecord] = [rlocRec]

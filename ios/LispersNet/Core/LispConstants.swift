@@ -70,7 +70,9 @@ enum LISP {
     static let infoInterval: TimeInterval = 15          // LISP_INFO_INTERVAL
     static let mapRegisterInterval: TimeInterval = 60   // LISP_MAP_REGISTER_INTERVAL
     static let rlocProbeInterval: TimeInterval = 10     // LISP_RLOC_PROBE_INTERVAL
-    static let rlocProbeReplyWait: TimeInterval = 15    // LISP_RLOC_PROBE_REPLY_WAIT
+    // Go unreach after 3 missed probes (3 × interval). At a 10 s interval a reply
+    // that's merely late won't flap the RLOC; three consecutive misses will.
+    static let rlocProbeReplyWait: TimeInterval = 30    // 3 × rlocProbeInterval
     static let rlocProbeTTL = 64                        // LISP_RLOC_PROBE_TTL
     static let registerTTL: UInt32 = 1440               // minutes (LISP_REGISTER_TTL)
     static let multicastRegisterTTL: UInt32 = 1440      // minutes (24h) — group membership

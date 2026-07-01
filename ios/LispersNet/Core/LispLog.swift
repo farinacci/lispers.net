@@ -73,6 +73,13 @@ final class LispLog: ObservableObject {
         if controlPlaneLogging || dataPlaneLogging { emit(component, message) }
     }
 
+    // aprint() — always logged, even when both logging scopes are off. Reserved
+    // for the per-process startup banner so each log always records when the code
+    // (re)started.
+    func aprint(_ component: LogComponent, _ message: String) {
+        emit(component, message)
+    }
+
     private func emit(_ component: LogComponent, _ message: String) {
         let ts = Self.tsFormatter.string(from: Date())
         let line = "\(ts): \(component.rawValue): \(message)"

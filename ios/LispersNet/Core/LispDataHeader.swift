@@ -18,6 +18,7 @@ struct LispDataHeader {
     static let eBit: UInt32 = 0x2000_0000
     static let vBit: UInt32 = 0x1000_0000
     static let iBit: UInt32 = 0x0800_0000
+    static let pBit: UInt32 = 0x0400_0000
 
     mutating func setNonce(_ nonce: UInt32) {
         firstLong |= Self.nBit
@@ -33,6 +34,22 @@ struct LispDataHeader {
     var instanceID: UInt32 { (secondLong >> 8) & 0xFF_FFFF }
     var hasInstanceID: Bool { firstLong & Self.iBit != 0 }
     var nonce: UInt32 { firstLong & 0x00FF_FFFF }
+
+    // lisp_data_header.print_header (lisp.py:3094): "<e_or_d> LISP-header -> flags:
+    // Nlevipkk, nonce: <24-bit>, iid/lsb: <8-hex>". Flag letter is upper-case when
+    // its bit is set, lower-case when clear (KK = the 2-bit key-id field).
+    func printHeader(_ eOrD: String) -> String {
+        let k = (firstLong >> 24) & 0x3
+        func fl(_ bit: UInt32, _ c: String) -> String {
+            firstLong & bit != 0 ? c.uppercased() : c
+        }
+        let flags = fl(Self.nBit, "n") + fl(Self.lBit, "l") + fl(Self.eBit, "e")
+                  + fl(Self.vBit, "v") + fl(Self.iBit, "i") + fl(Self.pBit, "p")
+                  + ((k == 2 || k == 3) ? "K" : "k") + ((k == 1 || k == 3) ? "K" : "k")
+        let nonceHex = String(firstLong & 0x00FF_FFFF, radix: 16)
+        let iidLsb = String(format: "%08x", secondLong)
+        return "\(eOrD) LISP-header -> flags: \(flags), nonce: \(nonceHex), iid/lsb: \(iidLsb)"
+    }
 
     func encode() -> Data {
         var w = ByteWriter()

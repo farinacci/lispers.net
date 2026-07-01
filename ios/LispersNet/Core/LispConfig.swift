@@ -46,6 +46,11 @@ final class LispConfig: ObservableObject, Codable {
     @Published var telemetryEnabled = true          // "lisp json" telemetry
     @Published var siteID: UInt64 = 0
     @Published var joinedGroups: [String] = []      // multicast groups we receive
+    // Ping load-splitting across the RTR set (Ping tab toggles). For each type:
+    //   on  = hash per-packet across the up RTRs (spread the load);
+    //   off = a single deterministic up RTR (no spread to multiple RTRs).
+    @Published var loadSplitUnicast = true
+    @Published var loadSplitMulticast = false
 
     var decentConfigured: Bool { !decentSuffix.isEmpty && decentModulus > 0 }
 
@@ -63,6 +68,7 @@ final class LispConfig: ObservableObject, Codable {
         case controlPlaneLog, dataPlaneLog, rlocProbeLog, eidString, instanceID
         case decentNATEnabled, natTraversalEnabled, rlocProbingEnabled
         case telemetryEnabled, siteID, joinedGroups
+        case loadSplitUnicast, loadSplitMulticast
     }
 
     init() { load() }
@@ -86,6 +92,8 @@ final class LispConfig: ObservableObject, Codable {
         telemetryEnabled = try c.decodeIfPresent(Bool.self, forKey: .telemetryEnabled) ?? true
         siteID = try c.decodeIfPresent(UInt64.self, forKey: .siteID) ?? 0
         joinedGroups = try c.decodeIfPresent([String].self, forKey: .joinedGroups) ?? []
+        loadSplitUnicast = try c.decodeIfPresent(Bool.self, forKey: .loadSplitUnicast) ?? true
+        loadSplitMulticast = try c.decodeIfPresent(Bool.self, forKey: .loadSplitMulticast) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -107,6 +115,8 @@ final class LispConfig: ObservableObject, Codable {
         try c.encode(telemetryEnabled, forKey: .telemetryEnabled)
         try c.encode(siteID, forKey: .siteID)
         try c.encode(joinedGroups, forKey: .joinedGroups)
+        try c.encode(loadSplitUnicast, forKey: .loadSplitUnicast)
+        try c.encode(loadSplitMulticast, forKey: .loadSplitMulticast)
     }
 
     private static var fileURL: URL {

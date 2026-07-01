@@ -29,22 +29,46 @@ extension LispEngine {
         let entry = multicast
             ? mapCache.lookupMulticast(source: config.eid ?? LispAddress(), group: destEID)
             : mapCache.lookup(destEID)
-        // Multicast: hash the (S,G) consistently → ONE RTR (it replicates). Unicast
-        // keeps the default per-ping load-split.
-        guard let entry = entry, entry.action == LISP.noAction,
-              let rlocEntry = entry.selectRLOC(for: inner, hashL4: multicast ? false : LISP.loadSplitPings) else {
+        // True miss — no matching entry at all. Unicast asks the mapping system and
+        // queues; multicast drops (the (0/0,224/4) default should always match).
+        guard let entry = entry else {
             if multicast {
                 log.lprint(.itr, "No multicast map-cache entry for group " +
                            "\(destEID.addressString), dropping")
                 return
             }
-            // Miss or send-map-request action: request the mapping and queue.
             log.lprint(.itr, "Map-cache lookup \(destEID.addressString) -> miss, " +
                        "send Map-Request")
             var q = queuedPackets[destEID.v4] ?? []
             if q.count < 4 { q.append(inner) }
             queuedPackets[destEID.v4] = q
             sendMapRequest(for: destEID)
+            return
+        }
+        // A send-map-request entry (decent-NAT 240/8) resolves the specific EID.
+        if entry.action == LISP.sendMapRequestAction {
+            log.lprint(.itr, "Map-cache \(destEID.addressString) -> send-map-request")
+            var q = queuedPackets[destEID.v4] ?? []
+            if q.count < 4 { q.append(inner) }
+            queuedPackets[destEID.v4] = q
+            sendMapRequest(for: destEID)
+            return
+        }
+        // Matched a forwarding entry (e.g. the 0.0.0.0/0 default -> RTRs). Pick ONE
+        // up RLOC. If none are reachable, drop — do NOT encapsulate to an unreach
+        // RLOC, and do NOT fall through to a Map-Request that would create a more-
+        // specific entry for something the default already covers.
+        //
+        // The Ping-tab "load-split" toggle for this traffic type drives selection:
+        //   ON  -> hash per-packet across the up RTRs (spread the load; a member
+        //          reachable via only some RTRs then gets partial delivery).
+        //   OFF -> a single deterministic up RTR (no spread to multiple RTRs).
+        guard entry.action == LISP.noAction,
+              let rlocEntry = entry.selectRLOC(for: inner,
+                  hashL4: multicast ? config.loadSplitMulticast
+                                    : config.loadSplitUnicast) else {
+            log.lprint(.itr, "Map-cache \(destEID.addressString) matched " +
+                       "\(entry.eid.prefixString) but no reachable RLOC, dropping")
             return
         }
 
@@ -67,7 +91,7 @@ extension LispEngine {
                    "\(rlocEntry.encapPort), inner EIDs: [\(destEID.instanceID)]\(ip.src) -> " +
                    "[\(destEID.instanceID)]\(ip.dst), " +
                    "inner tos/ttl: \(ip.tos)/\(ip.ttl), length: \(packet.count), " +
-                   "encap iid \(destEID.instanceID) nonce 0x\(String(nonce, radix: 16)), " +
+                   "\(header.printHeader("encap")), " +
                    "packet: \(lispFormatPacket(packet))")
         dataSocket?.send(packet, to: rlocEntry.rloc, port: rlocEntry.encapPort)
     }
@@ -186,8 +210,7 @@ extension LispEngine {
                    "outer tos/ttl: 0/\(outTTL), outer UDP: \(sourcePort) -> " +
                    "\(dataSocket?.localPort ?? 0), inner EIDs: [\(header.instanceID)]\(ip.src) -> " +
                    "[\(header.instanceID)]\(ip.dst), inner tos/ttl: \(ip.tos)/\(ip.ttl), " +
-                   "length: \(data.count), decap iid \(header.instanceID) " +
-                   "nonce 0x\(String(header.nonce, radix: 16))")
+                   "length: \(data.count), \(header.printHeader("decap"))")
         deliverInner(inner)
     }
 

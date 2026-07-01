@@ -65,7 +65,11 @@ struct MapCacheView: View {
             ForEach(Array(e.rlocSet.enumerated()), id: \.offset) { _, r in
                 rlocLine(r)
                 statsLine(r, iface: iface)
-                if r.lastProbeSent != nil { telemetryLine(r) }
+                // Only show rtts/hops/lats when RLOC-probing is on — with it off
+                // there's no telemetry, so the "[?, ?, ?]" line is just noise.
+                if engine.config.rlocProbingEnabled, r.lastProbeSent != nil {
+                    telemetryLine(r)
+                }
             }
         }
         .padding(10)

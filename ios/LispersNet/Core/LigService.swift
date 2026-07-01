@@ -23,6 +23,8 @@ struct LigLine: Identifiable {
         // paren bold; eid bold dark-green (the EID being ligged)
         case send(lead: String, paren: String, midTrail: String, eid: String, endTrail: String)
         case eidPrefix(prefix: String, rest: String)            // prefix green
+        // "Received map-reply from <ip> with rtt <rtt> secs:" — ip red, rtt bold.
+        case mapReply(from: String, rtt: String)
         // addrIsRLE: this RLOC-record is a replication list — render the address
         // label ("RLEs") in black instead of a red rloc address.
         case rloc(addr: String, beforeName: String, name: String?, afterName: String,
@@ -263,8 +265,7 @@ final class LigService: ObservableObject {
     func handleReply(_ reply: LispMapReply, from: LispAddress) -> Bool {
         guard let sentAt = pending.removeValue(forKey: reply.nonce) else { return false }
         let rtt = Date().timeIntervalSince(sentAt).rounded(toPlaces: 3)
-        append(.init(content: .plain("Received map-reply from \(from.addressString) " +
-                     "with rtt \(rtt) secs:")))
+        append(.init(content: .mapReply(from: from.addressString, rtt: "\(rtt)")))
         if debug {
             append(.init(content: .plain("")))
             let flags = (reply.rlocProbe ? "R" : "r") + "es"

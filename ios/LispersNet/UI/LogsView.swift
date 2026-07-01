@@ -24,6 +24,10 @@ struct LogsView: View {
     // Colored HTML export (the share sheet for the .html version).
     @State private var htmlShareURL: URL?
     @State private var showHTMLShare = false
+    // While searching, the displayed lines are FROZEN to this snapshot so live log
+    // appends don't reflow the LazyVStack and jerk the view away from the match
+    // you're reading. Re-taken when search is (re)entered or the component changes.
+    @State private var searchSnapshot: [String] = []
     @GestureState private var pinch: CGFloat = 1.0
     // Pinch-to-zoom the log font; the LazyVStack re-flows so scrolling stays good.
     private var zoom: CGFloat { min(max(fontScale * pinch, 0.6), 3.0) }
@@ -33,10 +37,16 @@ struct LogsView: View {
             .onEnded { v in fontScale = min(max(fontScale * v.magnification, 0.6), 3.0) }
     }
 
+    // Lines to display: a frozen snapshot while searching (stable, so stepping
+    // through matches never gets bumped by new log lines), live otherwise.
+    private var displayLines: [String] {
+        searching ? searchSnapshot : (log.lines[component] ?? [])
+    }
+
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
-                let lines = log.lines[component] ?? []
+                let lines = displayLines
                 let hits = searching ? matchingLines(lines) : []
                 let current = hits.indices.contains(matchIdx) ? hits[matchIdx] : -1
                 let hitSet = Set(hits)
@@ -80,8 +90,11 @@ struct LogsView: View {
                         if follow, count > 0 { proxy.scrollTo(count - 1, anchor: .bottom) }
                     }
                     .onChange(of: component) { _, _ in
-                        follow = true
-                        let n = (log.lines[component] ?? []).count
+                        // Switching logs while searching re-freezes to the new log;
+                        // otherwise resume following the live tail.
+                        if searching { searchSnapshot = log.lines[component] ?? [] }
+                        follow = !searching
+                        let n = displayLines.count
                         if n > 0 { proxy.scrollTo(n - 1, anchor: .bottom) }
                     }
                     .simultaneousGesture(magnify)
@@ -101,14 +114,14 @@ struct LogsView: View {
                     ToolbarItem(placement: .topBarLeading) {
                         // Small glyphs, but each gets a ~44pt thumb-sized hit area
                         // via a frame + contentShape so taps don't miss/collide.
-                        HStack(spacing: 2) {
+                        HStack(spacing: 4) {
                             Button {
                                 if searching { gotoMatch(matchIdx - 1, proxy) }
                                 else { follow = false; withAnimation { proxy.scrollTo(0, anchor: .top) } }
                             } label: {
                                 Image(systemName: searching ? "chevron.up" : "arrow.up.to.line")
                                     .font(.caption2)
-                                    .frame(width: 44, height: 38)
+                                    .frame(width: 38, height: 38)
                                     .contentShape(Rectangle())
                             }
                             .tint(.primary)
@@ -123,18 +136,22 @@ struct LogsView: View {
                             } label: {
                                 Image(systemName: searching ? "chevron.down" : "arrow.down.to.line")
                                     .font(.caption2)
-                                    .frame(width: 44, height: 38)
+                                    .frame(width: 38, height: 38)
                                     .contentShape(Rectangle())
                             }
                             .tint(.primary)
                             Button {
                                 searching.toggle()
-                                if searching { follow = false; searchFocused = true }
-                                else { searchText = "" }
+                                if searching {
+                                    // Freeze the current lines so the search view
+                                    // is stable while stepping through matches.
+                                    searchSnapshot = log.lines[component] ?? []
+                                    follow = false; searchFocused = true
+                                } else { searchText = "" }
                             } label: {
                                 Image(systemName: "magnifyingglass")
                                     .font(.caption2)
-                                    .frame(width: 44, height: 38)
+                                    .frame(width: 38, height: 38)
                                     .contentShape(Rectangle())
                             }
                             .tint(searching ? .lispGreen : .primary)
@@ -176,7 +193,7 @@ struct LogsView: View {
                 .focused($searchFocused)
                 .submitLabel(.search)
                 .onChange(of: searchText) { _, _ in
-                    let m = matchingLines(log.lines[component] ?? [])
+                    let m = matchingLines(displayLines)
                     matchIdx = max(0, m.count - 1)          // start at the bottom
                     if let line = m.last { withAnimation { proxy.scrollTo(line, anchor: .center) } }
                 }
@@ -206,7 +223,7 @@ struct LogsView: View {
 
     // Move to match `idx` (clamped) and scroll it into view.
     private func gotoMatch(_ idx: Int, _ proxy: ScrollViewProxy) {
-        let m = matchingLines(log.lines[component] ?? [])
+        let m = matchingLines(displayLines)
         guard !m.isEmpty else { return }
         matchIdx = min(max(idx, 0), m.count - 1)
         withAnimation { proxy.scrollTo(m[matchIdx], anchor: .center) }

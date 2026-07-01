@@ -92,15 +92,31 @@
       },
       {
         "comment": "",
-        "key": "  RLOC: ",
+        "key": "Received map-reply from ",
         "location": {
-          "startingColumn": 26,
-          "startingLine": 180
+          "startingColumn": 25,
+          "startingLine": 181
         }
       },
       {
         "comment": "",
-        "key": "        rle: ",
+        "key": " with rtt ",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 183
+        }
+      },
+      {
+        "comment": "",
+        "key": " secs:",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 185
+        }
+      },
+      {
+        "comment": "",
+        "key": "  RLOC: ",
         "location": {
           "startingColumn": 26,
           "startingLine": 187
@@ -108,10 +124,18 @@
       },
       {
         "comment": "",
+        "key": "        rle: ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 194
+        }
+      },
+      {
+        "comment": "",
         "key": " %@",
         "location": {
           "startingColumn": 46,
-          "startingLine": 189
+          "startingLine": 196
         }
       },
       {
