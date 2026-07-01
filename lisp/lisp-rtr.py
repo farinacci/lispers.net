@@ -225,17 +225,38 @@ def lisp_fix_rloc_encap_state_entry(mc, parms):
         format(hostname, lisp.red(addr, False), eid, "{}", "{}")
 
     for rloc_entry in mc.rloc_set:
-        rn = rloc_entry.normalize_decent_nat_rloc_name()
-        if (rn != hostname): continue
 
+        #
+        # RLE member case. The map-server merge clears the record-level rloc-name
+        # and moves each member's "<host>@tp-<port>" name onto its RLE node. So
+        # match and update per NODE by the node name — this lets an RTR apply its
+        # own NAT-state to an RLE member exactly like a unicast RLOC (whose record
+        # name stays intact). Matching only the record name (as the unicast path
+        # below does) misses a merged RLE, since that record name is None; that is
+        # why an RLE member (e.g. a phone) stayed portless/unreach while the same
+        # xTR worked as a unicast map-cache RLOC.
+        #
         if (rloc_entry.rle):
             for rle_node in rloc_entry.rle.rle_nodes:
-                rle_node.store_translated_rloc(rloc, port)
-                old_addr = rle_node.rloc.rloc.print_address_no_iid() + ":" + \
-                    str(rle_node.rloc.translated_port)
+                nr = rle_node.rloc
+                if (nr.normalize_decent_nat_rloc_name() != hostname): continue
+                old_addr = nr.rloc.print_address_no_iid() + ":" + \
+                    str(nr.translated_port)
+                nr.delete_from_rloc_probe_list(mc.eid, mc.group)
+                nr.store_translated_rloc(rloc, port)
+                nr.add_to_rloc_probe_list(mc.eid, mc.group)
                 lisp.lprint(msg.format("RLE", old_addr))
+                if (lisp.lisp_rloc_probing):
+                    lisp.lisp_send_map_request(lisp_sockets, 0, mc.eid,
+                        mc.group, nr)
+                #endif
             #endfor
+            lisp.lisp_write_ipc_map_cache(True, mc)
+            continue
         #endif
+
+        rn = rloc_entry.normalize_decent_nat_rloc_name()
+        if (rn != hostname): continue
 
         #
         # Update lisp-crypto encap array. Put keys in new dictionary array
@@ -655,23 +676,13 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         else:
             source = packet.outer_source.print_address_no_iid()
             ttl = packet.outer_ttl
-            sport = packet.udp_sport
             packet = packet.packet
-            is_probe_req = lisp.lisp_is_rloc_probe_request(packet[28:29])
-            if (is_probe_req == False and
+            if (lisp.lisp_is_rloc_probe_request(packet[28:29]) == False and
                 lisp.lisp_is_rloc_probe_reply(packet[28:29]) == False):
                 ttl = -1
             #endif
-            #
-            # For a data-encapsulated RLOC-probe REQUEST from a NAT'd xTR, pass
-            # the outer (translated) source port so the RTR can data-encap the
-            # reply back to the exact NAT port the probe came from. This is the
-            # only way to disambiguate multiple xTRs behind one NAT (same RLOC,
-            # different ports). All other data-plane control keeps sport=0.
-            #
-            sport = sport if is_probe_req else 0
             packet = packet[28::]
-            lisp.lisp_parse_packet(lisp_send_sockets, packet, source, sport, ttl)
+            lisp.lisp_parse_packet(lisp_send_sockets, packet, source, 0, ttl)
         #endif
         return
     #endif

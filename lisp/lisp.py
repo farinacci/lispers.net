@@ -5982,6 +5982,24 @@ class lisp_rloc_record(object):
                             lisp_decode_dist_name(packet)
                         if (packet == None): return(None)
                         lcaf_len -= len(rle_node.rloc.rloc_name) + 1 + 2
+
+                        #
+                        # An RLE member whose rloc-name carries "@tp-<port>" is
+                        # behind a NAT. On a NON-RTR prober (an ITR/member sending
+                        # to the group) set translated_port + translated_rloc from
+                        # the name so is_rloc_translated() is True and the probe is
+                        # data-encapsulated — a non-RTR has no NAT-state for the
+                        # member, so the name is its only source of the port. On an
+                        # RTR we deliberately DON'T do this: the RTR learns the
+                        # per-RTR translated port from its own NAT-state, applied by
+                        # lisp_fix_rloc_encap_state, exactly like a unicast RLOC.
+                        # Mirrors store_rloc_from_record's lisp_i_am_rtr gate.
+                        #
+                        if (lisp_i_am_rtr == False and
+                            rle_node.rloc.store_decent_nat_port()):
+                            rle_node.rloc.translated_rloc.copy_address(
+                                rle_node.rloc.rloc)
+                        #endif
                     #endif
                 #endif
             #endwhile
@@ -7635,17 +7653,20 @@ def lisp_rtr_process_map_request(lisp_sockets, map_request, source, sport,
         1440, map_request, keys, enc, True, ttl)
 
     #
-    # If this RLOC-probe Map-Request arrived data-encapsulated from a NAT'd xTR,
-    # lisp-rtr passes the outer (translated) source port as sport. A raw control-
-    # port Map-Reply cannot get back through the xTR's NAT, so data-encapsulate
-    # the RLOC-probe reply to the EXACT translated RLOC:port the probe came from.
-    # Using the arrival port (not an address-only nat_info lookup) is what lets
-    # multiple xTRs behind one NAT (same RLOC, different ports) each get their
-    # own reply. nat_info presence just confirms the source is a NAT'd xTR.
+    # If the RLOC-probe came from a NAT'd xTR (we have NAT-state for its RLOC
+    # from its Info-Requests), a raw control-port Map-Reply cannot get back
+    # through its NAT. Data-encapsulate the RLOC-probe reply to the xTR's
+    # translated DATA port (nat_info.port) instead — that mapping stays open
+    # via the xTR's periodic Info-Requests/registers to us on 4341, and the
+    # xTR's data-plane accepts the encapsulated reply. This works whether the
+    # probe arrived raw on the control port (e.g. lhr/frt, whose RTR RLOC is
+    # not translated so they probe raw) or data-encapsulated. nat_info presence
+    # is the "this xTR is NAT'd" test; a public xTR has none and gets a raw
+    # reply below.
     #
-    if (map_request.rloc_probe and sport != 0 and len(lisp_sockets) == 4):
-        if (lisp_get_nat_info(itr_rloc, None) != None):
-            ni = lisp_nat_info(itr_rloc.print_address_no_iid(), "", sport)
+    if (map_request.rloc_probe and len(lisp_sockets) == 4):
+        ni = lisp_get_nat_info(itr_rloc, None)
+        if (ni != None):
             lisp_encap_rloc_probe(lisp_sockets, itr_rloc, ni, packet)
             return
         #endif
@@ -13741,7 +13762,15 @@ class lisp_rloc(object):
                 #endfor
 
                 rloc_name = rle_node.rloc.rloc_name
-                nat_info = lisp_get_nat_info(rle_node.rloc.rloc, rloc_name)
+                #
+                # lisp_nat_state_info is keyed by the bare hostname, so strip the
+                # "@tp-<port>" before the lookup — same as the unicast RLOC path
+                # (self.normalize_decent_nat_rloc_name()). Using the full name here
+                # never matched, so an RLE member's translated port was left 0 and
+                # it stayed unreach while the same xTR worked as a unicast RLOC.
+                #
+                lookup_name = rle_node.rloc.normalize_decent_nat_rloc_name()
+                nat_info = lisp_get_nat_info(rle_node.rloc.rloc, lookup_name)
                 if (nat_info == None): continue
 
                 port = nat_info.port
