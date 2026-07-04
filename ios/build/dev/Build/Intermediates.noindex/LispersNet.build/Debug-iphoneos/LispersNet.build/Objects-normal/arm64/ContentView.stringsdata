@@ -52,18 +52,10 @@
       },
       {
         "comment": "",
-        "key": "LISP app uptime ",
-        "location": {
-          "startingColumn": 23,
-          "startingLine": 163
-        }
-      },
-      {
-        "comment": "",
         "key": "behind NAT",
         "location": {
           "startingColumn": 26,
-          "startingLine": 150
+          "startingLine": 149
         }
       },
       {
@@ -71,7 +63,7 @@
         "key": "LISP is active",
         "location": {
           "startingColumn": 39,
-          "startingLine": 138
+          "startingLine": 135
         }
       },
       {
@@ -79,7 +71,15 @@
         "key": "LISP is inactive",
         "location": {
           "startingColumn": 58,
-          "startingLine": 138
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "LISP app uptime ",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 163
         }
       },
       {
@@ -87,7 +87,7 @@
         "key": "Hostname ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 169
+          "startingLine": 170
         }
       },
       {
@@ -95,7 +95,7 @@
         "key": "EID ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 171
+          "startingLine": 172
         }
       },
       {
@@ -103,7 +103,7 @@
         "key": "RLOC ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 174
+          "startingLine": 175
         }
       },
       {
@@ -111,7 +111,7 @@
         "key": "translated RLOC:port ",
         "location": {
           "startingColumn": 30,
-          "startingLine": 180
+          "startingLine": 181
         }
       },
       {
@@ -119,7 +119,7 @@
         "key": "%@:%@",
         "location": {
           "startingColumn": 30,
-          "startingLine": 181
+          "startingLine": 182
         }
       },
       {
@@ -127,7 +127,7 @@
         "key": "registers sent ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 184
+          "startingLine": 200
         }
       },
       {
@@ -135,7 +135,31 @@
         "key": ", groups joined ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 186
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "RLOC ",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "translated RLOC:port ",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 194
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@:%@",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 195
         }
       }
     ]

@@ -74,6 +74,10 @@ enum LISP {
     // that's merely late won't flap the RLOC; three consecutive misses will.
     static let rlocProbeReplyWait: TimeInterval = 30    // 3 × rlocProbeInterval
     static let rlocProbeTTL = 64                        // LISP_RLOC_PROBE_TTL
+    // Multi-homing egress hysteresis: a better next-hop must beat the currently
+    // active one by this % of its rtt before we switch — damps oscillation from
+    // ordinary jitter (lisp.py lisp_mh_rtt_pct / multi-home-rtt-percentage).
+    static let mhRTTPct = 10
     static let registerTTL: UInt32 = 1440               // minutes (LISP_REGISTER_TTL)
     static let multicastRegisterTTL: UInt32 = 1440      // minutes (24h) — group membership
                                                         // (refreshed every 60s register)

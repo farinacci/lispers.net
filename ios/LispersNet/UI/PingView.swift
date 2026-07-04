@@ -64,8 +64,39 @@ struct PingView: View {
                     activePingSection(floated: true)
                     resultsSection
                 }
-                // Timer + load-split toggles float to the very top so they sit
-                // right under the "Ping" title, above the hosts list.
+                // Ping an arbitrary EID not in the hosts list — kept at the very top,
+                // right under the "Ping" title, now ABOVE the parameter section.
+                Section {
+                    HStack {
+                        TextField("EID or hostname", text: $customEID)
+                            .font(.body.monospaced())
+                            .keyboardType(.asciiCapable)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .focused($eidFocused)
+                        Button("Ping") {
+                            eidFocused = false
+                            let input = customTrimmed
+                            hosts.resolveTarget(input) { eid in
+                                if let eid = eid {
+                                    ping.startContinuous(name: eid.addressString, eid: eid)
+                                } else {
+                                    engine.log.fprint(.core, "Ping: cannot resolve \(input)")
+                                }
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        .disabled(!engine.running || customTrimmed.isEmpty)
+                    }
+                } header: {
+                    Text("Ping an EID (from \(engine.config.eidString.isEmpty ? "our EID" : "EID \(engine.config.eidString)"))")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .id("ping-top")
+                // Tighten the gap to the parameters below, but keep a little breathing room.
+                .listSectionSpacing(12)
+
+                // Timer + load-split toggles, now BELOW the Ping-an-EID field.
                 Section {
                     Picker("Interval", selection: Binding(
                         get: { ping.interval }, set: { ping.setInterval($0) })) {
@@ -90,32 +121,8 @@ struct PingView: View {
                         }
                     }
                 }
-                .id("ping-top")
 
                 Section {
-                    // Ping an arbitrary EID not in the hosts list.
-                    HStack {
-                        TextField("EID or hostname", text: $customEID)
-                            .font(.body.monospaced())
-                            .keyboardType(.asciiCapable)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                            .focused($eidFocused)
-                        Button("Ping") {
-                            eidFocused = false
-                            let input = customTrimmed
-                            hosts.resolveTarget(input) { eid in
-                                if let eid = eid {
-                                    ping.startContinuous(name: eid.addressString, eid: eid)
-                                } else {
-                                    engine.log.fprint(.core, "Ping: cannot resolve \(input)")
-                                }
-                            }
-                        }
-                        .buttonStyle(.borderless)
-                        .disabled(!engine.running || customTrimmed.isEmpty)
-                    }
-
                     ForEach(hosts.entries) { entry in
                         let entryEID = LispAddress(string: entry.address)
                         Button {
@@ -143,10 +150,10 @@ struct PingView: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     Button { editingHosts = true } label: {
-                        HStack { Spacer(); Text("Edit hosts"); Spacer() }
+                        HStack { Spacer(); Text("Edit hostnames"); Spacer() }
                     }
                 } header: {
-                    Text("Ping an EID (from \(engine.config.eidString.isEmpty ? "our EID" : "EID \(engine.config.eidString)"))")
+                    Text("Hostname Configuration")
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
 
@@ -214,8 +221,17 @@ struct PingView: View {
                 HStack {
                     Image(systemName: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundStyle(ok ? Color.lispGreen : Color.lispRed)
-                    Text("\(r.address) seq \(r.sequence)")
-                        .font(.caption.monospaced())
+                    // Multicast replies come from many group members — lead with the
+                    // responder's host name (blue) when lisp-hosts knows it.
+                    Group {
+                        if r.multicast, let hn = hosts.name(for: r.address) {
+                            Text(hn + " ").foregroundColor(.lispBlue)
+                                + Text("\(r.address) seq \(r.sequence)")
+                        } else {
+                            Text("\(r.address) seq \(r.sequence)")
+                        }
+                    }
+                    .font(.caption.monospaced())
                     Spacer()
                     Text(r.rttMs.map { "\(Int($0)) ms" } ?? "timeout")
                         .font(.caption.monospaced().bold())
@@ -244,6 +260,11 @@ struct PingView: View {
                 Text("Results").frame(maxWidth: .infinity, alignment: .center)
                 if !ping.completed.isEmpty {
                     HStack {
+                        // Trim the oldest 100 (left), opposite the full Clear (right).
+                        Button("Clear 100") { ping.clearOldest(100) }
+                            .font(.caption)
+                            .textCase(nil)
+                            .foregroundStyle(.primary)
                         Spacer()
                         Button("Clear") { ping.clearResults() }
                             .font(.caption)
@@ -291,19 +312,21 @@ struct PingView: View {
                     }
                 }
             }
-        } else {
-            Text("No active ping").font(.caption).foregroundStyle(.secondary)
         }
     }
 
+    // Only rendered while a ping is actually in flight — no "Active Ping" section
+    // (and no "No active ping" placeholder) when idle.
     // Floated == true: no header, so the first row sits crisply at the very top.
     // Floated == false: resting position in the middle, with the "Active Ping" header.
     @ViewBuilder private func activePingSection(floated: Bool) -> some View {
-        if floated {
-            Section { activePingContent }
-        } else {
-            Section { activePingContent } header: {
-                Text("Active Ping").frame(maxWidth: .infinity, alignment: .center)
+        if ping.inFlight || !ping.active.isEmpty {
+            if floated {
+                Section { activePingContent }
+            } else {
+                Section { activePingContent } header: {
+                    Text("Active Ping").frame(maxWidth: .infinity, alignment: .center)
+                }
             }
         }
     }

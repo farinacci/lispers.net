@@ -267,10 +267,20 @@ struct LogsView: View {
         return out
     }
 
-    // Keywords to boldface. Encap/Decap use a lookahead so only the keyword (not
-    // "Encapsulated…") bolds; longer alternatives precede shorter ones.
+    // Boldface, deliberately sparingly:
+    //  • the egress/ingress interface token (en*/pdp_ip*): after "Send "/"Receive "
+    //    on the byte lines, and at the tail of Encap ("… to <if>") / Decap
+    //    ("… from <if>"). Every OTHER message has no interface, so " to "/" from "
+    //    only match those tails (elsewhere they're followed by an address);
+    //  • the startup banner's version number after "version ";
+    //  • the map-server DNS NAME on the "LISP-Decent map-server <n> -> <ip>" line
+    //    ONLY (after "Decent map-server " — NOT the "Send Map-Register to map-server"
+    //    line): a dotted token that contains a letter, so a bare IP isn't bolded;
+    //  • the Encap/Decap keyword and the protocol-message keywords.
+    // (No blanket "token after ->" or "(...)" rules — those wrongly bolded
+    // record-ttl/flags/nonce and "(encap)".)
     private static let boldRegex = try? NSRegularExpression(pattern:
-        #"Encap(?= LISP packet)|Decap(?= LISP packet)|RLOC-probe reply|RLOC-probe|Map-Register|Map-Request|Map-Reply|Info-Request|Info-Reply|ECM"#)
+        #"(?<=Send )(?:en|pdp_ip)\w*|(?<=Receive )(?:en|pdp_ip)\w*|(?<= to )(?:en|pdp_ip)\w*|(?<= from )(?:en|pdp_ip)\w*|(?<=version )[\w.-]+|(?<=Decent map-server )(?=[\w.-]*[A-Za-z])[\w-]+(?:\.[\w-]+)+|Encap|Decap|RLOC-probe reply|RLOC-probe request|RLOC-probe|Map-Register|Map-Request|Map-Reply|Info-Request|Info-Reply|ECM"#)
 
     // Color EID (green), rloc-name (blue), and RLOC (red) tokens within text.
     private static func tokens(_ s: String) -> Text {

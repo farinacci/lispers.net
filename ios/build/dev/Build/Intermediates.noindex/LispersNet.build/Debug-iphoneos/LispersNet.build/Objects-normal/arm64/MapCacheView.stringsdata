@@ -39,7 +39,7 @@
         "key": "EID ",
         "location": {
           "startingColumn": 22,
-          "startingLine": 87
+          "startingLine": 100
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": ", uptime %@, ttl %@",
         "location": {
           "startingColumn": 20,
-          "startingLine": 89
+          "startingLine": 102
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": ", action ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 91
+          "startingLine": 104
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "  RLOC ",
         "location": {
           "startingColumn": 22,
-          "startingLine": 102
+          "startingLine": 117
         }
       },
       {
@@ -71,7 +71,7 @@
         "key": ", state ",
         "location": {
           "startingColumn": 20,
-          "startingLine": 104
+          "startingLine": 119
         }
       },
       {
@@ -79,7 +79,7 @@
         "key": " since %@, p%u/w%u",
         "location": {
           "startingColumn": 20,
-          "startingLine": 106
+          "startingLine": 122
         }
       },
       {
@@ -87,7 +87,23 @@
         "key": ", ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 108
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "up-state",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "unreach-state",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 120
         }
       },
       {
@@ -95,7 +111,23 @@
         "key": "%llu",
         "location": {
           "startingColumn": 26,
-          "startingLine": 118
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "*",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 146
         }
       },
       {
@@ -103,15 +135,7 @@
         "key": "    ",
         "location": {
           "startingColumn": 21,
-          "startingLine": 124
-        }
-      },
-      {
-        "comment": "",
-        "key": "%@%@",
-        "location": {
-          "startingColumn": 20,
-          "startingLine": 125
+          "startingLine": 147
         }
       },
       {
@@ -119,7 +143,7 @@
         "key": ": packet-count: ",
         "location": {
           "startingColumn": 20,
-          "startingLine": 126
+          "startingLine": 150
         }
       },
       {
@@ -127,7 +151,7 @@
         "key": "    rtts [%@], hops [%@], lats [%@]",
         "location": {
           "startingColumn": 18,
-          "startingLine": 142
+          "startingLine": 166
         }
       }
     ]

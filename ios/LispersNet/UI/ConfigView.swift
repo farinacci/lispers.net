@@ -100,6 +100,14 @@ struct ConfigView: View {
                             on ? engine.installDecentNATEntry()
                                : engine.removeDecentNATEntry()
                         }))
+                    Toggle("Multihoming", isOn: Binding(
+                        get: { config.multihomingEnabled },
+                        set: { on in
+                            config.multihomingEnabled = on; config.save()
+                            // Re-create sockets and the RTR next-hops for the new
+                            // mode. Simplest: bounce the engine if it's running.
+                            if engine.running { engine.disable(); engine.enable() }
+                        }))
                 } header: {
                     centeredTitle("xTR Configuration")
                 }
@@ -188,6 +196,20 @@ struct ConfigView: View {
                     }
                 } header: {
                     centeredTitle("LISP-Decent Lookup Prefix Configuration")
+                }
+
+                // Closing help: point the user at their mapping-system provider for
+                // the values (MS, lookup-prefix, EID, instance-ID) they can't invent
+                // themselves — these are allocated so registered EIDs stay unique.
+                Section {
+                    Text("Refer to your mapping system provider for LISP-Decent MS and "
+                       + "Lookup-Prefix configuration information. Your mapping service "
+                       + "provider will allocate your EID and instance-ID so you can "
+                       + "register unique EIDs to the mapping system.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                } header: {
+                    centeredTitle("Configuring EIDs & the Mapping System")
                 }
             }
             .listRowSeparatorTint(.lispSeparator)

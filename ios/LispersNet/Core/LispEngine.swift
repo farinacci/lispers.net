@@ -24,6 +24,13 @@ final class LispEngine: ObservableObject {
     // advertise in @tp and display. Fallback to natDataPort until an RTR replies.
     @Published var translatedPort: UInt16 = 0
     var advertisedPort: UInt16 { translatedPort != 0 ? translatedPort : LISP.natDataPort }
+    // Translated CONTROL port (ctrlSocket's public NAT port), learned from the
+    // map-server's control-socket Info-Reply. An ECM Map-Request goes out the
+    // ctrlSocket, and lisp.py's map-server proxy-replies to itr-rloc:<inner UDP
+    // src port> — so that inner source port MUST be this translated control port,
+    // or the reply lands on a port with no NAT mapping and is dropped. (lig does
+    // the same with its own ephemeral socket's translated port.)
+    @Published var translatedCtrlPort: UInt16 = 0
     @Published var registrationsSent = 0
     @Published var lastMapNotify: Date?
     @Published var mapCacheVersion = 0      // bumped to refresh the UI
@@ -39,7 +46,30 @@ final class LispEngine: ObservableObject {
     // Sockets — control bound to 4342, data bound to 4341.
     var ctrlSocket: UDPSocket?
     var dataSocket: UDPSocket?
+    // Multi-homing: per-interface control/data sockets (IP_BOUND_IF), keyed by
+    // interface name, used to RLOC-probe and encap out a specific interface.
+    var ifaceCtrlSockets: [String: UDPSocket] = [:]
+    var ifaceDataSockets: [String: UDPSocket] = [:]
+    var mhInterfaces: [DiscoveredRLOC] = []     // the interfaces we multi-home over
+    // Multi-homing: per-interface translated (public RLOC, @tp DATA port) learned
+    // from each interface's own RTR Info-Reply. We register ALL of these so a
+    // remote ITR can decap to us on either interface (outbound picks the active).
+    @Published var ifaceTranslated: [String: (rloc: LispAddress, port: UInt16)] = [:]
     let socketQueue = DispatchQueue(label: "lisp.sockets")
+
+    // Route control/data sends to the right socket: the per-interface one when
+    // multi-homing and the RLOC names an interface, else the default socket.
+    func ctrlSock(for iface: String?) -> UDPSocket? {
+        if let n = iface, let s = ifaceCtrlSockets[n] { return s }
+        return ctrlSocket
+    }
+    func dataSock(for iface: String?) -> UDPSocket? {
+        if let n = iface, let s = ifaceDataSockets[n] { return s }
+        return dataSocket
+    }
+    // Device name for the "Send on <device>" / "Receive on <device>" debug prefix;
+    // falls back to the active OS RLOC interface when not interface-specific.
+    func devName(_ ifn: String? = nil) -> String { ifn ?? rloc?.interfaceName ?? "?" }
 
     // xTR identity
     var xtrID: (UInt64, UInt64) = (UInt64.random(in: 0...UInt64.max),
@@ -119,6 +149,8 @@ final class LispEngine: ObservableObject {
             self?.processDataPacket(d, from: from, sourcePort: port, receivedTTL: ttl)
         }
 
+        buildMultihomeSockets(dataBind: dataBind)
+
         if config.decentNATEnabled { installDecentNATEntry() }
         running = true
 
@@ -149,12 +181,14 @@ final class LispEngine: ObservableObject {
         pathWatcher.stop()
         ctrlSocket?.shutdown(); ctrlSocket = nil
         dataSocket?.shutdown(); dataSocket = nil
+        tearDownMultihomeSockets()
         mapCache.clearAll()
         pendingMapRequests.removeAll()
         queuedPackets.removeAll()
         behindNAT = false
         translatedRLOC = nil
         translatedPort = 0
+        translatedCtrlPort = 0
         rtrList.removeAll()
         running = false
         bumpMapCache()
@@ -172,6 +206,45 @@ final class LispEngine: ObservableObject {
     // is preserved — only the transport is recycled.
     private var networkSuspended = false
 
+    // Multi-homing: bring up a control+data socket per interface (Wi-Fi +
+    // cellular), each pinned via IP_BOUND_IF, so we can RLOC-probe and encap out
+    // each one; replies/return-data come back on the socket that sent. Shared by
+    // enable() and resumeNetwork() so both build them (and both must, or the
+    // multihome sockets go stale/crash across a suspend).
+    func buildMultihomeSockets(dataBind: UInt16) {
+        mhInterfaces = config.multihomingEnabled ? Interfaces.discoverAllRLOCs() : []
+        for iface in mhInterfaces {
+            guard let c = UDPSocket(localPort: LISP.ctrlPort, queue: socketQueue, boundTo: iface),
+                  let d = UDPSocket(localPort: dataBind, queue: socketQueue, boundTo: iface) else {
+                log.fprint(.core, "Multihoming: could not bind sockets on \(iface.interfaceName)")
+                continue
+            }
+            let ifn = iface.interfaceName
+            c.startReceiving { [weak self] dt, from, port, ttl in
+                self?.processControlPacket(dt, from: from, sourcePort: port,
+                                           receivedTTL: ttl, onInterface: ifn)
+            }
+            d.startReceiving { [weak self] dt, from, port, ttl in
+                self?.processDataPacket(dt, from: from, sourcePort: port,
+                                        receivedTTL: ttl, onInterface: ifn)
+            }
+            ifaceCtrlSockets[iface.interfaceName] = c
+            ifaceDataSockets[iface.interfaceName] = d
+            log.fprint(.core, "Multihoming: interface \(iface.interfaceName) " +
+                       "RLOC \(iface.address.addressString) bound")
+        }
+    }
+
+    // Tear down the per-interface sockets (suspend/disable). MUST run before iOS
+    // suspends us — a live DispatchSourceRead on a reclaimed fd crashes on resume.
+    func tearDownMultihomeSockets() {
+        ifaceCtrlSockets.values.forEach { $0.shutdown() }
+        ifaceDataSockets.values.forEach { $0.shutdown() }
+        ifaceCtrlSockets.removeAll(); ifaceDataSockets.removeAll()
+        mhInterfaces.removeAll()
+        ifaceTranslated.removeAll()
+    }
+
     func suspendNetwork() {
         guard running, !networkSuspended else { return }
         networkSuspended = true
@@ -180,6 +253,7 @@ final class LispEngine: ObservableObject {
         pathWatcher.stop()
         ctrlSocket?.shutdown(); ctrlSocket = nil
         dataSocket?.shutdown(); dataSocket = nil
+        tearDownMultihomeSockets()
         log.fprint(.core, "Network suspended (app backgrounded)")
     }
 
@@ -202,6 +276,7 @@ final class LispEngine: ObservableObject {
         data.startReceiving { [weak self] d, from, port, ttl in
             self?.processDataPacket(d, from: from, sourcePort: port, receivedTTL: ttl)
         }
+        buildMultihomeSockets(dataBind: dataBind)      // rebuild per-interface sockets too
         startTimers()
         pathWatcher.start { [weak self] in self?.pathChanged() }
         // NAT bindings expired while suspended — refresh registration/NAT state on
@@ -306,19 +381,27 @@ final class LispEngine: ObservableObject {
         let iid = UInt32(config.instanceID)
 
         func rtrRLOCSet() -> [LispRLOC] {
-            rtrList.map { rtr in
-                let r = LispRLOC(rloc: rtr)
-                r.priority = 254
-                r.weight = 0
-                r.rlocName = "RTR"
-                // With RLOC-probing on we don't yet know the RTR is reachable —
-                // start unreach so we never show reach-state without telemetry; a
-                // probe reply promotes it to up. With probing off we can't measure
-                // reachability, so assume up (and forward), matching how turning
-                // probing off promotes everything to up-state.
-                r.state = config.rlocProbingEnabled ? "unreach-state" : "up-state"
-                return r
+            // Multi-homing: one RLOC per (RTR × interface) so each interface is a
+            // separate next-hop probed independently. Single-homed: one per RTR.
+            let ifaces: [DiscoveredRLOC?] = (config.multihomingEnabled && !mhInterfaces.isEmpty)
+                ? mhInterfaces.map { $0 } : [nil]
+            var out: [LispRLOC] = []
+            for rtr in rtrList {
+                for iface in ifaces {
+                    let r = LispRLOC(rloc: rtr)
+                    r.priority = 254
+                    r.weight = 0
+                    r.rlocName = "RTR"
+                    r.interfaceName = iface?.interfaceName
+                    r.ifIndex = iface?.ifIndex ?? 0
+                    // With RLOC-probing on we don't yet know the RTR is reachable —
+                    // start unreach so we never show reach without telemetry; a
+                    // probe reply promotes it. Probing off -> assume up (forward).
+                    r.state = config.rlocProbingEnabled ? "unreach-state" : "up-state"
+                    out.append(r)
+                }
             }
+            return out
         }
 
         var src = LispAddress(string: "0.0.0.0")!
@@ -370,8 +453,12 @@ final class LispEngine: ObservableObject {
                 log.lprint(.etr, "Cannot resolve decent map-server \(name)")
                 return nil
             }
+            // Show the decent lookup-prefix the EID matched (masked to the matching
+            // decent-prefix's lookup-length) — this is what gets hashed to select
+            // the map-server, so it tells you WHICH lookup-prefix is in play.
+            let lookup = LispDecent.eidString(for: eid, prefixes: config.decentPrefixes)
             log.lprint(.etr, "LISP-Decent map-server \(name) -> \(addr.addressString) " +
-                       "for EID \(eid.prefixString)")
+                       "for EID \(eid.prefixString), lookup-prefix \(lookup)")
             let msConfig = MapServerConfig(dnsNameOrAddress: name,
                                            authKey: config.decentAuthKey, authAlg: "sha2")
             return (addr, msConfig)

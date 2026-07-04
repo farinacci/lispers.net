@@ -83,17 +83,22 @@ extension LispEngine {
         rlocEntry.lastPacket = Date()
         lastEncapActivity = rlocEntry.lastPacket
 
+        // Multi-homing: encap out the active next-hop's interface socket.
+        let sock = dataSock(for: rlocEntry.interfaceName)
         // lisp.py print_packet("Send") — full outer/inner detail.
         let ip = innerIPInfo(inner)
-        log.dprint(.itr, "Encap LISP packet, outer RLOCs: " +
+        // Data-plane encap bypasses loggedSend, so there is NO "Send <if> N bytes"
+        // line for it — the egress interface is recorded here or nowhere.
+        let eifn = rlocEntry.interfaceName ?? rloc?.interfaceName ?? "?"
+        log.dprint(.itr, "Encap outer RLOCs: " +
                    "\(rloc?.address.addressString ?? "?") -> \(rlocEntry.rloc.addressString), " +
-                   "outer tos/ttl: 0/64, outer UDP: \(dataSocket?.localPort ?? 0) -> " +
+                   "outer tos/ttl: 0/64, outer UDP: \(sock?.localPort ?? 0) -> " +
                    "\(rlocEntry.encapPort), inner EIDs: [\(destEID.instanceID)]\(ip.src) -> " +
                    "[\(destEID.instanceID)]\(ip.dst), " +
                    "inner tos/ttl: \(ip.tos)/\(ip.ttl), length: \(packet.count), " +
                    "\(header.printHeader("encap")), " +
-                   "packet: \(lispFormatPacket(packet))")
-        dataSocket?.send(packet, to: rlocEntry.rloc, port: rlocEntry.encapPort)
+                   "packet: \(lispFormatPacket(packet)) to \(eifn)")
+        sock?.send(packet, to: rlocEntry.rloc, port: rlocEntry.encapPort)
     }
 
     // Parse an inner IPv4 packet's EIDs + tos/ttl for the encap/decap log lines
@@ -120,7 +125,7 @@ extension LispEngine {
     // MARK: - decap (lisp-etr.py:1056 flow)
 
     func processDataPacket(_ data: Data, from: LispAddress, sourcePort: UInt16,
-                           receivedTTL: Int = -1) {
+                           receivedTTL: Int = -1, onInterface: String? = nil) {
         guard data.count >= 4 else { return }
         // The data socket carries both real data packets AND control (Info-Replies,
         // RLOC-probe replies, 0xffffff relays). Log a real data packet under the
@@ -128,7 +133,8 @@ extension LispEngine {
         // 1/2) are handed to processControlPacket, which logs its own receive.)
         let nibble = data[data.startIndex] >> 4
         let isRelay = data.count > 8 && LispDataHeader.decode(data)?.instanceID == LISP.infoIID
-        let recvMsg = "Receive \(data.count) bytes from \(from.addressString) " +
+        let rifn = onInterface ?? rloc?.interfaceName ?? "?"
+        let recvMsg = "Receive \(rifn) \(data.count) bytes from \(from.addressString) " +
                       "\(sourcePort), packet: \(lispFormatPacket(data))"
         if isRelay {
             log.lprint(.itr, recvMsg)         // 0xffffff relay = RLOC-probe traffic -> itr
@@ -146,7 +152,7 @@ extension LispEngine {
         if data[data.startIndex] >> 4 == LISP.typeNatInfo {
             if let info = LispInfo.decode(data), info.isReply {
                 processInfoReply(info, from: from, sourcePort: sourcePort,
-                                 fromDataPort: true)
+                                 fromDataPort: true, onInterface: onInterface)
             }
             return
         }
@@ -160,7 +166,7 @@ extension LispEngine {
         let firstNibble = data[data.startIndex] >> 4
         if firstNibble == LISP.typeMapReply || firstNibble == LISP.typeMapRequest {
             processControlPacket(data, from: from, sourcePort: sourcePort,
-                                 receivedTTL: receivedTTL)
+                                 receivedTTL: receivedTTL, onInterface: onInterface)
             return
         }
 
@@ -183,7 +189,7 @@ extension LispEngine {
             case LISP.typeNatInfo:
                 if let info = LispInfo.decode(inner), info.isReply {
                     processInfoReply(info, from: from, sourcePort: sourcePort,
-                                     fromDataPort: true)
+                                     fromDataPort: true, onInterface: onInterface)
                 }
             case LISP.typeMapRequest:
                 if let req = LispMapRequest.decode(inner), req.rlocProbe {
@@ -205,17 +211,18 @@ extension LispEngine {
         // hex was already logged by the receive line at the top of this function.
         let ip = innerIPInfo(inner)
         let outTTL = receivedTTL >= 0 ? String(receivedTTL) : "?"
-        log.dprint(.etr, "Decap LISP packet, outer RLOCs: " +
+        let difn = onInterface ?? rloc?.interfaceName ?? "?"     // multi-homing ingress iface
+        log.dprint(.etr, "Decap outer RLOCs: " +
                    "\(from.addressString) -> \(rloc?.address.addressString ?? "?"), " +
                    "outer tos/ttl: 0/\(outTTL), outer UDP: \(sourcePort) -> " +
                    "\(dataSocket?.localPort ?? 0), inner EIDs: [\(header.instanceID)]\(ip.src) -> " +
                    "[\(header.instanceID)]\(ip.dst), inner tos/ttl: \(ip.tos)/\(ip.ttl), " +
-                   "length: \(data.count), \(header.printHeader("decap"))")
-        deliverInner(inner)
+                   "length: \(data.count), \(header.printHeader("decap")) from \(difn)")
+        deliverInner(inner, onInterface: onInterface)
     }
 
     // Parse inner IPv4 (lisp_ipv4_input equivalent) and deliver to the app.
-    private func deliverInner(_ packet: Data) {
+    private func deliverInner(_ packet: Data, onInterface: String? = nil) {
         guard packet.count >= 20 else { return }
         var r = ByteReader(packet)
         guard let vihl = r.u8(), vihl >> 4 == 4 else { return }

@@ -14,14 +14,26 @@ final class UDPSocket {
     private(set) var localPort: UInt16
     private var source: DispatchSourceRead?
     private let queue: DispatchQueue
+    // The interface this socket egresses on (multi-homing); nil = OS default.
+    let interfaceName: String?
 
-    init?(localPort: UInt16, queue: DispatchQueue) {
+    // `boundTo` (multi-homing): pin egress to that interface via IP_BOUND_IF and
+    // bind to the interface's own source address, so RLOC-probes go out — and
+    // replies come back on — that specific interface (Wi-Fi or cellular).
+    init?(localPort: UInt16, queue: DispatchQueue, boundTo iface: DiscoveredRLOC? = nil) {
         self.localPort = localPort
         self.queue = queue
+        self.interfaceName = iface?.interfaceName
         fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
         guard fd >= 0 else { return nil }
         var on: Int32 = 1
         setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, socklen_t(MemoryLayout<Int32>.size))
+        setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &on, socklen_t(MemoryLayout<Int32>.size))
+        // Pin egress to a specific interface (Darwin IP_BOUND_IF = 25).
+        if let iface = iface, iface.ifIndex != 0 {
+            var idx = Int32(iface.ifIndex)
+            setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &idx, socklen_t(MemoryLayout<Int32>.size))
+        }
         // Deliver the received IP TTL on each datagram (for RLOC-probe hop
         // counts) and send our control packets at the probe TTL of 64.
         var ttlOn: Int32 = 1
@@ -32,7 +44,9 @@ final class UDPSocket {
         addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
         addr.sin_family = sa_family_t(AF_INET)
         addr.sin_port = localPort.bigEndian
-        addr.sin_addr.s_addr = INADDR_ANY
+        // Bind to the interface's own source address when multi-homing (lets the
+        // per-interface sockets share the fixed port); INADDR_ANY otherwise.
+        addr.sin_addr.s_addr = iface.map { $0.address.v4.bigEndian } ?? INADDR_ANY
         let bound = withUnsafePointer(to: &addr) {
             $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
                 bind(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))

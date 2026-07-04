@@ -60,15 +60,28 @@ struct MapCacheView: View {
 
     private func entryCard(_ e: LispMapCacheEntry) -> some View {
         let iface = engine.rloc?.interfaceName ?? "???"
+        // Group multi-homing next-hops by RLOC address:port so the RLOC prints
+        // ONCE with a per-interface stats+rtt line under it (lisp.py layout),
+        // instead of repeating the RLOC line per interface.
+        var groups: [[LispRLOC]] = []
+        for r in e.rlocSet {
+            if let i = groups.firstIndex(where: {
+                $0[0].rloc.v4 == r.rloc.v4 && $0[0].encapPort == r.encapPort }) {
+                groups[i].append(r)
+            } else { groups.append([r]) }
+        }
         return VStack(alignment: .leading, spacing: 3) {
             eidLine(e)
-            ForEach(Array(e.rlocSet.enumerated()), id: \.offset) { _, r in
-                rlocLine(r)
-                statsLine(r, iface: iface)
-                // Only show rtts/hops/lats when RLOC-probing is on — with it off
-                // there's no telemetry, so the "[?, ?, ?]" line is just noise.
-                if engine.config.rlocProbingEnabled, r.lastProbeSent != nil {
-                    telemetryLine(r)
+            ForEach(groups.indices, id: \.self) { gi in
+                let hops = groups[gi]
+                rlocLine(hops[0], groupUp: hops.contains { $0.isUp })
+                ForEach(hops.indices, id: \.self) { hi in
+                    statsLine(hops[hi], iface: iface)
+                    // Only show rtts/hops/lats when RLOC-probing is on — with it
+                    // off there's no telemetry, so the "[?, ?, ?]" line is noise.
+                    if engine.config.rlocProbingEnabled, hops[hi].lastProbeSent != nil {
+                        telemetryLine(hops[hi])
+                    }
                 }
             }
         }
@@ -96,13 +109,16 @@ struct MapCacheView: View {
 
     // RLOC <addr>, state <state> since …, p/w[, name]   (addr red, state
     // green/red, name blue)
-    private func rlocLine(_ r: LispRLOC) -> Text {
+    private func rlocLine(_ r: LispRLOC, groupUp: Bool? = nil) -> Text {
         var addr = r.rloc.addressString
         if r.encapPort != LISP.dataPort { addr += ":\(r.encapPort)" }
+        // Multi-homing: the RLOC is up if ANY of its next-hops is up.
+        let up = groupUp ?? r.isUp
         var t = Text("  RLOC ").font(mono)
             + Text(addr).font(mono).foregroundColor(.lispRed)
             + Text(", state ").font(mono)
-            + Text(r.state).font(mono).foregroundColor(r.isUp ? .lispGreen : .lispRed)
+            + Text(up ? "up-state" : "unreach-state").font(mono)
+                .foregroundColor(up ? .lispGreen : .lispRed)
             + Text(" since \(formatHMS(r.stateChange)), p\(r.priority)/w\(r.weight)").font(mono)
         if let name = r.rlocName {
             t = t + Text(", ").font(mono) + Text(name).font(mono).foregroundColor(.lispBlue)
@@ -114,15 +130,23 @@ struct MapCacheView: View {
     // packet was encapsulated in the last second, bold-green within the last
     // minute, plain otherwise — mirrors lisp-mc.py print_stats()).
     private func statsLine(_ r: LispRLOC, iface: String) -> Text {
-        let active = r.isUp ? "*" : ""
+        // Multi-homing: label with this next-hop's own interface and put "*" on
+        // the active (best-rtt) one. Single-homed: the up interface gets "*".
+        let ifaceName = r.interfaceName ?? iface
+        let active = (r.interfaceName != nil ? r.activeNextHop : r.isUp)
         var count = Text("\(r.packetCount)").font(mono)
         if let last = r.lastPacket {
             let dt = Date().timeIntervalSince(last)
             if dt <= 1 { count = count.fontWeight(.black).foregroundColor(.primary) }
             else if dt <= 60 { count = count.fontWeight(.black).foregroundColor(.lispGreen) }
         }
+        // The "*" marking the selected outgoing interface is bold black; the
+        // interface name stays blue.
+        let star = active ? Text("*").font(mono).fontWeight(.black).foregroundColor(.primary)
+                          : Text("")
         return Text("    ").font(mono)
-            + Text("\(active)\(iface)").font(mono).foregroundColor(.lispBlue)
+            + star
+            + Text(ifaceName).font(mono).foregroundColor(.lispBlue)
             + Text(": packet-count: ").font(mono)
             + count
             + Text(", packet-rate: 0 pps, byte-count: \(r.byteCount), " +

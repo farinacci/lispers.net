@@ -9,7 +9,10 @@
 import Foundation
 
 struct HostEntry: Identifiable, Equatable {
-    var id: String { name }
+    // Stable identity: a computed id == name churned the row's identity on every
+    // keystroke while editing the name, so the TextField lost focus after one
+    // character. A fixed UUID keeps the row (and its focus) alive across edits.
+    let id = UUID()
     var name: String
     var address: String
 }
@@ -58,6 +61,15 @@ final class HostsFile: ObservableObject {
     func lookup(_ name: String) -> LispAddress? {
         guard let e = entries.first(where: { $0.name == name }) else { return nil }
         return LispAddress(string: e.address)
+    }
+
+    // Reverse lookup: EID address -> configured host name, if any. Compares on the
+    // numeric address so "240.10.0.1" matches regardless of formatting.
+    func name(for address: String) -> String? {
+        guard let a = LispAddress(string: address) else {
+            return entries.first { $0.address == address }?.name
+        }
+        return entries.first { LispAddress(string: $0.address)?.v4 == a.v4 }?.name
     }
 
     // Resolve a typed target to an EID: this lisp-hosts file first, then a literal

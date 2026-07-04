@@ -51,6 +51,10 @@ final class LispConfig: ObservableObject, Codable {
     //   off = a single deterministic up RTR (no spread to multiple RTRs).
     @Published var loadSplitUnicast = true
     @Published var loadSplitMulticast = false
+    // Egress multi-homing: probe every usable interface (Wi-Fi + cellular) to each
+    // RTR and use the best-rtt one (lisp.py rloc_next_hop). Off = use the single
+    // OS-chosen interface (today's behavior).
+    @Published var multihomingEnabled = false
 
     var decentConfigured: Bool { !decentSuffix.isEmpty && decentModulus > 0 }
 
@@ -68,7 +72,7 @@ final class LispConfig: ObservableObject, Codable {
         case controlPlaneLog, dataPlaneLog, rlocProbeLog, eidString, instanceID
         case decentNATEnabled, natTraversalEnabled, rlocProbingEnabled
         case telemetryEnabled, siteID, joinedGroups
-        case loadSplitUnicast, loadSplitMulticast
+        case loadSplitUnicast, loadSplitMulticast, multihomingEnabled
     }
 
     init() { load() }
@@ -94,6 +98,7 @@ final class LispConfig: ObservableObject, Codable {
         joinedGroups = try c.decodeIfPresent([String].self, forKey: .joinedGroups) ?? []
         loadSplitUnicast = try c.decodeIfPresent(Bool.self, forKey: .loadSplitUnicast) ?? true
         loadSplitMulticast = try c.decodeIfPresent(Bool.self, forKey: .loadSplitMulticast) ?? false
+        multihomingEnabled = try c.decodeIfPresent(Bool.self, forKey: .multihomingEnabled) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -117,6 +122,7 @@ final class LispConfig: ObservableObject, Codable {
         try c.encode(joinedGroups, forKey: .joinedGroups)
         try c.encode(loadSplitUnicast, forKey: .loadSplitUnicast)
         try c.encode(loadSplitMulticast, forKey: .loadSplitMulticast)
+        try c.encode(multihomingEnabled, forKey: .multihomingEnabled)
     }
 
     private static var fileURL: URL {
@@ -151,6 +157,9 @@ final class LispConfig: ObservableObject, Codable {
         telemetryEnabled = loaded.telemetryEnabled
         siteID = loaded.siteID
         joinedGroups = loaded.joinedGroups
+        loadSplitUnicast = loaded.loadSplitUnicast
+        loadSplitMulticast = loaded.loadSplitMulticast
+        multihomingEnabled = loaded.multihomingEnabled
 
         // Migrate a legacy map-server auth-key into the decent key, once.
         if decentAuthKey.isEmpty, let key = mapServers.first?.authKey, !key.isEmpty {

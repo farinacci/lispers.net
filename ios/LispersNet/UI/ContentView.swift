@@ -55,7 +55,7 @@ struct ContentView: View {
     @Environment(\.verticalSizeClass) private var vSizeClass
 
     // App version string — bump on request.
-    static let version = "0.5"
+    static let version = "0.6-9"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -111,9 +111,6 @@ struct StatusHeader: View {
     @EnvironmentObject var engine: LispEngine
     @EnvironmentObject var config: LispConfig
     @ObservedObject var netName = NetworkName.shared
-    // Snapshot time the uptimes are measured against; refreshed each time this
-    // view appears (tab switch) so the values update on (re)entry, not live.
-    @State private var asOf = Date()
 
     // "<addr> (en0 -> MyWiFi)" / "<addr> (pdp_ip0 -> Carrier)" — the network name
     // is appended when iOS lets us read it (Wi-Fi needs the wifi-info entitlement +
@@ -138,12 +135,14 @@ struct StatusHeader: View {
                 Text(engine.running ? "LISP is active" : "LISP is inactive")
                     .font(.headline)
                 // LISP uptime — since the Enable LISP toggle was last turned on.
-                // Snapshotted on appear (asOf); it refreshes when you leave and
-                // return to this tab, not every second.
+                // Minute-granularity, ticks once a minute ("< 1m", "5m", "1h3m",
+                // "1d3h").
                 if engine.running, let s = engine.lispStart {
-                    Text(formatHMS(s, asOf: asOf))
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.secondary)
+                    TimelineView(.periodic(from: .now, by: 60)) { ctx in
+                        Text(formatUptimeMinutes(s, asOf: ctx.date))
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Spacer()
                 if engine.behindNAT {
@@ -157,12 +156,14 @@ struct StatusHeader: View {
             // LISP app uptime — since the app process launched. Only shown when
             // it differs from the LISP uptime (i.e. LISP was re-enabled after
             // launch); if LISP came up with the app the two are equal, so the
-            // separate line would be redundant. Also snapshotted on appear.
+            // separate line would be redundant. Ticks once a minute.
             if engine.running, let s = engine.lispStart,
                s.timeIntervalSince(engine.appStart) >= 2 {
-                (Text("LISP app uptime ").foregroundStyle(.secondary)
-                 + Text(formatHMS(engine.appStart, asOf: asOf)))
-                    .font(.caption.monospaced())
+                TimelineView(.periodic(from: .now, by: 60)) { ctx in
+                    (Text("LISP app uptime ").foregroundStyle(.secondary)
+                     + Text(formatUptimeMinutes(engine.appStart, asOf: ctx.date)))
+                        .font(.caption.monospaced())
+                }
             }
             if engine.running {
                 Group {
@@ -181,6 +182,21 @@ struct StatusHeader: View {
                         Text("\(t.addressString):\(String(engine.advertisedPort))")
                             .foregroundStyle(Color.lispRed)
                     }
+                    // Multi-homing: the other interface(s)' RLOC + translated
+                    // RLOC:port (each interface is registered as its own RLOC).
+                    if config.multihomingEnabled {
+                        ForEach(engine.mhInterfaces.filter {
+                            $0.interfaceName != engine.rloc?.interfaceName
+                        }, id: \.interfaceName) { iface in
+                            Text("RLOC ").foregroundStyle(.secondary) +
+                            Text(rlocLabel(iface)).foregroundStyle(Color.lispRed)
+                            if let tr = engine.ifaceTranslated[iface.interfaceName] {
+                                Text("translated RLOC:port ").foregroundStyle(.secondary) +
+                                Text("\(tr.rloc.addressString):\(String(tr.port))")
+                                    .foregroundStyle(Color.lispRed)
+                            }
+                        }
+                    }
                     Text("registers sent ").foregroundStyle(.secondary) +
                     Text(String(engine.registrationsSent)) +
                     Text(", groups joined ").foregroundStyle(.secondary) +
@@ -190,6 +206,5 @@ struct StatusHeader: View {
             }
         }
         .padding(.vertical, 4)
-        .onAppear { asOf = Date() }
     }
 }

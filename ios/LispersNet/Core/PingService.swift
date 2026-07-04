@@ -17,6 +17,7 @@ struct PingResult: Identifiable {
     var address: String
     var rttMs: Double?          // set on reply
     var status: Status = .pending
+    var multicast = false       // a group ping — reply rows are per group member
     let sentAt = Date()
     enum Status { case pending, reply, timeout }
 }
@@ -124,6 +125,16 @@ final class PingService: ObservableObject {
         DispatchQueue.main.async { self.results.removeAll { $0.status != .pending } }
     }
 
+    // Remove the oldest N completed results. `results` is newest-first, so the
+    // oldest completed rows are at the end. Pending pings are always kept.
+    func clearOldest(_ n: Int = 100) {
+        DispatchQueue.main.async {
+            let oldest = self.results.filter { $0.status != .pending }.suffix(n)
+            let ids = Set(oldest.map { $0.id })
+            self.results.removeAll { ids.contains($0.id) }
+        }
+    }
+
     private func sendEcho(name: String, source: LispAddress, dest: LispAddress) {
         guard let engine = engine else { return }
         sequence &+= 1
@@ -132,13 +143,14 @@ final class PingService: ObservableObject {
         let inner = Self.buildIPv4(source: source, dest: dest, protocol: 1,
                                    payload: icmp)
         // Insert a pending row immediately so the UI shows the in-flight echo.
-        let result = PingResult(sequence: seq, target: name, address: dest.addressString)
         let multicast = dest.isMulticast
+        let result = PingResult(sequence: seq, target: name,
+                                address: dest.addressString, multicast: multicast)
         DispatchQueue.main.async {
             self.outstanding[seq] = Outstanding(id: result.id, target: name,
                                                 sentAt: result.sentAt, multicast: multicast)
             self.results.insert(result, at: 0)
-            if self.results.count > 50 { self.results.removeLast() }
+            if self.results.count > 500 { self.results.removeLast() }
         }
         engine.log.dprint(.itr, "Send ICMP echo-request to \(name) " +
                           "(\(dest.addressString)), seq \(seq)")
@@ -168,7 +180,8 @@ final class PingService: ObservableObject {
 
         if type == 0 {                      // echo-reply
             guard ident == identifier else { return }
-            engine.log.dprint(.itr, "ICMP echo-reply from \(source.addressString), seq \(seq)")
+            engine.log.dprint(.itr, "Receive ICMP echo-reply " +
+                              "from \(source.addressString), seq \(seq)")
             let srcStr = source.addressString
             let srcV4 = source.v4
             DispatchQueue.main.async {
@@ -184,10 +197,11 @@ final class PingService: ObservableObject {
                     }
                 } else {
                     // Additional responder (multicast group) — one row per source.
-                    var r = PingResult(sequence: seq, target: o.target, address: srcStr)
+                    var r = PingResult(sequence: seq, target: o.target,
+                                       address: srcStr, multicast: true)
                     r.rttMs = rtt; r.status = .reply
                     self.results.insert(r, at: 0)
-                    if self.results.count > 50 { self.results.removeLast() }
+                    if self.results.count > 500 { self.results.removeLast() }
                 }
                 // Unicast: done. Multicast: keep open for more until the timeout.
                 self.outstanding[seq] = o.multicast ? o : nil

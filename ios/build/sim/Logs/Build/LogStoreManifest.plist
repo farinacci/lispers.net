@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>70023B86-0554-4DDF-9128-5121B70EC3B5</key>
+		<key>C7FC89CC-6D05-4193-A4C6-50A063034FF9</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,7 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>70023B86-0554-4DDF-9128-5121B70EC3B5.xcactivitylog</string>
+			<string>C7FC89CC-6D05-4193-A4C6-50A063034FF9.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -40,15 +40,15 @@
 			<key>signature</key>
 			<string>Building project LispersNet with scheme LispersNet and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>804600936.89727294</real>
+			<real>804655121.22901499</real>
 			<key>timeStoppedRecording</key>
-			<real>804600942.67854905</real>
+			<real>804655126.07874</real>
 			<key>title</key>
 			<string>Building project LispersNet with scheme LispersNet and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>70023B86-0554-4DDF-9128-5121B70EC3B5</string>
+			<string>C7FC89CC-6D05-4193-A4C6-50A063034FF9</string>
 		</dict>
-		<key>D34EFFA9-80CE-47B7-AED2-40F2D0BAECA9</key>
+		<key>F2EDC998-987E-4D34-8C70-1143D2D7BA75</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -57,7 +57,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>D34EFFA9-80CE-47B7-AED2-40F2D0BAECA9.xcactivitylog</string>
+			<string>F2EDC998-987E-4D34-8C70-1143D2D7BA75.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -82,13 +82,13 @@
 			<key>signature</key>
 			<string>Building project LispersNet with scheme LispersNet and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>804563964.32474899</real>
+			<real>804655661.28657603</real>
 			<key>timeStoppedRecording</key>
-			<real>804563969.17384195</real>
+			<real>804655666.62629104</real>
 			<key>title</key>
 			<string>Building project LispersNet with scheme LispersNet and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>D34EFFA9-80CE-47B7-AED2-40F2D0BAECA9</string>
+			<string>F2EDC998-987E-4D34-8C70-1143D2D7BA75</string>
 		</dict>
 	</dict>
 </dict>

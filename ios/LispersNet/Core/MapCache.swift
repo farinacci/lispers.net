@@ -12,6 +12,12 @@ final class LispRLOC {
     var priority: UInt8 = 1
     var weight: UInt8 = 100
     var encapPort: UInt16 = LISP.dataPort       // ≠4341 when NAT-translated
+    // Multi-homing next-hop: the egress interface this RLOC entry is probed/used
+    // on. nil = single-homed (OS default interface). Two entries with the same
+    // rloc address but different interfaceName are the Wi-Fi/cellular next-hops.
+    var interfaceName: String?
+    var ifIndex: UInt32 = 0
+    var activeNextHop = false                   // the "*" — best-rtt among siblings
     var state = "up-state"                      // or "unreach-state"
     var stateChange = Date()
     var rlocName: String?
@@ -93,7 +99,12 @@ final class LispMapCacheEntry {
     // replicate). loadSplit == false: a single STABLE RTR (hash of src+dst, so a
     // flow always uses the same one — no spread across RTRs).
     func selectRLOC(for inner: Data? = nil, hashL4 loadSplit: Bool = LISP.loadSplitPings) -> LispRLOC? {
-        let up = rlocSet.filter { $0.isUp }
+        var up = rlocSet.filter { $0.isUp }
+        // Multi-homing: forward out each RTR's ACTIVE (best-rtt) next-hop only;
+        // fall back to all up if none is marked active yet. Single-homed RLOCs
+        // (nil interface) always pass.
+        let active = up.filter { $0.interfaceName == nil || $0.activeNextHop }
+        if !active.isEmpty { up = active }
         // best_rloc_set (lisp.py): the up RLOCs at the best (lowest) priority.
         guard let bestPri = up.map({ $0.priority }).min() else { return nil }
         let best = up.filter { $0.priority == bestPri }
@@ -185,6 +196,16 @@ func formatUptime(_ since: Date) -> String {
     return "\(s / 86400)d\((s % 86400) / 3600)h"
 }
 
+// Minute-granularity uptime for the xTR screen: "< 1m", "5m", "1h3m", "1d3h".
+// asOf lets a per-minute TimelineView drive the value.
+func formatUptimeMinutes(_ since: Date, asOf: Date = Date()) -> String {
+    let s = Int(asOf.timeIntervalSince(since))
+    if s < 60 { return "< 1m" }
+    if s < 3600 { return "\(s / 60)m" }
+    if s < 86400 { return "\(s / 3600)h\((s % 3600) / 60)m" }
+    return "\(s / 86400)d\((s % 86400) / 3600)h"
+}
+
 // Map-cache elapsed time, lisp-mc.py style: "H:MM:SS" or "N days, H:MM:SS".
 // asOf defaults to now (live, for map-cache rows); callers can pass a snapshot
 // time to freeze the value (the xTR-tab uptimes update only on (re)appear).
@@ -195,11 +216,11 @@ func formatHMS(_ since: Date, asOf: Date = Date()) -> String {
     return days > 0 ? "\(days) days, \(hms)" : hms
 }
 
-// Trailing-zero-trimmed seconds, matching Python's float repr (0.26 not 0.260).
+// Fixed 3-decimal seconds (x.yyy) — 0.710, never 0.71. Negative = unknown ("?").
 func fmtSecs(_ v: Double) -> String {
-    if v < 0 { return "?" }
-    var s = String(format: "%.3f", v)
-    while s.hasSuffix("0") { s.removeLast() }
-    if s.hasSuffix(".") { s.removeLast() }
-    return s
+    v < 0 ? "?" : String(format: "%.3f", v)
 }
+
+// Fixed 3-decimal seconds keeping the sign — for latencies, which are legitimately
+// negative under clock skew (fwd/rev = etr-in − itr-out etc.).
+func fmt3(_ v: Double) -> String { String(format: "%.3f", v) }
