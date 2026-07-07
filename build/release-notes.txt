@@ -1,6 +1,70 @@
 
-                  lispers.net Release Version 0.634
-                  ---------------------------------
+                  lispers.net IOS Release Version 0.7
+                  -----------------------------------
+
+o Release date: Tue Jul  7 15:38:38 PDT 2026
+
+o Don't use en0 when there is no telemetry retrieved and pdp_ip0 does have
+  telemetry. Even though en0 is in up-state, use pdp_ip0 as outgoing
+  interface.
+
+o Fix input problem with editing hostnames.
+
+o Hold 500 entries in the historical ping results log. Allow to clear
+  oldest 100 (already have a complete clear button).
+
+o Tidy up the Ping tab display with less sections until they are needed.
+
+o "*" not showing up sometimes for an outgoing interface for an RLOC
+  for a multicast map-cache entry. Fixed now.
+
+o Have xTR tab share include joined groups and map-cache.
+
+o Hostname not picked up by the LISP app when the user changes the device
+  name in Settings -> General -> About. Lets allow the user to configure
+  its own hostname that will show up in RLOC-sets in the mapping system.
+  If the user does not like the default hostname, they can configure
+  their own in the EID Configuration section of the xTR tab.
+
+o Add a multihoming switch percentage (default is 10%) which has the same
+  functionality as the python implementation of multi-home-rtt-percentage.
+
+o Put blue hostname as title on the Map-Cache tab display.
+
+o Put a grep in the Log tab. So it can display only the lines you want to
+  see. Great for debugging in large log files.
+    
+-------------------------------------------------------------------------------
+        
+                  lispers.net IOS Release Version 0.6
+                  -----------------------------------
+
+o Release date: Fri Jul  3 13:51:04 EDT 2026
+
+o Make uptime less granularity and continuing updating on the xTR display.
+
+o Support multi-homing so both the wifi and cellular interface is used at
+  the same time. Have the rtt estimate be used to select an outgoing
+  interface like the lispers.net python implementation uses.
+
+o Add slide-bar to the xTR tab display to turn on or off multihoming. When
+  off the interface used is what the OS gives to the app.
+
+o Made logging even more readable.
+
+o Create option to load-split either unicast and multicast packets across
+  RLOCs. This appears in the Ping tab display.
+
+o Display hostname on multicast ping responses so we easily can tell who
+  is responding.    
+
+o Fix bug for decent-hash when sending Map-Requests to the mapping system
+  from a decent-nat xTR.
+           
+-------------------------------------------------------------------------------
+        
+                  lispers.net Linus Release Version 0.634
+                  ---------------------------------------
 
 o Release date: Wed Jul  1 08:15:34 EDT 2026
 
