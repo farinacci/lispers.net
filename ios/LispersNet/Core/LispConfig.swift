@@ -40,6 +40,17 @@ final class LispConfig: ObservableObject, Codable {
     // EID + NAT
     @Published var eidString: String = ""           // e.g. "240.10.0.100"
     @Published var instanceID: Int = 0
+    // xTR/host name, editable on the xTR tab. Defaults to the system hostname
+    // (ProcessInfo, ".local" stripped) so the user gets a name out of the box;
+    // blank on devices that only report "localhost". Not persisted unless the user
+    // edits it, so an un-customized name stays LIVE (re-derived each launch).
+    @Published var xtrHostname: String = LispConfig.defaultHostname()
+
+    static func defaultHostname() -> String {
+        let h = ProcessInfo.processInfo.hostName
+        let name = h.hasSuffix(".local") ? String(h.dropLast(6)) : h
+        return name == "localhost" ? "" : name
+    }
     @Published var decentNATEnabled = false
     @Published var natTraversalEnabled = true
     @Published var rlocProbingEnabled = true
@@ -55,6 +66,11 @@ final class LispConfig: ObservableObject, Codable {
     // RTR and use the best-rtt one (lisp.py rloc_next_hop). Off = use the single
     // OS-chosen interface (today's behavior).
     @Published var multihomingEnabled = false
+    // Multi-homing egress-switch hysteresis (lisp.py lisp_mh_rtt_pct): only move the
+    // active next-hop to a better interface when its rtt beats the current one by at
+    // least this percent. Higher = stickier (fewer switches); 0 = switch on any
+    // improvement. Default 10%.
+    @Published var mhSwitchPct: Int = 10
 
     var decentConfigured: Bool { !decentSuffix.isEmpty && decentModulus > 0 }
 
@@ -69,10 +85,10 @@ final class LispConfig: ObservableObject, Codable {
 
     enum CodingKeys: String, CodingKey {
         case lispEnabled, mapServers, decentSuffix, decentModulus, decentAuthKey, decentPrefixes
-        case controlPlaneLog, dataPlaneLog, rlocProbeLog, eidString, instanceID
+        case controlPlaneLog, dataPlaneLog, rlocProbeLog, eidString, instanceID, xtrHostname
         case decentNATEnabled, natTraversalEnabled, rlocProbingEnabled
         case telemetryEnabled, siteID, joinedGroups
-        case loadSplitUnicast, loadSplitMulticast, multihomingEnabled
+        case loadSplitUnicast, loadSplitMulticast, multihomingEnabled, mhSwitchPct
     }
 
     init() { load() }
@@ -90,6 +106,7 @@ final class LispConfig: ObservableObject, Codable {
         rlocProbeLog = try c.decodeIfPresent(Bool.self, forKey: .rlocProbeLog) ?? false
         eidString = try c.decodeIfPresent(String.self, forKey: .eidString) ?? ""
         instanceID = try c.decodeIfPresent(Int.self, forKey: .instanceID) ?? 0
+        xtrHostname = try c.decodeIfPresent(String.self, forKey: .xtrHostname) ?? ""
         decentNATEnabled = try c.decodeIfPresent(Bool.self, forKey: .decentNATEnabled) ?? false
         natTraversalEnabled = try c.decodeIfPresent(Bool.self, forKey: .natTraversalEnabled) ?? true
         rlocProbingEnabled = try c.decodeIfPresent(Bool.self, forKey: .rlocProbingEnabled) ?? true
@@ -99,6 +116,7 @@ final class LispConfig: ObservableObject, Codable {
         loadSplitUnicast = try c.decodeIfPresent(Bool.self, forKey: .loadSplitUnicast) ?? true
         loadSplitMulticast = try c.decodeIfPresent(Bool.self, forKey: .loadSplitMulticast) ?? false
         multihomingEnabled = try c.decodeIfPresent(Bool.self, forKey: .multihomingEnabled) ?? false
+        mhSwitchPct = try c.decodeIfPresent(Int.self, forKey: .mhSwitchPct) ?? 10
     }
 
     func encode(to encoder: Encoder) throws {
@@ -114,6 +132,7 @@ final class LispConfig: ObservableObject, Codable {
         try c.encode(rlocProbeLog, forKey: .rlocProbeLog)
         try c.encode(eidString, forKey: .eidString)
         try c.encode(instanceID, forKey: .instanceID)
+        try c.encode(xtrHostname, forKey: .xtrHostname)
         try c.encode(decentNATEnabled, forKey: .decentNATEnabled)
         try c.encode(natTraversalEnabled, forKey: .natTraversalEnabled)
         try c.encode(rlocProbingEnabled, forKey: .rlocProbingEnabled)
@@ -123,6 +142,7 @@ final class LispConfig: ObservableObject, Codable {
         try c.encode(loadSplitUnicast, forKey: .loadSplitUnicast)
         try c.encode(loadSplitMulticast, forKey: .loadSplitMulticast)
         try c.encode(multihomingEnabled, forKey: .multihomingEnabled)
+        try c.encode(mhSwitchPct, forKey: .mhSwitchPct)
     }
 
     private static var fileURL: URL {
@@ -151,6 +171,9 @@ final class LispConfig: ObservableObject, Codable {
         rlocProbeLog = loaded.rlocProbeLog
         eidString = loaded.eidString
         instanceID = loaded.instanceID
+        // Only a user-typed name is persisted; an empty saved value re-derives the
+        // live system hostname so the field shows a default instead of going blank.
+        xtrHostname = loaded.xtrHostname.isEmpty ? Self.defaultHostname() : loaded.xtrHostname
         decentNATEnabled = loaded.decentNATEnabled
         natTraversalEnabled = loaded.natTraversalEnabled
         rlocProbingEnabled = loaded.rlocProbingEnabled
@@ -160,6 +183,7 @@ final class LispConfig: ObservableObject, Codable {
         loadSplitUnicast = loaded.loadSplitUnicast
         loadSplitMulticast = loaded.loadSplitMulticast
         multihomingEnabled = loaded.multihomingEnabled
+        mhSwitchPct = loaded.mhSwitchPct
 
         // Migrate a legacy map-server auth-key into the decent key, once.
         if decentAuthKey.isEmpty, let key = mapServers.first?.authKey, !key.isEmpty {

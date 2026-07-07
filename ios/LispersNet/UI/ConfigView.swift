@@ -13,14 +13,140 @@ struct ConfigView: View {
     @EnvironmentObject var engine: LispEngine
     @FocusState private var keyboardUp: Bool
     @State private var editingPrefixes = false
-    // Share the whole xTR configuration as one image (even the off-screen part).
+    // Share the whole xTR configuration: as one image (even the off-screen part)
+    // or as a colored .html file that also carries the full map-cache.
     @State private var shareImage: UIImage?
+    @State private var shareURL: URL?
     @State private var showShare = false
     // Multicast group join/leave field (section sits between xTR config and Logging).
     @State private var groupField = ""
 
     private func centeredTitle(_ s: String) -> some View {
         Text(s).frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    // Colored .html of the whole xTR state — config + the FULL map-cache — sharing
+    // the Logs export's palette (eid green, rloc red, name blue). Written to a temp
+    // file for the share sheet.
+    private func xtrHTMLFile() -> URL? {
+        let out = FileManager.default.temporaryDirectory
+            .appendingPathComponent("lispers-xtr.html")
+        try? xtrHTML().data(using: .utf8)?.write(to: out)
+        return out
+    }
+
+    private func xtrHTML() -> String {
+        func esc(_ s: String) -> String {
+            s.replacingOccurrences(of: "&", with: "&amp;")
+             .replacingOccurrences(of: "<", with: "&lt;")
+             .replacingOccurrences(of: ">", with: "&gt;")
+        }
+        func span(_ cls: String, _ s: String) -> String { "<span class=\(cls)>\(esc(s))</span>" }
+        func row(_ label: String, _ value: String) -> String {
+            "<div><span class=lbl>\(esc(label))</span> \(value)</div>"
+        }
+        var b = ""
+        b += row("Hostname", span("name", engine.xtrName))
+        b += row("EID", span("eid", config.eidString.isEmpty ? "—" : config.eidString))
+        if let r = engine.rloc {
+            b += row("RLOC", span("rloc", r.address.addressString) + " (" + esc(r.interfaceName) + ")")
+        }
+        if engine.behindNAT, let t = engine.translatedRLOC {
+            b += row("translated RLOC:port", span("rloc", "\(t.addressString):\(engine.advertisedPort)"))
+        }
+        b += row("registers sent", "\(engine.registrationsSent), groups joined \(config.joinedGroups.count)")
+        b += "<hr>"
+        b += row("IID", "\(config.instanceID)")
+        b += row("RLOC-probing", config.rlocProbingEnabled ? "on" : "off")
+        b += row("NAT-traversal", config.natTraversalEnabled ? "on" : "off")
+        b += row("Decentralized-NAT", config.decentNATEnabled ? "on" : "off")
+        b += row("Control-plane log", config.controlPlaneLog ? "on" : "off")
+        b += row("Data-plane log", config.dataPlaneLog ? "on" : "off")
+        b += "<hr>"
+        b += row("Suffix", span("name", config.decentSuffix.isEmpty ? "—" : config.decentSuffix))
+        b += row("Modulus", "\(config.decentModulus)")
+        if config.decentConfigured, let e = config.eid {
+            b += row("registers to", span("name", LispDecent.dnsName(eid: e,
+                     modulus: config.decentModulus, suffix: config.decentSuffix,
+                     prefixes: config.decentPrefixes)))
+        }
+        if !config.decentPrefixes.isEmpty {
+            b += "<hr><div class=lbl>Lookup prefixes:</div>"
+            for p in config.decentPrefixes {
+                b += "<div>&nbsp;&nbsp;• " +
+                    span("eid", "\(p.eidPrefix) lookup-len: \(p.lookupLength.map(String.init) ?? "?")") + "</div>"
+            }
+        }
+        if !config.joinedGroups.isEmpty {
+            b += "<hr><div class=lbl>Multicast groups joined:</div>"
+            for g in config.joinedGroups { b += "<div>&nbsp;&nbsp;• " + span("eid", g) + "</div>" }
+        }
+        // Map-cache in the SAME lisp-mc.py layout the Map-Cache tab renders, so the
+        // HTML share matches it field-for-field (uptime/ttl/action, since + p/w + name,
+        // packet-count/byte-count, rtts/hops/lats).
+        let entries = engine.mapCache.snapshot()
+        if !entries.isEmpty {
+            let sp = "&nbsp;&nbsp;"
+            b += "<hr><div class=lbl>Map-cache:</div>"
+            for e in entries {
+                let eidStr = e.isMulticast
+                    ? "[\(e.eid.instanceID)](\(e.eid.addressString)/\(e.eid.maskLen), " +
+                      "\(e.group.addressString)/\(e.group.maskLen))"
+                    : "[\(e.eid.instanceID)]\(e.eid.addressString)/\(e.eid.maskLen)"
+                var eidLine = "<div>EID " + span("eid", eidStr) +
+                    esc(", uptime \(formatHMS(e.uptime)), ttl \(e.ttlString)")
+                if e.action != LISP.noAction {
+                    eidLine += ", <b>" + esc(LISP.actionString(e.action)) + "</b>"
+                }
+                b += eidLine + "</div>"
+                var groups: [[LispRLOC]] = []
+                for r in e.rlocSet {
+                    if let i = groups.firstIndex(where: {
+                        $0[0].rloc.v4 == r.rloc.v4 && $0[0].encapPort == r.encapPort }) {
+                        groups[i].append(r)
+                    } else { groups.append([r]) }
+                }
+                for hops in groups {
+                    let r0 = hops[0]
+                    let addr = r0.encapPort != LISP.dataPort
+                        ? "\(r0.rloc.addressString):\(r0.encapPort)" : r0.rloc.addressString
+                    let up = hops.contains { $0.isUp }
+                    var rlocLine = "<div>\(sp)RLOC " + span("rloc", addr) + ", state " +
+                        span(up ? "eid" : "rloc", up ? "up-state" : "unreach-state") +
+                        esc(" since \(formatHMS(r0.stateChange)), p\(r0.priority)/w\(r0.weight)")
+                    if let name = r0.rlocName { rlocLine += ", " + span("name", name) }
+                    b += rlocLine + "</div>"
+                    for r in hops {
+                        let ifn = r.interfaceName ?? "???"
+                        let active = r.interfaceName != nil ? r.activeNextHop : r.isUp
+                        b += "<div>\(sp)\(sp)" + (active ? "<b>*</b>" : "") +
+                            span("name", ifn) +
+                            esc(": packet-count: \(r.packetCount), packet-rate: 0 pps, " +
+                                "byte-count: \(r.byteCount), bit-rate: 0.0 mbps") + "</div>"
+                        if config.rlocProbingEnabled, r.lastProbeSent != nil {
+                            let rtts = r.recentRTTs.isEmpty ? "?, ?, ?"
+                                : r.recentRTTs.map { fmtSecs($0) }.joined(separator: ", ")
+                            let ihops = r.recentHops.isEmpty ? "?/?, ?/?, ?/?"
+                                : r.recentHops.joined(separator: ", ")
+                            let lats = r.recentLatencies.isEmpty ? "?/?, ?/?, ?/?"
+                                : r.recentLatencies.joined(separator: ", ")
+                            b += "<div class=lbl>\(sp)\(sp)" +
+                                esc("rtts [\(rtts)], hops [\(ihops)], lats [\(lats)]") + "</div>"
+                        }
+                    }
+                }
+            }
+        }
+        return """
+        <!DOCTYPE html><html><head><meta charset="utf-8">\
+        <meta name="viewport" content="width=device-width, initial-scale=1">\
+        <title>lispers.net xTR \(ContentView.version)</title>\
+        <style>body{background:#fff;color:#111;font:13px ui-monospace,Menlo,monospace;\
+        padding:12px;white-space:pre-wrap;word-break:break-word}h2{text-align:center}\
+        .lbl{color:#666}.eid{color:#298C29}.rloc{color:#C71F1F}.name{color:#3366F2}\
+        hr{border:none;border-top:1px solid #ddd;margin:6px 0}b{font-weight:800}\
+        </style></head><body><h2>lispers.net xTR — \(ContentView.version)</h2>\(b)</body></html>
+        """
     }
 
     private var groupTrimmed: String { groupField.trimmingCharacters(in: .whitespaces) }
@@ -62,6 +188,18 @@ struct ConfigView: View {
                             .frame(width: 56)
                             .focused($keyboardUp)
                             .onChange(of: config.instanceID) { _, _ in config.save() }
+                    }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+
+                    HStack(spacing: 8) {
+                        Text("Hostname:")
+                        TextField(engine.xtrName, text: $config.xtrHostname)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .font(.body.monospaced())
+                            .frame(maxWidth: .infinity)
+                            .focused($keyboardUp)
+                            .onChange(of: config.xtrHostname) { _, _ in config.save() }
                     }
                     .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                 } header: {
@@ -108,6 +246,17 @@ struct ConfigView: View {
                             // mode. Simplest: bounce the engine if it's running.
                             if engine.running { engine.disable(); engine.enable() }
                         }))
+                    // Egress-switch hysteresis: move to a better interface only when
+                    // it beats the active one by at least this %. Read live by
+                    // selectNextHop — no engine bounce needed. Only relevant (and only
+                    // shown) when multihoming is on.
+                    if config.multihomingEnabled {
+                        Stepper(value: $config.mhSwitchPct, in: 0...100, step: 5) {
+                            Text("Multihoming rtt threshold: \(config.mhSwitchPct)%")
+                                .lineLimit(1).minimumScaleFactor(0.7)
+                        }
+                        .onChange(of: config.mhSwitchPct) { _, _ in config.save() }
+                    }
                 } header: {
                     centeredTitle("xTR Configuration")
                 }
@@ -218,22 +367,29 @@ struct ConfigView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    // Render the entire configuration (not just what's on screen)
-                    // to one image and hand it to the share sheet.
-                    Button {
-                        let snap = XTRSnapshot()
-                            .environmentObject(config)
-                            .environmentObject(engine)
-                        let r = ImageRenderer(content: snap)
-                        r.scale = UIScreen.main.scale
-                        if let ui = r.uiImage { shareImage = ui; showShare = true }
+                    Menu {
+                        // Image: render the whole configuration (even off-screen) to
+                        // one picture — the inline paste for Messages.
+                        Button {
+                            let snap = XTRSnapshot()
+                                .environmentObject(config)
+                                .environmentObject(engine)
+                            let r = ImageRenderer(content: snap)
+                            r.scale = UIScreen.main.scale
+                            if let ui = r.uiImage { shareURL = nil; shareImage = ui; showShare = true }
+                        } label: { Label("Image", systemImage: "photo") }
+                        // Colored .html carrying the config AND the full map-cache.
+                        Button {
+                            shareImage = nil; shareURL = xtrHTMLFile(); showShare = true
+                        } label: { Label("HTML (config + map-cache)", systemImage: "doc.richtext") }
                     } label: {
                         Image(systemName: "square.and.arrow.up")
                     }
                 }
             }
             .sheet(isPresented: $showShare) {
-                if let img = shareImage { ShareSheet(items: [img]) }
+                if let u = shareURL { ShareSheet(items: [u]) }
+                else if let img = shareImage { ShareSheet(items: [img]) }
             }
         }
     }
@@ -349,6 +505,30 @@ private struct XTRSnapshot: View {
                     .font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
                 ForEach(config.decentPrefixes) { p in
                     line("  •", "\(p.eidPrefix) lookup-len: \(p.lookupLength.map(String.init) ?? "?")", .lispGreen)
+                }
+            }
+            if !config.joinedGroups.isEmpty {
+                Divider()
+                Text("Multicast groups joined:")
+                    .font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
+                ForEach(config.joinedGroups, id: \.self) { g in
+                    line("  •", g, .lispGreen)
+                }
+            }
+            let mc = engine.mapCache.snapshot()
+            if !mc.isEmpty {
+                Divider()
+                Text("Map-cache:")
+                    .font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
+                // Same card the Map-Cache tab draws, so the share matches it exactly.
+                // scrollTelemetry:false because ImageRenderer can't capture a ScrollView —
+                // the rtts/hops/lats line wraps instead of scrolling.
+                ForEach(mc, id: \.uptime) { e in
+                    MapCacheEntryCard(entry: e,
+                                      iface: engine.rloc?.interfaceName ?? "???",
+                                      font: .system(size: 12, design: .monospaced),
+                                      showTelemetry: config.rlocProbingEnabled,
+                                      scrollTelemetry: false)
                 }
             }
         }

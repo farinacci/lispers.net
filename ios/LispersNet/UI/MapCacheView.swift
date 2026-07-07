@@ -24,17 +24,21 @@ struct MapCacheView: View {
 
     var body: some View {
         NavigationStack {
-            // Vertical scroll; text wraps to the available width. Refreshes are
-            // driven by engine.mapCacheVersion: every 500ms while data is being
-            // encapsulated (packet-count flashes boldface), and on each RLOC-probe
-            // reply when idle.
+            // Vertical scroll; text wraps to the available width. The engine bumps
+            // mapCacheVersion once a second while running, which re-runs this body AND
+            // (via the version passed into each MapCacheEntryCard) forces the entry
+            // cards to re-read their live counts/rtts/uptime — the cards can't observe
+            // the in-place mutations of their class-backed entry on their own.
             ScrollView {
                 Group {
                     let _ = engine.mapCacheVersion
                     VStack(alignment: .leading, spacing: 14) {
                         let entries = engine.mapCache.snapshot()
+                        // Title carries the local hostname (xTR tab override, else the
+                        // learned system name), in blue — the lispers.net palette for
+                        // names.
                         (Text("LISP Map-Cache for ") +
-                         Text(engine.config.eidString.isEmpty ? "xTR" : engine.config.eidString).bold() +
+                         Text(engine.xtrName).bold().foregroundColor(.lispBlue) +
                          Text(", entries \(entries.count)"))
                             .font(.system(size: 12 * zoom, design: .monospaced))
                             .foregroundStyle(.secondary)
@@ -59,10 +63,33 @@ struct MapCacheView: View {
     }
 
     private func entryCard(_ e: LispMapCacheEntry) -> some View {
-        let iface = engine.rloc?.interfaceName ?? "???"
-        // Group multi-homing next-hops by RLOC address:port so the RLOC prints
-        // ONCE with a per-interface stats+rtt line under it (lisp.py layout),
-        // instead of repeating the RLOC line per interface.
+        MapCacheEntryCard(entry: e, iface: engine.rloc?.interfaceName ?? "???",
+                          font: mono, showTelemetry: engine.config.rlocProbingEnabled,
+                          version: engine.mapCacheVersion)
+    }
+}
+
+// One map-cache entry in the lisp-mc.py layout — SHARED by the Map-Cache tab and
+// the xTR share snapshot so they render IDENTICALLY (colors, fields, per-interface
+// state + rtts/hops/lats). Group multi-homing next-hops by RLOC address:port.
+struct MapCacheEntryCard: View {
+    let entry: LispMapCacheEntry
+    let iface: String                    // single-homed active interface (for "*")
+    let font: Font
+    let showTelemetry: Bool
+    var scrollTelemetry: Bool = true     // tab scrolls the telemetry line; share wraps
+    // A changing value that forces SwiftUI to re-render this card when the parent
+    // refreshes. `entry` is a CLASS whose fields (uptime, packet-count, rtts) mutate
+    // in place — SwiftUI can't see those mutations through the reference, so without
+    // a changing input it skips this view's body and the display freezes at first
+    // render. The Map-Cache tab feeds engine.mapCacheVersion here; the share leaves
+    // it 0 (one-shot render).
+    var version: Int = 0
+
+    var body: some View { card() }
+
+    private func card() -> some View {
+        let e = entry
         var groups: [[LispRLOC]] = []
         for r in e.rlocSet {
             if let i = groups.firstIndex(where: {
@@ -76,10 +103,8 @@ struct MapCacheView: View {
                 let hops = groups[gi]
                 rlocLine(hops[0], groupUp: hops.contains { $0.isUp })
                 ForEach(hops.indices, id: \.self) { hi in
-                    statsLine(hops[hi], iface: iface)
-                    // Only show rtts/hops/lats when RLOC-probing is on — with it
-                    // off there's no telemetry, so the "[?, ?, ?]" line is noise.
-                    if engine.config.rlocProbingEnabled, hops[hi].lastProbeSent != nil {
+                    statsLine(hops[hi])
+                    if showTelemetry, hops[hi].lastProbeSent != nil {
                         telemetryLine(hops[hi])
                     }
                 }
@@ -97,76 +122,73 @@ struct MapCacheView: View {
             ? "[\(e.eid.instanceID)](\(e.eid.addressString)/\(e.eid.maskLen), " +
               "\(e.group.addressString)/\(e.group.maskLen))"
             : "[\(e.eid.instanceID)]\(e.eid.addressString)/\(e.eid.maskLen)"
-        var t = Text("EID ").font(mono)
-            + Text(prefix).font(mono).foregroundColor(.lispGreen)
-            + Text(", uptime \(formatHMS(e.uptime)), ttl \(e.ttlString)").font(mono)
+        var t = Text("EID ").font(font)
+            + Text(prefix).font(font).foregroundColor(.lispGreen)
+            + Text(", uptime \(formatHMS(e.uptime)), ttl \(e.ttlString)").font(font)
         if e.action != LISP.noAction {
-            t = t + Text(", action ").font(mono)
-                  + Text(LISP.actionString(e.action)).font(mono).bold()
+            t = t + Text(", action ").font(font)
+                  + Text(LISP.actionString(e.action)).font(font).bold()
         }
         return t
     }
 
-    // RLOC <addr>, state <state> since …, p/w[, name]   (addr red, state
-    // green/red, name blue)
+    // RLOC <addr>, state <state> since …, p/w[, name]
     private func rlocLine(_ r: LispRLOC, groupUp: Bool? = nil) -> Text {
         var addr = r.rloc.addressString
         if r.encapPort != LISP.dataPort { addr += ":\(r.encapPort)" }
-        // Multi-homing: the RLOC is up if ANY of its next-hops is up.
         let up = groupUp ?? r.isUp
-        var t = Text("  RLOC ").font(mono)
-            + Text(addr).font(mono).foregroundColor(.lispRed)
-            + Text(", state ").font(mono)
-            + Text(up ? "up-state" : "unreach-state").font(mono)
+        var t = Text("  RLOC ").font(font)
+            + Text(addr).font(font).foregroundColor(.lispRed)
+            + Text(", state ").font(font)
+            + Text(up ? "up-state" : "unreach-state").font(font)
                 .foregroundColor(up ? .lispGreen : .lispRed)
-            + Text(" since \(formatHMS(r.stateChange)), p\(r.priority)/w\(r.weight)").font(mono)
+            + Text(" since \(formatHMS(r.stateChange)), p\(r.priority)/w\(r.weight)").font(font)
         if let name = r.rlocName {
-            t = t + Text(", ").font(mono) + Text(name).font(mono).foregroundColor(.lispBlue)
+            t = t + Text(", ").font(font) + Text(name).font(font).foregroundColor(.lispBlue)
         }
         return t
     }
 
-    // *<iface>: packet-count: …   ("*<iface>" blue; packet-count bold-black if a
-    // packet was encapsulated in the last second, bold-green within the last
-    // minute, plain otherwise — mirrors lisp-mc.py print_stats()).
-    private func statsLine(_ r: LispRLOC, iface: String) -> Text {
-        // Multi-homing: label with this next-hop's own interface and put "*" on
-        // the active (best-rtt) one. Single-homed: the up interface gets "*".
+    // *<iface>: packet-count …   (packet-count bold-black ≤1s / green ≤1min). No
+    // per-interface up/unreach tag — the rtts line below tells whether probes are
+    // being received on this outgoing interface; the RLOC line above is the only
+    // reachability verdict (down only when ALL interfaces are down), matching lisp.py.
+    private func statsLine(_ r: LispRLOC) -> Text {
         let ifaceName = r.interfaceName ?? iface
         let active = (r.interfaceName != nil ? r.activeNextHop : r.isUp)
-        var count = Text("\(r.packetCount)").font(mono)
+        var count = Text("\(r.packetCount)").font(font)
         if let last = r.lastPacket {
             let dt = Date().timeIntervalSince(last)
             if dt <= 1 { count = count.fontWeight(.black).foregroundColor(.primary) }
             else if dt <= 60 { count = count.fontWeight(.black).foregroundColor(.lispGreen) }
         }
-        // The "*" marking the selected outgoing interface is bold black; the
-        // interface name stays blue.
-        let star = active ? Text("*").font(mono).fontWeight(.black).foregroundColor(.primary)
+        let star = active ? Text("*").font(font).fontWeight(.black).foregroundColor(.primary)
                           : Text("")
-        return Text("    ").font(mono)
+        return Text("    ").font(font)
             + star
-            + Text(ifaceName).font(mono).foregroundColor(.lispBlue)
-            + Text(": packet-count: ").font(mono)
+            + Text(ifaceName).font(font).foregroundColor(.lispBlue)
+            + Text(": packet-count: ").font(font)
             + count
             + Text(", packet-rate: 0 pps, byte-count: \(r.byteCount), " +
-                   "bit-rate: 0.0 mbps").font(mono)
+                   "bit-rate: 0.0 mbps").font(font)
     }
 
-    // rtts / hops / lats on ONE line. Landscape has the room to show all three
-    // recents inline; in portrait the line stays single and scrolls horizontally
-    // rather than wrapping.
-    private func telemetryLine(_ r: LispRLOC) -> some View {
+    // rtts / hops / lats on ONE line. Tab scrolls it horizontally; the share wraps
+    // (an ImageRenderer can't scroll, so it must show the whole line).
+    @ViewBuilder private func telemetryLine(_ r: LispRLOC) -> some View {
         let rtts = r.recentRTTs.isEmpty ? "?, ?, ?"
             : r.recentRTTs.map { fmtSecs($0) }.joined(separator: ", ")
         let hops = r.recentHops.isEmpty ? "?/?, ?/?, ?/?" : r.recentHops.joined(separator: ", ")
         let lats = r.recentLatencies.isEmpty ? "?/?, ?/?, ?/?"
             : r.recentLatencies.joined(separator: ", ")
-        return ScrollView(.horizontal, showsIndicators: false) {
-            Text("    rtts [\(rtts)], hops [\(hops)], lats [\(lats)]")
-                .font(mono).foregroundStyle(.secondary)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
+        let t = Text("    rtts [\(rtts)], hops [\(hops)], lats [\(lats)]")
+            .font(font).foregroundStyle(.secondary)
+        if scrollTelemetry {
+            ScrollView(.horizontal, showsIndicators: false) {
+                t.lineLimit(1).fixedSize(horizontal: true, vertical: false)
+            }
+        } else {
+            t.fixedSize(horizontal: false, vertical: true)
         }
     }
 }

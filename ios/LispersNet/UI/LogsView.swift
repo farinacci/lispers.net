@@ -20,6 +20,9 @@ struct LogsView: View {
     @State private var searching = false
     @State private var searchText = ""
     @State private var matchIdx = 0
+    // Grep/filter mode: show ONLY the lines containing the search string, instead of
+    // the whole log with matches highlighted. Toggled by the funnel in the search bar.
+    @State private var filterOnly = false
     @FocusState private var searchFocused: Bool
     // Colored HTML export (the share sheet for the .html version).
     @State private var htmlShareURL: URL?
@@ -43,10 +46,20 @@ struct LogsView: View {
         searching ? searchSnapshot : (log.lines[component] ?? [])
     }
 
+    // The lines actually rendered: in grep/filter mode, only those containing the
+    // search string; otherwise the full snapshot/live tail. All the hit/step/scroll
+    // logic operates on THIS array so indices stay consistent.
+    private var visibleLines: [String] {
+        let base = displayLines
+        guard searching, filterOnly, !searchText.isEmpty else { return base }
+        let q = searchText.lowercased()
+        return base.filter { $0.lowercased().contains(q) }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
-                let lines = displayLines
+                let lines = visibleLines
                 let hits = searching ? matchingLines(lines) : []
                 let current = hits.indices.contains(matchIdx) ? hits[matchIdx] : -1
                 let hitSet = Set(hits)
@@ -69,8 +82,11 @@ struct LogsView: View {
                                 Self.colored(line)
                                     .font(.system(size: 11 * zoom, design: .monospaced))
                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                    // Filter mode: every visible line matches, so only
+                                    // the current-step line gets the bright highlight;
+                                    // no faint wash on all of them.
                                     .background(i == current ? Color.yellow.opacity(0.55)
-                                        : hitSet.contains(i) ? Color.yellow.opacity(0.22)
+                                        : (!filterOnly && hitSet.contains(i)) ? Color.yellow.opacity(0.22)
                                         : Color.clear)
                                     .id(i)
                             }
@@ -94,8 +110,15 @@ struct LogsView: View {
                         // otherwise resume following the live tail.
                         if searching { searchSnapshot = log.lines[component] ?? [] }
                         follow = !searching
-                        let n = displayLines.count
+                        let n = visibleLines.count
                         if n > 0 { proxy.scrollTo(n - 1, anchor: .bottom) }
+                    }
+                    .onChange(of: filterOnly) { _, _ in
+                        // Toggling grep changes which lines are shown; re-anchor to the
+                        // bottom-most match so the count and highlight stay sensible.
+                        let m = matchingLines(visibleLines)
+                        matchIdx = max(0, m.count - 1)
+                        if let last = m.last { withAnimation { proxy.scrollTo(last, anchor: .bottom) } }
                     }
                     .simultaneousGesture(magnify)
                     .simultaneousGesture(
@@ -147,7 +170,7 @@ struct LogsView: View {
                                     // is stable while stepping through matches.
                                     searchSnapshot = log.lines[component] ?? []
                                     follow = false; searchFocused = true
-                                } else { searchText = "" }
+                                } else { searchText = ""; filterOnly = false }
                             } label: {
                                 Image(systemName: "magnifyingglass")
                                     .font(.caption2)
@@ -193,10 +216,16 @@ struct LogsView: View {
                 .focused($searchFocused)
                 .submitLabel(.search)
                 .onChange(of: searchText) { _, _ in
-                    let m = matchingLines(displayLines)
+                    let m = matchingLines(visibleLines)
                     matchIdx = max(0, m.count - 1)          // start at the bottom
                     if let line = m.last { withAnimation { proxy.scrollTo(line, anchor: .center) } }
                 }
+            // Grep toggle: show only the matching lines (funnel fills green when on).
+            Button { filterOnly.toggle() } label: {
+                Image(systemName: filterOnly ? "line.3.horizontal.decrease.circle.fill"
+                                             : "line.3.horizontal.decrease.circle")
+                    .foregroundStyle(filterOnly ? Color.lispGreen : .secondary)
+            }
             if !searchText.isEmpty {
                 Text("\(hitCount == 0 ? 0 : matchIdx + 1)/\(hitCount)")
                     .font(.caption2.monospaced()).foregroundStyle(.secondary)
@@ -205,6 +234,7 @@ struct LogsView: View {
                     // the keyboard so the tab bar comes back.
                     searchText = ""
                     searching = false
+                    filterOnly = false
                     searchFocused = false
                 } label: {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
@@ -223,7 +253,7 @@ struct LogsView: View {
 
     // Move to match `idx` (clamped) and scroll it into view.
     private func gotoMatch(_ idx: Int, _ proxy: ScrollViewProxy) {
-        let m = matchingLines(displayLines)
+        let m = matchingLines(visibleLines)
         guard !m.isEmpty else { return }
         matchIdx = min(max(idx, 0), m.count - 1)
         withAnimation { proxy.scrollTo(m[matchIdx], anchor: .center) }

@@ -55,6 +55,12 @@ final class LispEngine: ObservableObject {
     // from each interface's own RTR Info-Reply. We register ALL of these so a
     // remote ITR can decap to us on either interface (outbound picks the active).
     @Published var ifaceTranslated: [String: (rloc: LispAddress, port: UInt16)] = [:]
+    // Debounce for Info-Reply-triggered Map-Registers. A flurry of identical
+    // Info-Replies — both RTRs, on every interface, plus retransmits — arrives within
+    // a few ms; we coalesce them into ONE register fired after the burst settles,
+    // instead of one per reply (the storm) or suppressing them entirely (which
+    // starved the NAT keepalive and froze packet-counts).
+    var pendingRegisterWork: DispatchWorkItem?
     let socketQueue = DispatchQueue(label: "lisp.sockets")
 
     // Route control/data sends to the right socket: the per-interface one when
@@ -78,6 +84,11 @@ final class LispEngine: ObservableObject {
     // Base RLOC/host name advertised in Info-Requests and used as the prefix of
     // the translated RLOC-name ("<xtrName>@tp-<port>"). Strip the mDNS ".local".
     var xtrName: String {
+        // A hostname set on the xTR tab wins; otherwise the 0.6 default — the
+        // system hostname (ProcessInfo.hostName, ".local" stripped), which is the
+        // device's mDNS name where iOS exposes it, else "localhost".
+        let configured = config.xtrHostname.trimmingCharacters(in: .whitespaces)
+        if !configured.isEmpty { return configured }
         let h = ProcessInfo.processInfo.hostName
         return h.hasSuffix(".local") ? String(h.dropLast(6)) : h
     }
@@ -313,13 +324,15 @@ final class LispEngine: ObservableObject {
             }
             timers.append(info)
         }
-        // While data is being encapsulated, refresh the map-cache every 500ms so
-        // the packet-count flashes boldface live. When idle, this stays quiet and
-        // the display updates on RLOC-probe replies (processProbeReply bumps).
-        let ui = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-            guard let self = self, let last = self.lastEncapActivity,
-                  Date().timeIntervalSince(last) < 2.0 else { return }
-            self.bumpMapCache()
+        // Refresh the map-cache display on a steady 1s cadence while running, not
+        // just on encap activity / RLOC-probe replies. Otherwise, when the probe
+        // return-path is filtered (no replies -> no processProbeReply bump) and
+        // pings are intermittent, the view froze at its first render — uptime stuck
+        // at 0:00:00 and packet-counts/rtts never repainting even though the
+        // underlying objects were updating. This drives the SAME @Published bump the
+        // view already observes, so it works regardless of the view's own timers.
+        let ui = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.bumpMapCache()
         }
         timers.append(ui)
     }
@@ -394,10 +407,16 @@ final class LispEngine: ObservableObject {
                     r.rlocName = "RTR"
                     r.interfaceName = iface?.interfaceName
                     r.ifIndex = iface?.ifIndex ?? 0
-                    // With RLOC-probing on we don't yet know the RTR is reachable —
-                    // start unreach so we never show reach without telemetry; a
-                    // probe reply promotes it. Probing off -> assume up (forward).
-                    r.state = config.rlocProbingEnabled ? "unreach-state" : "up-state"
+                    // Start up-state so the RLOC is usable IMMEDIATELY. A NAT may
+                    // filter our RLOC-probes for the first cycle(s), and a brand-new
+                    // default entry should not be unusable while we wait for the
+                    // first reply. We fire a probe the instant the entry is created
+                    // (installRTRDefaultMapCacheEntries below calls sendRLOCProbes),
+                    // and the unreach timer still demotes it after rlocProbeReplyWait
+                    // if no reply ever comes. rtts stay "?" until the first reply
+                    // lands, so telemetry still tells "assumed up" from "probe-
+                    // confirmed up" (? -> a number == first probe reply received).
+                    r.state = "up-state"
                     out.append(r)
                 }
             }
@@ -423,7 +442,18 @@ final class LispEngine: ObservableObject {
         let rtrs = rtrList.map { $0.addressString }.joined(separator: ", ")
         log.fprint(.itr, "Installed RTR default map-cache entries 0.0.0.0/0 and " +
                    "(0.0.0.0/0, 224.0.0.0/4) -> RTRs \(rtrs)")
+        // Mark an active next-hop ("*") NOW, on the freshly-built RLOC set, instead
+        // of leaving every hop inactive until the first probe reply. With no rtt
+        // data yet, selectNextHop's fallback picks the cellular (pdp_ip*) hop — so
+        // a "*" shows the instant pdp_ip0 comes up and the set is rebuilt, not 10-30s
+        // later. Probe replies refine the choice by rtt afterward.
+        recomputeActiveNextHops()
         bumpMapCache()
+        // Probe the new RTRs right now instead of waiting up to a full
+        // rlocProbeInterval — telemetry arrives sooner and the RLOCs get
+        // probe-confirmed faster (they already start up-state, so they're usable
+        // in the meantime).
+        sendRLOCProbes()
     }
 
     // Turning RLOC-probing off: we can no longer determine reachability, so put

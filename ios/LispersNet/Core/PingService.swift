@@ -208,6 +208,17 @@ final class PingService: ObservableObject {
             }
         } else if type == 8 {               // echo-request (unicast EID or joined group)
             guard let myEID = engine.config.eid else { return }
+            // Don't reply to our OWN echo-request looped back to us as a member of the
+            // group we pinged — the RTR replicates our multicast packet back to us.
+            // A self-reply goes UNICAST to our own EID and encaps via the unicast
+            // map-cache entry, so a group ping would wrongly bump the unicast 0/0 (and
+            // decent 240/8) counters. Only the multicast entry should count for a
+            // group ping; drop the self-loop.
+            if source.v4 == myEID.v4 {
+                engine.log.dprint(.etr, "Ignoring our own echo-request looped back " +
+                                  "from a joined group (no self-reply)")
+                return
+            }
             engine.log.lprint(.etr, "Receive ICMP echo-request from " +
                               "\(source.addressString), seq \(seq)")
             var reply = Data(icmp)

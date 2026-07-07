@@ -347,9 +347,30 @@ extension LispEngine {
 
     // MARK: - Info-Request (lisp_send_info_request, lisp.py:16376)
 
+    // Pick a map-server to ask for the RTR-list this interval. In decent mode the
+    // map-servers are 0.<suffix> .. (modulus-1).<suffix>; picking a RANDOM one each
+    // interval rotates through them, so if they disagree on the RTR-list we notice
+    // (processInfoReply flags the change). We do NOT need to ask every map-server —
+    // one control Info-Reply carries the whole list. Non-decent: a random configured
+    // map-server.
+    private func randomInfoMapServer() -> (name: String, address: LispAddress)? {
+        if config.decentConfigured {
+            let idx = Int.random(in: 0..<max(config.decentModulus, 1))
+            let name = "\(idx).\(config.decentSuffix)"
+            guard let addr = DNS.resolve(name) else {
+                log.lprint(.etr, "Cannot resolve decent map-server \(name)")
+                return nil
+            }
+            return (name, addr)
+        }
+        let candidates = config.mapServers.filter { !$0.dnsNameOrAddress.isEmpty }
+        guard let ms = candidates.randomElement(),
+              let addr = DNS.resolve(ms.dnsNameOrAddress) else { return nil }
+        return (ms.dnsNameOrAddress, addr)
+    }
+
     func sendInfoRequests() {
-        guard running, let eid = config.eid else { return }
-        guard let (msAddr, _) = mapServerFor(eid: eid) else { return }
+        guard running, config.eid != nil else { return }
 
         var info = LispInfo()
         info.nonce = lispGetControlNonce()
@@ -357,59 +378,48 @@ extension LispEngine {
         lastInfoNonce = info.nonce
         let packet = info.encodeRequest()
 
-        // Control-port Info-Request from the 4342 socket.
-        log.lprint(.etr, "Send Info-Request to MS \(msAddr.addressString), " +
-                   "port \(LISP.ctrlPort) (for control)")
-        loggedSend(packet, to: msAddr, port: LISP.ctrlPort, on: ctrlSocket, .etr)
+        // ONE control-plane Info-Request, to a randomly-chosen map-server. Its reply
+        // is the only one that carries the RTR-list (RTRs answer with an empty list)
+        // and it also gives our control-port NAT translation. No need to ask all of
+        // them — rotating one-per-interval both cuts traffic and surfaces
+        // inconsistent RTR-lists across the map-server set.
+        if let (msName, msAddr) = randomInfoMapServer() {
+            log.lprint(.etr, "Send Info-Request to map-server \(msName) " +
+                       "\(msAddr.addressString), port \(LISP.ctrlPort) (for control, RTR-list)")
+            loggedSend(packet, to: msAddr, port: LISP.ctrlPort, on: ctrlSocket, .etr)
+        }
 
-        // Data-port Info-Request from the 4341 socket, wrapped in a LISP
-        // data header with IID 0xffffff, so the NAT creates/refreshes the
-        // data-port binding (lisp.py:16414).
+        // Data-plane Info-Requests to EACH RTR, per outgoing interface. This dance
+        // genuinely fans out #RTRs × #interfaces — every (RTR, interface) path has
+        // its own NAT mapping, and only an RTR's data reply gives the translated
+        // DATA port we register as "@tp-<port>". Two sends per RTR:
+        //   (a) data-wrapped -> :4341  — opens/refreshes this interface's NAT data
+        //       binding (the RTR stores NAT state, does NOT reply).
+        //   (b) RAW          -> :4342  — the one the RTR REPLIES to; sent TO :4342
+        //       FROM the data socket so the reply traverses a port-restricted NAT
+        //       back to that socket, carrying its translated RLOC:port.
         var header = LispDataHeader()
         header.setInstanceID(LISP.infoIID)
         let dataWrapped = header.encode() + packet
-        log.lprint(.etr, "Send Info-Request to RTR \(msAddr.addressString), " +
-                   "port \(LISP.dataPort) (for data)")
-        loggedSend(dataWrapped, to: msAddr, port: LISP.dataPort, on: dataSocket, .etr)
 
-        // Send the data-port Info-Request to each RTR — their reply carries the
-        // translated DATA port we register as "@tp-<port>".
         for rtr in rtrList {
             log.lprint(.etr, "Send Info-Request to RTR \(rtr.addressString), " +
                        "port \(LISP.dataPort) (for data)")
             loggedSend(dataWrapped, to: rtr, port: LISP.dataPort, on: dataSocket, .etr)
+            loggedSend(packet, to: rtr, port: LISP.ctrlPort, on: dataSocket, .etr)
         }
 
-        // Multi-homing: probe each interface's OWN NAT so we learn its public
-        // RLOC:port and can register both. Out EACH interface socket, to each RTR:
-        //   (a) data-wrapped -> :4341  — opens/refreshes this interface's NAT
-        //       data binding (the RTR just stores NAT state, it does NOT reply).
-        //   (b) RAW          -> :4342  — this is the one the RTR REPLIES to; sent
-        //       TO the control port FROM the data socket so the reply traverses a
-        //       port-restricted NAT back on THIS interface, carrying its translated
-        //       RLOC:port. processInfoReply(onInterface:) stores it in
-        //       ifaceTranslated. Without (b) a secondary interface (e.g. 5G) never
-        //       gets a reply and shows no translated port.
+        // Multi-homing: repeat the per-RTR data dance out EACH interface's own
+        // socket so we learn every interface's translated RLOC:port (ifaceTranslated).
+        // The per-interface byte lines carry the egress interface, so no separate
+        // descriptive line here.
         if config.multihomingEnabled {
             for (_, sock) in ifaceDataSockets {
                 for rtr in rtrList {
-                    // The per-interface byte lines carry the egress interface; no
-                    // separate descriptive Info-Request line (interface goes only
-                    // on the "Send <if> N bytes" lines).
                     loggedSend(dataWrapped, to: rtr, port: LISP.dataPort, on: sock, .etr)
                     loggedSend(packet, to: rtr, port: LISP.ctrlPort, on: sock, .etr)
                 }
             }
-        }
-
-        // Also send a RAW Info-Request from the DATA socket to each responder's
-        // CONTROL port (4342). This makes the responder record our ephemeral
-        // data translation and reply from 4342 — and because we sent TO 4342,
-        // that reply traverses a port-restricted NAT back to our data socket,
-        // giving us the real translated data port in its etr-port field.
-        loggedSend(packet, to: msAddr, port: LISP.ctrlPort, on: dataSocket, .etr)
-        for rtr in rtrList {
-            loggedSend(packet, to: rtr, port: LISP.ctrlPort, on: dataSocket, .etr)
         }
     }
 
@@ -428,10 +438,25 @@ extension LispEngine {
                    (info.rtrList.isEmpty ? "empty"
                     : info.rtrList.map { $0.addressString }.joined(separator: ", ")))
 
-        if !info.rtrList.isEmpty && info.rtrList != rtrList {
+        // Compare as an unordered set so a mere reordering between map-servers isn't
+        // treated as a change.
+        let newSig = info.rtrList.map { $0.v4 }.sorted()
+        let curSig = rtrList.map { $0.v4 }.sorted()
+        if !info.rtrList.isEmpty && newSig != curSig {
+            let wasEmpty = rtrList.isEmpty
+            let old = rtrList.map { $0.addressString }.joined(separator: ", ")
             rtrList = info.rtrList
             let rtrs = rtrList.map { $0.addressString }.joined(separator: ", ")
-            log.fprint(.etr, "Cached \(rtrList.count) RTR(s) from Info-Reply: \(rtrs)")
+            if wasEmpty {
+                log.fprint(.etr, "Cached \(rtrList.count) RTR(s) from Info-Reply: \(rtrs)")
+            } else {
+                // We rotate the map-server we ask each interval, so an RTR-list that
+                // CHANGES from what we already had usually means the decent
+                // map-servers disagree — flag it as a likely misconfiguration.
+                log.fprint(.etr, "RTR-list CHANGED [\(old)] -> [\(rtrs)] from map-server " +
+                           "\(source.addressString) — map-servers may be inconsistently " +
+                           "configured with the RTR-list")
+            }
             installRTRDefaultMapCacheEntries()
         }
 
@@ -475,11 +500,27 @@ extension LispEngine {
                 self.translatedCtrlPort = 0
             }
         }
-        if natted {
-            log.fprint(.etr, "xTR is behind NAT: translated RLOC " +
-                       "\(global.addressString):\(info.etrPort)")
-            // Register through the NAT now that we know the translation.
-            DispatchQueue.main.async { self.sendMapRegisters() }
+        // Re-register through the NAT once the Info-Reply burst settles. One
+        // Info-Request cycle draws 6-8 replies (both RTRs × every interface, plus
+        // retransmits) within a few ms; firing a Map-Register per reply was the storm
+        // seen in lisp-etr.log. DEBOUNCE instead: (re)schedule a single register a
+        // short time out, so the burst collapses to ONE register that carries the
+        // fully-learned translated port. This keeps the per-cycle NAT keepalive the
+        // RTRs need to keep forwarding to us (so RLOC-probe replies keep arriving and
+        // RLOCs stay up) — suppressing it entirely, as the old change-detection did,
+        // starved that path and froze packet-counts.
+        DispatchQueue.main.async {
+            self.pendingRegisterWork?.cancel()
+            let work = DispatchWorkItem { [weak self] in
+                guard let self = self, self.running else { return }
+                if self.behindNAT, let g = self.translatedRLOC {
+                    self.log.fprint(.etr, "xTR is behind NAT: translated RLOC " +
+                               "\(g.addressString):\(self.advertisedPort)")
+                }
+                self.sendMapRegisters()
+            }
+            self.pendingRegisterWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
         }
     }
 
@@ -694,7 +735,7 @@ extension LispEngine {
         // en0. (Wi-Fi behind CGNAT/VPN often gets no probe reply at all.)
         guard let best = hops.filter({ rtt($0) != nil }).min(by: { rtt($0)! < rtt($1)! }) else {
             let pick = hops.first(where: isCellular) ?? hops[0]
-            for h in hops { h.activeNextHop = (h === pick) }
+            for h in hops { h.activeNextHop = (h.interfaceName == pick.interfaceName) }
             return
         }
         let bestRTT = rtt(best)!
@@ -707,7 +748,7 @@ extension LispEngine {
         let active = hops.first { $0.activeNextHop }
         let oldDevice = active?.interfaceName
         guard let baselineRTT = active.flatMap(rtt) else {
-            for h in hops { h.activeNextHop = (h === best) }
+            for h in hops { h.activeNextHop = (h.interfaceName == best.interfaceName) }
             if oldDevice != device {
                 log.pprint(.itr, "Change egress \(oldDevice ?? "none") -> \(device) " +
                            "for RLOC \(addr), best-rtt \(fmtSecs(bestRTT)) secs")
@@ -715,19 +756,28 @@ extension LispEngine {
             return
         }
 
-        // Both baseline and best have data → lisp.py 10% hysteresis: switch only
-        // when best is at least lisp_mh_rtt_pct better than the active next-hop.
-        let diff = baselineRTT * Double(LISP.mhRTTPct) / 100.0
+        // Both baseline and best have data → lisp.py select_rloc_next_hop hysteresis:
+        // switch only when best is at least mhSwitchPct% better than the active
+        // next-hop (configurable on the xTR tab; default 10%). Log line mirrors
+        // lisp.py's format exactly.
+        let pct = config.mhSwitchPct
+        let diff = baselineRTT * Double(pct) / 100.0
         let better = bestRTT <= (baselineRTT - diff)
         if hops.count >= 2 {
-            let tag = better ? (oldDevice != device ? ", switch" : ", same-interface") : ""
-            log.pprint(.itr, "RLOC \(addr) (\(device)) new rtt \(fmtSecs(bestRTT)) secs " +
-                       "\(better ? "<=" : ">") \(LISP.mhRTTPct)% of last rtt \(fmtSecs(baselineRTT)) secs\(tag)")
+            // lisp.py tag: ", switch" when we move to a different, better interface;
+            // ", same-interface" when the active interface stays the best (no
+            // data-plane change); "" when a better-rtt interface exists but hysteresis
+            // holds us. lisp.py ties "same-interface" to a better next-hop ON the
+            // active device — iOS has one next-hop per interface, so the equivalent is
+            // simply "device unchanged".
+            let tag = (oldDevice == device) ? ", same-interface" : (better ? ", switch" : "")
+            log.pprint(.itr, "RLOC \(addr) (\(device)) new rtt \(fmtSecs(bestRTT)) " +
+                       "\(better ? "<=" : ">") \(pct)% of last rtt \(fmtSecs(baselineRTT))\(tag)")
         }
         guard better, oldDevice != device else { return }
-        for h in hops { h.activeNextHop = (h === best) }
+        for h in hops { h.activeNextHop = (h.interfaceName == best.interfaceName) }
         log.pprint(.itr, "Change egress \(oldDevice ?? "none") -> \(device) " +
-                   "for RLOC \(addr), best-rtt \(bestRTT) secs")
+                   "for RLOC \(addr), best-rtt \(fmtSecs(bestRTT)) secs")
     }
 
     func processProbeReply(_ reply: LispMapReply, from: LispAddress, replyTTL: Int) {

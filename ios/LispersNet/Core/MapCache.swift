@@ -100,6 +100,14 @@ final class LispMapCacheEntry {
     // flow always uses the same one — no spread across RTRs).
     func selectRLOC(for inner: Data? = nil, hashL4 loadSplit: Bool = LISP.loadSplitPings) -> LispRLOC? {
         var up = rlocSet.filter { $0.isUp }
+        // Don't blackhole data just because RLOC-PROBES stopped being answered. Many
+        // NATs drop the control-plane probe (and its reply) while still forwarding
+        // data, so an RLOC can read unreach-state yet still carry traffic. When NO
+        // RLOC is probe-reachable, fall back to forwarding through the whole set
+        // (best next-hop below) rather than dropping — the map-cache still shows
+        // unreach/? so the probe status stays honest. Matches starting RLOCs up-state
+        // so they're usable under probe-filtering NATs.
+        if up.isEmpty { up = rlocSet }
         // Multi-homing: forward out each RTR's ACTIVE (best-rtt) next-hop only;
         // fall back to all up if none is marked active yet. Single-homed RLOCs
         // (nil interface) always pass.

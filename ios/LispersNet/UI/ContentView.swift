@@ -55,7 +55,7 @@ struct ContentView: View {
     @Environment(\.verticalSizeClass) private var vSizeClass
 
     // App version string — bump on request.
-    static let version = "0.6-9"
+    static let version = "0.7"
 
     var body: some View {
         VStack(spacing: 0) {
