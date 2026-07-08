@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Merged with the generated Info.plist. Registers the custom URL scheme so
+	     overlay apps (PING, gaapchat) can launch the LISP app: lispxtr:// -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>net.lispers.xtr</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>lispxtr</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
