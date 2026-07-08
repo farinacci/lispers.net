@@ -1,4 +1,44 @@
 
+                  lispers.net IOS Release Version 0.8
+                  -----------------------------------
+
+o Release date: Wed Jul  8 15:48:41 PDT 2026
+
+o Put tunnel mode support into the LISP app so external "overlay apps" can
+  run on the overlay. The tunnel mode allows the external apps to send unicast
+  and multicast packets on the tunnel so the LISP app can receive and encapsulate
+  on the overlay. Eventually these external apps can send on both the overlay and
+  underlay. All depends if they send to EIDs or traditional addresses. All existing
+  iPhone applications use the underlay only. This feature sets the ground work
+  for future LISP overlay app development.
+
+o Since there is no tunnel interface on the simulator, we will use the loopback
+  interface so new overlay app development can be tested and talk to the LISP app
+  runing on the simulator.    
+
+o The tunnel (a VPN tunnel) support is necessary but not sufficient. But it does
+  validate external apps can send to the LISP app. Since the user is interacting
+  with the overlay app, the LISP app will be put in the background and suspend within
+  30s (IOS architectural constant and non configurable). So there is only connectviity
+  for a short time. There is a Network Extension (NE feature) that Claude guarantees
+  is the right way to solve this. So that will happen in release 0.9. But we have
+  confirmed we can have two apps talk to each other. Note when you switch to the LISP
+  app while the overlay app is running, the LISP app keeps running and the overlay
+  app suspends. This is less of a problem since the overlay app is only useful when
+  the user has it in the foreground. For the near future, the assunption is the
+  overlay apps are client (user) apps and not daemon processes.
+
+o Note, IOS does not let any apps send multicast packets. But overlay apps will
+  be able to because they are encapsulated over the internal tunnel to get them
+  to the LISP app which can replicate on the overlay. This is a first since IOS
+  has been shipping since 2007! App decentralization is here! We just need each
+  other!
+
+o This version works with a new PING overlay app. Its not being release right now
+  but will be when the NE feature is completed in release 0.9.
+
+-------------------------------------------------------------------------------
+
                   lispers.net IOS Release Version 0.7
                   -----------------------------------
 
