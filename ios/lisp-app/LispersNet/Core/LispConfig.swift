@@ -33,8 +33,9 @@ final class LispConfig: ObservableObject, Codable {
     @Published var decentModulus: Int = 0
     @Published var decentAuthKey: String = ""           // shared map-server key (sha2)
     @Published var decentPrefixes: [DecentPrefix] = []  // lookup-length per prefix
-    // (3) logging scopes — independent switches
-    @Published var controlPlaneLog = true
+    // (3) logging scopes — independent switches. Control-plane logging defaults OFF on a
+    // fresh install (no saved config); existing users keep their saved setting.
+    @Published var controlPlaneLog = false
     @Published var dataPlaneLog = false
     @Published var rlocProbeLog = false
     // EID + NAT
@@ -101,7 +102,7 @@ final class LispConfig: ObservableObject, Codable {
         decentModulus = try c.decodeIfPresent(Int.self, forKey: .decentModulus) ?? 0
         decentAuthKey = try c.decodeIfPresent(String.self, forKey: .decentAuthKey) ?? ""
         decentPrefixes = try c.decodeIfPresent([DecentPrefix].self, forKey: .decentPrefixes) ?? []
-        controlPlaneLog = try c.decodeIfPresent(Bool.self, forKey: .controlPlaneLog) ?? true
+        controlPlaneLog = try c.decodeIfPresent(Bool.self, forKey: .controlPlaneLog) ?? false
         dataPlaneLog = try c.decodeIfPresent(Bool.self, forKey: .dataPlaneLog) ?? false
         rlocProbeLog = try c.decodeIfPresent(Bool.self, forKey: .rlocProbeLog) ?? false
         eidString = try c.decodeIfPresent(String.self, forKey: .eidString) ?? ""

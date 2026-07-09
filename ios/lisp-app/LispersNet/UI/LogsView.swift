@@ -266,8 +266,11 @@ struct LogsView: View {
     // @tp-port, so it wouldn't otherwise match the rloc-name rule).
     // Group 1 is the multicast (S,G) tuple "[iid](S/ml, G/ml)" — colored green
     // (it's an EID) before the RLOC rule can grab its dotted-quads as red.
+    // Group 2 (EID) matches "[iid]<addr>[/mask]" AND a bare "<addr>/<mask>" prefix —
+    // a masked prefix is always an EID (e.g. "0.0.0.0/0"); RLOCs never carry a mask,
+    // so this stays green instead of falling through to the red RLOC rule.
     private static let tokenRegex = try? NSRegularExpression(
-        pattern: #"((?:\[\d+\])?\(\d{1,3}(?:\.\d{1,3}){3}/\d+,\s*\d{1,3}(?:\.\d{1,3}){3}/\d+\))|(\[\d+\][\d.]+(?:/\d+)?)|([\w.-]+@tp-\d+)|(\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?)|((?<=hostname )[\w.-]+)"#)
+        pattern: #"((?:\[\d+\])?\(\d{1,3}(?:\.\d{1,3}){3}/\d+,\s*\d{1,3}(?:\.\d{1,3}){3}/\d+\))|(\[\d+\][\d.]+(?:/\d+)?|\d{1,3}(?:\.\d{1,3}){3}/\d+)|([\w.-]+@tp-\d+)|(\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?)|((?<=hostname )[\w.-]+)"#)
 
     static func colored(_ line: String) -> Text {
         // Bold the leading "MM/dd/yy HH:mm:ss.SSS" timestamp (heavier than the

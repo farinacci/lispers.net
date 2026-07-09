@@ -66,7 +66,10 @@ struct LispersNetApp: App {
                         #endif
                         engine.resumeNetwork()        // no-op if the grace didn't expire
                         publishIdentity()
-                        // Keep the overlay tunnel up the whole time (no manual toggle).
+                        // Reconnect the overlay tunnel on foreground ONLY if the user opted
+                        // in (ensureUp no-ops otherwise). We never auto-prompt here — the
+                        // one-time ask is in the UI when LISP starts. The xTR runs with or
+                        // without the tunnel; the tunnel is only needed for overlay apps.
                         Task { await tunnel.ensureUp(eid: eid, instanceID: config.instanceID) }
                     default:          break
                     }

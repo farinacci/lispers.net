@@ -19,6 +19,15 @@ final class TunnelManager: ObservableObject {
     @Published var status: NEVPNStatus = .invalid
     @Published var lastError: String?
 
+    // The overlay tunnel is OPT-IN: it's required only to run overlay apps (PING,
+    // gaapchat), NOT for the xTR itself. We ask ONCE (when LISP starts) and remember the
+    // answer — never auto-prompt on every foreground (that looped forever on denial).
+    enum OverlayChoice: String { case unset, enabled, declined }
+    private let choiceKey = "overlayTunnelChoice"
+    @Published var choice: OverlayChoice = .unset {
+        didSet { UserDefaults.standard.set(choice.rawValue, forKey: choiceKey) }
+    }
+
     private var manager: NETunnelProviderManager?
     private var observer: NSObjectProtocol?
     // Mirror the provider's capture file into lisp-itr.log while the tunnel is up.
@@ -39,7 +48,11 @@ final class TunnelManager: ObservableObject {
         }
     }
 
-    init() { Task { await load() } }
+    init() {
+        if let raw = UserDefaults.standard.string(forKey: choiceKey),
+           let c = OverlayChoice(rawValue: raw) { choice = c }
+        Task { await load() }
+    }
 
     // Load an existing profile if one is installed.
     func load() async {
@@ -69,15 +82,34 @@ final class TunnelManager: ObservableObject {
             manager = m
             observe(m)
             try m.connection.startVPNTunnel()
-        } catch { lastError = error.localizedDescription }
+        } catch {
+            lastError = error.localizedDescription
+            // iOS "Allow VPN Configurations" was denied (or a config error). Record the
+            // decline so foregrounding never re-prompts in a loop — the user can turn it
+            // back on from the xTR tab.
+            choice = .declined
+        }
     }
 
     func stop() { manager?.connection.stopVPNTunnel() }
 
-    // Auto-start: bring the overlay tunnel up if it isn't already (the app keeps it up
-    // the whole time it's foregrounded — no manual toggle). First run triggers the
-    // one-time "Allow VPN" prompt.
+    // User opted IN (via the launch prompt or the xTR-tab toggle): remember it and start.
+    // This is the only path that triggers the one-time "Allow VPN" prompt.
+    func enableOverlay(eid: String, instanceID: Int) async {
+        choice = .enabled
+        await start(eid: eid, instanceID: instanceID)
+    }
+
+    // User opted OUT: remember it and tear the tunnel down. The xTR keeps running.
+    func disableOverlay() {
+        choice = .declined
+        stop()
+    }
+
+    // Reconnect an already-opted-in tunnel if it dropped (called on foreground ONLY when
+    // choice == .enabled). Permission is already granted, so this never prompts.
     func ensureUp(eid: String, instanceID: Int) async {
+        guard choice == .enabled else { return }
         if manager == nil { await load() }
         if isActive { return }
         await start(eid: eid, instanceID: instanceID)
@@ -123,7 +155,7 @@ final class TunnelManager: ObservableObject {
         lastMirroredSeq = OverlayTunnel.readCapture().compactMap(Self.seq).max() ?? 0
         utunName = OverlayTunnel.findUtun()?.name ?? "utun"
         LispLog.shared.fprint(.itr,
-            "=== overlay tunnel up on \(utunName): capturing 240.0.0.0/4 + 224.240.0.0/12 ===")
+            "=== overlay tunnel up on \(utunName): capturing 240.0.0.0/4 ===")
         mirrorTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 self?.mirrorNewCaptures()

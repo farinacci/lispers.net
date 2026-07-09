@@ -1,3 +1,26 @@
+            
+                  lispers.net IOS Release Version 0.9
+                  -----------------------------------
+
+o Release date: Thu Jul  9 14:06:39 PDT 2026
+
+o When LISP app starts and the user does not have a LISP Overlay VPN created,
+  it will ask you to Allow or Disallow. If you disallow, you can continue
+  using ther app. To turn it on later, there is a "Overlay tunnel" slide
+  bar in the xTR tab. Thanks Bruce!
+
+o Reset and observe what default values are for the LISP app when it is
+  installed and run for the first time.
+
+o The lisp-etr is sending too many Info-Requests. We only need to send one
+  to port 4342 to any map-server in the LISP-Decent map-server cluster. Just
+  to obtain the RTR-list. We don't need translation info for this type of
+  Info-Request. But we do for each Info-Request send to port 4341 to RTRs.
+  The max number of Info-Requests should be (1 + #RTRs * #interfaces) so,
+  for example, on an iphone with multihoming enabled using Seismora's network
+  that is 5 Info-Requests.
+
+-------------------------------------------------------------------------------
 
                   lispers.net IOS Release Version 0.8
                   -----------------------------------

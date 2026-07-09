@@ -389,15 +389,13 @@ extension LispEngine {
             loggedSend(packet, to: msAddr, port: LISP.ctrlPort, on: ctrlSocket, .etr)
         }
 
-        // Data-plane Info-Requests to EACH RTR, per outgoing interface. This dance
-        // genuinely fans out #RTRs × #interfaces — every (RTR, interface) path has
-        // its own NAT mapping, and only an RTR's data reply gives the translated
-        // DATA port we register as "@tp-<port>". Two sends per RTR:
-        //   (a) data-wrapped -> :4341  — opens/refreshes this interface's NAT data
-        //       binding (the RTR stores NAT state, does NOT reply).
-        //   (b) RAW          -> :4342  — the one the RTR REPLIES to; sent TO :4342
-        //       FROM the data socket so the reply traverses a port-restricted NAT
-        //       back to that socket, carrying its translated RLOC:port.
+        // Data-plane Info-Request to EACH RTR, per outgoing interface — data-encapsulated
+        // to the RTR's DATA port 4341 ONLY. This opens/refreshes this interface's NAT data
+        // binding (so the RTR can encap to us through the NAT) AND the RTR replies with our
+        // translated data RLOC:port, which we register as "@tp-<port>". We do NOT also
+        // Info-Request the RTR on its control port 4342 — that exchange is unnecessary; the
+        // control-port translation we need for ECM Map-Requests comes from the map-server's
+        // reply above, not the RTR.
         var header = LispDataHeader()
         header.setInstanceID(LISP.infoIID)
         let dataWrapped = header.encode() + packet
@@ -406,7 +404,6 @@ extension LispEngine {
             log.lprint(.etr, "Send Info-Request to RTR \(rtr.addressString), " +
                        "port \(LISP.dataPort) (for data)")
             loggedSend(dataWrapped, to: rtr, port: LISP.dataPort, on: dataSocket, .etr)
-            loggedSend(packet, to: rtr, port: LISP.ctrlPort, on: dataSocket, .etr)
         }
 
         // Multi-homing: repeat the per-RTR data dance out EACH interface's own
@@ -417,7 +414,6 @@ extension LispEngine {
             for (_, sock) in ifaceDataSockets {
                 for rtr in rtrList {
                     loggedSend(dataWrapped, to: rtr, port: LISP.dataPort, on: sock, .etr)
-                    loggedSend(packet, to: rtr, port: LISP.ctrlPort, on: sock, .etr)
                 }
             }
         }
@@ -474,10 +470,11 @@ extension LispEngine {
                 // ONLY. The map-server's reply carries its own path's translation
                 // (e.g. 41341) which the RTRs don't use for forwarding/probing, so it
                 // must not set the port we advertise.
-                // The control-socket reply (raw Info-Request -> :4342) carries the
-                // ctrlSocket's public NAT port — needed as the ECM Map-Request's
+                // The control-socket reply (the map-server's Info-Reply on :4342) carries
+                // the ctrlSocket's public NAT port — needed as the ECM Map-Request's
                 // inner UDP source port so the map-server's proxy Map-Reply routes
-                // back through the NAT (see translatedCtrlPort).
+                // back through the NAT (see translatedCtrlPort). RTRs aren't Info-Requested
+                // on 4342 anymore, so this only comes from the map-server now.
                 if !fromDataPort {
                     self.translatedCtrlPort = info.etrPort
                 }

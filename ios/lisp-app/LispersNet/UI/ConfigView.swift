@@ -11,6 +11,7 @@ import SwiftUI
 struct ConfigView: View {
     @EnvironmentObject var config: LispConfig
     @EnvironmentObject var engine: LispEngine
+    @EnvironmentObject var tunnel: TunnelManager
     @FocusState private var keyboardUp: Bool
     @State private var editingPrefixes = false
     // Share the whole xTR configuration: as one image (even the off-screen part)
@@ -168,6 +169,23 @@ struct ConfigView: View {
                             on ? engine.enable() : engine.disable()
                         }))
                     .tint(.lispGreen)
+                    // OPT-IN, default OFF. Only needed to run overlay apps (PING, gaapchat)
+                    // via the utun; the xTR itself runs fine without it. Turning it on
+                    // triggers the one-time iOS "Allow VPN Configurations" prompt.
+                    Toggle("Overlay App VPN", isOn: Binding(
+                        get: { tunnel.choice == .enabled },
+                        set: { on in
+                            if on {
+                                let eid = config.eidString.isEmpty ? "240.0.0.1" : config.eidString
+                                Task { await tunnel.enableOverlay(eid: eid, instanceID: config.instanceID) }
+                            } else {
+                                tunnel.disableOverlay()
+                            }
+                        }))
+                    .tint(.lispGreen)
+                } footer: {
+                    Text("Overlay App VPN is required only to run overlay apps (PING, "
+                       + "gaapchat). The LISP xTR runs without it.")
                 }
 
                 Section {

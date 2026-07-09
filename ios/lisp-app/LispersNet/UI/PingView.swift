@@ -17,9 +17,11 @@ struct PingView: View {
     @FocusState private var eidFocused: Bool
     @State private var showAllResults = false
     @Environment(\.scenePhase) private var scenePhase
-    // The Direct/Tunnel "path" pill is present but DISABLED for now — the PING app is
-    // the overlay client. Kept (grayed) so it can be re-enabled later. Always Direct.
+    // The Direct/Tunnel "path" pill is HIDDEN for now — the PING app is the overlay client,
+    // so we test the overlay there. The code is kept below (gated on `showPathControl`),
+    // so flipping this to `true` brings the pill back. Always Direct while hidden.
     @State private var tunnelMode = false
+    private let showPathControl = false
 
     private static let resultsCollapsedCount = 10
 
@@ -124,16 +126,18 @@ struct PingView: View {
                         }
                     }
 
-                    // Ping path — DISABLED for now (the PING app is the overlay client).
-                    // Grayed out; kept so it can be re-enabled later.
-                    HStack {
-                        Text("path").foregroundStyle(.secondary)
-                        Spacer()
-                        splitButton("direct", isOn: !tunnelMode) { }
-                        splitButton("tunnel", isOn: tunnelMode) { }
+                    // Ping path (direct|tunnel) — HIDDEN (the PING app is the overlay
+                    // client). Code kept, gated on showPathControl so it's easy to restore.
+                    if showPathControl {
+                        HStack {
+                            Text("path").foregroundStyle(.secondary)
+                            Spacer()
+                            splitButton("direct", isOn: !tunnelMode) { }
+                            splitButton("tunnel", isOn: tunnelMode) { }
+                        }
+                        .disabled(true)
+                        .opacity(0.5)
                     }
-                    .disabled(true)
-                    .opacity(0.5)
                 }
 
                 Section {
