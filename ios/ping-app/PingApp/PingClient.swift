@@ -50,6 +50,12 @@ final class PingClient: ObservableObject {
 
     private let identifier = UInt16.random(in: 1...0xFFFF)
     private var outstanding: [UInt16: (rowID: UUID, sentAt: Date)] = [:]
+    // Per-seq set of responder EIDs already recorded. A multicast group ping yields one
+    // reply per member (e.g. our own self-reply plus each other member), so we keep the
+    // seq open and add a row per NEW responder instead of stopping at the first.
+    private var seqResponders: [UInt16: Set<UInt32>] = [:]
+    // 224.0.0.0/4 — a group ping (multiple responders expected).
+    private var targetMulticast: Bool { (target & 0xF000_0000) == 0xE000_0000 }
     private let sendQueue = DispatchQueue(label: "net.lispers.ping.send")
     private var sendSource: DispatchSourceTimer?     // fires on sendQueue — survives backgrounding
     nonisolated(unsafe) private var sendSeq: UInt16 = 0     // touched only on sendQueue
@@ -232,6 +238,7 @@ final class PingClient: ObservableObject {
         if results.count > 500 { results.removeLast() }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
             guard let self = self, let o = self.outstanding.removeValue(forKey: seq) else { return }
+            self.seqResponders.removeValue(forKey: seq)
             if let i = self.results.firstIndex(where: { $0.id == o.rowID }), self.results[i].status == .pending {
                 self.results[i].status = .timeout
             }
@@ -275,13 +282,36 @@ final class PingClient: ObservableObject {
         guard data[b + 9] == 1, data.count >= ihl + 8, data[b + ihl] == 0 else { return }   // ICMP echo-reply
         let ident = (UInt16(data[b+ihl+4]) << 8) | UInt16(data[b+ihl+5])
         let seq   = (UInt16(data[b+ihl+6]) << 8) | UInt16(data[b+ihl+7])
-        guard ident == identifier, let o = outstanding.removeValue(forKey: seq) else { return }
+        guard ident == identifier, let o = outstanding[seq] else { return }
+        let responderV4 = (UInt32(data[b+12]) << 24) | (UInt32(data[b+13]) << 16)
+                        | (UInt32(data[b+14]) << 8) | UInt32(data[b+15])
+        // One reply per member per seq — ignore a duplicate from the same responder.
+        var seen = seqResponders[seq] ?? []
+        guard !seen.contains(responderV4) else { return }
+        let firstResponder = seen.isEmpty
+        seen.insert(responderV4); seqResponders[seq] = seen
         let responder = "\(data[b+12]).\(data[b+13]).\(data[b+14]).\(data[b+15])"
+        let rtt = (Date().timeIntervalSince(o.sentAt) * 1000).rounded()
         sessReplies += 1
-        if let i = results.firstIndex(where: { $0.id == o.rowID }) {
-            results[i].rttMs = (Date().timeIntervalSince(o.sentAt) * 1000).rounded()
-            results[i].responder = responder
-            results[i].status = .reply
+        if firstResponder {
+            // Fill in the placeholder row for this seq.
+            if let i = results.firstIndex(where: { $0.id == o.rowID }) {
+                results[i].rttMs = rtt
+                results[i].responder = responder
+                results[i].status = .reply
+            }
+        } else {
+            // Additional multicast responder — one row per member.
+            var row = PingRow(sequence: seq, target: targetStr, responder: responder)
+            row.rttMs = rtt; row.status = .reply
+            results.insert(row, at: 0)
+            if results.count > 500 { results.removeLast() }
+        }
+        // Unicast: single reply, so release the seq now (the 2.5s timeout becomes a no-op).
+        // Multicast: keep it open until the timeout so late members still land.
+        if !targetMulticast {
+            outstanding.removeValue(forKey: seq)
+            seqResponders.removeValue(forKey: seq)
         }
     }
 

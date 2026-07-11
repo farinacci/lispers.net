@@ -1,0 +1,2 @@
+Target dependency graph (1 target)
+Target 'PING' in project 'ping-app' (no dependencies)

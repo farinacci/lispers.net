@@ -25,7 +25,7 @@ struct ContentView: View {
     @FocusState private var focused: Bool
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
-    static let version = "0.0-29"
+    static let version = "0.1"
     private static let resultsCollapsedCount = 10
 
     private var trimmed: String { target.trimmingCharacters(in: .whitespaces) }

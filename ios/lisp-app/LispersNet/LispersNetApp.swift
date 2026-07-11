@@ -50,27 +50,31 @@ struct LispersNetApp: App {
                     }
                     switch phase {
                     case .background:
-                        // On a device iOS will suspend us and reclaim our sockets. Rather
-                        // than tear down immediately, hold a background-task assertion and
-                        // keep forwarding for a foreground overlay app (PING/gaapchat) for
-                        // the ~30s window iOS grants — the 0.8 interim before Option B. When
-                        // the assertion expires, suspendNetwork runs cleanly. The SIMULATOR
-                        // doesn't suspend background apps, so we just keep it up there.
-                        #if !targetEnvironment(simulator)
-                        engine.beginBackgroundGrace()
-                        #endif
+                        if tunnel.choice == .enabled {
+                            // Extension is the xTR (Option B): the app is just a mirror.
+                            // Nothing to keep alive here — the extension runs independently.
+                            // Pause the mirror poll while backgrounded (it can't fire anyway).
+                            engine.stopStateMirror()
+                        } else {
+                            // App is the xTR. On a device iOS will suspend us and reclaim our
+                            // sockets; hold a background-task assertion and keep forwarding for
+                            // a foreground overlay app for the ~30s window iOS grants (the 0.8
+                            // interim). The SIMULATOR doesn't suspend, so we stay up there.
+                            #if !targetEnvironment(simulator)
+                            engine.beginBackgroundGrace()
+                            #endif
+                        }
                         publishIdentity()
                     case .active:
                         #if !targetEnvironment(simulator)
-                        engine.endBackgroundGrace()   // returned within the window
+                        engine.endBackgroundGrace()   // returned within the window (app-xTR)
                         #endif
-                        engine.resumeNetwork()        // no-op if the grace didn't expire
+                        engine.resumeNetwork()        // app-xTR: rebuild sockets (no-op otherwise)
                         publishIdentity()
-                        // Reconnect the overlay tunnel on foreground ONLY if the user opted
-                        // in (ensureUp no-ops otherwise). We never auto-prompt here — the
-                        // one-time ask is in the UI when LISP starts. The xTR runs with or
-                        // without the tunnel; the tunnel is only needed for overlay apps.
-                        Task { await tunnel.ensureUp(eid: eid, instanceID: config.instanceID) }
+                        // Reconcile who runs the xTR (app vs extension) and restart the
+                        // mirror / reconnect the VPN as needed. Never auto-prompts — the
+                        // one-time VPN ask is in the UI when the Overlay App VPN is enabled.
+                        XTRCoordinator.reconcile(engine: engine, config: config, tunnel: tunnel)
                     default:          break
                     }
                 }

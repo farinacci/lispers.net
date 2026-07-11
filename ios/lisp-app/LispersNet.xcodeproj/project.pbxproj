@@ -50,6 +50,11 @@
 			path = LispTunnel;
 			sourceTree = "<group>";
 		};
+		AA30000000000000000000B1 /* Core */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Core;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +79,7 @@
 			isa = PBXGroup;
 			children = (
 				AA10000000000000000000B1 /* LispersNet */,
+				AA30000000000000000000B1 /* Core */,
 				AA20000000000000000000B1 /* LispTunnel */,
 				AA10000000000000000000D2 /* Products */,
 			);
@@ -107,6 +113,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				AA10000000000000000000B1 /* LispersNet */,
+				AA30000000000000000000B1 /* Core */,
 			);
 			name = LispersNet;
 			packageProductDependencies = (
@@ -129,6 +136,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				AA20000000000000000000B1 /* LispTunnel */,
+				AA30000000000000000000B1 /* Core */,
 			);
 			name = LispTunnel;
 			packageProductDependencies = (
@@ -343,7 +351,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = KV8AVA749G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -364,9 +372,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = net.lispers.xtr;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = HOST_APP;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -379,7 +388,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = KV8AVA749G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -400,9 +409,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = net.lispers.xtr;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = HOST_APP;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -414,7 +424,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = LispTunnel/LispTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = KV8AVA749G;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LispTunnel-Info.plist;
@@ -424,7 +434,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = net.lispers.xtr.LispTunnel;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -439,7 +449,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = LispTunnel/LispTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = KV8AVA749G;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LispTunnel-Info.plist;
@@ -449,7 +459,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = net.lispers.xtr.LispTunnel;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

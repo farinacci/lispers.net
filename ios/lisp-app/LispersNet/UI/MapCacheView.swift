@@ -39,7 +39,7 @@ struct MapCacheView: View {
                         // names.
                         (Text("LISP Map-Cache for ") +
                          Text(engine.xtrName).bold().foregroundColor(.lispBlue) +
-                         Text(", entries \(entries.count)"))
+                         Text(", \(entries.count) entries"))
                             .font(.system(size: 12 * zoom, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)

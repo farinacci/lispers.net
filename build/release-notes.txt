@@ -1,4 +1,21 @@
             
+                  lispers.net IOS Release Version 0.10
+                  ------------------------------------
+
+o Release date: Fri Jul 10 16:56:30 PDT 2026
+
+o Implement the Network Extension in the LISP app. This allows for the prtocool
+  engine to keep running. This means NAT-state is kept alive, registration is
+  kept alive and most importantly the EID is reachable and pingable. This makes
+  for a true server/daemon implementation. This also allows for overlay apps
+  to operate in the foreground while the LISP app functions in the background.
+  The VPN tunnel is used by the overlay app to send and receive packets from
+  the LISP app.
+
+o Releasing the PING app 0.1 with this LISP app 0.10 release.    
+
+-------------------------------------------------------------------------------
+            
                   lispers.net IOS Release Version 0.9
                   -----------------------------------
 

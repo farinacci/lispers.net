@@ -1,0 +1,168 @@
+{
+  "source": "/Users/dino/code/git/lispers.net/ios/lisp-app/LispersNet/UI/ContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "version %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "Map-Cache",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 89
+        }
+      },
+      {
+        "comment": "",
+        "key": "Logs",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ping",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "LIG",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "xTR",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "behind NAT",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "LISP is active",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "LISP is inactive",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "LISP app uptime ",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hostname ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 171
+        }
+      },
+      {
+        "comment": "",
+        "key": "EID ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 173
+        }
+      },
+      {
+        "comment": "",
+        "key": "RLOC ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 176
+        }
+      },
+      {
+        "comment": "",
+        "key": "translated RLOC:port ",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 182
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@:%@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 183
+        }
+      },
+      {
+        "comment": "",
+        "key": "registers sent ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 201
+        }
+      },
+      {
+        "comment": "",
+        "key": ", groups joined ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "RLOC ",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 192
+        }
+      },
+      {
+        "comment": "",
+        "key": "translated RLOC:port ",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 195
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@:%@",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 196
+        }
+      }
+    ]
+  },
+  "version": 1
+}

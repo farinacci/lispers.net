@@ -1,0 +1,23 @@
+{
+  "/Users/dino/code/git/lispers.net/ios/lisp-app/Core/TunnelManager.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/TunnelManager.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/TunnelManager.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/TunnelManager.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/TunnelManager.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/TunnelManager.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/lisp-app/LispersNet/UI/ConfigView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ConfigView.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/lisp-app/LispersNet/UI/ContentView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DerivedDataDev/Build/Intermediates.noindex/LispersNet.build/Debug-iphoneos/LispersNet.build/Objects-normal/arm64/ContentView.swiftdeps"
+  }
+}

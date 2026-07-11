@@ -166,26 +166,25 @@ struct ConfigView: View {
                         set: { on in
                             config.lispEnabled = on
                             config.save()
-                            on ? engine.enable() : engine.disable()
+                            // Who runs the xTR (app vs extension) depends on the Overlay
+                            // App VPN switch — let the coordinator decide.
+                            XTRCoordinator.reconcile(engine: engine, config: config, tunnel: tunnel)
                         }))
                     .tint(.lispGreen)
-                    // OPT-IN, default OFF. Only needed to run overlay apps (PING, gaapchat)
-                    // via the utun; the xTR itself runs fine without it. Turning it on
-                    // triggers the one-time iOS "Allow VPN Configurations" prompt.
+                    // OPT-IN, default OFF. Runs the xTR in the always-on LispTunnel
+                    // extension so overlay apps (PING, gaapchat) work even when the LISP
+                    // app is closed. Turning it on triggers the one-time iOS "Allow VPN
+                    // Configurations" prompt; the app then mirrors the extension's state.
                     Toggle("Overlay App VPN", isOn: Binding(
                         get: { tunnel.choice == .enabled },
                         set: { on in
-                            if on {
-                                let eid = config.eidString.isEmpty ? "240.0.0.1" : config.eidString
-                                Task { await tunnel.enableOverlay(eid: eid, instanceID: config.instanceID) }
-                            } else {
-                                tunnel.disableOverlay()
-                            }
+                            tunnel.choice = on ? .enabled : .declined
+                            XTRCoordinator.reconcile(engine: engine, config: config, tunnel: tunnel)
                         }))
                     .tint(.lispGreen)
                 } footer: {
                     Text("Overlay App VPN is required only to run overlay apps (PING, "
-                       + "gaapchat). The LISP xTR runs without it.")
+                       + "gaapchat). This LISP xTR app can run without it.")
                 }
 
                 Section {

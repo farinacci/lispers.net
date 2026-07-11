@@ -193,10 +193,10 @@ struct PingView: View {
             .sheet(isPresented: $editingHosts) {
                 HostsEditor()
             }
-            // Switching tabs keeps the ping running 5s longer so the map-cache
-            // counters can be watched climbing; returning cancels that.
+            // Switching tabs keeps the ping running 10s longer so the map-cache
+            // counters (and Logs) can be watched climbing; returning cancels that.
             .onAppear { ping.cancelGrace() }
-            .onDisappear { ping.keepAliveBriefly(5) }
+            .onDisappear { ping.keepAliveBriefly(10) }
             // Backgrounding the app stops the ping immediately.
             .onChange(of: scenePhase) { _, phase in
                 if phase != .active { ping.stopContinuous() }

@@ -51,11 +51,12 @@ final class KeyboardObserver: ObservableObject {
 struct ContentView: View {
     @EnvironmentObject var engine: LispEngine
     @EnvironmentObject var config: LispConfig
+    @EnvironmentObject var tunnel: TunnelManager
     @StateObject private var keyboard = KeyboardObserver()
     @Environment(\.verticalSizeClass) private var vSizeClass
 
-    // App version string — bump on request.
-    static let version = "0.9"
+    // App version string — canonical value lives in Core (AppInfo.version, bump there).
+    static let version = AppInfo.version
 
     var body: some View {
         VStack(spacing: 0) {
@@ -100,9 +101,9 @@ struct ContentView: View {
                 .tabItem { Label("xTR", systemImage: "gearshape") }
         }
         .onAppear {
-            // Resume a persisted-enabled xTR on launch so the toggle state and
-            // the engine never disagree.
-            if config.lispEnabled && !engine.running { engine.enable() }
+            // Resume a persisted-enabled xTR on launch. Who runs it (app vs the
+            // always-on extension) depends on the Overlay App VPN switch.
+            XTRCoordinator.reconcile(engine: engine, config: config, tunnel: tunnel)
         }
     }
 }

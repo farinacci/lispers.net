@@ -1,22 +1,25 @@
 //
 // PacketTunnelProvider.swift  (LispTunnel extension)
 //
-// The overlay packet tunnel. Brings up a utun that routes 240.0.0.0/4 (all overlay
-// EIDs) — captures the LISP packets a separate overlay app (e.g. PING) injects, and
-// hands them to the LISP app. (No 224.240/12 route: overlay apps can't send raw
-// multicast on iOS, so multicast rides as the INNER of a unicast-to-tunnel-EID packet —
-// nothing ever routes in by a multicast group address, so the route was unused.)
+// Option B: the ALWAYS-ON xTR. When the Overlay App VPN is enabled, iOS keeps this
+// packet-tunnel provider running as its own process — so the phone stays a registered,
+// pingable xTR even when the LISP app is backgrounded or closed. This provider now HOSTS
+// the full LispEngine (registration, Info-Requests/NAT, RLOC-probing, the data + control
+// sockets, encap/decap) — the registered RLOC:port is THIS process's data-socket NAT
+// mapping, which is what makes the phone reachable when the app isn't running.
 //
-// An overlay app can't send raw multicast on iOS (blocked) or IP-in-IP (no raw
-// sockets), so it sends its inner IP packet UNICAST to the tunnel's own EID on 4341:
+// It also keeps a minimal utun up (routing 240.0.0.0/4, all overlay EIDs) purely as the
+// vehicle iOS uses to keep this process alive and to capture packets a separate overlay
+// app (PING, gaapchat) injects. An overlay app can't send raw multicast or IP-in-IP on
+// iOS, so it sends its inner IP packet UNICAST to the tunnel EID on 4341:
 //   IP[src=EID → dst=tunnelEID]/UDP 4341/[inner IP].
-// The local hop needs no LISP header (the LISP app knows its own instance-id), so we
-// strip the outer IP+UDP and hand the raw [inner] to the app over loopback
-// (127.0.0.1:overlayInjectPort). The app's data plane does the map-cache lookup + encap
-// — so the "Receive utun, inner EIDs …" and "Encap outer RLOCs: …" log lines and the
-// map-cache counters are the real ones, and the encap egresses on the app's registered
-// data socket (so replies come back). This works while the app is foreground; PING's
-// keep-alive lets it keep sending during the switch. (Full-background = future Option B.)
+// We strip the outer IP+UDP and hand the raw [inner] to the in-process engine over
+// loopback (127.0.0.1:overlayInjectPort) — the engine's data plane does the map-cache
+// lookup + encap and egresses on its own registered data socket, so replies come back to
+// THIS process and are forwarded to the overlay app (127.0.0.1:pingReplyPort).
+//
+// While the app is the xTR (VPN-off, dual-mode) this extension isn't running at all; mode
+// coordination in the app guarantees only one engine binds the sockets at a time.
 //
 
 import NetworkExtension
@@ -25,11 +28,15 @@ import os
 final class PacketTunnelProvider: NEPacketTunnelProvider {
     static let appGroup = "group.net.lispers.xtr"
     static let injectPort: UInt16 = 4341        // overlay apps inject LISP packets here (on the utun)
-    static let appLoopbackPort: UInt16 = 41342  // where we hand packets to the app (LISP.overlayInjectPort)
     private let log = Logger(subsystem: "net.lispers.xtr.LispTunnel", category: "tunnel")
 
     private var tunnelEIDBytes: [UInt8] = [240, 0, 0, 1]
-    private var fwdFD: Int32 = -1               // reused loopback socket to the app
+    private var fwdFD: Int32 = -1               // reused loopback socket to the in-process engine
+
+    // The hosted xTR. Held for the provider's lifetime; created on startTunnel, torn
+    // down on stopTunnel. Config is read from the shared App-Group file (LispConfig).
+    private var config: LispConfig?
+    private var engine: LispEngine?
 
     private var captureURL: URL? {
         FileManager.default
@@ -39,8 +46,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
     override func startTunnel(options: [String: NSObject]?,
                               completionHandler: @escaping (Error?) -> Void) {
-        let d = UserDefaults(suiteName: Self.appGroup)
-        let eid = d?.string(forKey: "tunnelEID") ?? "240.0.0.1"
+        // Build the engine + config on the main queue so the engine's repeating
+        // Timers schedule on (and fire from) the extension's main run loop.
+        let cfg = LispConfig()
+        self.config = cfg
+        let eid = cfg.eidString.isEmpty ? "240.0.0.1" : cfg.eidString
         tunnelEIDBytes = Self.parseOctets(eid) ?? [240, 0, 0, 1]
 
         let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "240.0.0.0")
@@ -57,18 +67,29 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
                 self.log.error("setTunnelNetworkSettings failed: \(error.localizedDescription)")
                 completionHandler(error); return
             }
-            self.append("=== tunnel up, EID \(eid), routing 240/4 ===")
-            self.log.log("tunnel up, EID \(eid, privacy: .public)")
-            self.readLoop()
-            completionHandler(nil)
+            self.append("=== tunnel up, EID \(eid) — hosting xTR, routing 240/4 ===")
+            self.log.log("tunnel up, EID \(eid, privacy: .public) — starting hosted xTR")
+            // Start the xTR engine on the main queue (run-loop timers) and begin
+            // capturing overlay-injected packets off the utun.
+            DispatchQueue.main.async {
+                let engine = LispEngine(config: cfg)
+                self.engine = engine
+                if cfg.lispEnabled { engine.enable() }
+                self.readLoop()
+                completionHandler(nil)
+            }
         }
     }
 
     override func stopTunnel(with reason: NEProviderStopReason,
                              completionHandler: @escaping () -> Void) {
-        if fwdFD >= 0 { close(fwdFD); fwdFD = -1 }
-        append("=== tunnel stopped (reason \(reason.rawValue)) ===")
-        completionHandler()
+        DispatchQueue.main.async { [weak self] in
+            self?.engine?.disable()
+            self?.engine = nil
+            if let fd = self?.fwdFD, fd >= 0 { close(fd); self?.fwdFD = -1 }
+            self?.append("=== tunnel stopped (reason \(reason.rawValue)) ===")
+            completionHandler()
+        }
     }
 
     private func readLoop() {
@@ -81,9 +102,9 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         }
     }
 
-    // An overlay-injected packet (UDP to our tunnel EID on 4341): strip outer IP+UDP and
-    // hand the raw [inner] to the app over loopback (silently — the app logs the
-    // "Receive utun, inner EIDs …" line). The app does the map-cache lookup + encap.
+    // An overlay-injected packet (UDP to our tunnel EID on 4341): strip the outer IP+UDP
+    // and hand the raw [inner] to the in-process engine over loopback. The engine logs the
+    // "Receive utun, inner EIDs …" line and does the map-cache lookup + encap.
     private func handleInjected(_ p: Data) {
         let b = p.startIndex
         guard p.count >= 28, (p[b] >> 4) == 4 else { return }
@@ -96,16 +117,19 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
         let payload = p.subdata(in: (b + ihl + 8)..<p.endIndex)  // raw [inner IP]
         guard payload.count >= 20 else { return }
-        forwardToApp(payload)
+        forwardToEngine(payload)
     }
 
-    private func forwardToApp(_ pkt: Data) {
+    // Hand the raw inner packet to the in-process engine's overlay-inject socket
+    // (127.0.0.1:overlayInjectPort). Same-process loopback — the engine's receive
+    // handler dispatches it onto overlayQueue for encap.
+    private func forwardToEngine(_ pkt: Data) {
         if fwdFD < 0 { fwdFD = socket(AF_INET, SOCK_DGRAM, 0) }
         guard fwdFD >= 0 else { return }
         var addr = sockaddr_in()
         addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
         addr.sin_family = sa_family_t(AF_INET)
-        addr.sin_port = Self.appLoopbackPort.bigEndian
+        addr.sin_port = LISP.overlayInjectPort.bigEndian
         addr.sin_addr.s_addr = UInt32(0x7f00_0001).bigEndian     // 127.0.0.1
         _ = pkt.withUnsafeBytes { raw in
             withUnsafePointer(to: &addr) {
@@ -126,7 +150,8 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     // Append a "<seq>\t<line>" record to the shared capture file (bounded ~200 lines);
-    // the app mirrors new lines into lisp-itr.log. (Only used for the up/down banners.)
+    // used only for the up/down banners now (the engine writes real logs to the shared
+    // App-Group logs dir, which the app's Logs tab reads directly).
     private func append(_ line: String) {
         guard let url = captureURL else { return }
         let d = UserDefaults(suiteName: Self.appGroup)
