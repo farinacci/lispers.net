@@ -1,4 +1,24 @@
             
+                  lispers.net IOS Release Version 0.11
+                  ------------------------------------
+
+o Release date:
+
+o With this LISP xTR app release, we are releasing the PING app version 0.2.
+
+o With this LISP xTR app release, we are releasing the gaapchat app version 0.1.
+  We now have a user based messaging app that runs over a multicast group on a
+  LISP overlay. So when someone types a message, all gappchat group members
+  receive it. The app uses the GAAP protocol to dynamically allocated unique
+  group addresses. See https://www.ietf.org/archive/id/draft-ietf-pim-gaap-15.html
+  for gory details.
+
+o Made modications to the LISP xTR app to receive IGMPv2 report/leave messages so
+  overlay apps can tell the overlay they are still joined or they want to leave
+  the group.
+
+-------------------------------------------------------------------------------
+                
                   lispers.net IOS Release Version 0.10
                   ------------------------------------
 

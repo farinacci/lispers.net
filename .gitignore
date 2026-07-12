@@ -6,3 +6,6 @@ lisp/lisp-version.txt
 lisp/__pycache__    
 apps/*pyc
 apps/*pyo
+ios/*/build
+*.xcarchive
+        
