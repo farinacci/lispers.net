@@ -31,6 +31,7 @@ struct EngineSnapshot: Codable {
         var packetCount: UInt64
         var byteCount: UInt64
         var lastPacket: Date?
+        var lastProbeSent: Date?    // gates the rtts/hops/lats line in MapCacheView
         var recentRTTs: [Double]
         var recentHops: [String]
         var recentLatencies: [String]
@@ -63,6 +64,9 @@ struct EngineSnapshot: Codable {
     var joinedGroupsCount: Int
     var mh: [MHIface]
     var entries: [Entry]
+    var igmpGroups: [String: String]    // overlay-app group address -> joiner app name
+    var igmpLastReport: [String: Date]? // overlay-app group address -> last IGMP report time
+    var groupMapServers: [String: String]?  // group address -> map-server it registers to
     var updated: Date
 
     static var fileURL: URL? {
@@ -88,7 +92,8 @@ extension LispEngine {
                     ifIndex: r.ifIndex, activeNextHop: r.activeNextHop, state: r.state,
                     stateChange: r.stateChange, rlocName: r.rlocName,
                     packetCount: r.packetCount, byteCount: r.byteCount,
-                    lastPacket: r.lastPacket, recentRTTs: r.recentRTTs,
+                    lastPacket: r.lastPacket, lastProbeSent: r.lastProbeSent,
+                    recentRTTs: r.recentRTTs,
                     recentHops: r.recentHops, recentLatencies: r.recentLatencies)
             }
             return EngineSnapshot.Entry(
@@ -105,7 +110,11 @@ extension LispEngine {
             rloc: rloc, translatedRLOC: translatedRLOC, translatedPort: translatedPort,
             behindNAT: behindNAT, registrationsSent: registrationsSent,
             lispStart: lispStart, joinedGroupsCount: config.joinedGroups.count,
-            mh: mh, entries: entries, updated: Date())
+            mh: mh, entries: entries,
+            igmpGroups: appJoinedGroups.reduce(into: [:]) { $0[$1.address] = $1.source },
+            igmpLastReport: appJoinedGroups.reduce(into: [:]) { $0[$1.address] = $1.lastReport },
+            groupMapServers: groupMapServers,
+            updated: Date())
     }
 
     // Called from the real xTR's 1s UI timer (startTimers). Atomically publishes the
@@ -128,7 +137,8 @@ extension LispEngine {
                 r.activeNextHop = sr.activeNextHop; r.state = sr.state
                 r.stateChange = sr.stateChange; r.rlocName = sr.rlocName
                 r.packetCount = sr.packetCount; r.byteCount = sr.byteCount
-                r.lastPacket = sr.lastPacket; r.recentRTTs = sr.recentRTTs
+                r.lastPacket = sr.lastPacket; r.lastProbeSent = sr.lastProbeSent
+                r.recentRTTs = sr.recentRTTs
                 r.recentHops = sr.recentHops; r.recentLatencies = sr.recentLatencies
                 return r
             }
@@ -144,6 +154,13 @@ extension LispEngine {
         behindNAT = s.behindNAT
         registrationsSent = s.registrationsSent
         lispStart = s.lispStart
+        // overlay-app groups (mirror mode) — address -> joiner app name
+        appJoinedGroups = s.igmpGroups.map {
+            AppJoinedGroup(address: $0.key, source: $0.value,
+                           lastReport: s.igmpLastReport?[$0.key] ?? Date())
+        }
+            .sorted { $0.address < $1.address }
+        groupMapServers = s.groupMapServers ?? [:]
         mhInterfaces = s.mh.map { $0.iface }
         ifaceTranslated = Dictionary(uniqueKeysWithValues: s.mh.compactMap { m in
             m.translatedRLOC.map { (m.iface.interfaceName, (rloc: $0, port: m.translatedPort)) }

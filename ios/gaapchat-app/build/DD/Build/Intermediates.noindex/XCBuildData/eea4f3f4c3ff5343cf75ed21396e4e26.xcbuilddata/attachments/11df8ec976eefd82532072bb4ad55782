@@ -1,0 +1,79 @@
+{
+  "" : {
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/gaapchat-primary.dia",
+    "emit-module-dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/gaapchat-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/gaapchat-primary-emit-module.dia",
+    "pch" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/gaapchat-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/gaapchat-primary.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/gaapchat-app/GaapChat/ChaCha8.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChaCha8.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChaCha8.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChaCha8.dia",
+    "index-unit-output-path" : "/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChaCha8.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChaCha8.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChaCha8.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChaCha8.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChaCha8~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/gaapchat-app/GaapChat/ChatClient.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChatClient.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChatClient.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChatClient.dia",
+    "index-unit-output-path" : "/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChatClient.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChatClient.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChatClient.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChatClient.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ChatClient~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/gaapchat-app/GaapChat/ContentView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/gaapchat-app/GaapChat/GaapChatApp.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapChatApp.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapChatApp.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapChatApp.dia",
+    "index-unit-output-path" : "/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapChatApp.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapChatApp.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapChatApp.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapChatApp.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapChatApp~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/gaapchat-app/GaapChat/GaapHash.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapHash.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapHash.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapHash.dia",
+    "index-unit-output-path" : "/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapHash.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapHash.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapHash.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapHash.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapHash~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/gaapchat-app/GaapChat/GaapWire.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapWire.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapWire.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapWire.dia",
+    "index-unit-output-path" : "/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapWire.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapWire.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapWire.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapWire.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GaapWire~partial.swiftmodule"
+  },
+  "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/dino/code/git/lispers.net/ios/gaapchat-app/build/DD/Build/Intermediates.noindex/gaapchat.build/Debug-iphonesimulator/gaapchat.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

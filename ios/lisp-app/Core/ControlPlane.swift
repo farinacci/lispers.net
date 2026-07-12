@@ -205,20 +205,10 @@ extension LispEngine {
 
     // MARK: - Multicast group registration (lisp_send_multicast_map_register)
 
-    // Register every joined group as (0.0.0.0/0, G/32) so ITRs/RTRs can find the
-    // replication list. One Map-Register per group (each hashes to its own decent
-    // map-server, on the GROUP — lisp-etr.py: "use group address and no source as
-    // part of hash").
-    func sendGroupRegisters() {
-        guard running, rloc != nil else { return }
-        let iid = UInt32(config.instanceID)
-        for gstr in config.joinedGroups {
-            guard var group = LispAddress(string: gstr, iid: iid), group.isMulticast
-            else { continue }
-            group.maskLen = 32
-            sendGroupRegister(group: group, ttl: LISP.multicastRegisterTTL)
-        }
-    }
+    // NOTE: (*,G) Map-Registers are now IGMP-triggered — every membership Report (from an
+    // overlay app over the tunnel, or the LISP app self-reporting a manual group) drives one
+    // sendGroupRegister via applyIGMP (see IGMP.swift). There is no periodic multicast-register
+    // loop here; the unicast EID keeps its own timer (sendMapRegisters).
 
     // Build/send one group Map-Register (merge bit + an RLE locator with this xTR
     // at level 128). ttl 0 de-registers the group.
@@ -322,6 +312,8 @@ extension LispEngine {
         }
     }
 
+    // Manual join from the LISP UI: persist it, then drive the (*,G) register the SAME way
+    // an overlay app does — self-report an IGMPv2 membership Report (source "LISP app").
     func joinGroup(_ groupString: String) {
         guard let g = LispAddress(string: groupString), g.isMulticast else { return }
         let canon = g.addressString
@@ -330,15 +322,15 @@ extension LispEngine {
             config.save()
         }
         guard running else { return }
-        var grp = g; grp.maskLen = 32; grp.instanceID = UInt32(config.instanceID)
-        sendGroupRegister(group: grp, ttl: LISP.multicastRegisterTTL)
+        log.lprint(.etr, "Send IGMPv2 report for group \(canon) (\(Self.manualIGMPSource))")
+        applyIGMP(g.v4, type: LISP.igmpV2Report, source: Self.manualIGMPSource)
     }
 
     func leaveGroup(_ groupString: String) {
         guard let g = LispAddress(string: groupString), g.isMulticast else { return }
         if running {
-            var grp = g; grp.maskLen = 32; grp.instanceID = UInt32(config.instanceID)
-            sendGroupRegister(group: grp, ttl: 0)       // de-register
+            log.lprint(.etr, "Send IGMPv2 leave for group \(g.addressString) (\(Self.manualIGMPSource))")
+            applyIGMP(g.v4, type: LISP.igmpV2Leave, source: Self.manualIGMPSource)
         }
         config.joinedGroups.removeAll { $0 == g.addressString }
         groupMapServers[g.addressString] = nil
@@ -516,6 +508,7 @@ extension LispEngine {
                                "\(g.addressString):\(self.advertisedPort)")
                 }
                 self.sendMapRegisters()
+                self.reregisterIGMPGroups()          // (*,G) with the freshly-learned @tp port
             }
             self.pendingRegisterWork = work
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)

@@ -1,0 +1,23 @@
+{
+  "/Users/dino/code/git/lispers.net/ios/lisp-app/Core/TunnelManager.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/TunnelManager.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/TunnelManager.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/TunnelManager.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/TunnelManager.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/TunnelManager.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/lisp-app/LispersNet/XTRCoordinator.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/XTRCoordinator.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/XTRCoordinator.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/XTRCoordinator.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/XTRCoordinator.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/XTRCoordinator.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps"
+  }
+}

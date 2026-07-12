@@ -1,0 +1,30 @@
+{
+  "/Users/dino/code/git/lispers.net/ios/lisp-app/Core/ByteBuffer.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/ByteBuffer.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/ByteBuffer.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/ByteBuffer.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/ByteBuffer.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/ByteBuffer.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/lisp-app/LispersNet/LispersNetApp.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LispersNetApp.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LispersNetApp.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LispersNetApp.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LispersNetApp.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/LispersNetApp.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/lisp-app/LispersNet/UI/MapCacheView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCacheView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCacheView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCacheView.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCacheView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/MapCacheView.swiftdeps"
+  },
+  "/Users/dino/code/git/lispers.net/ios/lisp-app/LispersNet/UI/PingView.swift" : {
+    "const-values" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.swiftconstvalues",
+    "dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.d",
+    "diagnostics" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.dia",
+    "object" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.o",
+    "swift-dependencies" : "/Users/dino/code/git/lispers.net/ios/lisp-app/build/DDsim/Build/Intermediates.noindex/LispersNet.build/Debug-iphonesimulator/LispersNet.build/Objects-normal/arm64/PingView.swiftdeps"
+  }
+}

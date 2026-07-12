@@ -417,6 +417,27 @@ struct ConfigView: View {
     // Join/leave multicast groups. Joining registers (0/0, G/32) so an RTR
     // replicates the group's traffic to us; pinging a 224.x address just works
     // via the default (0/0, 224/4) map-cache entry.
+    // Long-press "Copy" for a group address — handy for pasting the 224.x.x.x around.
+    // Elapsed time since the last IGMP report for an overlay-app group, e.g. "12s ago",
+    // "3m 05s ago" — recomputed each second by the TimelineView so it counts up live.
+    private static func elapsed(since date: Date, now: Date) -> String {
+        let s = max(0, Int(now.timeIntervalSince(date)))
+        if s < 60 { return "\(s)s" }
+        return String(format: "%dm %02ds", s / 60, s % 60)
+    }
+
+    private func copyButton(_ text: String) -> some View {
+        Button {
+            UIPasteboard.general.string = text
+        } label: {
+            Label {
+                Text("Copy \(text)").lineLimit(1)
+            } icon: {
+                Image(systemName: "doc.on.doc")
+            }
+        }
+    }
+
     private var multicastSection: some View {
         Section {
             HStack {
@@ -440,6 +461,7 @@ struct ConfigView: View {
                         Image(systemName: "dot.radiowaves.up.forward")
                             .foregroundStyle(Color.lispGreen)
                         Text(g).font(.callout.monospaced()).foregroundStyle(Color.lispGreen)
+                        Text("manual").font(.caption2).foregroundStyle(.secondary)
                         Spacer()
                         Button("Leave") { engine.leaveGroup(g) }
                             .buttonStyle(.borderless)
@@ -457,8 +479,42 @@ struct ConfigView: View {
                     .font(.caption2.monospaced())
                     .lineLimit(1).minimumScaleFactor(0.7)
                 }
+                .contentShape(Rectangle())
+                .contextMenu { copyButton(g) }          // long-press to copy the address
             }
-            if config.joinedGroups.isEmpty {
+            // Overlay-app (IGMP) joined groups — LOCKED: the user can't leave these; only
+            // the app that joined them (gaapchat) via IGMP, or the ~5-min soft-state timeout.
+            ForEach(engine.appJoinedGroups) { g in
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Image(systemName: "lock.fill").foregroundStyle(Color.lispBlue)
+                        Text(g.address).font(.callout.monospaced()).foregroundStyle(Color.lispBlue)
+                        Spacer()
+                        Text("\(g.source) overlay app").font(.caption2).foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Group {
+                            if let ms = engine.groupMapServers[g.address] {
+                                Text("registers to ").foregroundStyle(.primary)
+                                    + Text(ms).foregroundStyle(Color.lispBlue)
+                            } else {
+                                Text(engine.running ? "registering…" : "register when LISP is active")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer()
+                        TimelineView(.periodic(from: .now, by: 1)) { ctx in
+                            Text("last IGMP report \(Self.elapsed(since: g.lastReport, now: ctx.date))")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .font(.caption2.monospaced())
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                }
+                .contentShape(Rectangle())
+                .contextMenu { copyButton(g.address) }  // long-press to copy the address
+            }
+            if config.joinedGroups.isEmpty && engine.appJoinedGroups.isEmpty {
                 Text("No groups joined")
                     .font(.caption).foregroundStyle(.secondary)
             }

@@ -212,10 +212,18 @@
       },
       {
         "comment": "",
+        "key": "Copy %@",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 425
+        }
+      },
+      {
+        "comment": "",
         "key": "No groups joined",
         "location": {
           "startingColumn": 22,
-          "startingLine": 462
+          "startingLine": 491
         }
       },
       {
@@ -223,7 +231,7 @@
         "key": "Join group address",
         "location": {
           "startingColumn": 27,
-          "startingLine": 423
+          "startingLine": 432
         }
       },
       {
@@ -231,7 +239,15 @@
         "key": "Join",
         "location": {
           "startingColumn": 24,
-          "startingLine": 429
+          "startingLine": 438
+        }
+      },
+      {
+        "comment": "",
+        "key": "manual",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 452
         }
       },
       {
@@ -239,7 +255,7 @@
         "key": "Leave",
         "location": {
           "startingColumn": 32,
-          "startingLine": 444
+          "startingLine": 454
         }
       },
       {
@@ -247,7 +263,7 @@
         "key": "registers to ",
         "location": {
           "startingColumn": 34,
-          "startingLine": 450
+          "startingLine": 460
         }
       },
       {
@@ -255,7 +271,7 @@
         "key": "registering…",
         "location": {
           "startingColumn": 51,
-          "startingLine": 453
+          "startingLine": 463
         }
       },
       {
@@ -263,7 +279,23 @@
         "key": "register when LISP is active",
         "location": {
           "startingColumn": 70,
-          "startingLine": 453
+          "startingLine": 463
+        }
+      },
+      {
+        "comment": "",
+        "key": "overlay app joined",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 483
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ joins/leaves",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 481
         }
       },
       {
@@ -271,7 +303,7 @@
         "key": "lispers.net xTR — %@",
         "location": {
           "startingColumn": 18,
-          "startingLine": 489
+          "startingLine": 518
         }
       },
       {
@@ -279,7 +311,7 @@
         "key": "Lookup prefixes:",
         "location": {
           "startingColumn": 22,
-          "startingLine": 524
+          "startingLine": 553
         }
       },
       {
@@ -287,7 +319,7 @@
         "key": "Multicast groups joined:",
         "location": {
           "startingColumn": 22,
-          "startingLine": 532
+          "startingLine": 561
         }
       },
       {
@@ -295,7 +327,7 @@
         "key": "Map-cache:",
         "location": {
           "startingColumn": 22,
-          "startingLine": 541
+          "startingLine": 570
         }
       },
       {
@@ -303,7 +335,7 @@
         "key": "lookup-len:",
         "location": {
           "startingColumn": 18,
-          "startingLine": 587
+          "startingLine": 616
         }
       },
       {
@@ -311,7 +343,7 @@
         "key": "eid-prefix, e.g. 240.11.0.0/16",
         "location": {
           "startingColumn": 23,
-          "startingLine": 579
+          "startingLine": 608
         }
       },
       {
@@ -319,7 +351,7 @@
         "key": "?",
         "location": {
           "startingColumn": 23,
-          "startingLine": 590
+          "startingLine": 619
         }
       }
     ]

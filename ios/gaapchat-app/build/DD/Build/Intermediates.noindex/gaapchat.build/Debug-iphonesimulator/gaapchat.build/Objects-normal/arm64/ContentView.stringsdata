@@ -1,0 +1,152 @@
+{
+  "source": "/Users/dino/code/git/lispers.net/ios/gaapchat-app/GaapChat/ContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Chat",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hash",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "gaapchat",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "group ",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "  →  ",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "as %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "LISP xTR ready",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "LISP xTR not running",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "group name",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 71
+        }
+      },
+      {
+        "comment": "",
+        "key": "Join",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "message or :command",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "join a group above",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hash",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 175
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hashes",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 161
+        }
+      },
+      {
+        "comment": "",
+        "key": "group name",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 153
+        }
+      },
+      {
+        "comment": "",
+        "key": "  %@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 166
+        }
+      },
+      {
+        "comment": "",
+        "key": "primary",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "rehash %lld",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 164
+        }
+      }
+    ]
+  },
+  "version": 1
+}

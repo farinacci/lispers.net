@@ -46,6 +46,11 @@ final class LispEngine: ObservableObject {
     // group addressString -> "<decent dns> (<resolved addr>)" of its map-server,
     // shown under each joined group in the Ping tab.
     @Published var groupMapServers: [String: String] = [:]
+    // Overlay-app (IGMP) joined groups — shown in the Multicast Groups list LOCKED (the user
+    // can't leave these; only the app that joined them via IGMP, or the soft-state timeout).
+    // Excludes the LISP app's own manually-joined groups (those show with a Leave button).
+    // Mirror of igmpGroups (app-xTR) / the snapshot.
+    @Published var appJoinedGroups: [AppJoinedGroup] = []
 
     // Sockets — control bound to 4342, data bound to 4341.
     var ctrlSocket: UDPSocket?
@@ -112,6 +117,14 @@ final class LispEngine: ObservableObject {
     var rtrList: [LispAddress] = []
     var lastInfoNonce: UInt64 = 0
     var lastEncapActivity: Date?            // drives the 500ms map-cache refresh
+    // IGMP soft-state (*,G) membership requested by an overlay app (gaapchat) via IGMPv2
+    // Reports injected over the tunnel (inner IP proto 2, dst = our EID). group-v4 -> last
+    // report time; expires after LISP.igmpGroupTimeout without a Report. Kept SEPARATE from
+    // config.joinedGroups (user-joined, persisted) so the user can't leave an app-joined
+    // group — only the app's IGMP Leave (or the soft-state timeout) removes it. See IGMP.swift.
+    var igmpGroups: [UInt32: Date] = [:]        // group-v4 -> last report time
+    var igmpGroupSource: [UInt32: String] = [:] // group-v4 -> joiner ("LISP app" or overlay app)
+    var overlayRecvFD: Int32 = -1           // loopback sender to the gaapchat overlay app
 
     private var timers: [Timer] = []
     // Option B mirror (app side, VPN-on): polls the extension's App-Group snapshot into
@@ -207,11 +220,11 @@ final class LispEngine: ObservableObject {
             sendInfoRequests()
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
                 self?.sendMapRegisters()
-                self?.sendGroupRegisters()
+                self?.selfReportManualGroups()
             }
         } else {
             sendMapRegisters()
-            sendGroupRegisters()
+            selfReportManualGroups()
         }
 
         startTimers()
@@ -232,6 +245,8 @@ final class LispEngine: ObservableObject {
         overlayInjectSocket?.shutdown(); overlayInjectSocket = nil
         tearDownMultihomeSockets()
         mapCache.clearAll()
+        igmpGroups.removeAll(); igmpGroupSource.removeAll()  // drop soft-state groups
+        if overlayRecvFD >= 0 { close(overlayRecvFD); overlayRecvFD = -1 }
         pendingMapRequests.removeAll()
         queuedPackets.removeAll()
         behindNAT = false
@@ -357,7 +372,7 @@ final class LispEngine: ObservableObject {
         // sending on the DEAD sockets).
         if behindNATConfigured { sendInfoRequests() }
         sendMapRegisters()
-        sendGroupRegisters()
+        reregisterIGMPGroups()                       // refresh (*,G) with the resumed sockets
         log.fprint(.core, "Network resumed (app foregrounded)")
     }
 
@@ -396,8 +411,9 @@ final class LispEngine: ObservableObject {
     private func startTimers() {
         let register = Timer.scheduledTimer(withTimeInterval: LISP.mapRegisterInterval,
                                             repeats: true) { [weak self] _ in
-            self?.sendMapRegisters()
-            self?.sendGroupRegisters()
+            self?.sendMapRegisters()                 // unicast EID (its own timer)
+            self?.selfReportManualGroups()           // manual groups self-report IGMP → (*,G)
+            self?.expireIGMPGroups()                 // drop stale overlay-app groups
         }
         let probe = Timer.scheduledTimer(withTimeInterval: LISP.rlocProbeInterval,
                                          repeats: true) { [weak self] _ in
@@ -469,7 +485,7 @@ final class LispEngine: ObservableObject {
                     self.sendInfoRequests()
                 }
                 self.sendMapRegisters()
-                self.sendGroupRegisters()
+                self.reregisterIGMPGroups()          // refresh (*,G) on RLOC change
             }
         }
     }
@@ -593,6 +609,13 @@ final class LispEngine: ObservableObject {
                    "inner tos/ttl: \(ip.tos)/\(ip.ttl), length: \(inner.count), " +
                    "packet: \(lispFormatPacket(inner))")
         let b = inner.startIndex
+        let ihl = Int(inner[b] & 0x0F) * 4
+        // IGMP (proto 2) from an overlay app (gaapchat): parse it to drive soft-state
+        // (*,G) group membership registration — do NOT encap it to the network.
+        if inner[b + 9] == LISP.ipProtoIGMP {
+            handleOverlayIGMP(inner, ihl: ihl)
+            return
+        }
         let dstV4 = (UInt32(inner[b+16]) << 24) | (UInt32(inner[b+17]) << 16)
                   | (UInt32(inner[b+18]) << 8) | UInt32(inner[b+19])
         var dest = LispAddress(v4: dstV4)

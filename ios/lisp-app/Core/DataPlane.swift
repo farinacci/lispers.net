@@ -249,8 +249,11 @@ extension LispEngine {
         let dstAddr = LispAddress(v4: dst)
 
         let forUs = config.eid.map { dstAddr.v4 == $0.v4 } ?? false
+        // A joined group: either a user-joined group (config) OR an overlay-app IGMP
+        // soft-state group (gaapchat).
         let forGroup = dstAddr.isMulticast
-            && joinedGroupAddresses.contains { $0.v4 == dstAddr.v4 }
+            && (joinedGroupAddresses.contains { $0.v4 == dstAddr.v4 }
+                || igmpGroups[dstAddr.v4] != nil)
         guard forUs || forGroup else {
             log.dprint(.etr, "Inner destination \(dstAddr.addressString) is not our EID " +
                        "or a joined group, discarding")
@@ -272,6 +275,11 @@ extension LispEngine {
             } else {
                 pingService.processInboundICMP(icmp, from: srcAddr)
             }
+        } else if proto == 17 {             // UDP — overlay-app traffic (gaapchat chat)
+            // Hand the raw inner up to the overlay app over loopback. The gaapchat app
+            // parses the UDP + ASCII payload; it filters its own multicast loopback by
+            // sender id (like the Python app), so delivering self-looped copies is fine.
+            forwardUDPToOverlayApp(packet, from: srcAddr, iid: iid)
         }
     }
 }

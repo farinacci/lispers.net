@@ -1,0 +1,136 @@
+{
+  "source": "/Users/dino/code/git/lispers.net/ios/gaapchat-app/GaapChat/ContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "version %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "group-name ",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "  →  ",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "as %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "LISP xTR ready",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 83
+        }
+      },
+      {
+        "comment": "",
+        "key": "LISP xTR not running",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 83
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "enter group-name",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "Join",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "enter message",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "join a group above",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hashes of group-name to group address",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 223
+        }
+      },
+      {
+        "comment": "",
+        "key": "enter group-name",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "  %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 228
+        }
+      },
+      {
+        "comment": "",
+        "key": "primary",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 226
+        }
+      },
+      {
+        "comment": "",
+        "key": "rehash %lld",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 226
+        }
+      }
+    ]
+  },
+  "version": 1
+}

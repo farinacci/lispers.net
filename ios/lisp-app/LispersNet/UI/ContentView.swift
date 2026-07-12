@@ -54,6 +54,9 @@ struct ContentView: View {
     @EnvironmentObject var tunnel: TunnelManager
     @StateObject private var keyboard = KeyboardObserver()
     @Environment(\.verticalSizeClass) private var vSizeClass
+    @State private var selectedTab = Tab.mapCache
+
+    private enum Tab: Hashable { case mapCache, logs, ping, lig, xtr }
 
     // App version string — canonical value lives in Core (AppInfo.version, bump there).
     static let version = AppInfo.version
@@ -73,6 +76,11 @@ struct ContentView: View {
                 .background(Color(.systemBackground))
         }
         .ignoresSafeArea(.container, edges: .bottom)
+        // Opened via the lispxtr:// scheme (the PING / gaapchat "Open" button) — land
+        // on the xTR tab so the user sees the xTR status straight away.
+        .onOpenURL { url in
+            if url.scheme == "lispxtr" { selectedTab = .xtr }
+        }
     }
 
     // Hide the tab bar while the keyboard is up (so it doesn't float over the
@@ -83,22 +91,27 @@ struct ContentView: View {
     }
 
     private var tabs: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             MapCacheView()
                 .toolbar(tabBarVisibility, for: .tabBar)
                 .tabItem { Label("Map-Cache", systemImage: "tablecells") }
+                .tag(Tab.mapCache)
             LogsView()
                 .toolbar(tabBarVisibility, for: .tabBar)
                 .tabItem { Label("Logs", systemImage: "doc.plaintext") }
+                .tag(Tab.logs)
             PingView()
                 .toolbar(tabBarVisibility, for: .tabBar)
                 .tabItem { Label("Ping", systemImage: "dot.radiowaves.left.and.right") }
+                .tag(Tab.ping)
             LigView()
                 .toolbar(tabBarVisibility, for: .tabBar)
                 .tabItem { Label("LIG", systemImage: "magnifyingglass") }
+                .tag(Tab.lig)
             ConfigView()
                 .toolbar(tabBarVisibility, for: .tabBar)
                 .tabItem { Label("xTR", systemImage: "gearshape") }
+                .tag(Tab.xtr)
         }
         .onAppear {
             // Resume a persisted-enabled xTR on launch. Who runs it (app vs the

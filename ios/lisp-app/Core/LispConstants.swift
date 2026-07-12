@@ -11,7 +11,7 @@ import Foundation
 // so both the app and the LispTunnel extension can stamp it into their log banners;
 // ContentView.version is an alias for the app UI.
 enum AppInfo {
-    static let version = "0.10"
+    static let version = "0.10-13"
 }
 
 enum LISP {
@@ -36,6 +36,23 @@ enum LISP {
     // so the extension forwards echo-replies to BOTH ports — 41343 for the standalone
     // PING app, 41344 for the in-app Ping tab — and each matches by its ICMP identifier.
     static let pingReplyPortApp: UInt16 = 41344
+    // Loopback port the LISP app forwards received overlay UDP (a joined multicast group's
+    // traffic, e.g. gaapchat chat) to. The gaapchat app listens here. Distinct from the
+    // PING reply ports so nothing collides.
+    static let overlayRecvPort: UInt16 = 41345
+    // The gaapchat chat UDP port (Python gaapchat app_port = 0xfafa) — the inner UDP dst
+    // port of chat data/ping/pong packets. Kept identical for Python interop.
+    static let gaapChatPort: UInt16 = 0xfafa
+
+    // IGMPv2 (RFC 2236) — an overlay app (gaapchat) sends these over the tunnel (inner
+    // dst = our EID, IP proto 2) to drive soft-state (*,G) group membership registration.
+    static let ipProtoIGMP: UInt8 = 2
+    static let igmpV1Report: UInt8 = 0x12
+    static let igmpV2Report: UInt8 = 0x16
+    static let igmpV2Leave: UInt8  = 0x17
+    // (*,G) soft-state: gaapchat re-sends a Report ~every 60s; the LISP app expires a
+    // group if no Report arrives within this window.
+    static let igmpGroupTimeout: TimeInterval = 300     // ~5 min
 
     // Control message types (high nibble of first long)
     static let typeMapRequest: UInt8 = 1
