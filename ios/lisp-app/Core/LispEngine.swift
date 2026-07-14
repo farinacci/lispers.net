@@ -115,7 +115,17 @@ final class LispEngine: ObservableObject {
     var queuedPackets: [UInt32: [Data]] = [:]                // dest v4 -> inner pkts
     var lastMapRequestSent: [UInt32: Date] = [:]             // rate limiter
     var rtrList: [LispAddress] = []
+    // Decent-NAT peer ETRs to NAT-probe (open our local NAT hole toward them so we can encap
+    // directly, bypassing the RTR). Keyed by RLOC v4. Mirrors lisp_etr_nat_probe_list
+    // (lisp-etr.py:77) — populated from resolved 240/x map-cache RLOCs that carry an @tp name.
+    var natProbeList: [UInt32: LispAddress] = [:]
     var lastInfoNonce: UInt64 = 0
+    // Per-interface data Info-Request nonce → interface name. A data Info-Reply is attributed
+    // to the interface its request EGRESSED on by matching this nonce — NOT by which socket
+    // caught the reply, because the wildcard default data socket (INADDR_ANY:41341) can steal
+    // a per-interface reply under SO_REUSEPORT, so socket-based attribution drops (or
+    // mis-assigns) an interface's translated RLOC. Rebuilt each Info-Request cycle.
+    var infoNonceIface: [UInt64: String] = [:]
     var lastEncapActivity: Date?            // drives the 500ms map-cache refresh
     // IGMP soft-state (*,G) membership requested by an overlay app (gaapchat) via IGMPv2
     // Reports injected over the tunnel (inner IP proto 2, dst = our EID). group-v4 -> last
@@ -413,7 +423,11 @@ final class LispEngine: ObservableObject {
                                             repeats: true) { [weak self] _ in
             self?.sendMapRegisters()                 // unicast EID (its own timer)
             self?.selfReportManualGroups()           // manual groups self-report IGMP → (*,G)
-            self?.expireIGMPGroups()                 // drop stale overlay-app groups
+            self?.expireIGMPGroups()                 // drop overlay groups whose app went silent
+                                                     //   past the grace window (igmpGroupTimeout)
+            self?.reregisterIGMPGroups()             // extension-owned (*,G) refresh — keeps a
+                                                     //   backgrounded app's group alive through
+                                                     //   the grace window without its IGMP reports
         }
         let probe = Timer.scheduledTimer(withTimeInterval: LISP.rlocProbeInterval,
                                          repeats: true) { [weak self] _ in
@@ -514,6 +528,7 @@ final class LispEngine: ObservableObject {
         // the dynamic (learned) entries but keep the static defaults (RTR 0/0, ::/0,
         // and the (S,G) multicast defaults).
         mapCache.clearDynamic()
+        natProbeList.removeAll()                // stop NAT-probing peer ETRs
         log.fprint(.core, "Removed decent-NAT \(LISP.decentNatEID)/" +
                    "\(LISP.decentNatMaskLen) entry and flushed learned map-cache entries " +
                    "(kept defaults)")
@@ -613,6 +628,26 @@ final class LispEngine: ObservableObject {
         // IGMP (proto 2) from an overlay app (gaapchat): parse it to drive soft-state
         // (*,G) group membership registration — do NOT encap it to the network.
         if inner[b + 9] == LISP.ipProtoIGMP {
+            // Log a parsed summary in the ITR log: report/leave, group, and the app-name the
+            // joiner appended after the 8-byte IGMP message.
+            if inner.count >= b + ihl + 8 {
+                let type = inner[b + ihl]
+                let gv4 = (UInt32(inner[b+ihl+4]) << 24) | (UInt32(inner[b+ihl+5]) << 16)
+                        | (UInt32(inner[b+ihl+6]) << 8) | UInt32(inner[b+ihl+7])
+                var g = LispAddress(v4: gv4); g.instanceID = iid; g.maskLen = 32
+                let kind: String
+                switch type {
+                case LISP.igmpV2Report, LISP.igmpV1Report: kind = "Report"
+                case LISP.igmpV2Leave:                     kind = "Leave"
+                default: kind = String(format: "type-0x%02x", type)
+                }
+                var app = "unknown"
+                if inner.count > b + ihl + 8,
+                   let s = String(data: inner.subdata(in: (b+ihl+8)..<inner.endIndex),
+                                  encoding: .utf8), !s.isEmpty { app = s }
+                // [iid]-prefix the group so the log colorizer greens it as an EID.
+                log.dprint(.itr, "IGMPv2 \(kind) for group [\(iid)]\(g.addressString) from app \"\(app)\"")
+            }
             handleOverlayIGMP(inner, ihl: ihl)
             return
         }

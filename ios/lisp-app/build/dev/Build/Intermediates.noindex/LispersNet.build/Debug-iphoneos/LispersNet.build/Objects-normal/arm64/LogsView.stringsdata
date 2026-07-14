@@ -1,5 +1,5 @@
 {
-  "source": "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/LogsView.swift",
+  "source": "/Users/dino/code/git/lispers.net/ios/lisp-app/LispersNet/UI/LogsView.swift",
   "tables": {
     "Localizable": [
       {
@@ -7,7 +7,7 @@
         "key": "Logs",
         "location": {
           "startingColumn": 34,
-          "startingLine": 109
+          "startingLine": 131
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "log",
         "location": {
           "startingColumn": 28,
-          "startingLine": 54
+          "startingLine": 67
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "lisp-core.log",
         "location": {
           "startingColumn": 30,
-          "startingLine": 55
+          "startingLine": 68
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "lisp-itr.log",
         "location": {
           "startingColumn": 30,
-          "startingLine": 56
+          "startingLine": 69
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "lisp-etr.log",
         "location": {
           "startingColumn": 30,
-          "startingLine": 57
+          "startingLine": 70
         }
       },
       {
@@ -47,15 +47,7 @@
         "key": "(no log lines — enable logging on the xTR tab)",
         "location": {
           "startingColumn": 38,
-          "startingLine": 78
-        }
-      },
-      {
-        "comment": "",
-        "key": "",
-        "location": {
-          "startingColumn": 26,
-          "startingLine": 246
+          "startingLine": 93
         }
       },
       {
@@ -63,7 +55,7 @@
         "key": "Clear",
         "location": {
           "startingColumn": 32,
-          "startingLine": 174
+          "startingLine": 196
         }
       },
       {
@@ -71,7 +63,7 @@
         "key": "Plain text (.log)",
         "location": {
           "startingColumn": 39,
-          "startingLine": 164
+          "startingLine": 186
         }
       },
       {
@@ -79,7 +71,7 @@
         "key": "Colored (.html)",
         "location": {
           "startingColumn": 46,
-          "startingLine": 170
+          "startingLine": 192
         }
       },
       {
@@ -87,7 +79,7 @@
         "key": "%lld/%lld",
         "location": {
           "startingColumn": 22,
-          "startingLine": 201
+          "startingLine": 229
         }
       },
       {
@@ -95,7 +87,15 @@
         "key": "search",
         "location": {
           "startingColumn": 23,
-          "startingLine": 189
+          "startingLine": 211
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 278
         }
       },
       {
@@ -103,7 +103,15 @@
         "key": "",
         "location": {
           "startingColumn": 24,
-          "startingLine": 280
+          "startingLine": 321
+        }
+      },
+      {
+        "comment": "",
+        "key": "packet ",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 443
         }
       }
     ]

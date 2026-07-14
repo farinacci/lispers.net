@@ -79,8 +79,7 @@ struct LogsView: View {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 2) {
                             ForEach(Array(lines.enumerated()), id: \.offset) { i, line in
-                                Self.colored(line)
-                                    .font(.system(size: 11 * zoom, design: .monospaced))
+                                LogLineView(line: line, zoom: zoom)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     // Filter mode: every visible line matches, so only
                                     // the current-step line gets the bright highlight;
@@ -313,7 +312,7 @@ struct LogsView: View {
     // (No blanket "token after ->" or "(...)" rules — those wrongly bolded
     // record-ttl/flags/nonce and "(encap)".)
     private static let boldRegex = try? NSRegularExpression(pattern:
-        #"(?<=Send )(?:en|pdp_ip|utun)\w*|(?<=Receive )(?:en|pdp_ip|utun)\w*|(?<= to )(?:en|pdp_ip|utun)\w*|(?<= from )(?:en|pdp_ip|utun)\w*|(?<=version )[\w.-]+|(?<=Decent map-server )(?=[\w.-]*[A-Za-z])[\w-]+(?:\.[\w-]+)+|Encap|Decap|RLOC-probe reply|RLOC-probe request|RLOC-probe|Map-Register|Map-Request|Map-Reply|Info-Request|Info-Reply|ECM"#)
+        #"(?<=Send )(?:en|pdp_ip|utun)\w*|(?<=Receive )(?:en|pdp_ip|utun)\w*|(?<= to )(?:en|pdp_ip|utun)\w*|(?<= from )(?:en|pdp_ip|utun)\w*|(?<=version )[\w.-]+|(?<=Decent map-server )(?=[\w.-]*[A-Za-z])[\w-]+(?:\.[\w-]+)+|Encap|Decap|RLOC-probe reply|RLOC-probe request|RLOC-probe|Map-Register|Map-Request|Map-Reply|Info-Request|Info-Reply|ECM|Report|Leave"#)
 
     // Color EID (green), rloc-name (blue), and RLOC (red) tokens within text.
     private static func tokens(_ s: String) -> Text {
@@ -420,6 +419,44 @@ struct LogsView: View {
                 of: ".log", with: ".html"))
         try? doc.data(using: .utf8)?.write(to: out)
         return out
+    }
+}
+
+// One log line. Send/Receive byte lines end with "packet: <hex>"; the hex is long
+// and noisy, so we show everything up to "packet:" plus a chevron and reveal the hex
+// only when tapped (collapsed by default). Every other line renders as before.
+private struct LogLineView: View {
+    let line: String
+    let zoom: CGFloat
+    @State private var expanded = false
+
+    var body: some View {
+        if let r = line.range(of: "packet: ") {
+            let head = String(line[..<r.lowerBound])      // "… ," before "packet:"
+            let hex = String(line[r.upperBound...])       // the byte encoding
+            VStack(alignment: .leading, spacing: 1) {
+                // The head (message + any decoded header breakdown) comes FIRST, then the
+                // "packet contents ⌄" pulldown inline at the very end — concatenated into
+                // ONE wrapping Text so on a long Encap/Decap line the disclosure lands
+                // AFTER the headers, not pinned beside the first line. Tap toggles the hex.
+                (LogsView.colored(head)
+                 + Text("packet ").foregroundColor(.primary)
+                 + Text(Image(systemName: expanded ? "chevron.up" : "chevron.down"))
+                    .foregroundColor(.primary))
+                    .font(.system(size: 11 * zoom, design: .monospaced))
+                    .contentShape(Rectangle())
+                    .onTapGesture { expanded.toggle() }
+                if expanded {
+                    Text(hex)
+                        .font(.system(size: 11 * zoom, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+            }
+        } else {
+            LogsView.colored(line)
+                .font(.system(size: 11 * zoom, design: .monospaced))
+        }
     }
 }
 

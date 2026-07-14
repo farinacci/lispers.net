@@ -30,6 +30,11 @@ struct PingSession: Identifiable, Codable {
     var startedAt: Date
     var sent: Int
     var replies: Int
+    // rtt stats over the run's replies (ms). Optional so history persisted before this
+    // field decodes fine (nil → the row just omits the rtt line).
+    var minRtt: Double? = nil
+    var avgRtt: Double? = nil
+    var maxRtt: Double? = nil
     var successPct: Int { sent == 0 ? 0 : Int((Double(replies) / Double(sent) * 100).rounded()) }
 }
 
@@ -66,6 +71,11 @@ final class PingClient: ObservableObject {
     private var sessSent = 0
     private var sessReplies = 0
     private var sessStart = Date()
+    // Running rtt stats for the current run (ms).
+    private var sessRttSum = 0.0
+    private var sessRttMin = Double.greatestFiniteMagnitude
+    private var sessRttMax = 0.0
+    private var sessRttCount = 0
 
     private var listenFD: Int32 = -1
     private var listenSource: DispatchSourceRead?
@@ -114,6 +124,7 @@ final class PingClient: ObservableObject {
         stop()                                          // finalizes any prior run
         target = dst; targetStr = LispWire.dotted(dst)
         sessSent = 0; sessReplies = 0; sessStart = Date()
+        sessRttSum = 0; sessRttMin = .greatestFiniteMagnitude; sessRttMax = 0; sessRttCount = 0
         running = true; currentTarget = targetStr
         acquireBgTask()                                 // hold the assertion for the whole
                                                         // session, so a later swipe-up gets the
@@ -211,11 +222,16 @@ final class PingClient: ObservableObject {
 
     private func finalizeSession() {
         guard sessSent > 0 else { return }
+        let avg = sessRttCount > 0 ? sessRttSum / Double(sessRttCount) : nil
         history.insert(PingSession(target: targetStr, startedAt: sessStart,
-                                   sent: sessSent, replies: sessReplies), at: 0)
+                                   sent: sessSent, replies: sessReplies,
+                                   minRtt: sessRttCount > 0 ? sessRttMin : nil,
+                                   avgRtt: avg,
+                                   maxRtt: sessRttCount > 0 ? sessRttMax : nil), at: 0)
         if history.count > 100 { history.removeLast(history.count - 100) }
         if let d = try? JSONEncoder().encode(history) { UserDefaults.standard.set(d, forKey: historyKey) }
         sessSent = 0; sessReplies = 0
+        sessRttSum = 0; sessRttMin = .greatestFiniteMagnitude; sessRttMax = 0; sessRttCount = 0
     }
 
     func clearHistory() { history.removeAll(); UserDefaults.standard.removeObject(forKey: historyKey) }
@@ -293,6 +309,8 @@ final class PingClient: ObservableObject {
         let responder = "\(data[b+12]).\(data[b+13]).\(data[b+14]).\(data[b+15])"
         let rtt = (Date().timeIntervalSince(o.sentAt) * 1000).rounded()
         sessReplies += 1
+        sessRttSum += rtt; sessRttCount += 1
+        sessRttMin = min(sessRttMin, rtt); sessRttMax = max(sessRttMax, rtt)
         if firstResponder {
             // Fill in the placeholder row for this seq.
             if let i = results.firstIndex(where: { $0.id == o.rowID }) {

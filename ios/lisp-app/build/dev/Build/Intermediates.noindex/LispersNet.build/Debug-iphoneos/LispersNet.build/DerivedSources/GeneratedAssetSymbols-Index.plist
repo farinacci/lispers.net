@@ -6,7 +6,7 @@
 	<array>
 		<dict>
 			<key>catalogPath</key>
-			<string>/Users/dino/code/git/lispers.net/ios/LispersNet/Assets.xcassets</string>
+			<string>/Users/dino/code/git/lispers.net/ios/lisp-app/LispersNet/Assets.xcassets</string>
 			<key>objcSymbol</key>
 			<string>ACColorNameAccentColor</string>
 			<key>relativePath</key>

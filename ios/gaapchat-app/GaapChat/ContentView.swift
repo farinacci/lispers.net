@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit   // UIPasteboard (tap-to-copy the group address)
 
 extension Color {
     static let gcBlue   = Color(red: 0.20, green: 0.40, blue: 0.95)
@@ -19,19 +20,21 @@ let pingPalette: [Color] = [.gcBlue, .gcGreen, .gcRed, .gcPurple]
 
 struct ContentView: View {
     // App/build version — bump on every build (like the LISP + PING apps).
-    static let version = "0.0-12"
+    static let version = "0.1"
     @State private var tab = 0
     var body: some View {
         VStack(spacing: 0) {
             HStack {
                 topTab("chat", 0)
                 Spacer()
+                Text(tab == 0 ? "gaapchat" : "gaaphash").font(.title3.bold())
+                Spacer()
                 topTab("hash", 1)
             }
             .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 6)
             Divider()
             if tab == 0 { ChatView() } else { CollideView() }
-            Text("version \(Self.version)")
+            Text("LISP gaapchat app version \(Self.version)")
                 .font(.caption2).foregroundStyle(.secondary)
                 .padding(.top, 2).padding(.bottom, 4)
         }
@@ -165,7 +168,7 @@ struct ChatView: View {
             cmdButton("quit",    ":quit",    "rectangle.portrait.and.arrow.right")
             cmdButton("help",    ":help",    "questionmark.circle")
         }
-        .padding(.vertical, 4)
+        .padding(.top, 4).padding(.bottom, 16)   // lift the buttons clear of the version line
     }
     private func cmdButton(_ label: String, _ cmd: String, _ icon: String) -> some View {
         Button { client.submit(cmd) } label: {
@@ -229,6 +232,15 @@ struct CollideView: View {
                                 .font(.caption.monospaced())
                             Spacer()
                             Text(c.address).font(mono).bold().foregroundColor(.gcGreen)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture { UIPasteboard.general.string = c.address }
+                        .contextMenu {
+                            Button {
+                                UIPasteboard.general.string = c.address
+                            } label: {
+                                Label("Copy \(c.address)", systemImage: "doc.on.doc")
+                            }
                         }
                     }
                 }

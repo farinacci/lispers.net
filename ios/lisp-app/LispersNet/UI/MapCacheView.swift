@@ -177,7 +177,7 @@ struct MapCacheEntryCard: View {
     // (an ImageRenderer can't scroll, so it must show the whole line).
     @ViewBuilder private func telemetryLine(_ r: LispRLOC) -> some View {
         let rtts = r.recentRTTs.isEmpty ? "?, ?, ?"
-            : r.recentRTTs.map { fmtSecs($0) }.joined(separator: ", ")
+            : r.recentRTTs.map { $0.map { fmtSecs($0) } ?? "?" }.joined(separator: ", ")
         let hops = r.recentHops.isEmpty ? "?/?, ?/?, ?/?" : r.recentHops.joined(separator: ", ")
         let lats = r.recentLatencies.isEmpty ? "?/?, ?/?, ?/?"
             : r.recentLatencies.joined(separator: ", ")

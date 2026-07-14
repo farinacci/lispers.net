@@ -203,7 +203,7 @@ extension LispEngine {
             case LISP.typeMapRequest:
                 if let req = LispMapRequest.decode(inner), req.rlocProbe {
                     answerEncapsulatedProbe(req, fromRTR: from, sourcePort: sourcePort,
-                                            innerTTL: innerTTL)
+                                            innerTTL: innerTTL, onInterface: onInterface)
                 }
             case LISP.typeMapReply:
                 if let reply = LispMapReply.decode(inner) {

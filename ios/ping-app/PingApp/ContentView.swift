@@ -25,7 +25,7 @@ struct ContentView: View {
     @FocusState private var focused: Bool
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
-    static let version = "0.1-30"
+    static let version = "0.2"
     private static let resultsCollapsedCount = 10
 
     private var trimmed: String { target.trimmingCharacters(in: .whitespaces) }
@@ -152,7 +152,7 @@ struct ContentView: View {
             .animation(nil, value: client.running)
             .safeAreaInset(edge: .bottom) {
                 // Opaque strip so scrolled-up content never bleeds over the version line.
-                Text("version \(Self.version)").font(.caption2).foregroundStyle(.secondary)
+                Text("LISP PING app version \(Self.version)").font(.caption2).foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity).padding(.top, 28).padding(.bottom, 6)
                     .background(Color(.systemGroupedBackground))
             }
@@ -312,13 +312,21 @@ struct ContentView: View {
     }
 
     private func historyRow(_ s: PingSession) -> some View {
-        HStack {
+        // Bottom-aligned so the middle rtt sits on the same line as the date and the
+        // replies/sent count (the second line of each side).
+        HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(s.target).font(.callout.monospaced()).foregroundStyle(Color.lispGreen)
                 Text(s.startedAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
+            if let avg = s.avgRtt {
+                // min/avg/max rtt (ms), centered on the replies/sent line.
+                Text("\(Int(s.minRtt ?? avg))/\(Int(avg))/\(Int(s.maxRtt ?? avg)) ms")
+                    .font(.caption2.monospaced()).foregroundStyle(.secondary)
+                Spacer()
+            }
             VStack(alignment: .trailing, spacing: 2) {
                 Text("\(s.successPct)%").font(.callout.bold())
                     .foregroundStyle(s.successPct >= 100 ? Color.lispGreen

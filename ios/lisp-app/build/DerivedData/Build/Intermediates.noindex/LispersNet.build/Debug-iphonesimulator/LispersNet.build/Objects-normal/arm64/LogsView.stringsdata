@@ -7,7 +7,7 @@
         "key": "Logs",
         "location": {
           "startingColumn": 34,
-          "startingLine": 132
+          "startingLine": 131
         }
       },
       {
@@ -47,15 +47,7 @@
         "key": "(no log lines — enable logging on the xTR tab)",
         "location": {
           "startingColumn": 38,
-          "startingLine": 94
-        }
-      },
-      {
-        "comment": "",
-        "key": "",
-        "location": {
-          "startingColumn": 26,
-          "startingLine": 279
+          "startingLine": 93
         }
       },
       {
@@ -63,7 +55,7 @@
         "key": "Clear",
         "location": {
           "startingColumn": 32,
-          "startingLine": 197
+          "startingLine": 196
         }
       },
       {
@@ -71,7 +63,7 @@
         "key": "Plain text (.log)",
         "location": {
           "startingColumn": 39,
-          "startingLine": 187
+          "startingLine": 186
         }
       },
       {
@@ -79,7 +71,7 @@
         "key": "Colored (.html)",
         "location": {
           "startingColumn": 46,
-          "startingLine": 193
+          "startingLine": 192
         }
       },
       {
@@ -87,7 +79,7 @@
         "key": "%lld/%lld",
         "location": {
           "startingColumn": 22,
-          "startingLine": 230
+          "startingLine": 229
         }
       },
       {
@@ -95,7 +87,15 @@
         "key": "search",
         "location": {
           "startingColumn": 23,
-          "startingLine": 212
+          "startingLine": 211
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 278
         }
       },
       {
@@ -103,7 +103,15 @@
         "key": "",
         "location": {
           "startingColumn": 24,
-          "startingLine": 322
+          "startingLine": 321
+        }
+      },
+      {
+        "comment": "",
+        "key": "packet contents ",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 443
         }
       }
     ]

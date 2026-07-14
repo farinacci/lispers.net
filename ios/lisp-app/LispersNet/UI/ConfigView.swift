@@ -129,7 +129,7 @@ struct ConfigView: View {
                                 "byte-count: \(r.byteCount), bit-rate: 0.0 mbps") + "</div>"
                         if config.rlocProbingEnabled, r.lastProbeSent != nil {
                             let rtts = r.recentRTTs.isEmpty ? "?, ?, ?"
-                                : r.recentRTTs.map { fmtSecs($0) }.joined(separator: ", ")
+                                : r.recentRTTs.map { $0.map { fmtSecs($0) } ?? "?" }.joined(separator: ", ")
                             let ihops = r.recentHops.isEmpty ? "?/?, ?/?, ?/?"
                                 : r.recentHops.joined(separator: ", ")
                             let lats = r.recentLatencies.isEmpty ? "?/?, ?/?, ?/?"
@@ -254,17 +254,29 @@ struct ConfigView: View {
                             // NAT-traversal — flip that bar on too.
                             if on { config.natTraversalEnabled = true }
                             config.save()
-                            guard engine.running else { return }
-                            on ? engine.installDecentNATEntry()
-                               : engine.removeDecentNATEntry()
+                            // Overlay mode: the extension owns the xTR and only reads
+                            // decent-NAT config at startTunnel — bounce it so the peer-
+                            // probing/240-entry actually take effect. App mode: light
+                            // install/remove of the 240 entry is enough.
+                            if tunnel.choice == .enabled {
+                                XTRCoordinator.applyRebuild(engine: engine, config: config,
+                                                            tunnel: tunnel)
+                            } else if engine.running {
+                                on ? engine.installDecentNATEntry()
+                                   : engine.removeDecentNATEntry()
+                            }
                         }))
                     Toggle("Multihoming", isOn: Binding(
                         get: { config.multihomingEnabled },
                         set: { on in
                             config.multihomingEnabled = on; config.save()
-                            // Re-create sockets and the RTR next-hops for the new
-                            // mode. Simplest: bounce the engine if it's running.
-                            if engine.running { engine.disable(); engine.enable() }
+                            // Re-create sockets and the RTR next-hops for the new mode.
+                            // Bounce whichever process runs the xTR — the EXTENSION in
+                            // overlay mode (it only re-reads config at startTunnel), else
+                            // the in-app engine. Without the extension bounce the mirrored
+                            // map-cache keeps the stale per-interface next-hops.
+                            XTRCoordinator.applyRebuild(engine: engine, config: config,
+                                                        tunnel: tunnel)
                         }))
                     // Egress-switch hysteresis: move to a better interface only when
                     // it beats the active one by at least this %. Read live by
@@ -490,7 +502,7 @@ struct ConfigView: View {
                         Image(systemName: "lock.fill").foregroundStyle(Color.lispBlue)
                         Text(g.address).font(.callout.monospaced()).foregroundStyle(Color.lispBlue)
                         Spacer()
-                        Text("\(g.source) overlay app").font(.caption2).foregroundStyle(.secondary)
+                        Text(g.source).font(.caption2).foregroundStyle(.secondary)
                     }
                     HStack {
                         Group {
@@ -504,7 +516,7 @@ struct ConfigView: View {
                         }
                         Spacer()
                         TimelineView(.periodic(from: .now, by: 1)) { ctx in
-                            Text("last IGMP report \(Self.elapsed(since: g.lastReport, now: ctx.date))")
+                            Text("last IGMP \(Self.elapsed(since: g.lastReport, now: ctx.date))")
                                 .foregroundStyle(.secondary)
                         }
                     }

@@ -1,4 +1,0 @@
-Target dependency graph (2 targets)
-Target 'LispersNet' in project 'LispersNet'
-➜ Explicit dependency on target 'LispTunnel' in project 'LispersNet'
-Target 'LispTunnel' in project 'LispersNet' (no dependencies)

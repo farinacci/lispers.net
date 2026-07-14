@@ -4,7 +4,7 @@
     "Localizable": [
       {
         "comment": "",
-        "key": "version %@",
+        "key": "LISP xTR app version %@",
         "location": {
           "startingColumn": 18,
           "startingLine": 67

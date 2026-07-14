@@ -51,6 +51,21 @@ enum XTRCoordinator {
         }
     }
 
+    // A config toggle that requires the xTR to rebuild its sockets / RTR next-hops
+    // (multihoming, decent-NAT). Restart whichever process runs it: in overlay mode the
+    // EXTENSION owns the xTR and only re-reads config at startTunnel, so bounce the tunnel;
+    // in app mode restart the in-app engine. Without this, the running xTR keeps the old
+    // per-interface next-hops and the map-cache never reflects the toggle.
+    static func applyRebuild(engine: LispEngine, config: LispConfig, tunnel: TunnelManager) {
+        guard config.lispEnabled else { return }
+        if tunnel.choice == .enabled {
+            let eid = config.eidString.isEmpty ? "240.0.0.1" : config.eidString
+            tunnel.restart(eid: eid, instanceID: config.instanceID)
+        } else if engine.running {
+            engine.disable(); engine.enable()
+        }
+    }
+
     // Attempt engine.enable() and, if the sockets didn't bind yet (running still false),
     // try again shortly — up to attemptsLeft times.
     private static func retryEnable(_ engine: LispEngine, attemptsLeft: Int, delay: Double) {

@@ -4,10 +4,26 @@
     "Localizable": [
       {
         "comment": "",
-        "key": "version %@",
+        "key": "LISP gaapchat app version %@",
         "location": {
           "startingColumn": 18,
-          "startingLine": 34
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "gaapchat",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 30
+        }
+      },
+      {
+        "comment": "",
+        "key": "gaaphash",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 30
         }
       },
       {
@@ -15,7 +31,7 @@
         "key": "group-name ",
         "location": {
           "startingColumn": 23,
-          "startingLine": 94
+          "startingLine": 97
         }
       },
       {
@@ -23,7 +39,7 @@
         "key": "  →  ",
         "location": {
           "startingColumn": 25,
-          "startingLine": 96
+          "startingLine": 99
         }
       },
       {
@@ -31,7 +47,7 @@
         "key": "as %@",
         "location": {
           "startingColumn": 22,
-          "startingLine": 91
+          "startingLine": 94
         }
       },
       {
@@ -39,7 +55,7 @@
         "key": "LISP xTR ready",
         "location": {
           "startingColumn": 41,
-          "startingLine": 83
+          "startingLine": 86
         }
       },
       {
@@ -47,7 +63,7 @@
         "key": "LISP xTR not running",
         "location": {
           "startingColumn": 60,
-          "startingLine": 83
+          "startingLine": 86
         }
       },
       {
@@ -55,7 +71,7 @@
         "key": "Open",
         "location": {
           "startingColumn": 28,
-          "startingLine": 86
+          "startingLine": 89
         }
       },
       {
@@ -63,7 +79,7 @@
         "key": "enter group-name",
         "location": {
           "startingColumn": 31,
-          "startingLine": 101
+          "startingLine": 104
         }
       },
       {
@@ -71,7 +87,7 @@
         "key": "Join",
         "location": {
           "startingColumn": 28,
-          "startingLine": 105
+          "startingLine": 108
         }
       },
       {
@@ -79,7 +95,7 @@
         "key": "enter message",
         "location": {
           "startingColumn": 39,
-          "startingLine": 149
+          "startingLine": 152
         }
       },
       {
@@ -87,7 +103,7 @@
         "key": "join a group above",
         "location": {
           "startingColumn": 57,
-          "startingLine": 149
+          "startingLine": 152
         }
       },
       {
@@ -95,7 +111,7 @@
         "key": "Hashes of group-name to group address",
         "location": {
           "startingColumn": 25,
-          "startingLine": 223
+          "startingLine": 226
         }
       },
       {
@@ -103,7 +119,7 @@
         "key": "enter group-name",
         "location": {
           "startingColumn": 27,
-          "startingLine": 217
+          "startingLine": 220
         }
       },
       {
@@ -111,7 +127,7 @@
         "key": "  %@",
         "location": {
           "startingColumn": 37,
-          "startingLine": 228
+          "startingLine": 231
         }
       },
       {
@@ -119,7 +135,7 @@
         "key": "primary",
         "location": {
           "startingColumn": 51,
-          "startingLine": 226
+          "startingLine": 229
         }
       },
       {
@@ -127,7 +143,15 @@
         "key": "rehash %lld",
         "location": {
           "startingColumn": 63,
-          "startingLine": 226
+          "startingLine": 229
+        }
+      },
+      {
+        "comment": "",
+        "key": "Copy %@",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 242
         }
       }
     ]

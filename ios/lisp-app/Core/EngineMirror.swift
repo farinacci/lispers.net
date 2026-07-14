@@ -32,7 +32,7 @@ struct EngineSnapshot: Codable {
         var byteCount: UInt64
         var lastPacket: Date?
         var lastProbeSent: Date?    // gates the rtts/hops/lats line in MapCacheView
-        var recentRTTs: [Double]
+        var recentRTTs: [Double?]
         var recentHops: [String]
         var recentLatencies: [String]
     }

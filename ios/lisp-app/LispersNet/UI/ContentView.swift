@@ -64,7 +64,7 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             tabs
-            Text("version \(Self.version)")
+            Text("LISP xTR app version \(Self.version)")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .padding(.top, 2)

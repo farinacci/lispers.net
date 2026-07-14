@@ -1,13 +1,21 @@
 //
 // IGMP.swift
 //
-// Group membership for the overlay is driven ENTIRELY by IGMPv2 (soft-state). Every
-// membership Report — whether from an overlay app (gaapchat, over the tunnel) or the LISP
-// app self-reporting its own manually-joined groups — TRIGGERS a (*,G) Map-Register. There
-// is no separate periodic multicast-register timer: the report cadence IS the register
-// cadence (gaapchat + the LISP self-report timer both re-report ~every 60s). The unicast
-// EID keeps its own Map-Register timer. A group with no Report within LISP.igmpGroupTimeout
-// is expired + de-registered; an explicit Leave de-registers immediately.
+// Group membership for the overlay is driven by IGMPv2. A membership Report — from an
+// overlay app (gaapchat, over the tunnel) or the LISP app self-reporting its own manually-
+// joined groups — ADDS/labels a group and triggers a (*,G) Map-Register. Crucially, the
+// always-on xTR OWNS the (*,G) refresh: it re-registers every joined group on its own
+// Map-Register timer (reregisterIGMPGroups), so an iOS-SUSPENDED app (which runs no timers
+// and sends no reports) doesn't lose its group just from being backgrounded.
+//
+// Membership is soft-state with a GRACE WINDOW (LISP.igmpGroupTimeout, ~3 min): a group
+// survives this long after the joining app's LAST report. That window is long enough to
+// tolerate app-switching / brief backgrounding, and short enough to auto-clean a hard-
+// killed app whose IGMP Leave never sent (iOS doesn't reliably deliver terminate to a
+// suspended app). gaapchat reports every 60s while foreground + once at the moment it
+// backgrounds, so a backgrounded group survives ~3 min then de-registers; returning to
+// foreground re-asserts it. An explicit Leave (:quit / terminate) de-registers immediately.
+// Manual LISP-app groups self-report every 60s, so they never hit the grace timeout.
 //
 // The joining app appends its name to the IGMP packet (after the 8-byte message) so the
 // xTR can label each group by who joined it — the LISP app's own self-reports carry
@@ -54,14 +62,14 @@ extension LispEngine {
         switch type {
         case LISP.igmpV2Report, LISP.igmpV1Report:
             igmpGroups[g] = Date(); igmpGroupSource[g] = source
-            log.lprint(.etr, "Receive IGMPv2 report for group \(group.addressString) " +
+            log.lprint(.etr, "Receive IGMPv2 Report for group \(group.addressString) " +
                        "from \(source) — triggering (*,G) Map-Register")
             sendGroupRegister(group: group, ttl: LISP.multicastRegisterTTL)
             refreshAppJoinedGroups(); bumpMapCache()
         case LISP.igmpV2Leave:
             if igmpGroups.removeValue(forKey: g) != nil {
                 igmpGroupSource.removeValue(forKey: g)
-                log.lprint(.etr, "Receive IGMPv2 leave for group \(group.addressString) " +
+                log.lprint(.etr, "Receive IGMPv2 Leave for group \(group.addressString) " +
                            "from \(source) — triggering (*,G) de-register")
                 sendGroupRegister(group: group, ttl: 0)
                 refreshAppJoinedGroups(); bumpMapCache()
@@ -80,7 +88,7 @@ extension LispEngine {
         for gstr in config.joinedGroups {
             guard var group = LispAddress(string: gstr, iid: iid), group.isMulticast else { continue }
             group.maskLen = 32
-            log.lprint(.etr, "Send IGMPv2 report for group \(group.addressString) " +
+            log.lprint(.etr, "Send IGMPv2 Report for group \(group.addressString) " +
                        "(\(Self.manualIGMPSource))")
             applyIGMP(group.v4, type: LISP.igmpV2Report, source: Self.manualIGMPSource)
         }
@@ -95,7 +103,10 @@ extension LispEngine {
         }
     }
 
-    // Expire IGMP soft-state groups not refreshed within the timeout. Called from the timer.
+    // Soft-state cleanup: de-register an overlay group whose joining app (gaapchat) has sent
+    // no IGMP Report within the grace window (LISP.igmpGroupTimeout). Tolerates brief app-
+    // switching / backgrounding (the window) while auto-cleaning a hard-killed app whose Leave
+    // never sent. Manual groups self-report every cycle, so they never reach this.
     func expireIGMPGroups() {
         guard !igmpGroups.isEmpty else { return }
         let now = Date()
@@ -104,8 +115,8 @@ extension LispEngine {
             let src = igmpGroupSource.removeValue(forKey: g) ?? "overlay app"
             var group = LispAddress(v4: g)
             group.instanceID = UInt32(config.instanceID); group.maskLen = 32
-            log.lprint(.etr, "IGMP soft-state expired for group \(group.addressString) " +
-                       "(\(src) gone), de-registering")
+            log.lprint(.etr, "No IGMP Report from \(src) for group \(group.addressString) in " +
+                       "\(Int(LISP.igmpGroupTimeout))s — de-registering (*,G)")
             sendGroupRegister(group: group, ttl: 0)
             refreshAppJoinedGroups(); bumpMapCache()
         }

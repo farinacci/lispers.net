@@ -1,5 +1,5 @@
 {
-  "source": "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/ConfigView.swift",
+  "source": "/Users/dino/code/git/lispers.net/ios/lisp-app/LispersNet/UI/ConfigView.swift",
   "tables": {
     "Localizable": [
       {
@@ -7,7 +7,7 @@
         "key": "lispers.net xTR",
         "location": {
           "startingColumn": 30,
-          "startingLine": 203
+          "startingLine": 398
         }
       },
       {
@@ -15,7 +15,15 @@
         "key": "Enable LISP",
         "location": {
           "startingColumn": 28,
-          "startingLine": 34
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "Overlay App VPN",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 178
         }
       },
       {
@@ -23,7 +31,7 @@
         "key": "EID:",
         "location": {
           "startingColumn": 30,
-          "startingLine": 46
+          "startingLine": 192
         }
       },
       {
@@ -31,7 +39,7 @@
         "key": "IID:",
         "location": {
           "startingColumn": 30,
-          "startingLine": 56
+          "startingLine": 202
         }
       },
       {
@@ -39,7 +47,7 @@
         "key": "240.10.0.100",
         "location": {
           "startingColumn": 35,
-          "startingLine": 47
+          "startingLine": 193
         }
       },
       {
@@ -47,7 +55,15 @@
         "key": "0",
         "location": {
           "startingColumn": 35,
-          "startingLine": 57
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hostname:",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 215
         }
       },
       {
@@ -55,7 +71,7 @@
         "key": "RLOC-probing",
         "location": {
           "startingColumn": 28,
-          "startingLine": 72
+          "startingLine": 230
         }
       },
       {
@@ -63,7 +79,7 @@
         "key": "NAT-traversal",
         "location": {
           "startingColumn": 28,
-          "startingLine": 78
+          "startingLine": 236
         }
       },
       {
@@ -71,7 +87,7 @@
         "key": "Decentralized-NAT",
         "location": {
           "startingColumn": 28,
-          "startingLine": 90
+          "startingLine": 248
         }
       },
       {
@@ -79,7 +95,15 @@
         "key": "Multihoming",
         "location": {
           "startingColumn": 28,
-          "startingLine": 103
+          "startingLine": 269
+        }
+      },
+      {
+        "comment": "",
+        "key": "Multihoming rtt threshold: %lld%%",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 287
         }
       },
       {
@@ -87,7 +111,7 @@
         "key": "Control-plane",
         "location": {
           "startingColumn": 28,
-          "startingLine": 118
+          "startingLine": 299
         }
       },
       {
@@ -95,7 +119,7 @@
         "key": "Data-plane",
         "location": {
           "startingColumn": 28,
-          "startingLine": 124
+          "startingLine": 305
         }
       },
       {
@@ -103,7 +127,7 @@
         "key": "Modulus: %lld",
         "location": {
           "startingColumn": 29,
-          "startingLine": 144
+          "startingLine": 325
         }
       },
       {
@@ -111,7 +135,7 @@
         "key": "EID registers to",
         "location": {
           "startingColumn": 40,
-          "startingLine": 156
+          "startingLine": 337
         }
       },
       {
@@ -119,7 +143,7 @@
         "key": "Suffix:",
         "location": {
           "startingColumn": 30,
-          "startingLine": 136
+          "startingLine": 317
         }
       },
       {
@@ -127,7 +151,7 @@
         "key": "suffix, e.g. ms.example.com",
         "location": {
           "startingColumn": 35,
-          "startingLine": 137
+          "startingLine": 318
         }
       },
       {
@@ -135,7 +159,7 @@
         "key": "Auth-key:",
         "location": {
           "startingColumn": 30,
-          "startingLine": 148
+          "startingLine": 329
         }
       },
       {
@@ -143,7 +167,7 @@
         "key": "authentication-key",
         "location": {
           "startingColumn": 37,
-          "startingLine": 149
+          "startingLine": 330
         }
       },
       {
@@ -151,7 +175,7 @@
         "key": "add prefix",
         "location": {
           "startingColumn": 32,
-          "startingLine": 184
+          "startingLine": 365
         }
       },
       {
@@ -159,7 +183,7 @@
         "key": "done",
         "location": {
           "startingColumn": 50,
-          "startingLine": 191
+          "startingLine": 372
         }
       },
       {
@@ -167,7 +191,31 @@
         "key": "edit/delete prefix",
         "location": {
           "startingColumn": 59,
-          "startingLine": 191
+          "startingLine": 372
+        }
+      },
+      {
+        "comment": "",
+        "key": "Image",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "HTML (config + map-cache)",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 416
+        }
+      },
+      {
+        "comment": "",
+        "key": "Copy %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 446
         }
       },
       {
@@ -175,7 +223,7 @@
         "key": "No groups joined",
         "location": {
           "startingColumn": 22,
-          "startingLine": 272
+          "startingLine": 530
         }
       },
       {
@@ -183,7 +231,7 @@
         "key": "Join group address",
         "location": {
           "startingColumn": 27,
-          "startingLine": 233
+          "startingLine": 456
         }
       },
       {
@@ -191,7 +239,15 @@
         "key": "Join",
         "location": {
           "startingColumn": 24,
-          "startingLine": 239
+          "startingLine": 462
+        }
+      },
+      {
+        "comment": "",
+        "key": "manual",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 476
         }
       },
       {
@@ -199,7 +255,7 @@
         "key": "Leave",
         "location": {
           "startingColumn": 32,
-          "startingLine": 254
+          "startingLine": 478
         }
       },
       {
@@ -207,7 +263,7 @@
         "key": "registers to ",
         "location": {
           "startingColumn": 34,
-          "startingLine": 260
+          "startingLine": 484
         }
       },
       {
@@ -215,7 +271,7 @@
         "key": "registering…",
         "location": {
           "startingColumn": 51,
-          "startingLine": 263
+          "startingLine": 487
         }
       },
       {
@@ -223,7 +279,39 @@
         "key": "register when LISP is active",
         "location": {
           "startingColumn": 70,
-          "startingLine": 263
+          "startingLine": 487
+        }
+      },
+      {
+        "comment": "",
+        "key": "registers to ",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 510
+        }
+      },
+      {
+        "comment": "",
+        "key": "registering…",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 513
+        }
+      },
+      {
+        "comment": "",
+        "key": "register when LISP is active",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 513
+        }
+      },
+      {
+        "comment": "",
+        "key": "last IGMP %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 519
         }
       },
       {
@@ -231,7 +319,7 @@
         "key": "lispers.net xTR — %@",
         "location": {
           "startingColumn": 18,
-          "startingLine": 299
+          "startingLine": 557
         }
       },
       {
@@ -239,7 +327,23 @@
         "key": "Lookup prefixes:",
         "location": {
           "startingColumn": 22,
-          "startingLine": 334
+          "startingLine": 592
+        }
+      },
+      {
+        "comment": "",
+        "key": "Multicast groups joined:",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 600
+        }
+      },
+      {
+        "comment": "",
+        "key": "Map-cache:",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 609
         }
       },
       {
@@ -247,7 +351,7 @@
         "key": "lookup-len:",
         "location": {
           "startingColumn": 18,
-          "startingLine": 373
+          "startingLine": 655
         }
       },
       {
@@ -255,7 +359,7 @@
         "key": "eid-prefix, e.g. 240.11.0.0/16",
         "location": {
           "startingColumn": 23,
-          "startingLine": 365
+          "startingLine": 647
         }
       },
       {
@@ -263,7 +367,7 @@
         "key": "?",
         "location": {
           "startingColumn": 23,
-          "startingLine": 376
+          "startingLine": 658
         }
       }
     ]

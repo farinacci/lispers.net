@@ -103,6 +103,13 @@ final class LispLog: ObservableObject {
         }
     }
 
+    // A shared "clear pending" marker. The mirroring app (which can't safely truncate a file
+    // the extension has open) drops this; the owning writer truncates on its next write, and
+    // loadTail shows empty until then. Lets the Logs-tab Clear button work in VPN-on mode.
+    private func markerURL(_ c: LogComponent) -> URL {
+        Self.logsDirectory.appendingPathComponent("lisp-\(c.rawValue).clear")
+    }
+
     private func write(line: String, to component: LogComponent) {
         // In Option B mirror mode the app does NOT own the log files — the extension does,
         // and it writes them continuously. Two processes appending via cached FileHandle
@@ -110,6 +117,10 @@ final class LispLog: ObservableObject {
         // (its in-memory ring still updates; the Logs tab shows the extension's files via
         // loadTail). Set false by startStateMirror, true by stopStateMirror.
         guard fileWritesEnabled else { return }
+        // Honor a Clear the mirroring app requested: truncate this file before appending.
+        if FileManager.default.fileExists(atPath: markerURL(component).path) {
+            applyClear(component)
+        }
         let url = Self.logsDirectory.appendingPathComponent(component.filename)
         if handles[component] == nil {
             if !FileManager.default.fileExists(atPath: url.path) {
@@ -125,12 +136,24 @@ final class LispLog: ObservableObject {
 
     func clear(_ component: LogComponent) {
         queue.async {
-            try? self.handles[component]?.close()
-            self.handles[component] = nil
-            let url = Self.logsDirectory.appendingPathComponent(component.filename)
-            try? FileManager.default.removeItem(at: url)
+            // Drop a shared "clear pending" marker so the process that OWNS the files (the
+            // extension, in VPN-on mirror mode) truncates on its next write, and so this
+            // process's loadTail shows empty until then. If WE own the files (VPN-off), clear
+            // immediately. Always blank the in-memory ring so the view empties right away.
+            FileManager.default.createFile(atPath: self.markerURL(component).path, contents: nil)
             DispatchQueue.main.async { self.lines[component] = [] }
+            if self.fileWritesEnabled { self.applyClear(component) }
         }
+    }
+
+    // Truncate a component's log — owning writer only. Removes the file (a fresh empty one is
+    // recreated on the next write) and clears the pending marker. Must run on `queue`.
+    private func applyClear(_ component: LogComponent) {
+        try? handles[component]?.close()
+        handles[component] = nil
+        try? FileManager.default.removeItem(
+            at: Self.logsDirectory.appendingPathComponent(component.filename))
+        try? FileManager.default.removeItem(at: markerURL(component))
     }
 
     // Option B mirror: load a component's in-memory ring from the tail of its on-disk
@@ -150,6 +173,12 @@ final class LispLog: ObservableObject {
     func loadTail(_ component: LogComponent, maxLines: Int = 2000) {
         let url = Self.logsDirectory.appendingPathComponent(component.filename)
         queue.async {
+            // A Clear is pending (the owning writer hasn't truncated yet): show empty rather
+            // than reloading the stale file, so the Clear button takes effect immediately.
+            if FileManager.default.fileExists(atPath: self.markerURL(component).path) {
+                DispatchQueue.main.async { self.lines[component] = [] }
+                return
+            }
             guard let s = try? String(contentsOf: url, encoding: .utf8) else { return }
             let all = s.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
             let tail = Array(all.suffix(maxLines))

@@ -284,14 +284,6 @@
       },
       {
         "comment": "",
-        "key": "%@ overlay app",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 493
-        }
-      },
-      {
-        "comment": "",
         "key": "registers to ",
         "location": {
           "startingColumn": 38,
@@ -316,7 +308,7 @@
       },
       {
         "comment": "",
-        "key": "last IGMP report %@",
+        "key": "last IGMP %@",
         "location": {
           "startingColumn": 34,
           "startingLine": 507

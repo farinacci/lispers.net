@@ -95,6 +95,26 @@ final class TunnelManager: ObservableObject {
 
     func stop() { manager?.connection.stopVPNTunnel() }
 
+    // Bounce the tunnel so the extension re-reads the App-Group config at its next
+    // startTunnel (it loads LispConfig ONLY there). Used when a config toggle
+    // (multihoming, decent-NAT) must rebuild the extension's xTR — otherwise the
+    // running extension keeps the old sockets/next-hops and the mirrored map-cache
+    // never reflects the change. Waits for full teardown before restarting so
+    // startTunnel doesn't race a still-disconnecting session.
+    func restart(eid: String, instanceID: Int) {
+        guard choice == .enabled else { return }
+        stop()
+        func bringUp(_ attemptsLeft: Int) {
+            guard attemptsLeft > 0 else { return }
+            if status == .disconnected || status == .invalid {
+                Task { await self.start(eid: eid, instanceID: instanceID) }
+            } else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { bringUp(attemptsLeft - 1) }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { bringUp(12) }
+    }
+
     // User opted IN (via the launch prompt or the xTR-tab toggle): remember it and start.
     // This is the only path that triggers the one-time "Allow VPN" prompt.
     func enableOverlay(eid: String, instanceID: Int) async {

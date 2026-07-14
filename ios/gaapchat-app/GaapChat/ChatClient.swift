@@ -95,7 +95,7 @@ final class ChatClient: ObservableObject {
         reportTimer?.invalidate(); reportTimer = nil
         if group != 0 {
             GaapWire.sendIGMP(type: GaapWire.igmpLeave, group: group)
-            info("Send IGMPv2 leave for group \(groupAddress)")
+            info("Send IGMPv2 Leave for group \(groupAddress)")
         }
         joined = false
     }
@@ -103,7 +103,7 @@ final class ChatClient: ObservableObject {
     private func sendReport(announce: Bool = false) {
         guard joined, group != 0 else { return }
         GaapWire.sendIGMP(type: GaapWire.igmpReport, group: group)
-        if announce { info("Send IGMPv2 report for group \(groupAddress)") }
+        if announce { info("Send IGMPv2 Report for group \(groupAddress)") }
     }
 
     // MARK: send

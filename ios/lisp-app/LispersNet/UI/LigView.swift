@@ -190,8 +190,9 @@ struct LigView: View {
             if let n = name { t = t + Text(n).font(mono).foregroundColor(.lispBlue) }
             return t + Text(after).font(mono)
         case .rle(let m):
-            // one member per line: "        rle: <ip> <name>" — ip red, name blue.
-            var t = Text("        rle: ").font(mono)
+            // one member per line: "    rle: <ip> <name>" — indented 2 from the RLOC column
+            // (RLOC starts at 2 spaces, so rle sits at 4); ip red, name blue.
+            var t = Text("    rle: ").font(mono)
                   + Text(m.rloc).font(mono).foregroundColor(.lispRed)
             if let n = m.name { t = t + Text(" \(n)").font(mono).foregroundColor(.lispBlue) }
             return t

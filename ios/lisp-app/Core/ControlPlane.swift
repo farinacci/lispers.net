@@ -123,6 +123,11 @@ extension LispEngine {
         // (outbound egress is chosen separately by best-rtt). Else the single
         // translated RLOC (@tp is the RTR-reported DATA port, engine.advertisedPort
         // — the port the RTRs use to forward/probe us, matching lisp.py's @tp parse).
+        // Multi-homing registers EACH interface as its own RLOC-record: its own translated
+        // ADDRESS + its own "@tp-<port>". No per-interface hostname is needed — the remote
+        // end distinguishes interfaces by RLOC ADDRESS (lisp_get_nat_info matches on
+        // nat_info.address, lisp.py:17173), so a shared "xtr" hostname is fine; the port
+        // here is THIS interface's translated @tp (from ifaceTranslated), not a shared one.
         let locals: [(rloc: LispAddress, port: UInt16)]
         if behindNAT && config.multihomingEnabled && !ifaceTranslated.isEmpty {
             locals = ifaceTranslated.values
@@ -361,55 +366,123 @@ extension LispEngine {
         return (ms.dnsNameOrAddress, addr)
     }
 
+    // The NAT-traversed interfaces to egress Info-Requests out of (multi-homing);
+    // single-homed = the default sockets. Shared by sendInfoRequests and the
+    // triggered decent-NAT peer probe so both fan out identically.
+    private func natTraversedIfaces() -> [(ifn: String?, ctrl: UDPSocket?, data: UDPSocket?)] {
+        (config.multihomingEnabled && !ifaceDataSockets.isEmpty)
+            ? ifaceDataSockets.keys.map { ($0, ifaceCtrlSockets[$0], ifaceDataSockets[$0]) }
+            : [(nil, ctrlSocket, dataSocket)]
+    }
+
+    // Send a bare data-port (4341) Info-Request to one destination out EACH NAT interface —
+    // the same NAT-punch as the RTR probes (section 3), aimed at a peer ETR. No reply expected.
+    func sendNATProbe(to dest: LispAddress, reason: String) {
+        guard running else { return }
+        var header = LispDataHeader(); header.setInstanceID(LISP.infoIID)
+        for (ifn, _, dataSock) in natTraversedIfaces() {
+            let via = ifn.map { " via \($0)" } ?? ""
+            var di = LispInfo(); di.nonce = lispGetControlNonce(); di.hostname = xtrName
+            log.lprint(.etr, "Send NAT-Probe to ETR \(dest.addressString), port " +
+                       "\(LISP.dataPort) (\(reason))\(via)")
+            loggedSend(header.encode() + di.encodeRequest(), to: dest,
+                       port: LISP.dataPort, on: dataSock, .etr)
+        }
+    }
+
     func sendInfoRequests() {
         guard running, config.eid != nil else { return }
 
-        var info = LispInfo()
-        info.nonce = lispGetControlNonce()
-        info.hostname = xtrName
-        lastInfoNonce = info.nonce
-        let packet = info.encodeRequest()
+        guard let (msName, msAddr) = randomInfoMapServer() else { return }
 
-        // ONE control-plane Info-Request, to a randomly-chosen map-server. Its reply
-        // is the only one that carries the RTR-list (RTRs answer with an empty list)
-        // and it also gives our control-port NAT translation. No need to ask all of
-        // them — rotating one-per-interval both cuts traffic and surfaces
-        // inconsistent RTR-lists across the map-server set.
-        if let (msName, msAddr) = randomInfoMapServer() {
+        let ifaces = natTraversedIfaces()
+
+        infoNonceIface.removeAll()
+
+        // (1) Control Info-Request (4342) to ONE map-server, out EACH interface. Each reply
+        // carries THIS interface's translated RLOC (global-rloc) — which is what we register —
+        // plus the RTR-list + control-port translation. Nonce → interface so each reply's
+        // translated RLOC is registered for the interface it egressed on.
+        for (ifn, ctrlSock, _) in ifaces {
+            var ci = LispInfo(); ci.nonce = lispGetControlNonce(); ci.hostname = xtrName
+            lastInfoNonce = ci.nonce
+            if let ifn = ifn { infoNonceIface[ci.nonce] = ifn }
+            let via = ifn.map { " via \($0)" } ?? ""
             log.lprint(.etr, "Send Info-Request to map-server \(msName) " +
-                       "\(msAddr.addressString), port \(LISP.ctrlPort) (for control, RTR-list)")
-            loggedSend(packet, to: msAddr, port: LISP.ctrlPort, on: ctrlSocket, .etr)
+                       "\(msAddr.addressString), port \(LISP.ctrlPort) (for control, RTR-list)" +
+                       "\(via), nonce 0x\(String(ci.nonce, radix: 16))")
+            loggedSend(ci.encodeRequest(), to: msAddr, port: LISP.ctrlPort, on: ctrlSock, .etr)
         }
 
-        // Data-plane Info-Request to EACH RTR, per outgoing interface — data-encapsulated
-        // to the RTR's DATA port 4341 ONLY. This opens/refreshes this interface's NAT data
-        // binding (so the RTR can encap to us through the NAT) AND the RTR replies with our
-        // translated data RLOC:port, which we register as "@tp-<port>". We do NOT also
-        // Info-Request the RTR on its control port 4342 — that exchange is unnecessary; the
-        // control-port translation we need for ECM Map-Requests comes from the map-server's
-        // reply above, not the RTR.
-        var header = LispDataHeader()
-        header.setInstanceID(LISP.infoIID)
-        let dataWrapped = header.encode() + packet
+        // (2) Info-Request to the MAP-SERVER on the CONTROL port (4342) but egressed the DATA
+        // socket — this is the one we want a REPLY to: it teaches us our translated DATA @tp so we
+        // can register @tp-<real port> (decent-NAT direct path — an ITR encaps straight to our
+        // public addr:@tp). This mirrors lisp.py exactly: the ETR sends every Info-Request from ONE
+        // socket (lisp_ephem_socket), the same socket that receives encapsulated data, so the
+        // map-server's echoed etr_port IS that socket's NAT translation. The map-server only answers
+        // on 4342 (it has no data-plane on 4341), so the DEST is 4342; the LOCAL SOURCE port is what
+        // determines the @tp, and here it's the data socket's — the same local port the RTR requests
+        // below and inbound data use. BARE Info-Request (control message, no data header). Nonce →
+        // interface so processInfoReply(fromDataPort:) records THIS interface's @tp.
+        for (ifn, _, dataSock) in ifaces {
+            var di = LispInfo(); di.nonce = lispGetControlNonce(); di.hostname = xtrName
+            if let ifn = ifn { infoNonceIface[di.nonce] = ifn }
+            let via = ifn.map { " via \($0)" } ?? ""
+            log.lprint(.etr, "Send Info-Request to map-server \(msName) " +
+                       "\(msAddr.addressString), port \(LISP.ctrlPort) from data socket " +
+                       "(for translated @tp)\(via), nonce 0x\(String(di.nonce, radix: 16))")
+            loggedSend(di.encodeRequest(), to: msAddr, port: LISP.ctrlPort, on: dataSock, .etr)
+        }
+        var header = LispDataHeader(); header.setInstanceID(LISP.infoIID)
 
-        // ONE Info-Request per RTR, sent out EACH outgoing interface. Multi-homing: out
-        // every interface's own socket — each reply sets the primary translated DATA port
-        // AND that interface's ifaceTranslated[iface] (which we register). Single-homed:
-        // out the default data socket. Previously we ALSO sent a redundant copy out the
-        // default socket when multi-homing, so the active interface — served by both — got
-        // the Info-Request TWICE per RTR. Now it's exactly one send per (RTR, interface):
-        // for 2 RTRs × 2 interfaces that's 4 data sends (+ the 1 control send above = 5).
-        let infoSockets: [UDPSocket?] =
-            (config.multihomingEnabled && !ifaceDataSockets.isEmpty)
-            ? Array(ifaceDataSockets.values)
-            : [dataSocket]
-        for rtr in rtrList {
-            log.lprint(.etr, "Send Info-Request to RTR \(rtr.addressString), " +
-                       "port \(LISP.dataPort) (for data)")
-            for sock in infoSockets {
-                loggedSend(dataWrapped, to: rtr, port: LISP.dataPort, on: sock, .etr)
+        // (3) Data Info-Request (4341) to EACH RTR, out EACH interface — ONE-WAY NAT-punch so each
+        // RTR caches this interface's translated DATA port in its lisp-nat-info table (it uses that
+        // for forwarding; the RTR ignores @tp in the name). No reply expected. Bare like lisp.py.
+        for (ifn, _, dataSock) in ifaces {
+            let via = ifn.map { " via \($0)" } ?? ""
+            for rtr in rtrList {
+                var di = LispInfo(); di.nonce = lispGetControlNonce(); di.hostname = xtrName
+                log.lprint(.etr, "Send Info-Request to RTR \(rtr.addressString), " +
+                           "port \(LISP.dataPort) (for data, NAT-punch — no reply expected)\(via)")
+                loggedSend(header.encode() + di.encodeRequest(), to: rtr,
+                           port: LISP.dataPort, on: dataSock, .etr)
             }
         }
+
+        // (4) DECENT-NAT: NAT-probe each resolved peer ETR (lisp_etr_nat_probe_list) on 4341,
+        // out each interface — opens our local NAT hole toward the peer so we can encap directly
+        // (bypassing the RTR). Only when decent-NAT is on; the list is fed from 240/x map-cache
+        // RLOCs that carry an @tp name (processMapReply). Same NAT-punch as the RTR probes above.
+        if config.decentNATEnabled {
+            for peer in natProbeList.values {
+                sendNATProbe(to: peer, reason: "decent-NAT peer, periodic")
+            }
+        }
+    }
+
+    // A decent-NAT prober (an RTR or a peer ETR, per lisp_etr_nat_probe_list) NAT-probes us with
+    // an Info-REQUEST to keep our NAT binding open and confirm reachability. We MUST answer with
+    // an Info-Reply echoing the prober's translated addr:port — an unanswered probe flips our
+    // registered RLOC to unreach-state. Mirrors lisp_process_info_request (lisp.py:16512).
+    func processInfoRequest(_ info: LispInfo, from source: LispAddress,
+                            sourcePort: UInt16, fromDataPort: Bool,
+                            onInterface: String? = nil) {
+        guard running else { return }
+        // sport == 0 is a pure NAT-pierce (a remote ITR opening the hole) — no reply needed.
+        guard sourcePort != 0 else {
+            log.lprint(.etr, "Receive Info-Request (NAT-pierce) from " +
+                       "\(source.addressString) — hole punched, no reply")
+            return
+        }
+        var reply = LispInfo()
+        reply.nonce = info.nonce
+        reply.globalETRRLOC = source        // echo the prober's translated address
+        reply.etrPort = sourcePort          // echo the prober's translated port
+        let packet = reply.encodeReply(echoHostname: info.hostname)
+        let sock = fromDataPort ? dataSock(for: onInterface) : ctrlSock(for: onInterface)
+        log.lprint(.etr, "Receive Info-Request from \(source.addressString) \(sourcePort) " +
+                   "(\(fromDataPort ? "data" : "control")) — sending Info-Reply (NAT-probe answer)")
+        loggedSend(packet, to: source, port: sourcePort, on: sock, .etr)
     }
 
     func processInfoReply(_ info: LispInfo, from source: LispAddress,
@@ -451,40 +524,52 @@ extension LispEngine {
 
         let natted = !global.isNull && global != myRLOC.address
         DispatchQueue.main.async {
+            // The interface this reply belongs to — by the NONCE of the request that egressed
+            // it (infoNonceIface), NOT the socket that caught it (SO_REUSEPORT can misdeliver).
+            // The globally-advertised translation reflects the PRIMARY interface (or single-
+            // homed); each other interface keeps its own translation in ifaceTranslated.
+            // The interface this reply is for — by the NONCE of the control Info-Request that
+            // egressed it (infoNonceIface), not the socket that caught it (SO_REUSEPORT can
+            // misdeliver). The globally-advertised translation reflects the PRIMARY interface
+            // (single-homed uses it directly); each other interface keeps its own translated
+            // RLOC in ifaceTranslated for its own registered RLOC-record.
+            let replyIface = self.infoNonceIface[info.nonce] ?? onInterface
+            let isPrimary = (replyIface == nil || replyIface == self.rloc?.interfaceName)
             self.behindNAT = natted
             if natted {
-                self.translatedRLOC = global
-                // Learn the translated DATA port from the data-socket Info-Reply,
-                // exactly like lisp_process_info_reply()'s store=True path — no
-                // special-casing by responder or mode. The control-socket reply
-                // (fromDataPort == false) carries the control-port translation and
-                // is not used for @tp.
-                // Learn the translated DATA port from an RTR's data-socket Info-Reply
-                // ONLY. The map-server's reply carries its own path's translation
-                // (e.g. 41341) which the RTRs don't use for forwarding/probing, so it
-                // must not set the port we advertise.
-                // The control-socket reply (the map-server's Info-Reply on :4342) carries
-                // the ctrlSocket's public NAT port — needed as the ECM Map-Request's
-                // inner UDP source port so the map-server's proxy Map-Reply routes
-                // back through the NAT (see translatedCtrlPort). RTRs aren't Info-Requested
-                // on 4342 anymore, so this only comes from the map-server now.
-                if !fromDataPort {
-                    self.translatedCtrlPort = info.etrPort
-                }
-                if fromDataPort && isRTR {
-                    if self.translatedPort != info.etrPort {
-                        self.log.fprint(.etr, "Translated DATA port \(info.etrPort) " +
-                            "from RTR \(source.addressString) (was \(self.translatedPort))")
+                if fromDataPort {
+                    // DATA-port Info-Reply (map-server) → our translated DATA @tp for THIS
+                    // interface. Register @tp-<this real port> so an ITR can encap directly to us
+                    // (decent-NAT direct path). Keep the interface's translated ADDRESS (learned
+                    // from its control reply); set the port.
+                    if isPrimary { self.translatedPort = info.etrPort }
+                    if let ifn = replyIface {
+                        let addr = self.ifaceTranslated[ifn]?.rloc ?? global
+                        if self.ifaceTranslated[ifn]?.port != info.etrPort {
+                            self.log.fprint(.etr, "Interface \(ifn) translated @tp port " +
+                                "\(info.etrPort) (nonce 0x\(String(info.nonce, radix: 16)))")
+                        }
+                        self.ifaceTranslated[ifn] = (addr, info.etrPort)
                     }
-                    self.translatedPort = info.etrPort
-                    // Multi-homing: remember THIS interface's public RLOC:port so
-                    // we can register both interfaces (a remote ITR can decap to us
-                    // on either). The reply arrived on that interface's socket.
-                    if let ifn = onInterface {
-                        self.ifaceTranslated[ifn] = (global, info.etrPort)
+                } else {
+                    // CONTROL-port Info-Reply (map-server) → this interface's translated RLOC
+                    // ADDRESS (global) + control-port translation (for ECM Map-Requests). Keep any
+                    // @tp port already learned from the data reply; default to natDataPort until it
+                    // arrives (the RTR relay works meanwhile).
+                    if isPrimary {
+                        self.translatedRLOC = global
+                        self.translatedCtrlPort = info.etrPort
+                    }
+                    if let ifn = replyIface {
+                        let port = self.ifaceTranslated[ifn]?.port ?? LISP.natDataPort
+                        if self.ifaceTranslated[ifn]?.rloc != global {
+                            self.log.fprint(.etr, "Interface \(ifn) translated RLOC " +
+                                "\(global.addressString) (nonce 0x\(String(info.nonce, radix: 16)))")
+                        }
+                        self.ifaceTranslated[ifn] = (global, port)
                     }
                 }
-            } else {
+            } else if isPrimary {
                 self.translatedRLOC = nil
                 self.translatedPort = 0
                 self.translatedCtrlPort = 0
@@ -640,6 +725,11 @@ extension LispEngine {
                 let sentAt = Date()
                 for e2 in snapshot {
                     for s in e2.rlocSet where probeKey(s) == probeKey(r) {
+                        // Reserve a "?" slot for THIS probe. A matching reply fills it
+                        // (processProbeReply); if none comes it stays "?". The slot count
+                        // shows how many probes have gone out — [?] after one, [?, ?] after
+                        // two, [?, ?, ?] after three.
+                        s.probeSent()
                         s.lastProbeNonce = probe.nonce
                         s.lastProbeSent = sentAt
                         // Begin the unanswered run on the first send after a
@@ -666,14 +756,22 @@ extension LispEngine {
                 // Multi-homing: send out this next-hop's interface socket. The
                 // egress interface shows on the "Send <if> N bytes" byte line the
                 // loggedSend below emits, not here. Single-homed: default socket.
-                if behindNAT, rtrList.contains(where: { $0.v4 == r.rloc.v4 }) {
+                // DATA-ENCAPSULATE the probe to any NAT'd peer we reach via encap: an RTR
+                // (encapPort 4341) OR a decent-NAT peer (encapPort = its translated @tp).
+                // A NAT'd peer's data plane only processes LISP-encapsulated packets on its
+                // data port, so a RAW control-port probe to it is dropped — it never replies
+                // and the RLOC wrongly shows unreach even while our data flows to it. Send to
+                // the peer's encapPort (4341 for an RTR, the @tp for a decent peer), the same
+                // port our data traffic uses. The reply returns data-encap on our data socket.
+                if behindNAT, rtrList.contains(where: { $0.v4 == r.rloc.v4 })
+                              || r.encapPort != LISP.dataPort {
                     let encap = encapForRTR(control: packet, src: srcAddr, dst: r.rloc)
                     log.pprint(.itr, "Send RLOC-probe request to " +
-                               "\(r.rloc.addressString):\(LISP.dataPort), for EID " +
+                               "\(r.rloc.addressString):\(r.encapPort) (encap), for EID " +
                                "\(entry.eid.prefixString)\(tel), nonce 0x" +
                                String(probe.nonce, radix: 16))
                     logMapRequest(.itr, probe)
-                    loggedSend(encap, to: r.rloc, port: LISP.dataPort,
+                    loggedSend(encap, to: r.rloc, port: r.encapPort,
                                on: dataSock(for: r.interfaceName), .itr)
                 } else {
                     // Not NAT'd (or a direct xTR RLOC): raw probe to the control
@@ -715,7 +813,8 @@ extension LispEngine {
         guard !hops.isEmpty else { return }
         let addr = hops[0].rloc.addressString
 
-        func rtt(_ r: LispRLOC) -> Double? { r.isUp ? r.recentRTTs.first : nil }
+        // Newest ACTUAL rtt (skip "?" lost-probe slots) for the best-next-hop choice.
+        func rtt(_ r: LispRLOC) -> Double? { r.isUp ? r.recentRTTs.compactMap { $0 }.first : nil }
         func isCellular(_ r: LispRLOC) -> Bool {
             r.interfaceName?.hasPrefix("pdp_ip") ?? false
         }
@@ -823,6 +922,17 @@ extension LispEngine {
             }
         }
         if matched { recomputeActiveNextHops(); bumpMapCache() }
+        else {
+            // A probe reply DID arrive but no map-cache RLOC is waiting on this nonce.
+            // Splits "reply never comes back" (a path/NAT problem — no log at all) from
+            // "reply arrives but we can't match it" (a nonce/rebuild bug) — the two need
+            // opposite fixes. Include the outstanding nonces so a mismatch is obvious.
+            let outstanding = mapCache.snapshot().flatMap { $0.rlocSet }
+                .compactMap { $0.lastProbeNonce }.map { "0x\(String($0, radix: 16))" }
+            log.pprint(.itr, "Receive RLOC-probe reply from \(from.addressString) " +
+                       "nonce 0x\(String(reply.nonce, radix: 16)) — NO MATCH (outstanding: " +
+                       "\(outstanding.isEmpty ? "none" : outstanding.joined(separator: ", ")))")
+        }
     }
 
     // Answer RLOC-probes aimed at us so peers' telemetry works
@@ -835,7 +945,7 @@ extension LispEngine {
             return
         }
         let etrIn = Telemetry.timestamp()
-        log.lprint(.itr, "Receive RLOC-probe from \(from.addressString), " +
+        log.lprint(.itr, "Receive RLOC-probe request from \(from.addressString), " +
                    "nonce 0x\(String(req.nonce, radix: 16))")
         logMapRequest(.itr, req)
 
@@ -867,7 +977,7 @@ extension LispEngine {
         reply.hopCount = receivedTTL >= 0 ? UInt8(clamping: receivedTTL) : 0
         reply.records = [(eidRec, records)]
         let packet = reply.encode()
-        log.lprint(.itr, "Send RLOC-probe Map-Reply to \(from.addressString):\(sourcePort)")
+        log.lprint(.itr, "Send RLOC-probe reply to \(from.addressString):\(sourcePort)")
         logMapReply(.itr, reply)
         loggedSend(packet, to: from, port: sourcePort, on: ctrlSocket, .itr)
     }
@@ -877,10 +987,19 @@ extension LispEngine {
     // lisp_encap_rloc_probe (lisp.py:7555/19092). Without this the RTR marks our
     // RLOC unreach-state.
     func answerEncapsulatedProbe(_ req: LispMapRequest, fromRTR rtr: LispAddress,
-                                 sourcePort: UInt16, innerTTL: Int) {
+                                 sourcePort: UInt16, innerTTL: Int,
+                                 onInterface: String? = nil) {
         guard let eid = config.eid, let myRLOC = rloc else { return }
+        // Reply as the interface the probe ARRIVED on (multi-homing): the RTR probed a
+        // specific translated RLOC:port, so the answer must carry that same RLOC/@tp AND
+        // egress that same interface's socket — otherwise the RTR sees the reply from a
+        // different translation (the default socket egresses the OS default route, e.g.
+        // Wi-Fi) and leaves the probed RLOC unreach.
+        let ifTrans = onInterface.flatMap { ifaceTranslated[$0] }
+        let probeData = onInterface.flatMap { ifaceDataSockets[$0] } ?? dataSocket
+        let probeCtrl = onInterface.flatMap { ifaceCtrlSockets[$0] } ?? ctrlSocket
         let etrIn = Telemetry.timestamp()
-        log.pprint(.itr, "Receive RLOC-probe (encap) from \(rtr.addressString):\(sourcePort), " +
+        log.pprint(.itr, "Receive RLOC-probe request (encap) from \(rtr.addressString):\(sourcePort), " +
                    "nonce 0x\(String(req.nonce, radix: 16)) — replying to source")
 
         var eidRec = LispEIDRecord()
@@ -888,7 +1007,7 @@ extension LispEngine {
         eidRec.eid = eid
 
         var rlocRec = LispRLOCRecord()
-        rlocRec.rloc = behindNAT ? (translatedRLOC ?? myRLOC.address) : myRLOC.address
+        rlocRec.rloc = behindNAT ? (ifTrans?.rloc ?? translatedRLOC ?? myRLOC.address) : myRLOC.address
         rlocRec.priority = 1
         rlocRec.weight = 100
         rlocRec.localBit = true
@@ -898,7 +1017,8 @@ extension LispEngine {
         // RTR-reported translated DATA port, so lisp.py's probe-reply matching
         // (lisp.py:18367) lands on the port the RTR uses, not the map-server's.
         if behindNAT {
-            rlocRec.rlocName = "\(xtrName)\(LISP.tpPrefix)\(advertisedPort)"
+            let port = ifTrans?.port ?? advertisedPort
+            rlocRec.rlocName = "\(xtrName)\(LISP.tpPrefix)\(port)"
         }
 
         var records: [LispRLOCRecord] = [rlocRec]
@@ -922,10 +1042,42 @@ extension LispEngine {
         // which is why lhr stayed unreach while the RTR went up.
         if rtrList.contains(where: { $0.v4 == rtr.v4 }) {
             let encap = encapForRTR(control: reply.encode(), src: myRLOC.address, dst: rtr)
-            loggedSend(encap, to: rtr, port: sourcePort, on: dataSocket, .itr)
+            loggedSend(encap, to: rtr, port: sourcePort, on: probeData, .itr)
+            // The RTR does NOT answer our RLOC-probes with a Map-Reply — it PROBES US
+            // instead (lisp_rtr_process_map_request), and our reply here is what keeps us
+            // up on ITS side. So RECEIVING the RTR's probe is our liveness signal for it:
+            // mark the RTR's map-cache RLOC(s) reachable and clear the outstanding-probe
+            // timer, so our own (never-answered) probes don't flip it to unreach. If the
+            // RTR dies it stops probing us, probeOutstandingSince stays set, and the
+            // existing unreach timer (sendRLOCProbes) demotes it after rlocProbeReplyWait.
+            markRTRReachableFromInboundProbe(rtr)
         } else {
-            loggedSend(reply.encode(), to: rtr, port: sourcePort, on: ctrlSocket, .itr)
+            loggedSend(reply.encode(), to: rtr, port: sourcePort, on: probeCtrl, .itr)
         }
+    }
+
+    // Mark every map-cache RLOC that IS this RTR reachable (it just probed us). Runs on
+    // the socket queue like processProbeReply, which mutates RLOC state the same way.
+    private func markRTRReachableFromInboundProbe(_ rtr: LispAddress) {
+        let now = Date()
+        var changed = false
+        for entry in mapCache.snapshot() {
+            for r in entry.rlocSet where r.rloc.v4 == rtr.v4 {
+                r.probeOutstandingSince = nil       // its probe cancels our unreach countdown
+                // NOTE: do NOT set lastProbeReply here — that field means "a reply to OUR
+                // probe arrived" and gates the lost-probe "?" in sendRLOCProbes. Receiving
+                // the RTR's probe proves liveness (up-state) but our own probe may still be
+                // unanswered, which must still record a "?". Clearing the unreach countdown
+                // above is enough to keep it up.
+                if !r.isUp {
+                    r.state = "up-state"; r.stateChange = now
+                    log.pprint(.itr, "RLOC \(rtr.addressString) reachable (received its RLOC-probe)")
+                    changed = true
+                }
+            }
+        }
+        if changed { recomputeActiveNextHops() }
+        bumpMapCache()
     }
 
     // Data-encapsulate a control message to an RTR: data header (IID 0xffffff) +
@@ -988,6 +1140,16 @@ extension LispEngine {
                 if let name = rr.rlocName, let tp = name.range(of: LISP.tpPrefix),
                    let port = UInt16(name[tp.upperBound...]) {
                     r.encapPort = port
+                    // Decent-NAT: this peer ETR is behind a NAT (carries an @tp name). NAT-probe
+                    // it so our local NAT opens a hole toward it and it caches our translated port
+                    // — enabling direct ETR↔ETR encap (bypassing the RTR). Trigger an immediate
+                    // probe the first time we see it (low join latency); thereafter it rides the
+                    // periodic Info-Request timer (sendInfoRequests section 4). Mirrors lisp-etr.py
+                    // lisp_etr_nat_probe (1885): add to list + trigger on first appearance.
+                    if config.decentNATEnabled, natProbeList[rr.rloc.v4] == nil {
+                        natProbeList[rr.rloc.v4] = rr.rloc
+                        sendNATProbe(to: rr.rloc, reason: "decent-NAT peer, triggered")
+                    }
                 }
                 entry.rlocSet.append(r)
             }

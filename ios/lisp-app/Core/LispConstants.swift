@@ -11,7 +11,7 @@ import Foundation
 // so both the app and the LispTunnel extension can stamp it into their log banners;
 // ContentView.version is an alias for the app UI.
 enum AppInfo {
-    static let version = "0.10-13"
+    static let version = "0.11"
 }
 
 enum LISP {
@@ -50,9 +50,12 @@ enum LISP {
     static let igmpV1Report: UInt8 = 0x12
     static let igmpV2Report: UInt8 = 0x16
     static let igmpV2Leave: UInt8  = 0x17
-    // (*,G) soft-state: gaapchat re-sends a Report ~every 60s; the LISP app expires a
-    // group if no Report arrives within this window.
-    static let igmpGroupTimeout: TimeInterval = 300     // ~5 min
+    // (*,G) soft-state GRACE WINDOW: an overlay group survives this long after the joining
+    // app's last IGMP Report. Long enough to tolerate app-switching / brief backgrounding
+    // (the always-on xTR refreshes the (*,G) meanwhile), short enough to auto-clean a hard-
+    // killed app whose Leave never sent. gaapchat reports every 60s foreground + once at
+    // background, so a backgrounded group survives ~3 min then de-registers.
+    static let igmpGroupTimeout: TimeInterval = 180     // 3 min
 
     // Control message types (high nibble of first long)
     static let typeMapRequest: UInt8 = 1

@@ -1,5 +1,5 @@
 {
-  "source": "/Users/dino/code/git/lispers.net/ios/LispersNet/UI/LigView.swift",
+  "source": "/Users/dino/code/git/lispers.net/ios/lisp-app/LispersNet/UI/LigView.swift",
   "tables": {
     "Localizable": [
       {
@@ -124,10 +124,10 @@
       },
       {
         "comment": "",
-        "key": "        rle: ",
+        "key": "    rle: ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 194
+          "startingLine": 195
         }
       },
       {
@@ -135,7 +135,7 @@
         "key": " %@",
         "location": {
           "startingColumn": 46,
-          "startingLine": 196
+          "startingLine": 197
         }
       },
       {

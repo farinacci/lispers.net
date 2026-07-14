@@ -4,10 +4,10 @@
     "Localizable": [
       {
         "comment": "",
-        "key": "version %@",
+        "key": "LISP xTR app version %@",
         "location": {
           "startingColumn": 18,
-          "startingLine": 64
+          "startingLine": 67
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "Map-Cache",
         "location": {
           "startingColumn": 34,
-          "startingLine": 89
+          "startingLine": 97
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "Logs",
         "location": {
           "startingColumn": 34,
-          "startingLine": 92
+          "startingLine": 101
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "Ping",
         "location": {
           "startingColumn": 34,
-          "startingLine": 95
+          "startingLine": 105
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "LIG",
         "location": {
           "startingColumn": 34,
-          "startingLine": 98
+          "startingLine": 109
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "xTR",
         "location": {
           "startingColumn": 34,
-          "startingLine": 101
+          "startingLine": 113
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": "behind NAT",
         "location": {
           "startingColumn": 26,
-          "startingLine": 150
+          "startingLine": 163
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "LISP is active",
         "location": {
           "startingColumn": 39,
-          "startingLine": 136
+          "startingLine": 149
         }
       },
       {
@@ -71,7 +71,7 @@
         "key": "LISP is inactive",
         "location": {
           "startingColumn": 58,
-          "startingLine": 136
+          "startingLine": 149
         }
       },
       {
@@ -79,7 +79,7 @@
         "key": "LISP app uptime ",
         "location": {
           "startingColumn": 27,
-          "startingLine": 164
+          "startingLine": 177
         }
       },
       {
@@ -87,7 +87,7 @@
         "key": "Hostname ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 171
+          "startingLine": 184
         }
       },
       {
@@ -95,7 +95,7 @@
         "key": "EID ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 173
+          "startingLine": 186
         }
       },
       {
@@ -103,7 +103,7 @@
         "key": "RLOC ",
         "location": {
           "startingColumn": 26,
-          "startingLine": 176
+          "startingLine": 189
         }
       },
       {
@@ -111,46 +111,6 @@
         "key": "translated RLOC:port ",
         "location": {
           "startingColumn": 30,
-          "startingLine": 182
-        }
-      },
-      {
-        "comment": "",
-        "key": "%@:%@",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 183
-        }
-      },
-      {
-        "comment": "",
-        "key": "registers sent ",
-        "location": {
-          "startingColumn": 26,
-          "startingLine": 201
-        }
-      },
-      {
-        "comment": "",
-        "key": ", groups joined ",
-        "location": {
-          "startingColumn": 26,
-          "startingLine": 203
-        }
-      },
-      {
-        "comment": "",
-        "key": "RLOC ",
-        "location": {
-          "startingColumn": 34,
-          "startingLine": 192
-        }
-      },
-      {
-        "comment": "",
-        "key": "translated RLOC:port ",
-        "location": {
-          "startingColumn": 38,
           "startingLine": 195
         }
       },
@@ -158,8 +118,48 @@
         "comment": "",
         "key": "%@:%@",
         "location": {
-          "startingColumn": 38,
+          "startingColumn": 30,
           "startingLine": 196
+        }
+      },
+      {
+        "comment": "",
+        "key": "registers sent ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 214
+        }
+      },
+      {
+        "comment": "",
+        "key": ", groups joined ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 216
+        }
+      },
+      {
+        "comment": "",
+        "key": "RLOC ",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 205
+        }
+      },
+      {
+        "comment": "",
+        "key": "translated RLOC:port ",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 208
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@:%@",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 209
         }
       }
     ]

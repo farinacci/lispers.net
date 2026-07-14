@@ -34,7 +34,7 @@ final class LispRLOC {
     // last send" — the latter never exceeds the probe interval and so could
     // never fire. Cleared on a probe-reply.
     var probeOutstandingSince: Date?
-    var recentRTTs: [Double] = []               // last 3, seconds
+    var recentRTTs: [Double?] = []              // last 3, seconds; nil = probe lost ("?")
     var recentHops: [String] = []
     var recentLatencies: [String] = []          // "fwd/rev"
 
@@ -42,8 +42,19 @@ final class LispRLOC {
 
     var isUp: Bool { state == "up-state" }
 
+    // A probe was SENT: reserve the newest slot in each telemetry window (rtt "?",
+    // hops "?/?", lats "?/?"). A matching reply then FILLS these slots; an unanswered
+    // probe leaves the "?". The slot COUNT therefore reflects how many probes have gone
+    // out (capped at 3) — so a starting map-cache reads [?] after one probe, [?, ?] after
+    // two, [?, ?, ?] after three or more.
+    func probeSent() {
+        recentRTTs = [nil] + recentRTTs.prefix(2)
+        recentHops = ["?/?"] + recentHops.prefix(2)
+        recentLatencies = ["?/?"] + recentLatencies.prefix(2)
+    }
+    // A reply arrived — fill the newest (pending) slot reserved by probeSent().
     func storeRTT(_ rtt: Double) {
-        recentRTTs = [rtt] + recentRTTs.prefix(2)
+        if recentRTTs.isEmpty { recentRTTs = [rtt] } else { recentRTTs[0] = rtt }
     }
     // Hops each way from the received TTLs, "to/from" (store_rloc_probe_hops,
     // lisp.py:13845): 64 - received-TTL, with "?"/"!" for unknown/too-far.
@@ -53,10 +64,11 @@ final class LispRLOC {
             if ttl < LISP.rlocProbeTTL / 2 { return "!" }
             return String(LISP.rlocProbeTTL - ttl)
         }
-        recentHops = ["\(h(toReceivedTTL))/\(h(fromReceivedTTL))"] + recentHops.prefix(2)
+        let v = "\(h(toReceivedTTL))/\(h(fromReceivedTTL))"
+        if recentHops.isEmpty { recentHops = [v] } else { recentHops[0] = v }
     }
     func storeLatency(_ l: String) {
-        recentLatencies = [l] + recentLatencies.prefix(2)
+        if recentLatencies.isEmpty { recentLatencies = [l] } else { recentLatencies[0] = l }
     }
 }
 

@@ -84,7 +84,7 @@
       },
       {
         "comment": "",
-        "key": "version %@",
+        "key": "LISP PING app version %@",
         "location": {
           "startingColumn": 22,
           "startingLine": 155

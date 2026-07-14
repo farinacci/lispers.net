@@ -626,6 +626,33 @@ struct LispInfo {
         return w.data
     }
 
+    // Info-Reply — the R (info-reply) bit + a Type-7 NAT LCAF echoing the requester's
+    // translated addr:port (globalETRRLOC/etrPort) so a decent-NAT prober confirms we're
+    // reachable and learns its own translation. `echoHostname` rides the private-ETR-RLOC
+    // slot as an AFI-17 name. Mirrors lisp_info.encode()'s reply path (lisp.py:6489-6538).
+    func encodeReply(echoHostname: String?) -> Data {
+        var w = ByteWriter()
+        w.u32((UInt32(LISP.typeNatInfo) << 28) | (1 << 27))    // type 7, R bit set
+        w.u64Native(nonce)
+        w.zeros(12)                                            // key-id/auth-len/ttl/masklen/afi
+        // Type-7 NAT LCAF: HHBBHH (afi, rsvd, lcaf-type, rsvd, lcaf-len) then ports + addresses.
+        w.u16(LISP.afiLCAF); w.u16(0)
+        w.u8(LISP.lcafNAT); w.u8(0)
+        w.u16(16)                                              // lcaf-len (fixed 16, like lisp.py)
+        w.u16(msPort); w.u16(etrPort)
+        // Global ETR RLOC = the requester's translated address (IPv4).
+        w.u16(LISP.afiIPv4); w.bytes(globalETRRLOC.packAddress())
+        // Global MS RLOC absent (AFI 0), then private ETR RLOC = the echoed hostname (AFI-17).
+        w.u16(0)
+        if let h = echoHostname {
+            w.u16(LISP.afiName); w.bytes(Data(h.utf8)); w.u8(0)
+        } else {
+            w.u16(0)
+        }
+        w.u16(0)                                               // empty RTR-list terminator
+        return w.data
+    }
+
     static func decode(_ data: Data) -> LispInfo? {
         var r = ByteReader(data)
         guard let first = r.u32(), let nonce = r.u64Native() else { return nil }
