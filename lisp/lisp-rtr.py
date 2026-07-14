@@ -676,13 +676,22 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
         else:
             source = packet.outer_source.print_address_no_iid()
             ttl = packet.outer_ttl
+
+            #
+            # Keep the source port the data-encapsulated probe arrived on. Two xTRs
+            # behind the SAME NAT share one public address but have different translated
+            # ports; passing the port (instead of 0) lets lisp_rtr_process_map_request
+            # send the RLOC-probe reply back to the RIGHT xTR (the port disambiguates
+            # what an address-only nat-info lookup cannot).
+            #
+            sport = packet.udp_sport
             packet = packet.packet
             if (lisp.lisp_is_rloc_probe_request(packet[28:29]) == False and
                 lisp.lisp_is_rloc_probe_reply(packet[28:29]) == False):
                 ttl = -1
             #endif
             packet = packet[28::]
-            lisp.lisp_parse_packet(lisp_send_sockets, packet, source, 0, ttl)
+            lisp.lisp_parse_packet(lisp_send_sockets, packet, source, sport, ttl)
         #endif
         return
     #endif

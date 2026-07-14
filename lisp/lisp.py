@@ -7665,7 +7665,17 @@ def lisp_rtr_process_map_request(lisp_sockets, map_request, source, sport,
     # reply below.
     #
     if (map_request.rloc_probe and len(lisp_sockets) == 4):
-        ni = lisp_get_nat_info(itr_rloc, None)
+        #
+        # Two xTRs behind the SAME NAT - same public address, different translated
+        # ports - would otherwise both get whichever nat-info is first for that address.
+        # When we know the port the data-encapsulated probe arrived on (sport), prefer
+        # the nat-info matching (address, port) so each xTR gets its OWN reply. If that
+        # doesn't match (e.g. a raw probe whose control source port isn't the data port),
+        # fall back to the original address-only lookup - unchanged behavior.
+        #
+        ni = None
+        if (sport != 0): ni = lisp_get_nat_info(itr_rloc, None, sport)
+        if (ni == None): ni = lisp_get_nat_info(itr_rloc, None)
         if (ni != None):
             lisp_encap_rloc_probe(lisp_sockets, itr_rloc, ni, packet)
             return
@@ -17155,13 +17165,20 @@ def lisp_store_nat_info(hostname, rloc, port):
 # Do lookup to get port number to store in map-cache entry as the encapsulation
 # port. If hostname is None, then search by RLOC IP address.
 #
-def lisp_get_nat_info(rloc, hostname):
+def lisp_get_nat_info(rloc, hostname, port=None):
     addr_str = rloc.print_address_no_iid()
 
+    #
+    # When 'port' is supplied, match on (address, port). Two xTRs behind the same
+    # NAT share one public address, so an address-only match can return the wrong
+    # xTR's translated port; matching the port too picks the right one.
+    #
     if (hostname == None):
         for hostname in lisp_nat_state_info:
             for nat_info in lisp_nat_state_info[hostname]:
-                if (nat_info.address == addr_str): return(nat_info)
+                if (nat_info.address != addr_str): continue
+                if (port != None and nat_info.port != port): continue
+                return(nat_info)
             #endfor
         #endfor
         return(None)
@@ -17170,7 +17187,9 @@ def lisp_get_nat_info(rloc, hostname):
     if (hostname not in lisp_nat_state_info): return(None)
 
     for nat_info in lisp_nat_state_info[hostname]:
-        if (nat_info.address == addr_str): return(nat_info)
+        if (nat_info.address != addr_str): continue
+        if (port != None and nat_info.port != port): continue
+        return(nat_info)
     #endfor
     return(None)
 #enddef
