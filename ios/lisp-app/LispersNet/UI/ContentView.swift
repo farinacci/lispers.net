@@ -56,7 +56,7 @@ struct ContentView: View {
     @Environment(\.verticalSizeClass) private var vSizeClass
     @State private var selectedTab = Tab.mapCache
 
-    private enum Tab: Hashable { case mapCache, logs, ping, lig, xtr }
+    private enum Tab: Hashable { case mapCache, logs, ping, lig, ltr, xtr }
 
     // App version string — canonical value lives in Core (AppInfo.version, bump there).
     static let version = AppInfo.version
@@ -90,34 +90,62 @@ struct ContentView: View {
         (keyboard.isVisible || vSizeClass == .compact) ? .hidden : .visible
     }
 
+    // The six tab views, kept alive in a ZStack (only the selected one visible) so tab
+    // state survives switching — a custom bar is used instead of the system tab bar,
+    // which caps at 5 items on iPhone and collapses the rest into a "More" tab.
     private var tabs: some View {
-        TabView(selection: $selectedTab) {
-            MapCacheView()
-                .toolbar(tabBarVisibility, for: .tabBar)
-                .tabItem { Label("Map-Cache", systemImage: "tablecells") }
-                .tag(Tab.mapCache)
-            LogsView()
-                .toolbar(tabBarVisibility, for: .tabBar)
-                .tabItem { Label("Logs", systemImage: "doc.plaintext") }
-                .tag(Tab.logs)
-            PingView()
-                .toolbar(tabBarVisibility, for: .tabBar)
-                .tabItem { Label("Ping", systemImage: "dot.radiowaves.left.and.right") }
-                .tag(Tab.ping)
-            LigView()
-                .toolbar(tabBarVisibility, for: .tabBar)
-                .tabItem { Label("LIG", systemImage: "magnifyingglass") }
-                .tag(Tab.lig)
-            ConfigView()
-                .toolbar(tabBarVisibility, for: .tabBar)
-                .tabItem { Label("xTR", systemImage: "gearshape") }
-                .tag(Tab.xtr)
+        VStack(spacing: 0) {
+            ZStack {
+                MapCacheView().opacity(selectedTab == .mapCache ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .mapCache)
+                LogsView().opacity(selectedTab == .logs ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .logs)
+                PingView().opacity(selectedTab == .ping ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .ping)
+                LigView().opacity(selectedTab == .lig ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .lig)
+                LTRView().opacity(selectedTab == .ltr ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .ltr)
+                ConfigView().opacity(selectedTab == .xtr ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .xtr)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if tabBarVisibility == .visible {
+                HStack(spacing: 0) {
+                    tabButton(.mapCache, "Map-Cache", "tablecells")
+                    tabButton(.logs, "Logs", "doc.plaintext")
+                    tabButton(.ping, "Ping", "dot.radiowaves.left.and.right")
+                    tabButton(.lig, "LIG", "magnifyingglass")
+                    tabButton(.ltr, "LTR", "point.3.filled.connected.trianglepath.dotted")
+                    tabButton(.xtr, "xTR", "gearshape")
+                }
+                .padding(.vertical, 8).padding(.horizontal, 6)
+                .background(.regularMaterial, in: Capsule())
+                .overlay(Capsule().stroke(Color(.separator).opacity(0.5), lineWidth: 0.5))
+                .padding(.horizontal, 10)
+                .padding(.top, 6)
+                .padding(.bottom, 12)              // raise the pill above the version line
+            }
         }
         .onAppear {
             // Resume a persisted-enabled xTR on launch. Who runs it (app vs the
             // always-on extension) depends on the Overlay App VPN switch.
             XTRCoordinator.reconcile(engine: engine, config: config, tunnel: tunnel)
         }
+    }
+
+    // One custom tab-bar item — narrow enough that all six fit without a "More" tab.
+    private func tabButton(_ tab: Tab, _ title: String, _ icon: String) -> some View {
+        Button { selectedTab = tab } label: {
+            VStack(spacing: 2) {
+                Image(systemName: icon).font(.system(size: 17))
+                Text(title).font(.system(size: 10)).lineLimit(1).minimumScaleFactor(0.7)
+            }
+            .frame(maxWidth: .infinity)
+            .foregroundStyle(selectedTab == tab ? Color.lispGreen : Color.primary.opacity(0.7))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 

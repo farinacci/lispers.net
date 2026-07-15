@@ -148,11 +148,13 @@ final class LispEngine: ObservableObject {
     private let pathWatcher = PathWatcher()
     var pingService: PingService!
     var ligService: LigService!
+    var ltrService: LTRService!
 
     init(config: LispConfig) {
         self.config = config
         pingService = PingService(engine: self)
         ligService = LigService(engine: self)
+        ltrService = LTRService(engine: self)
         log.controlPlaneLogging = config.controlPlaneLog
         log.dataPlaneLogging = config.dataPlaneLog
     }

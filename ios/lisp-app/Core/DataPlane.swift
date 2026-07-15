@@ -228,11 +228,63 @@ extension LispEngine {
                    "[\(header.instanceID)]\(ip.dst), inner tos/ttl: \(ip.tos)/\(ip.ttl), " +
                    "length: \(data.count), \(header.printHeader()), " +
                    "packet: \(lispFormatPacket(data))")
-        deliverInner(inner, iid: header.instanceID, onInterface: onInterface)
+        deliverInner(inner, iid: header.instanceID, onInterface: onInterface, outerSource: from)
+    }
+
+    // Append our ETR decap node to a returning LISP-Trace packet (lisp_trace_append,
+    // ed="decap") so the trace ends with the phone's own hop, then return the rebuilt
+    // inner IP/UDP packet. Falls back to the original on any parse failure.
+    private func appendTraceDecap(_ inner: Data, outerSource: LispAddress) -> Data {
+        let b = inner.startIndex
+        guard inner.count >= 20 else { return inner }
+        let ihl = Int(inner[b] & 0x0f) * 4
+        let udpOff = b + ihl
+        let payloadOff = udpOff + 8                 // start of Type-9 packet
+        let jsonOff = payloadOff + 16               // header: first-long(4)+rloc(4)+nonce(8)
+        guard inner.count > jsonOff else { return inner }
+        func u32(_ o: Int) -> UInt32 {
+            (UInt32(inner[b+o]) << 24) | (UInt32(inner[b+o+1]) << 16)
+          | (UInt32(inner[b+o+2]) << 8) | UInt32(inner[b+o+3])
+        }
+        let deid = LispAddress(v4: u32(16)).addressString      // inner dst = our EID (return dest)
+
+        let jsonData = inner.subdata(in: jsonOff..<inner.endIndex)
+        guard var segments = (try? JSONSerialization.jsonObject(with: jsonData))
+                as? [[String: Any]] else { return inner }
+
+        let ourRLOC = (translatedRLOC ?? rloc?.address)?.addressString ?? "?"
+        let sr = outerSource.isNull ? (rloc?.address.addressString ?? "?")
+                                    : outerSource.addressString
+        let entry: [String: Any] = ["n": "ETR", "sr": sr, "dr": ourRLOC,
+                                    "hn": xtrName, "dts": Date().timeIntervalSince1970]
+        // Append to the return segment (de == our EID); else the last segment.
+        if let i = segments.firstIndex(where: { ($0["de"] as? String) == deid }) {
+            var paths = (segments[i]["paths"] as? [[String: Any]]) ?? []
+            paths.append(entry); segments[i]["paths"] = paths
+        } else if !segments.isEmpty {
+            var paths = (segments[segments.count-1]["paths"] as? [[String: Any]]) ?? []
+            paths.append(entry); segments[segments.count-1]["paths"] = paths
+        }
+        guard let newJSON = try? JSONSerialization.data(withJSONObject: segments) else { return inner }
+
+        // Rebuild IP + UDP + Type-9 header + new JSON, fixing lengths + checksums.
+        let udpPayload = inner.subdata(in: payloadOff..<jsonOff) + newJSON       // Type-9 hdr + JSON
+        var udp = Data(inner.subdata(in: udpOff..<payloadOff))
+        let udpLen = UInt16(truncatingIfNeeded: 8 + udpPayload.count)
+        udp[udp.startIndex+4] = UInt8(udpLen >> 8); udp[udp.startIndex+5] = UInt8(udpLen & 0xff)
+        udp[udp.startIndex+6] = 0; udp[udp.startIndex+7] = 0                     // zero UDP checksum
+        var ipHdr = Data(inner.subdata(in: b..<udpOff))
+        let totalLen = UInt16(truncatingIfNeeded: ihl + 8 + udpPayload.count)
+        ipHdr[ipHdr.startIndex+2] = UInt8(totalLen >> 8); ipHdr[ipHdr.startIndex+3] = UInt8(totalLen & 0xff)
+        ipHdr[ipHdr.startIndex+10] = 0; ipHdr[ipHdr.startIndex+11] = 0
+        let ck = internetChecksum(ipHdr)
+        ipHdr[ipHdr.startIndex+10] = UInt8(ck >> 8); ipHdr[ipHdr.startIndex+11] = UInt8(ck & 0xff)
+        return ipHdr + udp + udpPayload
     }
 
     // Parse inner IPv4 (lisp_ipv4_input equivalent) and deliver to the app.
-    private func deliverInner(_ packet: Data, iid: UInt32 = 0, onInterface: String? = nil) {
+    private func deliverInner(_ packet: Data, iid: UInt32 = 0, onInterface: String? = nil,
+                              outerSource: LispAddress = LispAddress()) {
         guard packet.count >= 20 else { return }
         var r = ByteReader(packet)
         guard let vihl = r.u8(), vihl >> 4 == 4 else { return }
@@ -276,11 +328,22 @@ extension LispEngine {
             } else {
                 pingService.processInboundICMP(icmp, from: srcAddr)
             }
-        } else if proto == 17 {             // UDP — overlay-app traffic (gaapchat chat)
-            // Hand the raw inner up to the overlay app over loopback. The gaapchat app
-            // parses the UDP + ASCII payload; it filters its own multicast loopback by
-            // sender id (like the Python app), so delivering self-looped copies is fine.
-            forwardUDPToOverlayApp(packet, from: srcAddr, iid: iid)
+        } else if proto == 17 {             // UDP — overlay-app traffic
+            // A LISP-Trace (ltr) reply is UDP whose payload's first nibble is Type-9;
+            // route it to the LTR tab on 41346. Everything else (gaapchat chat) goes to
+            // the overlay-app port. The gaapchat app filters its own multicast loopback
+            // by sender id, so delivering self-looped copies is fine.
+            let ub = packet.startIndex + ihl
+            let isTrace = packet.count >= ub + 9 && (packet[ub + 8] >> 4) == LISP.typeLispTrace
+            if isTrace {
+                // Append our own ETR decap hop (lisp_trace_append, ed="decap") so the
+                // phone appears as the final line, then hand the reply to the LTR tab.
+                let withHop = appendTraceDecap(packet, outerSource: outerSource)
+                forwardUDPToOverlayApp(withHop, from: srcAddr, iid: iid,
+                                       port: LISP.ltrReplyPort, label: "LTR app")
+            } else {
+                forwardUDPToOverlayApp(packet, from: srcAddr, iid: iid)
+            }
         }
     }
 }

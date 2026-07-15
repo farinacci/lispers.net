@@ -6,13 +6,13 @@
 //
 
 import SwiftUI
+import UIKit   // UIPasteboard — long-press to copy a hostname/EID
 
 struct PingView: View {
     @EnvironmentObject var engine: LispEngine
     @EnvironmentObject var config: LispConfig
     @EnvironmentObject var hosts: HostsFile
     @EnvironmentObject var ping: PingService
-    @State private var editingHosts = false
     @State private var customEID = ""
     @FocusState private var eidFocused: Bool
     @State private var showAllResults = false
@@ -167,11 +167,8 @@ struct PingView: View {
                         Text("Enable LISP on the xTR tab to ping.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
-                    Button { editingHosts = true } label: {
-                        HStack { Spacer(); Text("Edit hostnames"); Spacer() }
-                    }
                 } header: {
-                    Text("Hostname Configuration")
+                    Text("Ping Targets")
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
 
@@ -186,13 +183,10 @@ struct PingView: View {
             // Pull the first section up tight under the nav bar (past the List's
             // default top content inset) so the timer/toggle pill sits right below
             // "Ping". Negative margin closes the remaining gap.
-            .contentMargins(.top, -44, for: .scrollContent)
+            .contentMargins(.top, -50, for: .scrollContent)
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Ping")
             .navigationBarTitleDisplayMode(.inline)
-            .sheet(isPresented: $editingHosts) {
-                HostsEditor()
-            }
             // Switching tabs keeps the ping running 10s longer so the map-cache
             // counters (and Logs) can be watched climbing; returning cancels that.
             .onAppear { ping.cancelGrace() }
@@ -360,18 +354,35 @@ struct HostsEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("lisp-hosts (Documents/lisp-hosts)") {
+                Section {
                     ForEach($working) { $e in
                         HStack {
                             TextField("name", text: $e.name)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
+                                .foregroundStyle(Color.lispBlue)          // hostname blue
                             TextField("eid", text: $e.address)
                                 .font(.body.monospaced())
                                 .keyboardType(.decimalPad)
+                                .foregroundStyle(Color.lispGreen)         // EID green
+                        }
+                        .contextMenu {                                    // long-press to copy
+                            Button {
+                                UIPasteboard.general.string = e.address
+                            } label: { Label("Copy EID \(e.address)", systemImage: "doc.on.doc") }
+                            Button {
+                                UIPasteboard.general.string = e.name
+                            } label: { Label("Copy name \(e.name)", systemImage: "doc.on.doc") }
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                working.removeAll { $0.id == e.id }
+                            } label: { Label("Delete", systemImage: "trash") }
                         }
                     }
-                    .onDelete { working.remove(atOffsets: $0) }
+                    .onDelete { working.remove(atOffsets: $0) }   // Edit-mode delete too
+                } header: {
+                    Text("Hostname Configuration").frame(maxWidth: .infinity, alignment: .center)
                 }
                 Section("add entry") {
                     HStack {
@@ -391,7 +402,7 @@ struct HostsEditor: View {
                 }
             }
             .listRowSeparatorTint(.lispSeparator)
-            .navigationTitle("lisp-hosts")
+            .navigationTitle("LISP Hosts")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

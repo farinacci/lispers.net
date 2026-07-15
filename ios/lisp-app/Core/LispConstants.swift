@@ -11,7 +11,7 @@ import Foundation
 // so both the app and the LispTunnel extension can stamp it into their log banners;
 // ContentView.version is an alias for the app UI.
 enum AppInfo {
-    static let version = "0.12"
+    static let version = "0.13"
 }
 
 enum LISP {
@@ -43,6 +43,13 @@ enum LISP {
     // The gaapchat chat UDP port (Python gaapchat app_port = 0xfafa) — the inner UDP dst
     // port of chat data/ping/pong packets. Kept identical for Python interop.
     static let gaapChatPort: UInt16 = 0xfafa
+
+    // LISP-Trace (ltr.py). Type-9 messages ride UDP on port 2434 (4342 backwards) between
+    // EIDs; the accumulated path JSON is returned to the ltr client. The extension forwards
+    // decapped LISP-Trace replies (inner UDP payload starting 0x9x) to the LTR tab on 41346.
+    static let tracePort: UInt16 = 2434                 // LISP_TRACE_PORT
+    static let typeLispTrace: UInt8 = 9                 // LISP-Trace message type (high nibble)
+    static let ltrReplyPort: UInt16 = 41346
 
     // IGMPv2 (RFC 2236) — an overlay app (gaapchat) sends these over the tunnel (inner
     // dst = our EID, IP proto 2) to drive soft-state (*,G) group membership registration.

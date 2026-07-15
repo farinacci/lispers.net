@@ -147,13 +147,15 @@ extension LispEngine {
     // Forward a received overlay UDP packet (a joined group's chat traffic) to the gaapchat
     // app over loopback (127.0.0.1:overlayRecvPort). Raw inner IP packet; gaapchat filters
     // its own multicast loopback by sender id.
-    func forwardUDPToOverlayApp(_ inner: Data, from src: LispAddress, iid: UInt32) {
+    func forwardUDPToOverlayApp(_ inner: Data, from src: LispAddress, iid: UInt32,
+                                port: UInt16 = LISP.overlayRecvPort,
+                                label: String = "overlay app") {
         if overlayRecvFD < 0 { overlayRecvFD = socket(AF_INET, SOCK_DGRAM, 0) }
         guard overlayRecvFD >= 0 else { return }
         var addr = sockaddr_in()
         addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
         addr.sin_family = sa_family_t(AF_INET)
-        addr.sin_port = LISP.overlayRecvPort.bigEndian
+        addr.sin_port = port.bigEndian
         addr.sin_addr.s_addr = UInt32(0x7f00_0001).bigEndian        // 127.0.0.1
         _ = inner.withUnsafeBytes { raw in
             withUnsafePointer(to: &addr) {
@@ -165,6 +167,6 @@ extension LispEngine {
         }
         let ip = innerIPInfo(inner)
         log.dprint(.etr, "Send utun, inner EIDs: [\(iid)]\(ip.src) -> [\(iid)]\(ip.dst), " +
-                   "length: \(inner.count), delivered to overlay app")
+                   "length: \(inner.count), delivered to \(label)")
     }
 }

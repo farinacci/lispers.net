@@ -30,6 +30,7 @@ struct LispersNetApp: App {
                 .environmentObject(hosts)
                 .environmentObject(engine.pingService)
                 .environmentObject(engine.ligService)
+                .environmentObject(engine.ltrService)
                 .environmentObject(tunnel)
                 .onChange(of: scenePhase) { _, phase in
                     // iOS reclaims our sockets while suspended; tear the network down

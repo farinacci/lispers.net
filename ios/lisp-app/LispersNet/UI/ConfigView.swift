@@ -19,6 +19,7 @@ struct ConfigView: View {
     @State private var shareImage: UIImage?
     @State private var shareURL: URL?
     @State private var showShare = false
+    @State private var editingHosts = false          // top-left "Hostnames" -> hosts editor sheet
     // Multicast group join/leave field (section sits between xTR config and Logging).
     @State private var groupField = ""
 
@@ -394,10 +395,16 @@ struct ConfigView: View {
                 }
             }
             .listRowSeparatorTint(.lispSeparator)
+            .contentMargins(.top, -4, for: .scrollContent)   // tighten title↔first-section gap
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle("lispers.net xTR")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { editingHosts = true } label: {
+                        Label("Hostnames", systemImage: "list.bullet.rectangle")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         // Image: render the whole configuration (even off-screen) to
@@ -423,6 +430,7 @@ struct ConfigView: View {
                 if let u = shareURL { ShareSheet(items: [u]) }
                 else if let img = shareImage { ShareSheet(items: [img]) }
             }
+            .sheet(isPresented: $editingHosts) { HostsEditor() }
         }
     }
 

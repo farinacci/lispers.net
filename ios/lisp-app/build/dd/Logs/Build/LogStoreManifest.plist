@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>BF42BB88-C033-4A00-8C9B-D421FFF7DBAA</key>
+		<key>80BFD614-CD0E-486B-87D4-F124BE2DAA47</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,13 +15,13 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>BF42BB88-C033-4A00-8C9B-D421FFF7DBAA.xcactivitylog</string>
+			<string>80BFD614-CD0E-486B-87D4-F124BE2DAA47.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
 			<dict>
 				<key>highLevelStatus</key>
-				<string>W</string>
+				<string>S</string>
 				<key>totalNumberOfAnalyzerIssues</key>
 				<integer>0</integer>
 				<key>totalNumberOfErrors</key>
@@ -29,7 +29,7 @@
 				<key>totalNumberOfTestFailures</key>
 				<integer>0</integer>
 				<key>totalNumberOfWarnings</key>
-				<integer>2</integer>
+				<integer>0</integer>
 			</dict>
 			<key>schemeIdentifier-containerName</key>
 			<string>LispersNet project</string>
@@ -40,13 +40,13 @@
 			<key>signature</key>
 			<string>Building project LispersNet with scheme LispersNet and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>804549078.47370005</real>
+			<real>805844444.17956996</real>
 			<key>timeStoppedRecording</key>
-			<real>804549082.85805595</real>
+			<real>805844448.01747203</real>
 			<key>title</key>
 			<string>Building project LispersNet with scheme LispersNet and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>BF42BB88-C033-4A00-8C9B-D421FFF7DBAA</string>
+			<string>80BFD614-CD0E-486B-87D4-F124BE2DAA47</string>
 		</dict>
 	</dict>
 </dict>

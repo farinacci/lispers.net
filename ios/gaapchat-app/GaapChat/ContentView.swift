@@ -20,7 +20,7 @@ let pingPalette: [Color] = [.gcBlue, .gcGreen, .gcRed, .gcPurple]
 
 struct ContentView: View {
     // App/build version — bump on every build (like the LISP + PING apps).
-    static let version = "0.2"
+    static let version = "0.3"
     @State private var tab = 0
     var body: some View {
         VStack(spacing: 0) {
@@ -202,8 +202,13 @@ struct ChatView: View {
                 .textFieldStyle(.roundedBorder).font(mono)
                 .autocapitalization(.none).disableAutocorrection(true)
                 .onSubmit { send() }
-            Button { send() } label: { Image(systemName: "paperplane.fill") }
-                .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty)
+            Button { send() } label: {
+                Image(systemName: "arrow.up.circle.fill")           // iMessage-style send
+                    .font(.title)
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, Color.gcBlue)
+            }
+            .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty)
         }
         .padding(10)
     }
