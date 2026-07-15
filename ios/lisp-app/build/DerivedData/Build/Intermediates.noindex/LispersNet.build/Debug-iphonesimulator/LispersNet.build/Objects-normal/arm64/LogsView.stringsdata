@@ -108,7 +108,7 @@
       },
       {
         "comment": "",
-        "key": "packet contents ",
+        "key": "packet ",
         "location": {
           "startingColumn": 25,
           "startingLine": 443

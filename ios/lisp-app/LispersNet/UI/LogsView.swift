@@ -312,7 +312,7 @@ struct LogsView: View {
     // (No blanket "token after ->" or "(...)" rules — those wrongly bolded
     // record-ttl/flags/nonce and "(encap)".)
     private static let boldRegex = try? NSRegularExpression(pattern:
-        #"(?<=Send )(?:en|pdp_ip|utun)\w*|(?<=Receive )(?:en|pdp_ip|utun)\w*|(?<= to )(?:en|pdp_ip|utun)\w*|(?<= from )(?:en|pdp_ip|utun)\w*|(?<=version )[\w.-]+|(?<=Decent map-server )(?=[\w.-]*[A-Za-z])[\w-]+(?:\.[\w-]+)+|Encap|Decap|RLOC-probe reply|RLOC-probe request|RLOC-probe|Map-Register|Map-Request|Map-Reply|Info-Request|Info-Reply|ECM|Report|Leave"#)
+        #"(?<=Send )(?:en|pdp_ip|utun)\w*|(?<=Receive )(?:en|pdp_ip|utun)\w*|(?<=Encap )(?:en|pdp_ip|utun)\w*|(?<=Decap )(?:en|pdp_ip|utun)\w*|(?<= to )(?:en|pdp_ip|utun)\w*|(?<= from )(?:en|pdp_ip|utun)\w*|(?<=version )[\w.-]+|(?<=Decent map-server )(?=[\w.-]*[A-Za-z])[\w-]+(?:\.[\w-]+)+|Encap|Decap|RLOC-probe reply|RLOC-probe request|RLOC-probe|Map-Register|Map-Request|Map-Reply|Info-Request|Info-Reply|ECM|Report|Leave"#)
 
     // Color EID (green), rloc-name (blue), and RLOC (red) tokens within text.
     private static func tokens(_ s: String) -> Text {

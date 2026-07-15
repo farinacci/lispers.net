@@ -99,14 +99,14 @@ extension LispEngine {
         // Data-plane encap bypasses loggedSend, so there is NO "Send <if> N bytes"
         // line for it — the egress interface is recorded here or nowhere.
         let eifn = rlocEntry.interfaceName ?? rloc?.interfaceName ?? "?"
-        log.dprint(.itr, "Encap outer RLOCs: " +
+        log.dprint(.itr, "Encap \(eifn) outer RLOCs: " +
                    "\(rloc?.address.addressString ?? "?") -> \(rlocEntry.rloc.addressString), " +
                    "outer tos/ttl: 0/64, outer UDP: \(sock?.localPort ?? 0) -> " +
                    "\(rlocEntry.encapPort), inner EIDs: [\(destEID.instanceID)]\(ip.src) -> " +
                    "[\(destEID.instanceID)]\(ip.dst), " +
                    "inner tos/ttl: \(ip.tos)/\(ip.ttl), length: \(packet.count), " +
                    "\(header.printHeader()), " +
-                   "packet: \(lispFormatPacket(packet)) to \(eifn)")
+                   "packet: \(lispFormatPacket(packet))")
         sock?.send(packet, to: rlocEntry.rloc, port: rlocEntry.encapPort)
     }
 
@@ -147,11 +147,11 @@ extension LispEngine {
                       "\(sourcePort), packet: \(lispFormatPacket(data))"
         if isRelay {
             log.lprint(.itr, recvMsg)         // 0xffffff relay = RLOC-probe traffic -> itr
-        } else if nibble >= 8 {
-            log.dprint(.etr, recvMsg)         // real data packet -> data-plane (etr)
         } else if nibble == LISP.typeNatInfo {
             log.lprint(.etr, recvMsg)         // raw Info-Reply -> etr (register/NAT)
         }
+        // Real data (nibble >= 8) gets NO separate receive line — its raw hex rides the
+        // Decap line's "packet:" pulldown below, so there's one line per decap (like Encap).
         // raw type 1/2 (RLOC-probe) -> processControlPacket logs its own receive
 
         // The reply to a data-port Info-Request comes back RAW (unwrapped) on
@@ -216,17 +216,18 @@ extension LispEngine {
         }
 
         let inner = Data(data.dropFirst(8))
-        // lisp.py print_packet("Receive"/decap) — full outer/inner detail. The raw
-        // hex was already logged by the receive line at the top of this function.
+        // lisp.py print_packet("Receive"/decap) — full outer/inner detail, with the raw
+        // received packet on the "packet:" pulldown at the end (one line per decap).
         let ip = innerIPInfo(inner)
         let outTTL = receivedTTL >= 0 ? String(receivedTTL) : "?"
         let difn = onInterface ?? rloc?.interfaceName ?? "?"     // multi-homing ingress iface
-        log.dprint(.etr, "Decap outer RLOCs: " +
+        log.dprint(.etr, "Decap \(difn) outer RLOCs: " +
                    "\(from.addressString) -> \(rloc?.address.addressString ?? "?"), " +
                    "outer tos/ttl: 0/\(outTTL), outer UDP: \(sourcePort) -> " +
                    "\(dataSocket?.localPort ?? 0), inner EIDs: [\(header.instanceID)]\(ip.src) -> " +
                    "[\(header.instanceID)]\(ip.dst), inner tos/ttl: \(ip.tos)/\(ip.ttl), " +
-                   "length: \(data.count), \(header.printHeader()) from \(difn)")
+                   "length: \(data.count), \(header.printHeader()), " +
+                   "packet: \(lispFormatPacket(data))")
         deliverInner(inner, iid: header.instanceID, onInterface: onInterface)
     }
 

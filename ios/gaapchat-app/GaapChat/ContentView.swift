@@ -20,7 +20,7 @@ let pingPalette: [Color] = [.gcBlue, .gcGreen, .gcRed, .gcPurple]
 
 struct ContentView: View {
     // App/build version — bump on every build (like the LISP + PING apps).
-    static let version = "0.1"
+    static let version = "0.2"
     @State private var tab = 0
     var body: some View {
         VStack(spacing: 0) {
@@ -58,7 +58,9 @@ struct ChatView: View {
     @Environment(\.openURL) private var openURL
     @State private var groupField = ""
     @State private var input = ""
-    private let mono = Font.system(.body, design: .monospaced)
+    @AppStorage("gcFontSize") private var fontSize: Double = 13   // pinch the message list to zoom
+    @State private var zoomBase: Double? = nil
+    private var mono: Font { .system(size: fontSize, design: .monospaced) }
 
     // Launch the LISP app via its custom URL scheme (same as the PING app) so the user
     // can bring the xTR to the foreground straight from the "not running" hint.
@@ -67,15 +69,38 @@ struct ChatView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            Divider()
-            messageList
-            Divider()
-            inputBar
-            Divider()
-            commandBar
+        ZStack {
+            VStack(spacing: 0) {
+                header
+                Divider()
+                messageList
+                Divider()
+                inputBar
+                Divider()
+                commandBar
+            }
+            if client.showHistory {
+                CenteredCard(title: "History",
+                             height: cardHeight(items: historyCount, base: 160, per: 26),
+                             onDone: { client.showHistory = false }) {
+                    HistoryView().environmentObject(client)
+                }
+            }
+            if client.showMembers {
+                CenteredCard(title: "Members",
+                             height: cardHeight(items: memberCount, base: 150, per: 44),
+                             onDone: { client.showMembers = false }) {
+                    MembersView().environmentObject(client)
+                }
+            }
         }
+    }
+
+    // Centered pop-up card sizing: grows with the list, capped at ~80% of the screen.
+    private var memberCount: Int { Set(client.members + [client.myid]).count }
+    private var historyCount: Int { client.messages.filter { $0.kind != .info }.count }
+    private func cardHeight(items: Int, base: CGFloat, per: CGFloat) -> CGFloat {
+        min(UIScreen.main.bounds.height * 0.8, base + CGFloat(items) * per)
     }
 
     private var header: some View {
@@ -91,7 +116,7 @@ struct ChatView: View {
                         .font(.caption2)
                 }
                 Spacer()
-                Text("as \(client.myid)").font(.caption2).foregroundStyle(.secondary)
+                Text("you are \(client.myid)").font(.caption2).foregroundStyle(.secondary)
             }
             if client.joined {
                 (Text("group-name ").foregroundStyle(.secondary)
@@ -123,6 +148,13 @@ struct ChatView: View {
                 .padding(12)
             }
             .scrollDismissesKeyboard(.interactively)    // pull the keyboard down by dragging
+            .gesture(MagnificationGesture()             // pinch to zoom text smaller/larger
+                .onChanged { scale in
+                    let base = zoomBase ?? fontSize
+                    if zoomBase == nil { zoomBase = base }
+                    fontSize = min(30, max(8, base * Double(scale)))
+                }
+                .onEnded { _ in zoomBase = nil })
             .onChange(of: client.messages.count) { _, _ in
                 if let last = client.messages.last { withAnimation { proxy.scrollTo(last.id, anchor: .bottom) } }
             }
@@ -132,7 +164,7 @@ struct ChatView: View {
     @ViewBuilder private func row(_ m: ChatMessage) -> some View {
         switch m.kind {
         case .info:
-            Text(m.text).font(.caption.monospaced()).foregroundStyle(.secondary)
+            Text(m.text).font(mono).foregroundStyle(.secondary)
         case .mine:
             HStack { Spacer()
                 Text(m.text).font(mono).padding(8)
@@ -142,9 +174,26 @@ struct ChatView: View {
             (Text(m.sender + ": ").font(mono).bold().foregroundColor(.gcBlue)
              + Text(m.text).font(mono))
         case .ping, .pong:
-            Text(m.text).font(mono)
+            spanText(m)
+        }
+    }
+
+    // Ping/pong rows: color ONLY the sequence number and the group address (EID),
+    // like the Python app — everything else stays default. Falls back to plain text.
+    private func spanText(_ m: ChatMessage) -> Text {
+        guard let spans = m.spans else {
+            return Text(m.text).font(mono)
                 .foregroundColor(m.colorIndex.map { pingPalette[$0] } ?? .secondary)
         }
+        let seqColor = m.colorIndex.map { pingPalette[$0] } ?? .primary
+        return spans.reduce(Text("")) { acc, span in
+            switch span {
+            case .plain(let s): return acc + Text(s)
+            case .seq(let s):   return acc + Text(s).foregroundColor(seqColor).bold()
+            case .eid(let s):   return acc + Text(s).foregroundColor(.gcGreen)
+            case .name(let s):  return acc + Text(s).bold()
+            }
+        }.font(mono)
     }
 
     private var inputBar: some View {
@@ -166,7 +215,6 @@ struct ChatView: View {
             cmdButton("history", ":history", "clock")
             cmdButton("ping",    ":ping",    "dot.radiowaves.left.and.right")
             cmdButton("quit",    ":quit",    "rectangle.portrait.and.arrow.right")
-            cmdButton("help",    ":help",    "questionmark.circle")
         }
         .padding(.top, 4).padding(.bottom, 16)   // lift the buttons clear of the version line
     }
@@ -190,6 +238,125 @@ struct ChatView: View {
     private func send() {
         let t = input; input = ""
         client.submit(t)
+    }
+}
+
+// MARK: - History (a dismissible window, not inline)
+
+struct HistoryView: View {
+    @EnvironmentObject var client: ChatClient
+    private let mono = Font.system(size: 13, design: .monospaced)
+
+    private var entries: [ChatMessage] { client.messages.filter { $0.kind != .info } }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("Total messages sent/received: \(client.sentCount)/\(client.recvCount)")
+                .font(.subheadline.bold())
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(Color.gcBlue.opacity(0.10))
+            Divider()
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 4) {
+                    if entries.isEmpty {
+                        Text("(no history yet)").font(mono).foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        ForEach(entries) { m in historyRow(m).lineLimit(1).minimumScaleFactor(0.5) }
+                    }
+                }
+                .padding(12)
+            }
+        }
+    }
+
+    private func opLabel(_ m: ChatMessage) -> String {
+        switch m.kind {
+        case .mine, .data: return "data"
+        case .ping:        return "ping"
+        case .pong:        return "pong"
+        case .info:        return ""
+        }
+    }
+
+    private func historyRow(_ m: ChatMessage) -> Text {
+        // "<bold op> <sender>: <data>".
+        Text(opLabel(m)).font(mono).bold()
+        + Text(" \(m.sender): ").font(mono)
+        + Text(m.detail ?? m.text).font(mono)
+    }
+}
+
+// MARK: - Members (a dismissible window, like History)
+
+struct MembersView: View {
+    @EnvironmentObject var client: ChatClient
+    private let mono = Font.system(size: 13, design: .monospaced)
+
+    // All members including self, most-recently-active first.
+    private var ordered: [String] {
+        let all = client.members.contains(client.myid) ? client.members
+                                                       : client.members + [client.myid]
+        return all.sorted { (client.lastSent[$0] ?? .distantPast) > (client.lastSent[$1] ?? .distantPast) }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("\(ordered.count) member\(ordered.count == 1 ? "" : "s")")
+                .font(.subheadline.bold())
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(Color.gcBlue.opacity(0.10))
+            Divider()
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 6) {
+                    ForEach(ordered, id: \.self) { m in memberRow(m).lineLimit(1).minimumScaleFactor(0.5) }
+                }
+                .padding(12)
+            }
+        }
+    }
+
+    private func memberRow(_ m: String) -> Text {
+        let now = Date()
+        let joined = client.firstSeen[m].map { client.agoString(now.timeIntervalSince($0)) } ?? "never"
+        let last = client.lastSent[m].map { client.agoString(now.timeIntervalSince($0)) } ?? "never"
+        let short = m.components(separatedBy: "@").last ?? m   // drop "user@" for horizontal room
+        return Text(short).font(mono).bold().foregroundColor(.gcBlue)
+             + Text(" — joined \(joined), last sent \(last)").font(mono).foregroundColor(.secondary)
+    }
+}
+
+// MARK: - Centered pop-up card (dimmed backdrop + a card centered on screen)
+
+struct CenteredCard<Content: View>: View {
+    let title: String
+    let height: CGFloat
+    let onDone: () -> Void
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.35).ignoresSafeArea().onTapGesture(perform: onDone)
+            VStack(spacing: 0) {
+                HStack {
+                    Text(title).font(.headline).bold()
+                    Spacer()
+                    Button("Done", action: onDone).font(.headline)
+                }
+                .padding(.horizontal, 16).padding(.vertical, 12)
+                .background(Color.gcBlue.opacity(0.10))
+                Divider()
+                content()
+            }
+            .frame(maxWidth: 400)
+            .frame(height: height)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .shadow(radius: 24)
+            .padding(24)
+        }
     }
 }
 
