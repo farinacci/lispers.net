@@ -1,0 +1,5 @@
+# Xcode build output and per-user state — regenerable, never commit.
+*/build/
+*.xcarchive
+**/xcuserdata/
+*.xcuserstate
