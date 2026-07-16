@@ -67,6 +67,7 @@ struct EngineSnapshot: Codable {
     var igmpGroups: [String: String]    // overlay-app group address -> joiner app name
     var igmpLastReport: [String: Date]? // overlay-app group address -> last IGMP report time
     var groupMapServers: [String: String]?  // group address -> map-server it registers to
+    var rtrList: [LispAddress]?              // RTRs (for the LTR tab's NAT-trace primers)
     var updated: Date
 
     static var fileURL: URL? {
@@ -114,6 +115,7 @@ extension LispEngine {
             igmpGroups: appJoinedGroups.reduce(into: [:]) { $0[$1.address] = $1.source },
             igmpLastReport: appJoinedGroups.reduce(into: [:]) { $0[$1.address] = $1.lastReport },
             groupMapServers: groupMapServers,
+            rtrList: rtrList,
             updated: Date())
     }
 
@@ -161,6 +163,7 @@ extension LispEngine {
         }
             .sorted { $0.address < $1.address }
         groupMapServers = s.groupMapServers ?? [:]
+        if isMirroring { rtrList = s.rtrList ?? [] }    // app mirror learns the RTRs for LTR primers
         mhInterfaces = s.mh.map { $0.iface }
         ifaceTranslated = Dictionary(uniqueKeysWithValues: s.mh.compactMap { m in
             m.translatedRLOC.map { (m.iface.interfaceName, (rloc: $0, port: m.translatedPort)) }

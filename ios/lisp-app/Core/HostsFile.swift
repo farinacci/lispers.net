@@ -34,6 +34,16 @@ final class HostsFile: ObservableObject {
             .appendingPathComponent("lisp-hosts")
     }
 
+    // The seeded targets (lhr/frt/cmh) — parsed from defaultContents, not hard-coded.
+    // The Ping tab shows these by default and tucks any added/imported hosts behind a
+    // pull-down so a big imported /etc/hosts doesn't eat the screen.
+    static let defaultNames: Set<String> = Set(
+        defaultContents.split(separator: "\n").compactMap { line in
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard !t.isEmpty, !t.hasPrefix("#") else { return nil }
+            return t.split(separator: " ").first.map(String.init)
+        })
+
     init() { load() }
 
     func load() {

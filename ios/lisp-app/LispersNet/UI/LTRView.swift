@@ -111,11 +111,22 @@ struct LTRView: View {
             return Text(s).font(mono)
         case .error(let s):
             return Text(s).font(mono).foregroundColor(.lispRed)
+        case .learning(let addr):
+            var t = Text("Learning translation (Info-Request) ...").font(mono)
+            if let a = addr {
+                t = t + Text(" translated address ").font(mono)
+                      + Text(a).font(mono).foregroundColor(.lispRed)
+            }
+            return t
         case .sendRT(let seid, let deid):
             return Text("Send round-trip LISP-Trace between EIDs ").font(mono)
                  + Text(seid).font(mono).foregroundColor(.lispGreen)
                  + Text(" -> ").font(mono)
                  + Text(deid).font(mono).foregroundColor(.lispGreen)
+                 + Text(" ...").font(mono)
+        case .natTraversal(let rtr):
+            return Text("Send NAT-traversal LISP-Trace to RTR ").font(mono)
+                 + Text(rtr).font(mono).foregroundColor(.lispRed)
                  + Text(" ...").font(mono)
         case .received(let source, let rtt):
             return Text("Received reply from ").font(mono)

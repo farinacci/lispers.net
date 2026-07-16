@@ -6,7 +6,8 @@
 //
 
 import SwiftUI
-import UIKit   // UIPasteboard — long-press to copy a hostname/EID
+import UIKit                       // UIPasteboard — long-press to copy a hostname/EID
+import UniformTypeIdentifiers      // UTType for the hosts-file importer
 
 struct PingView: View {
     @EnvironmentObject var engine: LispEngine
@@ -16,6 +17,7 @@ struct PingView: View {
     @State private var customEID = ""
     @FocusState private var eidFocused: Bool
     @State private var showAllResults = false
+    @State private var showAllTargets = false
     @Environment(\.scenePhase) private var scenePhase
     // The Direct/Tunnel "path" pill is HIDDEN for now — the PING app is the overlay client,
     // so we test the overlay there. The code is kept below (gated on `showPathControl`),
@@ -141,27 +143,30 @@ struct PingView: View {
                 }
 
                 Section {
-                    ForEach(hosts.entries) { entry in
-                        let entryEID = LispAddress(string: entry.address)
+                    // Seeded defaults (lhr/frt/cmh) always show; added/imported hosts
+                    // stay tucked behind a pull-down so they don't eat vertical space.
+                    let defaults = hosts.entries.filter { HostsFile.defaultNames.contains($0.name) }
+                    let others = hosts.entries.filter { !HostsFile.defaultNames.contains($0.name) }
+                    ForEach(defaults) { targetRow($0) }
+                    if showAllTargets {
+                        ForEach(others) { targetRow($0) }
+                    }
+                    if !others.isEmpty {
                         Button {
-                            if let eid = entryEID {
-                                ping.startContinuous(name: eid.addressString, eid: eid)
-                            }
+                            withAnimation { showAllTargets.toggle() }
                         } label: {
                             HStack {
-                                Text(entry.name).bold()
-                                Text(entry.address)
-                                    .font(.callout.monospaced())
-                                    .foregroundStyle(Color.lispGreen)
                                 Spacer()
-                                let pinging = ping.continuous
-                                    && ping.currentTarget == entryEID?.addressString
-                                Image(systemName: "dot.radiowaves.left.and.right")
-                                    .foregroundStyle(pinging ? Color.lispGreen : .secondary)
-                                    .symbolEffect(.variableColor, isActive: pinging)
+                                Text(showAllTargets ? "Show fewer"
+                                                    : "Show \(others.count) more")
+                                    .font(.caption)
+                                Image(systemName: showAllTargets ? "chevron.up" : "chevron.down")
+                                    .font(.caption.bold())
+                                Spacer()
                             }
                         }
-                        .disabled(!engine.running)
+                        .buttonStyle(.borderless)
+                        .foregroundStyle(Color.lispBlue)
                     }
                     if !engine.running {
                         Text("Enable LISP on the xTR tab to ping.")
@@ -215,6 +220,30 @@ struct PingView: View {
             .animation(nil, value: ping.continuous)
             }
         }
+    }
+
+    // One tappable ping-target row (host name + EID + live-ping indicator).
+    @ViewBuilder private func targetRow(_ entry: HostEntry) -> some View {
+        let entryEID = LispAddress(string: entry.address)
+        Button {
+            if let eid = entryEID {
+                ping.startContinuous(name: eid.addressString, eid: eid)
+            }
+        } label: {
+            HStack {
+                Text(entry.name).bold()
+                Text(entry.address)
+                    .font(.callout.monospaced())
+                    .foregroundStyle(Color.lispGreen)
+                Spacer()
+                let pinging = ping.continuous
+                    && ping.currentTarget == entryEID?.addressString
+                Image(systemName: "dot.radiowaves.left.and.right")
+                    .foregroundStyle(pinging ? Color.lispGreen : .secondary)
+                    .symbolEffect(.variableColor, isActive: pinging)
+            }
+        }
+        .disabled(!engine.running)
     }
 
     // Completed ping replies. Floats up under the live "Pinging…" section while a
@@ -350,6 +379,55 @@ struct HostsEditor: View {
     @State private var working: [HostEntry] = []
     @State private var newName = ""
     @State private var newAddress = ""
+    @State private var showImport = false
+    // Own the edit state locally so the parent's 1s engine-mirror re-render can't
+    // retrigger the edit-mode row animation (was: list sliding left/right repeatedly).
+    @State private var editMode: EditMode = .inactive
+
+    // /etc/hosts format: a header banner, then "<address>\t<name>" per entry.
+    private static let hostsHeader = """
+    #
+    # This hosts file was created by the lispers.net LISP xTR IOS app.
+    #
+
+    """
+    private func exportText() -> String {
+        Self.hostsHeader + working.map { "\($0.address)\t\($0.name)" }.joined(separator: "\n") + "\n"
+    }
+    // Parse /etc/hosts lines ("<address>\t<name> [aliases]"), skipping blank/comment lines.
+    private func parseHosts(_ text: String) -> [HostEntry] {
+        var out: [HostEntry] = []
+        for raw in text.split(separator: "\n", omittingEmptySubsequences: false) {
+            let line = raw.trimmingCharacters(in: .whitespaces)
+            if line.isEmpty || line.hasPrefix("#") { continue }
+            let parts = line.split(whereSeparator: { $0 == " " || $0 == "\t" }).map(String.init)
+            guard parts.count >= 2, LispAddress(string: parts[0]) != nil else { continue }
+            out.append(HostEntry(name: parts[1], address: parts[0]))   // /etc/hosts: address, then name
+        }
+        return out
+    }
+    private func readImported(_ url: URL) -> String? {
+        let ok = url.startAccessingSecurityScopedResource()
+        defer { if ok { url.stopAccessingSecurityScopedResource() } }
+        return try? String(contentsOf: url, encoding: .utf8)
+    }
+    // Present the system share sheet from the top-most view controller — reliable even
+    // from inside a sheet (SwiftUI's nested .sheet blanks the UIActivityViewController).
+    static func presentShare(_ items: [Any]) {
+        guard let scene = UIApplication.shared.connectedScenes
+                  .compactMap({ $0 as? UIWindowScene })
+                  .first(where: { $0.activationState == .foregroundActive }),
+              let root = scene.keyWindow?.rootViewController else { return }
+        var top = root
+        while let p = top.presentedViewController { top = p }
+        let av = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        if let pop = av.popoverPresentationController {          // iPad anchor
+            pop.sourceView = top.view
+            pop.sourceRect = CGRect(x: top.view.bounds.midX, y: top.view.bounds.maxY - 60,
+                                    width: 0, height: 0)
+        }
+        top.present(av, animated: true)
+    }
 
     var body: some View {
         NavigationStack {
@@ -374,17 +452,24 @@ struct HostsEditor: View {
                                 UIPasteboard.general.string = e.name
                             } label: { Label("Copy name \(e.name)", systemImage: "doc.on.doc") }
                         }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                working.removeAll { $0.id == e.id }
-                            } label: { Label("Delete", systemImage: "trash") }
-                        }
+                        // onDelete drives BOTH swipe-to-delete and the edit-mode red −.
+                        // Disable it while not editing so only the edit-mode delete remains.
+                        .deleteDisabled(!editMode.isEditing)
                     }
-                    .onDelete { working.remove(atOffsets: $0) }   // Edit-mode delete too
+                    .onDelete { working.remove(atOffsets: $0) }   // Edit-mode delete (red −)
+                    .onMove { working.move(fromOffsets: $0, toOffset: $1) }  // drag to reorder
                 } header: {
                     Text("Hostname Configuration").frame(maxWidth: .infinity, alignment: .center)
                 }
-                Section("add entry") {
+                // Edit/Done centered directly below the list (reorder + red − delete).
+                Section {
+                    Button(editMode.isEditing ? "Done" : "Edit") {
+                        withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .tint(Color.lispBlue)
+                }
+                Section {
                     HStack {
                         TextField("name", text: $newName)
                             .textInputAutocapitalization(.never)
@@ -399,11 +484,56 @@ struct HostsEditor: View {
                             newName = ""; newAddress = ""
                         }
                     }
+                } header: {
+                    Text("Add Entry").frame(maxWidth: .infinity, alignment: .center)
+                }
+                Section {
+                    HStack {
+                        Button {
+                            let url = FileManager.default.temporaryDirectory
+                                .appendingPathComponent("lisp-hostnames")
+                            try? exportText().data(using: .utf8)?.write(to: url)
+                            Self.presentShare([url])           // share sheet from the top VC
+                        } label: {
+                            Label("Export", systemImage: "square.and.arrow.up")
+                                .font(.subheadline)
+                                .padding(.horizontal, 14).padding(.vertical, 7)
+                                .background(Color.lispGreen.opacity(0.15), in: Capsule())
+                                .foregroundStyle(Color.lispGreen)
+                        }
+                        .buttonStyle(.plain)
+                        Spacer()
+                        Button {
+                            showImport = true
+                        } label: {
+                            Label("Import", systemImage: "square.and.arrow.down")
+                                .font(.subheadline)
+                                .padding(.horizontal, 14).padding(.vertical, 7)
+                                .background(Color.lispGreen.opacity(0.15), in: Capsule())
+                                .foregroundStyle(Color.lispGreen)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } header: {
+                    Text("Import / Export")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                } footer: {
+                    Text("(/etc/hosts format)")
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
             .listRowSeparatorTint(.lispSeparator)
+            .environment(\.editMode, $editMode)     // local edit state (stable across re-renders)
             .navigationTitle("LISP Hosts")
             .navigationBarTitleDisplayMode(.inline)
+            .fileImporter(isPresented: $showImport,
+                          allowedContentTypes: [.plainText, .text, .data, .item]) { result in
+                guard case .success(let url) = result,
+                      let text = readImported(url) else { return }
+                let imported = parseHosts(text)
+                let existing = Set(working.map { $0.address })      // merge, skip dup addresses
+                working += imported.filter { !existing.contains($0.address) }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

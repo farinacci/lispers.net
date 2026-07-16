@@ -1,21 +1,92 @@
-            
+
+                  lispers.net IOS Release Version 0.14
+                  ------------------------------------
+
+o Release date: Thu Jul 16 16:39:21 PDT 2026
+
+o Allow import/export of Hostname entries in /etc/hosts format.
+
+o Have Hostname Configuration screen move entries up and down and have
+  delete inside of edit mode.
+    
+o The LTR IOS implemenation needs a socket to listen for error replies
+  from the Trace path. Right now we get "the entire path works" or
+  'nothing works". So this fix does the same as lispers.net/lisp/ltr.py.
+  The system returns "map-cache miss" and "EID not found" but those
+  replies are not received by the IOS implementation.
+
+o Have ping tab pull-down for hostname entries. But keep the default ones
+  exposed for easy access.
+
+-------------------------------------------------------------------------------
+
+                  lispers.net Linux Release Version 0.635
+                  ---------------------------------------
+
+o Release date:
+
+o Fixed code so RTRs can detect which xTRs are behind the same NAT with
+  the same translated RLOC but a different translated port. This situation
+  occurred when my phone and laptop, both behind the same wifi NAT were
+  each running LISP at the same time.
+
+-------------------------------------------------------------------------------
+
+                  lispers.net IOS Release Version 0.13
+                  ------------------------------------
+
+o Release date: Wed Jul 15 16:11:19 PDT 2026
+
+o Implement a LTR tab so we can do LISP Traceroute from the LISP xTR app.
+
+o Move Hostname configuration out of the Ping tab and put it in its own
+  screen that is invoked from the xTR tab screen upper left hand corner.
+
+o You can now swipe to the left to remove hostnames.
+
+o Add an iMessage like send button for gaapchat. Most more obviuos and
+  visible. This is in LISP gaapchat 0.3.
+
+-------------------------------------------------------------------------------
+
+                  lispers.net IOS Release Version 0.12
+                  ------------------------------------
+
+o Release date: Tue Jul 14 20:16:14 PDT 2026
+
+o Put interface name next to Encap and Decap for data-plane logging.
+
+o Fixed multicast packet delivery to overlay apps.    
+
+o With this release, releasing the gaapchat 0.2. We have a working
+  app that interoperates with the python gaapchat implemenation.
+
+o Improved some UI featuers in gaapchat.
+
+-------------------------------------------------------------------------------
                   lispers.net IOS Release Version 0.11
                   ------------------------------------
 
-o Release date:
+o Release date: Mon Jul 13 17:58:25 PDT 2026
 
 o With this LISP xTR app release, we are releasing the PING app version 0.2.
 
 o With this LISP xTR app release, we are releasing the gaapchat app version 0.1.
   We now have a user based messaging app that runs over a multicast group on a
   LISP overlay. So when someone types a message, all gappchat group members
-  receive it. The app uses the GAAP protocol to dynamically allocated unique
+  receive it. The app uses the GAAP protocol to dynamically allocate unique
   group addresses. See https://www.ietf.org/archive/id/draft-ietf-pim-gaap-15.html
   for gory details.
 
 o Made modications to the LISP xTR app to receive IGMPv2 report/leave messages so
   overlay apps can tell the overlay they are still joined or they want to leave
   the group.
+
+o Have PING app calculate min/avg/max RTTs for ping repsonses and display in
+  history section.
+
+o Condense the logging a bit, have a pull-down arrow when you want to see byte
+  contents of a packet. So much more readable.        
 
 -------------------------------------------------------------------------------
                 
@@ -163,7 +234,7 @@ o Fix bug for decent-hash when sending Map-Requests to the mapping system
            
 -------------------------------------------------------------------------------
         
-                  lispers.net Linus Release Version 0.634
+                  lispers.net Linux Release Version 0.634
                   ---------------------------------------
 
 o Release date: Wed Jul  1 08:15:34 EDT 2026

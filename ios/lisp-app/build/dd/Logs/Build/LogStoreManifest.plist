@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>80BFD614-CD0E-486B-87D4-F124BE2DAA47</key>
+		<key>C8D09B22-64FB-4338-8302-ED366A86E9C2</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,7 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>80BFD614-CD0E-486B-87D4-F124BE2DAA47.xcactivitylog</string>
+			<string>C8D09B22-64FB-4338-8302-ED366A86E9C2.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -40,13 +40,13 @@
 			<key>signature</key>
 			<string>Building project LispersNet with scheme LispersNet and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>805844444.17956996</real>
+			<real>805928179.40101194</real>
 			<key>timeStoppedRecording</key>
-			<real>805844448.01747203</real>
+			<real>805928200.66053402</real>
 			<key>title</key>
 			<string>Building project LispersNet with scheme LispersNet and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>80BFD614-CD0E-486B-87D4-F124BE2DAA47</string>
+			<string>C8D09B22-64FB-4338-8302-ED366A86E9C2</string>
 		</dict>
 	</dict>
 </dict>
