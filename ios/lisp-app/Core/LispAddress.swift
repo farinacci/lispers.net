@@ -13,12 +13,33 @@ struct LispAddress: Equatable, Hashable, CustomStringConvertible, Codable {
     var afi: UInt16 = 0
     var v4: UInt32 = 0
     var v6: Data = Data()       // 16 bytes when afi == IPv6
+    var name: String = ""       // the string when afi == LISP_AFI_NAME (distinguished name)
     var maskLen: Int = 0
     var instanceID: UInt32 = 0
 
     var isNull: Bool { afi == 0 }
     var isIPv4: Bool { afi == LISP.afiIPv4 }
     var isIPv6: Bool { afi == LISP.afiIPv6 }
+    var isName: Bool { afi == LISP.afiName }
+
+    // Custom Codable (decodeIfPresent for `name`/`v6`) so snapshots written by an older
+    // build — which had no `name` field — still decode.
+    enum CodingKeys: String, CodingKey { case afi, v4, v6, name, maskLen, instanceID }
+    init(from d: Decoder) throws {
+        let c = try d.container(keyedBy: CodingKeys.self)
+        afi = try c.decode(UInt16.self, forKey: .afi)
+        v4 = try c.decode(UInt32.self, forKey: .v4)
+        v6 = try c.decodeIfPresent(Data.self, forKey: .v6) ?? Data()
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+        maskLen = try c.decode(Int.self, forKey: .maskLen)
+        instanceID = try c.decode(UInt32.self, forKey: .instanceID)
+    }
+    func encode(to e: Encoder) throws {
+        var c = e.container(keyedBy: CodingKeys.self)
+        try c.encode(afi, forKey: .afi); try c.encode(v4, forKey: .v4)
+        try c.encode(v6, forKey: .v6); try c.encode(name, forKey: .name)
+        try c.encode(maskLen, forKey: .maskLen); try c.encode(instanceID, forKey: .instanceID)
+    }
 
     init() {}
 
@@ -34,7 +55,14 @@ struct LispAddress: Equatable, Hashable, CustomStringConvertible, Codable {
             let inner = String(s[s.index(after: s.startIndex)..<close])
             guard let parsed = UInt32(inner) else { return nil }
             instanceID = parsed
-            s = String(s[s.index(after: close)...])
+            s = String(s[s.index(after: close)...]).trimmingCharacters(in: .whitespaces)
+        }
+        // Distinguished-name EID: 'name' (AFI-17). e.g. [1]'sm-nca6-host-240.11.0.1'
+        if s.hasPrefix("'"), s.hasSuffix("'"), s.count >= 2 {
+            afi = LISP.afiName
+            name = String(s.dropFirst().dropLast())
+            maskLen = name.utf8.count * 8
+            return
         }
         var ml = -1
         if let slash = s.firstIndex(of: "/") {
@@ -55,10 +83,13 @@ struct LispAddress: Equatable, Hashable, CustomStringConvertible, Codable {
         return
     }
 
-    var addressLength: Int { isIPv4 ? 4 : (isIPv6 ? 16 : 0) }
+    var addressLength: Int {
+        isName ? name.utf8.count + 1 : (isIPv4 ? 4 : (isIPv6 ? 16 : 0))   // name is null-terminated
+    }
 
     // print_address_no_iid()
     var addressString: String {
+        if isName { return "'\(name)'" }
         if isIPv4 {
             return "\(v4 >> 24).\((v4 >> 16) & 0xff).\((v4 >> 8) & 0xff).\(v4 & 0xff)"
         }
@@ -71,12 +102,15 @@ struct LispAddress: Equatable, Hashable, CustomStringConvertible, Codable {
         return "none"
     }
 
-    // print_prefix() — the lisp-decent hash input format
-    var prefixString: String { "[\(instanceID)]\(addressString)/\(maskLen)" }
+    // print_prefix() — the lisp-decent hash input format. Distinguished names carry no mask.
+    var prefixString: String {
+        isName ? "[\(instanceID)]\(addressString)" : "[\(instanceID)]\(addressString)/\(maskLen)"
+    }
 
     var description: String { prefixString }
 
     func packAddress() -> Data {
+        if isName { return Data(name.utf8) + Data([0]) }   // null-terminated (lisp.py)
         if isIPv4 {
             var w = ByteWriter(); w.u32(v4); return w.data
         }
@@ -91,6 +125,12 @@ struct LispAddress: Equatable, Hashable, CustomStringConvertible, Codable {
         } else if afi == LISP.afiIPv6 {
             guard let d = reader.bytes(16) else { return nil }
             a.v6 = d; a.maskLen = 128
+        } else if afi == LISP.afiName {
+            // Distinguished name: a null-terminated string (lisp_decode_dist_name).
+            var bytes = [UInt8]()
+            while let b = reader.u8(), b != 0 { bytes.append(b) }
+            a.name = String(decoding: bytes, as: UTF8.self)
+            a.maskLen = bytes.count * 8
         } else if afi == 0 {
             a.maskLen = 0
         } else {

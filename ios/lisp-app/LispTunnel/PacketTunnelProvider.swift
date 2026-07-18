@@ -74,9 +74,33 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             DispatchQueue.main.async {
                 let engine = LispEngine(config: cfg)
                 self.engine = engine
+                // Live EID edits (app xTR tab, VPN up): the tunnel IP is the EID, so
+                // re-address the utun before the engine re-registers.
+                engine.onEIDChange = { [weak self] eid in self?.readdressTunnel(eid) }
                 if cfg.lispEnabled { engine.enable() }
                 self.readLoop()
                 completionHandler(nil)
+            }
+        }
+    }
+
+    // Re-address the utun when the EID changes live (the tunnel's IPv4 address IS the EID).
+    // Safe to call setTunnelNetworkSettings again on a running provider.
+    private func readdressTunnel(_ eid: String) {
+        let addr = eid.isEmpty ? "240.0.0.1" : eid
+        tunnelEIDBytes = Self.parseOctets(addr) ?? [240, 0, 0, 1]
+        let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "240.0.0.0")
+        let ipv4 = NEIPv4Settings(addresses: [addr], subnetMasks: ["255.255.255.255"])
+        ipv4.includedRoutes = [
+            NEIPv4Route(destinationAddress: "240.0.0.0", subnetMask: "240.0.0.0"),
+        ]
+        settings.ipv4Settings = ipv4
+        settings.mtu = 1400
+        setTunnelNetworkSettings(settings) { [weak self] error in
+            if let error = error {
+                self?.log.error("re-address tunnel failed: \(error.localizedDescription)")
+            } else {
+                self?.append("=== tunnel re-addressed to EID \(addr) ===")
             }
         }
     }

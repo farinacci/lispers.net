@@ -60,12 +60,21 @@ final class LigService: ObservableObject {
             set([LigLine(content: .error("Enable LISP on the xTR tab first."))])
             return
         }
-        guard var eid = LispAddress(string: eidString.trimmingCharacters(in: .whitespaces),
-                                    iid: UInt32(engine.config.instanceID)) else {
+        // Accept an optional "[<iid>]" prefix on the EID (e.g. "[1]240.10.0.1"); the bracketed
+        // instance-id overrides the configured default so you can lig into any IID.
+        let raw = eidString.trimmingCharacters(in: .whitespaces)
+        var iid = UInt32(engine.config.instanceID)
+        var addrStr = raw
+        if raw.hasPrefix("["), let close = raw.firstIndex(of: "]"),
+           let parsed = UInt32(raw[raw.index(after: raw.startIndex)..<close]) {
+            iid = parsed
+            addrStr = String(raw[raw.index(after: close)...]).trimmingCharacters(in: .whitespaces)
+        }
+        guard var eid = LispAddress(string: addrStr, iid: iid) else {
             set([LigLine(content: .error("Invalid EID: \(eidString)"))])
             return
         }
-        eid.maskLen = 32
+        if !eid.isName { eid.maskLen = 32 }     // a distinguished name keeps its len*8 mask
         target = eid
         self.pubsub = pubsub
         self.debug = debug
@@ -170,9 +179,11 @@ final class LigService: ObservableObject {
                 LispLog.shared.lprint(.itr, "lig: undecodable map-reply (\(data.count) " +
                                       "bytes): \(lispFormatPacket(data))")
                 pending.removeAll()
+                let hint = target.isMulticast
+                    ? " — the map-server likely has no (S,G) registration for this group"
+                    : ""
                 append(.init(content: .error("*** Received a map-reply we can't decode " +
-                    "(\(data.count) bytes) — the map-server likely has no (S,G) " +
-                    "registration for this group ***")))
+                    "(\(data.count) bytes)\(hint) ***")))
                 next()
                 return
             }
@@ -207,8 +218,11 @@ final class LigService: ObservableObject {
 
         let inner = req.encode()
         // ECM inner IP src = our translated RLOC, inner UDP src = our translated
-        // ephemeral port — so the proxy Map-Reply routes back to THIS socket.
-        let ecm = LispECM.wrap(control: inner, innerSource: ephemRLOC, innerDest: target,
+        // ephemeral port — so the proxy Map-Reply routes back to THIS socket. A distinguished
+        // name can't go in the inner IPv4 dest field, so use the map-resolver's address there
+        // (we send straight to the MS anyway — it reads the target from the map-request record).
+        let ecmDest = target.isName ? mr : target
+        let ecm = LispECM.wrap(control: inner, innerSource: ephemRLOC, innerDest: ecmDest,
                                sourcePort: ephemPort, destPort: LISP.ctrlPort, toMS: false)
         pending[req.nonce] = Date()
 

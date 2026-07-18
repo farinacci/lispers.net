@@ -141,6 +141,9 @@ final class LispEngine: ObservableObject {
     // this engine so the UI shows the extension's live state. See EngineMirror.swift.
     var mirrorTimer: Timer?
     var isMirroring = false
+    // Set by the tunnel provider: the tunnel IP is the EID, so an EID edit while the VPN is
+    // up must re-address the utun. applyLiveReload() calls this before the soft re-register.
+    var onEIDChange: ((String) -> Void)?
     // Internal setters so the mirror (EngineMirror.swift, a separate file) can drive the
     // private(set) status props. Only for mirroring — the real xTR sets these directly.
     func mirrorSetRunning(_ v: Bool) { running = v }
@@ -269,6 +272,49 @@ final class LispEngine: ObservableObject {
         running = false
         bumpMapCache()
         log.fprint(.core, "LISP xTR disabled")
+    }
+
+    // Live-reconfigure (extension only, called from the 1s timer). The app writes xTR-tab
+    // edits to the shared config file; pick them up and apply to the running xTR — no Save
+    // button, no VPN off/on. Dynamic fields apply in place; structural fields do a soft
+    // re-register (disable+enable rebinds sockets and re-registers, the tunnel stays up).
+    // The bounce is deferred to the next runloop tick so it doesn't invalidate the timer
+    // that's currently firing (this method runs inside that timer).
+    private var registerDirty = false
+    private var bounceDirty = false
+    private var pendingEIDChange = false
+
+    func applyLiveReload() {
+        let r = config.reloadAll()
+        if r.dynamicChanged {
+            log.controlPlaneLogging = config.controlPlaneLog
+            log.dataPlaneLogging = config.dataPlaneLog
+        }
+        if r.eidChanged { pendingEIDChange = true }
+        // A structural field is mid-edit (differs from last tick). Mark it dirty and wait for
+        // it to settle, so a text field like EID/auth-key applies ONCE on the committed value,
+        // not on every keystroke.
+        if r.bounceChanged { bounceDirty = true; return }
+        if r.registerChanged { registerDirty = true; return }
+        guard bounceDirty || registerDirty else { return }
+        // A full tick with no further change = the edit committed. Apply once.
+        let doBounce = bounceDirty
+        let eidChanged = pendingEIDChange
+        registerDirty = false; bounceDirty = false; pendingEIDChange = false
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            if eidChanged { self.onEIDChange?(self.config.eidString) }   // re-address the utun
+            if doBounce {
+                // Sockets/data-plane must be rebuilt (NAT mode, mh, RLOC-probe, enable).
+                self.log.fprint(.core, "Config edit settled — re-applying (sockets rebound)")
+                if self.running { self.disable() }
+                if self.config.lispEnabled { self.enable() }
+            } else if self.running {
+                // Register-only (EID, IID, auth-key, MSes, hostname): a fresh Map-Register.
+                self.log.fprint(.core, "Config edit settled — sending Map-Register")
+                self.sendMapRegisters()
+            }
+        }
     }
 
     // MARK: app-background lifecycle
@@ -464,14 +510,10 @@ final class LispEngine: ObservableObject {
             // this xTR runs in the extension — Option B) can mirror it. Only the real
             // xTR runs startTimers, so there's never a competing writer.
             self.writeSnapshot()
-            // Extension only: pick up runtime-tunable flags (load-split, logging scopes,
-            // telemetry) the user toggled in the app while the VPN is up — the extension
-            // read config once at startTunnel and would otherwise never see them.
+            // Extension only: pick up config the user edited in the app while the VPN is up
+            // (the extension read config once at startTunnel). No Save button, no VPN bounce.
             #if !HOST_APP
-            if self.config.reloadRuntimeFlags() {
-                self.log.controlPlaneLogging = self.config.controlPlaneLog
-                self.log.dataPlaneLogging = self.config.dataPlaneLog
-            }
+            self.applyLiveReload()
             #endif
         }
         timers.append(ui)

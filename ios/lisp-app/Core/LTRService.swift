@@ -76,6 +76,18 @@ final class LTRService: ObservableObject {
         d.maskLen = 32
         if d.isMulticast { set([LTRLine(content: .error("Multicast EID not supported"))]); return }
 
+        // IID-scoped map-cache check. With NAT-traversal the [iid]0/0 default covers every
+        // dest in an IID we're configured in, so a miss here means we have NO EID in that
+        // IID — honest-report and stop rather than silently tracing via the [0]0/0 default
+        // (the app→extension inject boundary would otherwise IID-0 the packet). No Map-Request
+        // is sent: the NAT-traversal design never needs one.
+        if engine.mapCache.lookup(d) == nil {
+            set([LTRLine(content: .error(
+                "Map-Cache lookup failed for [\(d.instanceID)]\(d.addressString) - " +
+                "IID \(d.instanceID) not configured"))])
+            return
+        }
+
         seid = s; deid = d
         output = []; inFlight = true; done = false
         nonce = Data((0..<8).map { _ in UInt8.random(in: 0...255) })

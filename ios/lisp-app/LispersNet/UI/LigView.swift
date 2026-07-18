@@ -70,13 +70,22 @@ struct LigView: View {
                 Button {
                     keyboardUp = false
                     let input = eid.trimmingCharacters(in: .whitespaces)
-                    hosts.resolveTarget(input) { addr in
-                        guard let addr = addr else {
-                            lig.output = [LigLine(content: .error("Cannot resolve \(input)"))]
-                            return
-                        }
-                        lig.lookup(eidString: addr.addressString, count: count,
+                    // An explicit EID — "[iid]…", a 'distinguished-name', or a literal address
+                    // — is ligged as typed so the instance-id and name survive. Anything else
+                    // is treated as a hostname and resolved via lisp-hosts / DNS.
+                    if input.hasPrefix("[") || input.contains("'")
+                        || LispAddress(string: input) != nil {
+                        lig.lookup(eidString: input, count: count,
                                    pubsub: pubsub, noInfo: noInfo, debug: debug)
+                    } else {
+                        hosts.resolveTarget(input) { addr in
+                            guard let addr = addr else {
+                                lig.output = [LigLine(content: .error("Cannot resolve \(input)"))]
+                                return
+                            }
+                            lig.lookup(eidString: addr.addressString, count: count,
+                                       pubsub: pubsub, noInfo: noInfo, debug: debug)
+                        }
                     }
                 } label: {
                     if lig.inFlight { ProgressView() } else { Text("lig it").bold() }
@@ -98,7 +107,7 @@ struct LigView: View {
                     Spacer()
                     Text("lig self").bold()
                     if !engine.config.eidString.isEmpty {
-                        Text(engine.config.eidString)
+                        Text("[\(engine.config.instanceID)]\(engine.config.eidString)")
                             .font(.callout.monospaced())
                             .foregroundStyle(Color.lispGreen)
                     }

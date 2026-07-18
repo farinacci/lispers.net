@@ -214,9 +214,13 @@ struct StatusHeader: View {
                     Text("EID ").foregroundStyle(.secondary) +
                     Text(config.eidString.isEmpty ? "unconfigured" : config.eidString)
                         .foregroundStyle(Color.lispGreen).bold()
-                    Text("RLOC ").foregroundStyle(.secondary) +
-                    Text(engine.rloc.map { rlocLabel($0) } ?? "none")
-                        .foregroundStyle(Color.lispRed)
+                    // Keep "<addr> (iface → SSID)" on ONE line, shrinking the font if the
+                    // network name makes it too long to fit.
+                    (Text("RLOC ").foregroundStyle(.secondary) +
+                     Text(engine.rloc.map { rlocLabel($0) } ?? "none")
+                        .foregroundStyle(Color.lispRed))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                     if let t = engine.translatedRLOC {
                         // The RTR-reported translated DATA port (engine.advertisedPort)
                         // — the same value we put in @tp and the RTRs use to forward.
@@ -230,8 +234,10 @@ struct StatusHeader: View {
                         ForEach(engine.mhInterfaces.filter {
                             $0.interfaceName != engine.rloc?.interfaceName
                         }, id: \.interfaceName) { iface in
-                            Text("RLOC ").foregroundStyle(.secondary) +
-                            Text(rlocLabel(iface)).foregroundStyle(Color.lispRed)
+                            (Text("RLOC ").foregroundStyle(.secondary) +
+                             Text(rlocLabel(iface)).foregroundStyle(Color.lispRed))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
                             if let tr = engine.ifaceTranslated[iface.interfaceName] {
                                 Text("translated RLOC:port ").foregroundStyle(.secondary) +
                                 Text("\(tr.rloc.addressString):\(String(tr.port))")

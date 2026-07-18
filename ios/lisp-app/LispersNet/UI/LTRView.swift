@@ -65,12 +65,18 @@ struct LTRView: View {
                 Button {
                     keyboardUp = false
                     let input = eid.trimmingCharacters(in: .whitespaces)
-                    hosts.resolveTarget(input) { addr in
-                        guard let addr = addr else {
-                            ltr.output = [LTRLine(content: .error("Cannot resolve \(input)"))]
-                            return
+                    // An explicit EID ("[iid]…" or a literal address) is traced as typed so the
+                    // instance-id survives; otherwise resolve it as a hostname.
+                    if input.hasPrefix("[") || LispAddress(string: input) != nil {
+                        ltr.trace(target: input)
+                    } else {
+                        hosts.resolveTarget(input) { addr in
+                            guard let addr = addr else {
+                                ltr.output = [LTRLine(content: .error("Cannot resolve \(input)"))]
+                                return
+                            }
+                            ltr.trace(target: addr.addressString)
                         }
-                        ltr.trace(target: addr.addressString)
                     }
                 } label: {
                     if ltr.inFlight { ProgressView() } else { Text("Send").bold() }

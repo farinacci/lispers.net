@@ -216,27 +216,59 @@ final class LispConfig: ObservableObject, Codable {
         }
     }
 
-    // Re-read RUNTIME-TUNABLE flags from the shared config file without restarting the
-    // engine. The LispTunnel extension (Option B) calls this so toggles the user flips in
-    // the app while the VPN is up — load-split, logging scopes, telemetry — take effect in
-    // the running extension. Returns true if anything changed. Deliberately does NOT touch
-    // EID / map-servers / instance-id / joins: those need a re-register, so they still
-    // require a VPN restart. Cheap enough to call on the engine's 1s timer.
-    @discardableResult
-    func reloadRuntimeFlags() -> Bool {
+    // What a live reload changed, split so the engine knows how to apply it.
+    struct ConfigReload {
+        var dynamicChanged = false      // apply in place (logs, telemetry, load-split, mh %)
+        var registerChanged = false     // just re-register (EID, IID, auth-key, MSes, hostname…)
+        var bounceChanged = false       // needs sockets rebound (NAT mode, mh, RLOC-probe, enable)
+        var eidChanged = false          // the tunnel IP is the EID — provider must re-address
+    }
+
+    // Reload the FULL config from the shared App-Group file. The extension reads config
+    // once at startTunnel; this lets on-device edits in the app reach the running xTR with
+    // no Save button and no VPN bounce. Dynamic fields apply in place; structural fields
+    // trigger a soft engine re-register (see LispEngine.applyLiveReload).
+    func reloadAll() -> ConfigReload {
         guard let data = try? Data(contentsOf: Self.fileURL),
               let loaded = try? JSONDecoder().decode(LispConfig.self, from: data)
-        else { return false }
-        var changed = false
-        func set<T: Equatable>(_ kp: ReferenceWritableKeyPath<LispConfig, T>, _ v: T) {
-            if self[keyPath: kp] != v { self[keyPath: kp] = v; changed = true }
+        else { return ConfigReload() }
+        var r = ConfigReload()
+        func dyn<T: Equatable>(_ kp: ReferenceWritableKeyPath<LispConfig, T>, _ v: T) {
+            if self[keyPath: kp] != v { self[keyPath: kp] = v; r.dynamicChanged = true }
         }
-        set(\.loadSplitUnicast, loaded.loadSplitUnicast)
-        set(\.loadSplitMulticast, loaded.loadSplitMulticast)
-        set(\.controlPlaneLog, loaded.controlPlaneLog)
-        set(\.dataPlaneLog, loaded.dataPlaneLog)
-        set(\.rlocProbeLog, loaded.rlocProbeLog)
-        set(\.telemetryEnabled, loaded.telemetryEnabled)
-        return changed
+        // reg — just re-register (Map-Register carries EID/IID/auth/hostname/MS to the MS).
+        func reg<T: Equatable>(_ kp: ReferenceWritableKeyPath<LispConfig, T>, _ v: T) {
+            if self[keyPath: kp] != v { self[keyPath: kp] = v; r.registerChanged = true }
+        }
+        // bounce — needs sockets rebound (NAT/data-port mode, mh, RLOC-probe, LISP enable).
+        func bounce<T: Equatable>(_ kp: ReferenceWritableKeyPath<LispConfig, T>, _ v: T) {
+            if self[keyPath: kp] != v { self[keyPath: kp] = v; r.bounceChanged = true }
+        }
+        // Dynamic — read at use-sites (or a direct setter), no re-register needed.
+        dyn(\.loadSplitUnicast, loaded.loadSplitUnicast)
+        dyn(\.loadSplitMulticast, loaded.loadSplitMulticast)
+        dyn(\.controlPlaneLog, loaded.controlPlaneLog)
+        dyn(\.dataPlaneLog, loaded.dataPlaneLog)
+        dyn(\.rlocProbeLog, loaded.rlocProbeLog)
+        dyn(\.telemetryEnabled, loaded.telemetryEnabled)
+        dyn(\.mhSwitchPct, loaded.mhSwitchPct)
+        // Register-only — the Map-Register conveys these; no socket rebind.
+        if eidString != loaded.eidString { r.eidChanged = true }   // + tunnel re-address
+        reg(\.eidString, loaded.eidString)
+        reg(\.instanceID, loaded.instanceID)
+        reg(\.decentAuthKey, loaded.decentAuthKey)
+        reg(\.xtrHostname, loaded.xtrHostname)
+        reg(\.siteID, loaded.siteID)
+        reg(\.decentSuffix, loaded.decentSuffix)
+        reg(\.decentModulus, loaded.decentModulus)
+        reg(\.decentPrefixes, loaded.decentPrefixes)
+        reg(\.mapServers, loaded.mapServers)
+        // Bounce — sockets/data-plane must be rebuilt for these to take effect.
+        bounce(\.natTraversalEnabled, loaded.natTraversalEnabled)
+        bounce(\.decentNATEnabled, loaded.decentNATEnabled)
+        bounce(\.multihomingEnabled, loaded.multihomingEnabled)
+        bounce(\.rlocProbingEnabled, loaded.rlocProbingEnabled)
+        bounce(\.lispEnabled, loaded.lispEnabled)
+        return r
     }
 }

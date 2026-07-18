@@ -8,6 +8,17 @@
 
 import Foundation
 
+// Parse a "[<key-id>]<key>" authentication-key: the bracketed integer becomes the Map-Register
+// key-id and the remainder is the HMAC key. No (or malformed) prefix → key-id 0 and the whole
+// string is the key. Mirrors lisp.py lisp_parse_auth_key().
+func lispParseAuthKey(_ raw: String) -> (keyID: UInt8, key: String) {
+    if raw.hasPrefix("["), let close = raw.firstIndex(of: "]"),
+       let id = UInt8(raw[raw.index(after: raw.startIndex)..<close]) {
+        return (id, String(raw[raw.index(after: close)...]))
+    }
+    return (0, raw)
+}
+
 extension LispEngine {
 
     // Send a packet and log it like lisp.py's lisp_send() dprint: "Send N bytes
@@ -173,12 +184,12 @@ extension LispEngine {
         register.xtrID = xtrID
         register.siteID = config.siteID
         register.algID = msConf.authAlg == "sha1" ? LISP.sha1AlgID : LISP.sha2AlgID
-        // key-id selects WHICH configured key on the map-server — it is NOT the
-        // alg-id. lispers.net's lisp_parse_auth_key() assigns key-id 0 to a plain
-        // "authentication-key" (no "[key-id]" prefix), so default to 0. Sending
-        // key-id 2 made the MS hash with an empty key (auth always failed).
-        register.keyID = 0
-        let packet = register.encode(eidRecords: recordData, password: msConf.authKey)
+        // key-id selects WHICH configured key on the map-server — it is NOT the alg-id.
+        // A plain "authentication-key" is key-id 0; a "[<key-id>]<key>" prefix overrides it
+        // (lisp.py lisp_parse_auth_key), and the HMAC uses only the part after the bracket.
+        let auth = lispParseAuthKey(msConf.authKey)
+        register.keyID = auth.keyID
+        let packet = register.encode(eidRecords: recordData, password: auth.key)
 
         let decent = config.decentConfigured
             ? ", decent-index \(LispDecent.index(eid: eid, modulus: config.decentModulus, prefixes: config.decentPrefixes))" : ""
@@ -295,8 +306,9 @@ extension LispEngine {
         register.xtrID = xtrID
         register.siteID = config.siteID
         register.algID = msConf.authAlg == "sha1" ? LISP.sha1AlgID : LISP.sha2AlgID
-        register.keyID = 0
-        let packet = register.encode(eidRecords: recordData, password: msConf.authKey)
+        let auth = lispParseAuthKey(msConf.authKey)     // "[<key-id>]<key>" → key-id + HMAC key
+        register.keyID = auth.keyID
+        let packet = register.encode(eidRecords: recordData, password: auth.key)
 
         let act = ttl == 0 ? "de-register" : "register"
         let msDisplay = msConf.dnsNameOrAddress.isEmpty ? msAddr.addressString : msConf.dnsNameOrAddress

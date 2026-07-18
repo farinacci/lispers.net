@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct ConfigView: View {
     @EnvironmentObject var config: LispConfig
@@ -65,8 +66,8 @@ struct ConfigView: View {
         b += row("Control-plane log", config.controlPlaneLog ? "on" : "off")
         b += row("Data-plane log", config.dataPlaneLog ? "on" : "off")
         b += "<hr>"
-        b += row("Suffix", span("name", config.decentSuffix.isEmpty ? "—" : config.decentSuffix))
-        b += row("Modulus", "\(config.decentModulus)")
+        b += row("DNS Suffix", span("name", config.decentSuffix.isEmpty ? "—" : config.decentSuffix))
+        b += row("Hash Modulus", "\(config.decentModulus)")
         if config.decentConfigured, let e = config.eid {
             b += row("registers to", span("name", LispDecent.dnsName(eid: e,
                      modulus: config.decentModulus, suffix: config.decentSuffix,
@@ -162,33 +163,60 @@ struct ConfigView: View {
             Form {
                 Section {
                     StatusHeader()
-                    Toggle("Enable LISP", isOn: Binding(
-                        get: { config.lispEnabled },
-                        set: { on in
-                            config.lispEnabled = on
-                            config.save()
-                            // Who runs the xTR (app vs extension) depends on the Overlay
-                            // App VPN switch — let the coordinator decide.
-                            XTRCoordinator.reconcile(engine: engine, config: config, tunnel: tunnel)
-                        }))
-                    .tint(.lispGreen)
+                }
+                .listSectionSpacing(14)     // small gap to the toggles section (not too tight)
+
+                // Enable LISP + Overlay App VPN in their own section. Each toggle and its
+                // caption share ONE row (VStack) so there's no separator line between them.
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle("Enable LISP", isOn: Binding(
+                            get: { config.lispEnabled },
+                            set: { on in
+                                config.lispEnabled = on
+                                config.save()
+                                // Who runs the xTR (app vs extension) depends on the Overlay
+                                // App VPN switch — let the coordinator decide.
+                                XTRCoordinator.reconcile(engine: engine, config: config, tunnel: tunnel)
+                            }))
+                        .tint(.lispGreen)
+                        Text("LISP keeps running in the background even when this app is " +
+                             "closed. Turn Enable LISP off to fully stop it.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     // OPT-IN, default OFF. Runs the xTR in the always-on LispTunnel
                     // extension so overlay apps (PING, gaapchat) work even when the LISP
                     // app is closed. Turning it on triggers the one-time iOS "Allow VPN
                     // Configurations" prompt; the app then mirrors the extension's state.
-                    Toggle("Overlay App VPN", isOn: Binding(
-                        get: { tunnel.choice == .enabled },
-                        set: { on in
-                            tunnel.choice = on ? .enabled : .declined
-                            XTRCoordinator.reconcile(engine: engine, config: config, tunnel: tunnel)
-                        }))
-                    .tint(.lispGreen)
-                } footer: {
-                    Text("Overlay App VPN is only required for overlay apps.  This LISP "
-                       + "xTR app can run without VPN enabled when no overlay apps are installed.")
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle("Overlay App VPN", isOn: Binding(
+                            get: { tunnel.choice == .enabled },
+                            set: { on in
+                                tunnel.choice = on ? .enabled : .declined
+                                XTRCoordinator.reconcile(engine: engine, config: config, tunnel: tunnel)
+                            }))
+                        .tint(.lispGreen)
+                        Text("Overlay App VPN is only required for overlay apps.  This LISP " +
+                             "xTR app can run without VPN enabled when no overlay apps are installed.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 Section {
+                    HStack(spacing: 8) {
+                        Text("Hostname:")
+                        TextField(engine.xtrName, text: $config.xtrHostname)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .font(.body.monospaced())
+                            .frame(maxWidth: .infinity)
+                            .focused($keyboardUp)
+                            .onChange(of: config.xtrHostname) { _, _ in config.save() }
+                    }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+
                     HStack(spacing: 8) {
                         Text("EID:")
                         TextField("240.10.0.100", text: $config.eidString)
@@ -211,18 +239,16 @@ struct ConfigView: View {
                             .onChange(of: config.instanceID) { _, _ in config.save() }
                     }
                     .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-
-                    HStack(spacing: 8) {
-                        Text("Hostname:")
-                        TextField(engine.xtrName, text: $config.xtrHostname)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                            .font(.body.monospaced())
-                            .frame(maxWidth: .infinity)
-                            .focused($keyboardUp)
-                            .onChange(of: config.xtrHostname) { _, _ in config.save() }
+                    if config.decentConfigured, let eid = config.eid {
+                        LabeledContent("EID registers to") {
+                            Text(LispDecent.dnsName(eid: eid,
+                                                    modulus: config.decentModulus,
+                                                    suffix: config.decentSuffix,
+                                                    prefixes: config.decentPrefixes))
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.blue)
+                        }
                     }
-                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                 } header: {
                     centeredTitle("EID Configuration")
                 }
@@ -285,7 +311,7 @@ struct ConfigView: View {
                     // shown) when multihoming is on.
                     if config.multihomingEnabled {
                         Stepper(value: $config.mhSwitchPct, in: 0...100, step: 5) {
-                            Text("Multihoming rtt threshold: \(config.mhSwitchPct)%")
+                            Text("Multihoming RTT threshold: \(config.mhSwitchPct)%")
                                 .lineLimit(1).minimumScaleFactor(0.7)
                         }
                         .onChange(of: config.mhSwitchPct) { _, _ in config.save() }
@@ -315,7 +341,8 @@ struct ConfigView: View {
 
                 Section {
                     HStack(spacing: 8) {
-                        Text("Suffix:").frame(width: 72, alignment: .leading)
+                        Text("DNS Suffix:").lineLimit(1).fixedSize()
+                            .frame(width: 100, alignment: .leading)
                         TextField("suffix, e.g. ms.example.com", text: $config.decentSuffix)
                             .font(.body.monospaced())
                             .autocapitalization(.none)
@@ -323,26 +350,20 @@ struct ConfigView: View {
                             .focused($keyboardUp)
                             .onChange(of: config.decentSuffix) { _, _ in config.save() }
                     }
-                    Stepper("Modulus: \(config.decentModulus)",
-                            value: $config.decentModulus, in: 0...255)
-                        .onChange(of: config.decentModulus) { _, _ in config.save() }
-                    HStack(spacing: 8) {
-                        Text("Auth-key:")
-                        SecureField("authentication-key", text: $config.decentAuthKey)
-                            .font(.body.monospaced())
-                            .multilineTextAlignment(.trailing)
-                            .focused($keyboardUp)
-                            .onChange(of: config.decentAuthKey) { _, _ in config.save() }
+                    Stepper(value: $config.decentModulus, in: 0...255) {
+                        Text("Hash Modulus: \(config.decentModulus)")
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
-                    if config.decentConfigured, let eid = config.eid {
-                        LabeledContent("EID registers to") {
-                            Text(LispDecent.dnsName(eid: eid,
-                                                    modulus: config.decentModulus,
-                                                    suffix: config.decentSuffix,
-                                                    prefixes: config.decentPrefixes))
-                            .font(.caption.monospaced())
-                            .foregroundStyle(.blue)
-                        }
+                    .onChange(of: config.decentModulus) { _, _ in config.save() }
+                    HStack(spacing: 8) {
+                        Text("Auth Key:")
+                        // Each keystroke shows in plaintext for 3s, then turns to a dot; the
+                        // rest of the key (and the committed value) is always masked — the full
+                        // key is never shown at once. Commits on blur.
+                        TransientRevealField(placeholder: "authentication-key",
+                                             text: $config.decentAuthKey) { config.save() }
+                            .frame(maxWidth: .infinity)
                     }
                 } header: {
                     centeredTitle("LISP-Decent MS Configuration")
@@ -397,6 +418,7 @@ struct ConfigView: View {
             .listRowSeparatorTint(.lispSeparator)
             .contentMargins(.top, -4, for: .scrollContent)   // tighten title↔first-section gap
             .scrollDismissesKeyboard(.interactively)
+            .background(TapToDismissKeyboard())              // tap anywhere (but a field) commits
             .navigationTitle("lispers.net xTR")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -586,9 +608,9 @@ private struct XTRSnapshot: View {
             line("Data-plane log:", config.dataPlaneLog ? "on" : "off")
 
             Divider()
-            line("Suffix:", config.decentSuffix.isEmpty ? "—" : config.decentSuffix, .lispBlue)
-            line("Modulus:", "\(config.decentModulus)")
-            line("Auth-key:", config.decentAuthKey.isEmpty ? "—"
+            line("DNS Suffix:", config.decentSuffix.isEmpty ? "—" : config.decentSuffix, .lispBlue)
+            line("Hash Modulus:", "\(config.decentModulus)")
+            line("Auth Key:", config.decentAuthKey.isEmpty ? "—"
                  : String(repeating: "*", count: config.decentAuthKey.count))
             if config.decentConfigured, let eid = config.eid {
                 line("registers to:", LispDecent.dnsName(eid: eid,
@@ -671,6 +693,157 @@ private struct DecentPrefixRow: View {
                 .frame(width: 36)
                 .focused(keyboardUp)
                 .disabled(!editing)
+        }
+    }
+}
+
+// A masked entry field where each freshly-typed character is shown in plaintext for 3s and
+// then turns into a dot — the full key is NEVER shown at once, and the committed value is
+// fully masked. UIKit-backed: it owns its display text (dots + still-hot plaintext chars)
+// while the real value lives in the binding.
+struct TransientRevealField: UIViewRepresentable {
+    let placeholder: String
+    @Binding var text: String
+    var onCommit: () -> Void = {}
+
+    func makeUIView(context: Context) -> UITextField {
+        let tf = UITextField()
+        tf.placeholder = placeholder
+        tf.autocapitalizationType = .none
+        tf.autocorrectionType = .no
+        tf.spellCheckingType = .no
+        tf.font = .monospacedSystemFont(
+            ofSize: UIFont.preferredFont(forTextStyle: .body).pointSize, weight: .regular)
+        tf.textAlignment = .right
+        tf.delegate = context.coordinator
+        tf.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        context.coordinator.textField = tf
+        context.coordinator.setReal(text)       // start fully masked
+        return tf
+    }
+
+    func updateUIView(_ tf: UITextField, context: Context) {
+        // Resync only on an EXTERNAL change to the binding (e.g. config loaded), not our own.
+        if context.coordinator.real != text { context.coordinator.setReal(text) }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, UITextFieldDelegate {
+        let parent: TransientRevealField
+        weak var textField: UITextField?
+        private(set) var real = ""
+        private var deadlines: [Date] = []       // per-character plaintext-until time
+        private var timer: Timer?
+        private let revealSecs: TimeInterval = 3
+        private let dot = "\u{2022}"             // • — same bullet SecureField used in 0.14
+
+        init(_ p: TransientRevealField) { parent = p }
+
+        // Adopt a value with everything already masked (never reveals an existing key).
+        func setReal(_ s: String) {
+            real = s
+            deadlines = Array(repeating: .distantPast, count: s.count)
+            render(cursorToEnd: true)
+        }
+
+        func textField(_ tf: UITextField, shouldChangeCharactersIn range: NSRange,
+                       replacementString string: String) -> Bool {
+            // Display and real are the same length (1 display char per real char), so the
+            // display range maps 1:1 onto the real string.
+            let ns = real as NSString
+            guard range.location + range.length <= ns.length else { return false }
+            real = ns.replacingCharacters(in: range, with: string)
+            let lo = range.location, hi = range.location + range.length
+            if hi <= deadlines.count { deadlines.removeSubrange(lo..<hi) }
+            let now = Date()
+            deadlines.insert(contentsOf: Array(repeating: now.addingTimeInterval(revealSecs),
+                                               count: (string as NSString).length),
+                             at: min(lo, deadlines.count))
+            parent.text = real
+            render(cursorTo: range.location + (string as NSString).length)
+            startTimer()
+            return false                          // we manage .text ourselves
+        }
+
+        func textFieldDidEndEditing(_ tf: UITextField) {
+            deadlines = Array(repeating: .distantPast, count: real.count)  // mask all on blur
+            render(cursorToEnd: true)
+            stopTimer()
+            parent.onCommit()
+        }
+
+        func textFieldShouldReturn(_ tf: UITextField) -> Bool {
+            tf.resignFirstResponder(); return true
+        }
+
+        // plaintext where the char is still inside its 3s window, otherwise a dot.
+        private func display() -> String {
+            let now = Date()
+            return Array(real).enumerated().map { i, c in
+                (i < deadlines.count && now < deadlines[i]) ? String(c) : dot
+            }.joined()
+        }
+
+        private func render(cursorToEnd: Bool = false, cursorTo pos: Int? = nil) {
+            guard let tf = textField else { return }
+            tf.text = display()
+            let n = tf.text?.count ?? 0
+            let loc = min(cursorToEnd ? n : (pos ?? n), n)
+            if let p = tf.position(from: tf.beginningOfDocument, offset: loc) {
+                tf.selectedTextRange = tf.textRange(from: p, to: p)
+            }
+        }
+
+        private func startTimer() {
+            guard timer == nil else { return }
+            timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+                guard let self = self else { return }
+                let sel = self.textField?.selectedTextRange      // masking keeps length, so
+                self.render()                                    // the cursor stays valid
+                if let sel = sel { self.textField?.selectedTextRange = sel }
+                if !self.deadlines.contains(where: { Date() < $0 }) { self.stopTimer() }
+            }
+        }
+        private func stopTimer() { timer?.invalidate(); timer = nil }
+    }
+}
+
+// Window-level tap-to-dismiss: a tap anywhere resigns the first responder (committing the
+// field), EXCEPT taps that land on a text field — those still focus it. cancelsTouchesInView
+// is false so buttons/toggles keep working (and also dismiss). Attach via .background().
+struct TapToDismissKeyboard: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIView {
+        let v = UIView(frame: .zero)
+        DispatchQueue.main.async {
+            guard let window = v.window, context.coordinator.tap == nil else { return }
+            let tap = UITapGestureRecognizer(target: context.coordinator,
+                                             action: #selector(Coordinator.dismiss))
+            tap.cancelsTouchesInView = false
+            tap.delegate = context.coordinator
+            window.addGestureRecognizer(tap)
+            context.coordinator.tap = tap
+            context.coordinator.window = window
+        }
+        return v
+    }
+    func updateUIView(_ uiView: UIView, context: Context) {}
+    func makeCoordinator() -> Coordinator { Coordinator() }
+    static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) {
+        if let tap = coordinator.tap { coordinator.window?.removeGestureRecognizer(tap) }
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        weak var window: UIWindow?
+        weak var tap: UITapGestureRecognizer?
+        @objc func dismiss() { window?.endEditing(true) }
+        func gestureRecognizer(_ g: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            var v = touch.view
+            while let cur = v {
+                if cur is UITextField || cur is UITextView { return false }   // let fields focus
+                v = cur.superview
+            }
+            return true
         }
     }
 }

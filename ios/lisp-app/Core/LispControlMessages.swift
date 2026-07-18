@@ -494,10 +494,22 @@ struct LispMapRequest {
         // Subscribe byte + mask-len, then EID prefix — or a Multicast-Info LCAF
         // when looking up a group (lig <group>), lisp.py:4627.
         w.u8(subscribe ? 0x80 : 0)
-        w.u8(UInt8(targetEID.maskLen))
+        // mask-len is 0 for a non-binary EID (distinguished name / geo), else the prefix len
+        // (lisp.py lisp_map_request.encode: "0 if is_binary()==False else mask_len").
+        w.u8(targetEID.isName ? 0 : UInt8(min(max(targetEID.maskLen, 0), 255)))
         if !targetGroup.isNull {
             w.u16(LISP.afiLCAF)
             w.bytes(LispEIDRecord.encodeMcastInfoLCAF(source: targetEID, group: targetGroup))
+        } else if targetEID.instanceID != 0 {
+            // LCAF Instance-ID wrapping the EID — carries the IID to the map-resolver.
+            // Works for an IPv4 EID or an AFI-17 distinguished name (packAddress + afi differ).
+            w.u16(LISP.afiLCAF)
+            w.u8(0); w.u8(0)
+            w.u8(LISP.lcafInstanceID); w.u8(0)
+            w.u16(UInt16(4 + 2 + targetEID.addressLength))
+            w.u32(targetEID.instanceID)
+            w.u16(targetEID.afi)
+            w.bytes(targetEID.packAddress())
         } else {
             w.u16(targetEID.afi)
             w.bytes(targetEID.packAddress())

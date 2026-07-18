@@ -11,7 +11,7 @@ import Foundation
 // so both the app and the LispTunnel extension can stamp it into their log banners;
 // ContentView.version is an alias for the app UI.
 enum AppInfo {
-    static let version = "0.14-1"
+    static let version = "0.14-30"
 }
 
 enum LISP {
