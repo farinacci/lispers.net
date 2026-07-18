@@ -197,9 +197,23 @@ def build_map_register(afe, iid, eid, ml, afl, rloc, ms, ms_key):
     # Build rest of Map-Register with zeroed auth-data and append EID-record
     # to it. Set T-bit so we can use our own TTL.
     #
+    #
+    # Parse "[<key-id>]<string>" auth-key form. No brackets means key-id 0.
+    # Only the <string> part is the HMAC secret; <key-id> goes in the header.
+    #
+    key_id = 0
+    if (ms_key[0:1] == "["):
+        end = ms_key.find("]")
+        if (end != -1):
+            try: key_id = int(ms_key[1:end])
+            except: key_id = 0
+            ms_key = ms_key[end+1::]
+        #endif
+    #endif
+
     pkt = struct.pack("I", sl(0x30000801))
     nonce = random.randint(0, 0xffffffffffffffff)
-    pkt += struct.pack("QBBH", nonce, 0, 2, ss(32))
+    pkt += struct.pack("QBBH", nonce, key_id, 2, ss(32))
     pkt += struct.pack("QQQQ", 0, 0, 0, 0)
     pkt += eid_record
 
