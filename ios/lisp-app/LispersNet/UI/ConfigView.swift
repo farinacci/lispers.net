@@ -184,8 +184,8 @@ struct ConfigView: View {
                         }))
                     .tint(.lispGreen)
                 } footer: {
-                    Text("Overlay App VPN is required only to run overlay apps (PING, "
-                       + "gaapchat). This LISP xTR app can run without it.")
+                    Text("Overlay App VPN is only required for overlay apps.  This LISP "
+                       + "xTR app can run without VPN enabled when no overlay apps are installed.")
                 }
 
                 Section {
