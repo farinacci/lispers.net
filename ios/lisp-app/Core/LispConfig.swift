@@ -233,42 +233,78 @@ final class LispConfig: ObservableObject, Codable {
               let loaded = try? JSONDecoder().decode(LispConfig.self, from: data)
         else { return ConfigReload() }
         var r = ConfigReload()
-        func dyn<T: Equatable>(_ kp: ReferenceWritableKeyPath<LispConfig, T>, _ v: T) {
-            if self[keyPath: kp] != v { self[keyPath: kp] = v; r.dynamicChanged = true }
+        // Log each applied change to lisp-core.log as "<name>: <old> -> <new>". The auth key
+        // is masked so the secret never lands in an exportable log.
+        func note(_ name: String, _ old: Any, _ new: Any, secret: Bool) {
+            let o = secret ? "•••" : "\(old)", n = secret ? "•••" : "\(new)"
+            LispLog.shared.aprint(.core, "Config change: \(name): \(o) -> \(n)")
+        }
+        // Diff two lists of already-formatted, COMPLETE entries — one readable line per
+        // added/removed. Incomplete entries (still being typed) are filtered out by the caller
+        // so a half-entered prefix doesn't log "added:  lookup-len ?".
+        func contentDiff(_ name: String, _ old: [String], _ new: [String]) {
+            let o = Set(old), n = Set(new)
+            for s in n.subtracting(o) { LispLog.shared.aprint(.core, "Config change: \(name) added: \(s)") }
+            for s in o.subtracting(n) { LispLog.shared.aprint(.core, "Config change: \(name) removed: \(s)") }
+        }
+        func dyn<T: Equatable>(_ name: String, _ kp: ReferenceWritableKeyPath<LispConfig, T>, _ v: T) {
+            let old = self[keyPath: kp]
+            if old != v { self[keyPath: kp] = v; r.dynamicChanged = true; note(name, old, v, secret: false) }
         }
         // reg — just re-register (Map-Register carries EID/IID/auth/hostname/MS to the MS).
-        func reg<T: Equatable>(_ kp: ReferenceWritableKeyPath<LispConfig, T>, _ v: T) {
-            if self[keyPath: kp] != v { self[keyPath: kp] = v; r.registerChanged = true }
+        func reg<T: Equatable>(_ name: String, _ kp: ReferenceWritableKeyPath<LispConfig, T>,
+                               _ v: T, secret: Bool = false) {
+            let old = self[keyPath: kp]
+            if old != v { self[keyPath: kp] = v; r.registerChanged = true; note(name, old, v, secret: secret) }
         }
         // bounce — needs sockets rebound (NAT/data-port mode, mh, RLOC-probe, LISP enable).
-        func bounce<T: Equatable>(_ kp: ReferenceWritableKeyPath<LispConfig, T>, _ v: T) {
-            if self[keyPath: kp] != v { self[keyPath: kp] = v; r.bounceChanged = true }
+        func bounce<T: Equatable>(_ name: String, _ kp: ReferenceWritableKeyPath<LispConfig, T>, _ v: T) {
+            let old = self[keyPath: kp]
+            if old != v { self[keyPath: kp] = v; r.bounceChanged = true; note(name, old, v, secret: false) }
         }
         // Dynamic — read at use-sites (or a direct setter), no re-register needed.
-        dyn(\.loadSplitUnicast, loaded.loadSplitUnicast)
-        dyn(\.loadSplitMulticast, loaded.loadSplitMulticast)
-        dyn(\.controlPlaneLog, loaded.controlPlaneLog)
-        dyn(\.dataPlaneLog, loaded.dataPlaneLog)
-        dyn(\.rlocProbeLog, loaded.rlocProbeLog)
-        dyn(\.telemetryEnabled, loaded.telemetryEnabled)
-        dyn(\.mhSwitchPct, loaded.mhSwitchPct)
+        dyn("load-split unicast", \.loadSplitUnicast, loaded.loadSplitUnicast)
+        dyn("load-split multicast", \.loadSplitMulticast, loaded.loadSplitMulticast)
+        dyn("control-plane log", \.controlPlaneLog, loaded.controlPlaneLog)
+        dyn("data-plane log", \.dataPlaneLog, loaded.dataPlaneLog)
+        dyn("rloc-probe log", \.rlocProbeLog, loaded.rlocProbeLog)
+        dyn("telemetry", \.telemetryEnabled, loaded.telemetryEnabled)
+        dyn("multihoming RTT %", \.mhSwitchPct, loaded.mhSwitchPct)
         // Register-only — the Map-Register conveys these; no socket rebind.
         if eidString != loaded.eidString { r.eidChanged = true }   // + tunnel re-address
-        reg(\.eidString, loaded.eidString)
-        reg(\.instanceID, loaded.instanceID)
-        reg(\.decentAuthKey, loaded.decentAuthKey)
-        reg(\.xtrHostname, loaded.xtrHostname)
-        reg(\.siteID, loaded.siteID)
-        reg(\.decentSuffix, loaded.decentSuffix)
-        reg(\.decentModulus, loaded.decentModulus)
-        reg(\.decentPrefixes, loaded.decentPrefixes)
-        reg(\.mapServers, loaded.mapServers)
+        reg("EID", \.eidString, loaded.eidString)
+        reg("IID", \.instanceID, loaded.instanceID)
+        reg("Auth Key", \.decentAuthKey, loaded.decentAuthKey, secret: true)
+        reg("Hostname", \.xtrHostname, loaded.xtrHostname)
+        reg("site-ID", \.siteID, loaded.siteID)
+        reg("DNS Suffix", \.decentSuffix, loaded.decentSuffix)
+        reg("Hash Modulus", \.decentModulus, loaded.decentModulus)
+        // Arrays: log a readable add/remove diff of COMPLETE entries only, so an entry still
+        // being typed (partial CIDR, no lookup-len) doesn't log, and editing re-registers
+        // without spamming.
+        func completePrefixes(_ ps: [DecentPrefix]) -> [String] {
+            ps.compactMap { p in
+                guard p.eidPrefix.contains("/"), LispAddress(string: p.eidPrefix) != nil,
+                      let len = p.lookupLength else { return nil }
+                return "\(p.eidPrefix) lookup-len \(len)"
+            }
+        }
+        if decentPrefixes != loaded.decentPrefixes {
+            contentDiff("lookup prefix", completePrefixes(decentPrefixes),
+                        completePrefixes(loaded.decentPrefixes))
+            decentPrefixes = loaded.decentPrefixes; r.registerChanged = true
+        }
+        if mapServers != loaded.mapServers {
+            contentDiff("map-server", mapServers.map { $0.dnsNameOrAddress }.filter { !$0.isEmpty },
+                        loaded.mapServers.map { $0.dnsNameOrAddress }.filter { !$0.isEmpty })
+            mapServers = loaded.mapServers; r.registerChanged = true
+        }
         // Bounce — sockets/data-plane must be rebuilt for these to take effect.
-        bounce(\.natTraversalEnabled, loaded.natTraversalEnabled)
-        bounce(\.decentNATEnabled, loaded.decentNATEnabled)
-        bounce(\.multihomingEnabled, loaded.multihomingEnabled)
-        bounce(\.rlocProbingEnabled, loaded.rlocProbingEnabled)
-        bounce(\.lispEnabled, loaded.lispEnabled)
+        bounce("NAT-traversal", \.natTraversalEnabled, loaded.natTraversalEnabled)
+        bounce("Decentralized-NAT", \.decentNATEnabled, loaded.decentNATEnabled)
+        bounce("Multihoming", \.multihomingEnabled, loaded.multihomingEnabled)
+        bounce("RLOC-probing", \.rlocProbingEnabled, loaded.rlocProbingEnabled)
+        bounce("Enable LISP", \.lispEnabled, loaded.lispEnabled)
         return r
     }
 }

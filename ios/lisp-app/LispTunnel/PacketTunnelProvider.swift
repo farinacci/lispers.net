@@ -77,6 +77,8 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
                 // Live EID edits (app xTR tab, VPN up): the tunnel IP is the EID, so
                 // re-address the utun before the engine re-registers.
                 engine.onEIDChange = { [weak self] eid in self?.readdressTunnel(eid) }
+                LispLog.shared.aprint(.core, "Overlay App VPN STARTED — extension hosting xTR " +
+                    "(Enable LISP \(cfg.lispEnabled ? "on" : "off"))")
                 if cfg.lispEnabled { engine.enable() }
                 self.readLoop()
                 completionHandler(nil)
@@ -108,6 +110,8 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     override func stopTunnel(with reason: NEProviderStopReason,
                              completionHandler: @escaping () -> Void) {
         DispatchQueue.main.async { [weak self] in
+            LispLog.shared.aprint(.core, "Overlay App VPN STOPPED (reason \(reason.rawValue)) — " +
+                "tearing down xTR")
             self?.engine?.disable()
             self?.engine = nil
             if let fd = self?.fwdFD, fd >= 0 { close(fd); self?.fwdFD = -1 }

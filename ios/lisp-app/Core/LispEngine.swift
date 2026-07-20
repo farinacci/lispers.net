@@ -244,8 +244,7 @@ final class LispEngine: ObservableObject {
 
         startTimers()
         pathWatcher.start { [weak self] in self?.pathChanged() }
-        log.fprint(.core, "LISP xTR enabled, EID \(config.eidString), " +
-                   "decent-NAT \(config.decentNATEnabled ? "enabled" : "disabled")")
+        log.aprint(.core, "LISP xTR enabled, EID [\(config.instanceID)]\(config.eidString)")
     }
 
     func disable() {
@@ -271,7 +270,7 @@ final class LispEngine: ObservableObject {
         rtrList.removeAll()
         running = false
         bumpMapCache()
-        log.fprint(.core, "LISP xTR disabled")
+        log.aprint(.core, "LISP xTR disabled")
     }
 
     // Live-reconfigure (extension only, called from the 1s timer). The app writes xTR-tab
@@ -305,13 +304,13 @@ final class LispEngine: ObservableObject {
             guard let self = self else { return }
             if eidChanged { self.onEIDChange?(self.config.eidString) }   // re-address the utun
             if doBounce {
-                // Sockets/data-plane must be rebuilt (NAT mode, mh, RLOC-probe, enable).
-                self.log.fprint(.core, "Config edit settled — re-applying (sockets rebound)")
+                // Sockets/data-plane must be rebuilt (NAT mode, mh, RLOC-probe, enable). The
+                // per-field "Config change:" lines already say what changed; enable()/disable()
+                // log the re-register — so no separate "settled" line needed.
                 if self.running { self.disable() }
                 if self.config.lispEnabled { self.enable() }
             } else if self.running {
                 // Register-only (EID, IID, auth-key, MSes, hostname): a fresh Map-Register.
-                self.log.fprint(.core, "Config edit settled — sending Map-Register")
                 self.sendMapRegisters()
             }
         }
@@ -533,18 +532,49 @@ final class LispEngine: ObservableObject {
     private func pathChanged() {
         guard running else { return }
         let newRLOC = Interfaces.discoverRLOC()
+        let newMH = config.multihomingEnabled ? Interfaces.discoverAllRLOCs() : []
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            if newRLOC?.address != self.rloc?.address {
-                self.log.fprint(.core, "RLOC change: \(self.rloc?.address.addressString ?? "none") -> " +
-                                "\(newRLOC?.address.addressString ?? "none"), re-registering")
-                self.rloc = newRLOC
-                if self.config.natTraversalEnabled || self.config.decentNATEnabled {
-                    self.sendInfoRequests()
-                }
-                self.sendMapRegisters()
-                self.reregisterIGMPGroups()          // refresh (*,G) on RLOC change
+            // Detect a change on the PRIMARY RLOC or on ANY multi-homed interface's address
+            // (a Wi-Fi network switch keeps the same interface but changes its IP + NAT).
+            let primaryChanged = newRLOC?.address != self.rloc?.address
+            let oldMH = Dictionary(uniqueKeysWithValues:
+                self.mhInterfaces.map { ($0.interfaceName, $0.address) })
+            let newMHMap = Dictionary(uniqueKeysWithValues:
+                newMH.map { ($0.interfaceName, $0.address) })
+            guard primaryChanged || oldMH != newMHMap else { return }
+
+            self.log.aprint(.core, "Path change: RLOC \(self.rloc?.address.addressString ?? "none") " +
+                            "-> \(newRLOC?.address.addressString ?? "none") — rebuilding sockets, " +
+                            "re-learning NAT translations")
+            self.rloc = newRLOC
+
+            // Drop the translated RLOC/@tp learned on the OLD network for every interface whose
+            // IP changed — otherwise it lingers (copied from the other interface) until LISP is
+            // disabled, and its RLOC-probes get no replies (no rtts). It re-learns via the
+            // Info-Requests below.
+            for (name, addr) in newMHMap where oldMH[name] != addr {
+                self.ifaceTranslated[name] = nil
             }
+            if primaryChanged { self.translatedRLOC = nil; self.translatedPort = 0 }
+
+            // Rebuild the per-interface (multi-homing) sockets bound to the NEW interface IPs,
+            // so Info-Requests and RLOC-probes egress the right path after the switch.
+            if self.config.multihomingEnabled {
+                let dataBind = (self.config.natTraversalEnabled || self.config.decentNATEnabled)
+                    ? LISP.natDataPort : LISP.dataPort
+                self.tearDownMultihomeSockets()
+                self.buildMultihomeSockets(dataBind: dataBind)
+                // mhInterfaces changed (e.g. Wi-Fi came up at a hotel) — rebuild the RTR default
+                // map-cache entries so the new interface is a next-hop (one RLOC per RTR×iface).
+                self.installRTRDefaultMapCacheEntries()
+            }
+
+            if self.config.natTraversalEnabled || self.config.decentNATEnabled {
+                self.sendInfoRequests()
+            }
+            self.sendMapRegisters()
+            self.reregisterIGMPGroups()          // refresh (*,G) on RLOC change
         }
     }
 

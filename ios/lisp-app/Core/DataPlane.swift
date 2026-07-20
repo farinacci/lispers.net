@@ -17,10 +17,15 @@ extension LispEngine {
     func encapAndSend(inner: Data, destEID: LispAddress) {
         guard running else { return }
         let multicast = destEID.isMulticast
+        // A LISP-Trace to our OWN EID must still go OUT to the RTR (which decaps + re-encaps
+        // back to us) so the round-trip path is real — otherwise it short-circuits locally
+        // (no RTR hops). Non-trace own-EID packets stay local (below).
+        let isTrace = Self.isTracePacket(inner)
+        let selfTrace = !multicast && isTrace && (config.eid.map { destEID.v4 == $0.v4 } ?? false)
         // A unicast packet destined to our OWN EID is local (e.g. our self-reply to our own
         // multicast group ping). Deliver it up the stack — do NOT encap to the network or
         // Map-Request it, which would wrongly create a map-cache entry for ourselves.
-        if !multicast, let myEID = config.eid, destEID.v4 == myEID.v4 {
+        if !multicast, !selfTrace, let myEID = config.eid, destEID.v4 == myEID.v4 {
             log.dprint(.itr, "Destination \(destEID.addressString) is our own EID — " +
                        "deliver locally, no encap")
             deliverInner(inner, iid: destEID.instanceID)
@@ -35,9 +40,12 @@ extension LispEngine {
         // Multicast: (S,G) lookup (source = our EID); the default (0/0, 224/4)
         // entry's RLOC-set is the RTRs, and selectRLOC hashes (S,G) -> one RTR,
         // which then replicates to the joined receivers.
+        // Self-trace: resolve via the RTR default (0/0), not the 240/8 send-map-request entry.
+        // Looking up 0.0.0.0 matches ONLY the 0/0 default (the RTR set), so we encap to the RTR.
+        let lookupEID = selfTrace ? LispAddress(v4: 0, maskLen: 0, iid: destEID.instanceID) : destEID
         let entry = multicast
             ? mapCache.lookupMulticast(source: config.eid ?? LispAddress(), group: destEID)
-            : mapCache.lookup(destEID)
+            : mapCache.lookup(lookupEID)
         // True miss — no matching entry at all. Unicast asks the mapping system and
         // queues; multicast drops (the (0/0,224/4) default should always match).
         guard let entry = entry else {
@@ -283,6 +291,16 @@ extension LispEngine {
     }
 
     // Parse inner IPv4 (lisp_ipv4_input equivalent) and deliver to the app.
+    // A LISP-Trace inner packet: IPv4 + UDP with dst port 2434 (LISP_TRACE_PORT).
+    static func isTracePacket(_ inner: Data) -> Bool {
+        let b = inner.startIndex
+        guard inner.count >= 20, (inner[b] >> 4) == 4 else { return false }
+        let ihl = Int(inner[b] & 0x0f) * 4
+        guard inner[b + 9] == 17, inner.count >= ihl + 8 else { return false }   // UDP
+        let dport = (UInt16(inner[b + ihl + 2]) << 8) | UInt16(inner[b + ihl + 3])
+        return dport == LISP.tracePort
+    }
+
     private func deliverInner(_ packet: Data, iid: UInt32 = 0, onInterface: String? = nil,
                               outerSource: LispAddress = LispAddress()) {
         guard packet.count >= 20 else { return }

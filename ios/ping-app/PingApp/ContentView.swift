@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 extension Color {
     static let lispGreen = Color(red: 0.16, green: 0.55, blue: 0.16)
@@ -16,37 +17,102 @@ extension Color {
     static let lispSeparator = Color.gray.opacity(0.55)
 }
 
+// Reverse-DNS cache for RLOCs: hostname(for:) returns a cached name or nil while it looks
+// one up off the main thread; the async result republishes so the row redraws with the name.
+// "" is stored for a no-PTR address so we don't re-query it every redraw.
+@MainActor
+final class RDNSCache: ObservableObject {
+    @Published private(set) var names: [String: String] = [:]
+    private var inflight: Set<String> = []
+
+    func hostname(for addr: String) -> String? {
+        if let n = names[addr] { return n.isEmpty ? nil : n }
+        guard !inflight.contains(addr) else { return nil }
+        inflight.insert(addr)
+        DispatchQueue.global().async {
+            let host = LispWire.reverseDNS(addr)
+            DispatchQueue.main.async {
+                self.inflight.remove(addr)
+                self.names[addr] = host ?? ""       // cache the miss too (empty = none)
+            }
+        }
+        return nil
+    }
+}
+
 struct ContentView: View {
     @EnvironmentObject var client: PingClient
     @StateObject private var hosts = PingHosts()
+    @StateObject private var rdns = RDNSCache()
     @State private var target = ""
-    @State private var editingHosts = false
     @State private var showAllResults = false
+    @State private var showAllHosts = false
     @FocusState private var focused: Bool
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
-    static let version = "0.2"
+    static let version = "0.3"
     private static let resultsCollapsedCount = 10
+    private static let hostsCollapsedCount = 5
 
     private var trimmed: String { target.trimmingCharacters(in: .whitespaces) }
 
-    // Resolve an EID or a hostname (from the list) to a dotted EID; nil if neither.
-    private func resolve(_ input: String) -> String? {
+    // Resolve the typed target to a dotted address, delivered async (DNS can block):
+    //   • a literal IPv4  → an EID (240/4, overlay) or an RLOC (native underlay ping)
+    //   • a configured hostname (lisp-hosts) → its EID
+    //   • otherwise a DNS name → its first A record (usually an RLOC)
+    // client.start() then routes overlay-vs-native by the address prefix.
+    private func resolve(_ input: String, completion: @escaping (String?) -> Void) {
         let s = input.trimmingCharacters(in: .whitespaces)
-        if LispWire.parseIPv4(s) != nil { return s }
-        return hosts.entries.first { $0.name.caseInsensitiveCompare(s) == .orderedSame }?.address
+        guard !s.isEmpty else { completion(nil); return }
+        if LispWire.parseIPv4(s) != nil { completion(s); return }
+        if let a = hosts.entries.first(where: { $0.name.caseInsensitiveCompare(s) == .orderedSame })?.address {
+            completion(a); return
+        }
+        DispatchQueue.global().async {
+            let addr = LispWire.resolveDNS(s)
+            DispatchQueue.main.async { completion(addr.map(LispWire.dotted)) }
+        }
     }
     private func startPing(_ input: String) {
         focused = false
-        guard let addr = resolve(input) else { return }
-        target = addr
-        client.start(addr)
+        resolve(input) { addr in
+            guard let addr = addr else { return }
+            target = addr
+            client.start(addr)
+        }
+    }
+
+    // Color an address by kind: an overlay EID (240/4 or a 224/4 group) is green, a routable
+    // RLOC is red. Anything that doesn't parse as IPv4 stays neutral.
+    private func addrColor(_ s: String) -> Color {
+        guard let v = LispWire.parseIPv4(s) else { return .primary }
+        let hi = v & 0xF000_0000
+        return (hi == 0xF000_0000 || hi == 0xE000_0000) ? .lispGreen : .lispRed
+    }
+    private func isRLOC(_ s: String) -> Bool {
+        guard let v = LispWire.parseIPv4(s) else { return false }
+        let hi = v & 0xF000_0000
+        return !(hi == 0xF000_0000 || hi == 0xE000_0000)   // not an overlay EID/group
+    }
+    // The name shown above an address: an RLOC's reverse-DNS name, or an EID's configured
+    // hostname reverse-looked-up in the Hostname Configuration (lisp-hosts). nil if none
+    // (or, for an RLOC, while the DNS lookup is still in flight).
+    private func displayName(for addr: String) -> String? {
+        if isRLOC(addr) { return rdns.hostname(for: addr) }
+        guard let v = LispWire.parseIPv4(addr) else { return nil }
+        return hosts.entries.first { LispWire.parseIPv4($0.address) == v }?.name
     }
 
     // Launch the LISP app via its custom URL scheme (registered in its Info.plist) so the
     // user can bring the xTR to the foreground straight from the "open it" hint.
     private func openLispApp() {
-        if let url = URL(string: "lispxtr://") { openURL(url) }
+        // Concrete host ("open") — a bare "lispxtr://" (empty authority) doesn't reliably
+        // launch on all iOS versions. The LISP app matches on the scheme, ignoring the host.
+        guard let url = URL(string: "lispxtr://open") else { return }
+        openURL(url) { accepted in
+            // Fallback to the low-level opener if the SwiftUI action declines (rare).
+            if !accepted { UIApplication.shared.open(url) }
+        }
     }
 
     var body: some View {
@@ -68,10 +134,10 @@ struct ContentView: View {
 
                 statusSection
 
-                // Ping an EID (input) — its own section, like the LISP app.
+                // Ping a target (input) — an overlay EID, an RLOC, or a DNS name.
                 Section {
                     HStack {
-                        TextField("EID or hostname", text: $target)
+                        TextField("EID, RLOC, or DNS name", text: $target)
                             .font(.body.monospaced())
                             .keyboardType(.asciiCapable)
                             .autocorrectionDisabled()
@@ -81,7 +147,7 @@ struct ContentView: View {
                             .buttonStyle(.borderless)
                             .disabled(trimmed.isEmpty)
                     }
-                } header: { centered("Ping an EID") }
+                } header: { centered("Ping an EID or RLOC") }
 
                 // Interval — its own section.
                 Section {
@@ -93,9 +159,11 @@ struct ContentView: View {
                     .pickerStyle(.segmented)
                 }
 
-                // Hostnames
+                // Hostnames — show the first few; a pull-down reveals the rest.
                 Section {
-                    ForEach(hosts.entries) { h in
+                    let allHosts = hosts.entries
+                    let shownHosts = showAllHosts ? allHosts : Array(allHosts.prefix(Self.hostsCollapsedCount))
+                    ForEach(shownHosts) { h in
                         Button { startPing(h.address) } label: {
                             HStack {
                                 Text(h.name).bold()
@@ -108,8 +176,27 @@ struct ContentView: View {
                             }
                         }
                     }
-                    Button { editingHosts = true } label: {
-                        HStack { Spacer(); Text("Edit hostnames"); Spacer() }
+                    if allHosts.count > Self.hostsCollapsedCount {
+                        Button { withAnimation { showAllHosts.toggle() } } label: {
+                            HStack {
+                                Spacer()
+                                Text(showAllHosts ? "Show first \(Self.hostsCollapsedCount)"
+                                                  : "Show all \(allHosts.count)").font(.caption)
+                                Image(systemName: showAllHosts ? "chevron.up" : "chevron.down").font(.caption.bold())
+                                Spacer()
+                            }
+                        }
+                        .buttonStyle(.borderless).foregroundStyle(Color.lispBlue)
+                    }
+                    // Read-only here — the Hostname Configuration is owned by the LISP xTR app.
+                    Button { openLispApp() } label: {
+                        HStack {
+                            Spacer()
+                            Text("Edit hostnames in the LISP xTR app")
+                                .font(.caption).foregroundStyle(.secondary)
+                            Image(systemName: "arrow.up.forward.app").font(.caption)
+                            Spacer()
+                        }
                     }
                 } header: { centered("Hostname Configuration") }
 
@@ -133,9 +220,11 @@ struct ContentView: View {
                     }
                 }
             }
-            .sheet(isPresented: $editingHosts) { HostsEditor(hosts: hosts) }
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active { client.enteredForeground() }   // resume the send loop
+                if phase == .active {
+                    client.enteredForeground()      // resume the send loop
+                    hosts.reload()                  // pick up LISP xTR Hostname Configuration edits
+                }
                 else { client.keepAliveBriefly(25) }     // keep pinging ~25s (within iOS's ~30s) after leaving
             }
             .onChange(of: client.currentTarget) { _, t in
@@ -164,48 +253,52 @@ struct ContentView: View {
 
     private var statusSection: some View {
         Section {
-            HStack {
-                Circle().fill(client.tunnelUp ? Color.lispGreen : Color.gray)
-                    .frame(width: 10, height: 10)
-                Group {
-                    if client.tunnelUp {
-                        Text("Overlay path ") + Text("active").foregroundColor(.lispGreen)
-                            + Text(" — using ")
-                            + Text(client.utunName).foregroundColor(.lispBlue)
-                                .font(.callout.monospaced())        // same as the Hostname (dino-iphone) row
-                    } else {
-                        Text("Overlay path ") + Text("down").foregroundColor(.lispRed)
-                    }
-                }
-                .font(.subheadline)
-                Spacer()
-            }
-            HStack {
+            // Both status dots on ONE line: LISP on the left, Overlay path on the right.
+            HStack(spacing: 8) {
                 Circle().fill(client.lispReady ? Color.lispGreen : Color.orange)
                     .frame(width: 10, height: 10)
-                if client.lispReady {
-                    (Text("LISP app is ") + Text("ready to encap/decap").foregroundColor(.lispGreen))
-                        .font(.subheadline)
+                (Text("LISP is ") + (client.lispReady
+                    ? Text("active").foregroundColor(.lispGreen)
+                    : Text("not running").foregroundColor(.orange)))
+                    .font(.subheadline)
+                Spacer()
+                Circle().fill(client.tunnelUp ? Color.lispGreen : Color.gray)
+                    .frame(width: 10, height: 10)
+                // Force-press "Overlay path" to reveal which interface carries the overlay:
+                // a real utunNN on device, or loopback straight to the LISP app (sim / no NE).
+                (Text("Overlay path ") + (client.tunnelUp
+                    ? Text("active").foregroundColor(.lispGreen)
+                    : Text("down").foregroundColor(.lispRed)))
+                    .font(.subheadline)
+                    .contextMenu {
+                        if client.tunnelUp {
+                            Label(client.utunName == "loopback"
+                                  ? "Overlay via loopback"
+                                  : "Overlay via \(client.utunName)",
+                                  systemImage: "point.3.connected.trianglepath.dotted")
+                        } else {
+                            Label("Overlay path is down", systemImage: "xmark.circle")
+                        }
+                    }
+            }
+            // Open the LISP xTR app when it isn't running — centered, not a stray left row.
+            if !client.lispReady {
+                HStack {
                     Spacer()
-                } else {
-                    (Text("LISP app ") + Text("not running").foregroundColor(.orange))
-                        .font(.subheadline)
+                    Button("Open LISP xTR app") { openLispApp() }
+                        .buttonStyle(.borderedProminent).tint(.lispGreen).controlSize(.small)
                     Spacer()
-                    Button("Open") { openLispApp() }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.lispGreen)
-                        .controlSize(.small)
                 }
             }
+            // Hostname + Local EID on ONE line — never wrap; shrink to fit if tight.
             HStack {
                 Text("Hostname").foregroundStyle(.secondary)
-                Spacer()
                 Text(LispWire.localHostname).font(.callout.monospaced()).foregroundStyle(Color.lispBlue)
-            }
-            HStack {
-                Text("Local EID").foregroundStyle(.secondary)
-                Spacer()
+                    .lineLimit(1).minimumScaleFactor(0.5)
+                Spacer(minLength: 8)
+                Text("EID").foregroundStyle(.secondary)
                 Text(client.ourEID).font(.callout.monospaced()).foregroundStyle(Color.lispGreen)
+                    .lineLimit(1).minimumScaleFactor(0.5)
             }
         } header: { centered("Ping Overlay App") }
     }
@@ -222,7 +315,17 @@ struct ContentView: View {
                 HStack {
                     Image(systemName: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundStyle(ok ? Color.lispGreen : Color.lispRed)
-                    Text("\(r.responder) seq \(r.sequence)").font(.caption.monospaced())
+                    // The host's name sits ABOVE its address (EID → lisp-hosts name, RLOC →
+                    // reverse DNS); the two small lines keep the row roughly the same height.
+                    VStack(alignment: .leading, spacing: 0) {
+                        if let h = displayName(for: r.responder) {
+                            Text(h).font(.caption2.monospaced()).foregroundColor(.lispBlue)
+                                .lineLimit(1).minimumScaleFactor(0.5)
+                        }
+                        (Text(r.responder).foregroundColor(addrColor(r.responder))
+                            + Text(" seq \(r.sequence)").foregroundColor(.primary))
+                            .font(.caption.monospaced()).lineLimit(1).minimumScaleFactor(0.5)
+                    }
                     Spacer()
                     Text(r.rttMs.map { "\(Int($0)) ms" } ?? "timeout")
                         .font(.caption.monospaced().bold())
@@ -267,7 +370,10 @@ struct ContentView: View {
                 ProgressView()
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Pinging ...").bold()
-                    Text("\(client.ourEID) \u{2192} \(client.currentTarget ?? "")")
+                    // Source and target colored by kind: green EID, red RLOC.
+                    (Text(client.sourceDisplay).foregroundColor(addrColor(client.sourceDisplay))
+                        + Text(" \u{2192} ").foregroundColor(.primary)
+                        + Text(client.currentTarget ?? "").foregroundColor(addrColor(client.currentTarget ?? "")))
                         .font(.callout.monospaced()).lineLimit(1).minimumScaleFactor(0.5)
                 }
                 Spacer()
@@ -277,7 +383,9 @@ struct ContentView: View {
                 ForEach(client.active) { r in
                     HStack {
                         Image(systemName: "dot.radiowaves.left.and.right").foregroundStyle(Color.lispBlue)
-                        Text("seq \(r.sequence) → \(r.target)").font(.caption.monospaced())
+                        (Text("seq \(r.sequence) → ").foregroundColor(.primary)
+                            + Text(r.target).foregroundColor(addrColor(r.target)))
+                            .font(.caption.monospaced())
                         Spacer()
                         Text(String(format: "waiting %.1fs", Date().timeIntervalSince(r.sentAt)))
                             .font(.caption.monospaced()).foregroundStyle(.secondary)
@@ -300,7 +408,15 @@ struct ContentView: View {
     private var historySection: some View {
         Section {
             if client.history.isEmpty { Text("No history yet").foregroundStyle(.secondary) }
-            ForEach(client.history.prefix(50)) { s in historyRow(s) }
+            ForEach(client.history.prefix(50)) { s in
+                historyRow(s)
+                    // Force-press a history line to re-ping that address.
+                    .contextMenu {
+                        Button { startPing(s.target) } label: {
+                            Label("Ping \(s.target)", systemImage: "dot.radiowaves.left.and.right")
+                        }
+                    }
+            }
         } header: {
             ZStack {
                 centered("History")
@@ -315,8 +431,15 @@ struct ContentView: View {
         // Bottom-aligned so the middle rtt sits on the same line as the date and the
         // replies/sent count (the second line of each side).
         HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(s.target).font(.callout.monospaced()).foregroundStyle(Color.lispGreen)
+            VStack(alignment: .leading, spacing: 1) {
+                // Host name above the address (EID → lisp-hosts name, RLOC → reverse DNS);
+                // date below, as before.
+                if let h = displayName(for: s.target) {
+                    Text(h).font(.caption2.monospaced()).foregroundColor(.lispBlue)
+                        .lineLimit(1).minimumScaleFactor(0.5)
+                }
+                Text(s.target).font(.callout.monospaced()).foregroundStyle(addrColor(s.target))
+                    .lineLimit(1).minimumScaleFactor(0.5)
                 Text(s.startedAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.caption2).foregroundStyle(.secondary)
             }
@@ -341,39 +464,3 @@ struct ContentView: View {
     }
 }
 
-struct HostsEditor: View {
-    @ObservedObject var hosts: PingHosts
-    @Environment(\.dismiss) private var dismiss
-    @State private var newName = ""
-    @State private var newAddr = ""
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("hosts") {
-                    ForEach(hosts.entries) { h in
-                        HStack {
-                            Text(h.name).bold()
-                            Text(h.address).font(.body.monospaced()).foregroundStyle(Color.lispGreen)
-                        }
-                    }
-                    .onDelete { hosts.remove(at: $0) }
-                }
-                Section("add") {
-                    HStack {
-                        TextField("name", text: $newName).autocorrectionDisabled()
-                            .textInputAutocapitalization(.never)
-                        TextField("240.x.x.x", text: $newAddr).font(.body.monospaced())
-                            .keyboardType(.numbersAndPunctuation)
-                        Button("Add") {
-                            hosts.add(name: newName, address: newAddr); newName = ""; newAddr = ""
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Hostnames")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
-        }
-    }
-}

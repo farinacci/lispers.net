@@ -281,21 +281,23 @@ struct LogsView: View {
             stamp = Text(String(line[r])).bold()
             body = String(line[r.upperBound...])
         }
+        // The "lispers.net" wordmark is branded (green/./red) ONLY on the startup banner.
+        let brand = body.contains("starting up")
         // Boldface every protocol keyword in the line (a line can have more than
         // one, e.g. "Send Map-Request (ECM) ..."); gaps keep token coloring.
-        guard let bold = boldRegex else { return stamp + tokens(body) }
+        guard let bold = boldRegex else { return stamp + tokens(body, brand: brand) }
         let ns = body as NSString
         var out = stamp
         var last = 0
         for m in bold.matches(in: body, range: NSRange(location: 0, length: ns.length)) {
             if m.range.location > last {
                 out = out + tokens(ns.substring(with: NSRange(location: last,
-                                   length: m.range.location - last)))
+                                   length: m.range.location - last)), brand: brand)
             }
             out = out + Text(ns.substring(with: m.range)).fontWeight(.black)
             last = m.range.location + m.range.length
         }
-        if last < ns.length { out = out + tokens(ns.substring(from: last)) }
+        if last < ns.length { out = out + tokens(ns.substring(from: last), brand: brand) }
         return out
     }
 
@@ -314,8 +316,26 @@ struct LogsView: View {
     private static let boldRegex = try? NSRegularExpression(pattern:
         #"(?<=Send )(?:en|pdp_ip|utun)\w*|(?<=Receive )(?:en|pdp_ip|utun)\w*|(?<=Encap )(?:en|pdp_ip|utun)\w*|(?<=Decap )(?:en|pdp_ip|utun)\w*|(?<= to )(?:en|pdp_ip|utun)\w*|(?<= from )(?:en|pdp_ip|utun)\w*|(?<=version )[\w.-]+|(?<=Decent map-server )(?=[\w.-]*[A-Za-z])[\w-]+(?:\.[\w-]+)+|Encap|Decap|RLOC-probe reply|RLOC-probe request|RLOC-probe|Map-Register|Map-Request|Map-Reply|Info-Request|Info-Reply|ECM|Report|Leave"#)
 
-    // Color EID (green), rloc-name (blue), and RLOC (red) tokens within text.
-    private static func tokens(_ s: String) -> Text {
+    // True for a bare IPv4 in the overlay EID space (first octet 224–255): 224/4 multicast
+    // or 240/4 unicast EIDs. Strips an optional :port first.
+    private static func isEIDAddress(_ token: String) -> Bool {
+        let addr = token.split(separator: ":").first.map(String.init) ?? token
+        guard let first = addr.split(separator: ".").first, let octet = Int(first),
+              addr.split(separator: ".").count == 4 else { return false }
+        return octet >= 224 && octet <= 255
+    }
+
+    // Color EID (green), rloc-name (blue), and RLOC (red) tokens within text. `brand` is set
+    // ONLY for the startup banner, where the "lispers.net" wordmark is colored (green/./red);
+    // everywhere else "lispers.net" is just part of a map-server name and stays uncolored.
+    private static func tokens(_ s: String, brand: Bool = false) -> Text {
+        if brand, let r = s.range(of: "lispers.net") {
+            return tokens(String(s[s.startIndex..<r.lowerBound]), brand: brand)
+                + Text("lispers").foregroundColor(.lispGreen)
+                + Text(".")
+                + Text("net").foregroundColor(.lispRed)
+                + tokens(String(s[r.upperBound...]), brand: brand)
+        }
         guard let regex = tokenRegex else { return Text(s) }
         let ns = s as NSString
         var out = Text("")
@@ -326,9 +346,12 @@ struct LogsView: View {
                                               length: m.range.location - last)))
             }
             let token = ns.substring(with: m.range)
-            let color: Color = (m.range(at: 1).location != NSNotFound
+            var color: Color = (m.range(at: 1).location != NSNotFound
                                 || m.range(at: 2).location != NSNotFound) ? .lispGreen
                 : m.range(at: 4).location != NSNotFound ? .lispRed : .lispBlue
+            // A bare overlay address (first octet 224–255 = 224/4 multicast or 240/4 EID) is
+            // always an EID → green, even without an [iid] prefix (so "240.0.0.254" isn't red).
+            if color == .lispRed, Self.isEIDAddress(token) { color = .lispGreen }
             out = out + Text(token).foregroundColor(color)
             last = m.range.location + m.range.length
         }

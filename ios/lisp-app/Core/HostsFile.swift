@@ -29,7 +29,19 @@ final class HostsFile: ObservableObject {
     cmh 240.10.0.8
     """
 
+    static let appGroup = "group.net.lispers.xtr"
+
+    // Stored in the SHARED App-Group container so overlay apps (PING, gaapchat) use the SAME
+    // Hostname Configuration. Falls back to the app's Documents only if the container is
+    // somehow unavailable.
     static var fileURL: URL {
+        if let g = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup) {
+            return g.appendingPathComponent("lisp-hosts")
+        }
+        return legacyFileURL
+    }
+    // Pre-App-Group location (app's Documents) — read once to migrate into the shared file.
+    static var legacyFileURL: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("lisp-hosts")
     }
@@ -47,9 +59,15 @@ final class HostsFile: ObservableObject {
     init() { load() }
 
     func load() {
-        if !FileManager.default.fileExists(atPath: Self.fileURL.path) {
-            try? Self.defaultContents.write(to: Self.fileURL, atomically: true,
-                                            encoding: .utf8)
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: Self.fileURL.path) {
+            // First run after the App-Group move: migrate a legacy Documents/lisp-hosts into
+            // the shared file; otherwise seed the defaults.
+            if let legacy = try? String(contentsOf: Self.legacyFileURL, encoding: .utf8) {
+                try? legacy.write(to: Self.fileURL, atomically: true, encoding: .utf8)
+            } else {
+                try? Self.defaultContents.write(to: Self.fileURL, atomically: true, encoding: .utf8)
+            }
         }
         let text = (try? String(contentsOf: Self.fileURL, encoding: .utf8)) ?? ""
         entries = text.split(separator: "\n").compactMap { line in

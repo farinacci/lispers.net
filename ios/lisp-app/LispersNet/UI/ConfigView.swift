@@ -373,20 +373,15 @@ struct ConfigView: View {
                     ForEach($config.decentPrefixes) { $p in
                         DecentPrefixRow(prefix: $p, editing: editingPrefixes,
                                         keyboardUp: $keyboardUp) {
-                            config.decentPrefixes.removeAll { $0.id == p.id }
-                            config.save()
+                            config.decentPrefixes.removeAll { $0.id == p.id }   // in memory only
                         }
                     }
-                    .onChange(of: config.decentPrefixes) { _, _ in config.save() }
-                    // "add prefix" stays on the left; "edit/delete prefix" on the
-                    // right reveals the minus buttons and enables the fields. The
-                    // list is otherwise read-only so it can't be changed by
-                    // accident. Adding a prefix drops into edit mode so the new
-                    // row is immediately editable.
+                    // Prefix edits (add / delete / field changes) stay IN MEMORY while editing;
+                    // config.save() fires only when "done" is pressed, so the running xTR sees
+                    // ONE committed change (and logs one line), not every keystroke.
                     HStack {
                         Button("add prefix") {
                             config.decentPrefixes.append(DecentPrefix())
-                            config.save()
                             editingPrefixes = true
                         }
                         .buttonStyle(.borderless)
@@ -394,6 +389,7 @@ struct ConfigView: View {
                         Button(editingPrefixes ? "done" : "edit/delete prefix") {
                             keyboardUp = false
                             editingPrefixes.toggle()
+                            if !editingPrefixes { config.save() }   // commit on "done"
                         }
                         .buttonStyle(.borderless)
                     }

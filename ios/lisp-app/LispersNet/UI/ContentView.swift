@@ -52,6 +52,7 @@ struct ContentView: View {
     @EnvironmentObject var engine: LispEngine
     @EnvironmentObject var config: LispConfig
     @EnvironmentObject var tunnel: TunnelManager
+    @EnvironmentObject var ping: PingService
     @StateObject private var keyboard = KeyboardObserver()
     @Environment(\.verticalSizeClass) private var vSizeClass
     @State private var selectedTab = Tab.mapCache
@@ -80,6 +81,14 @@ struct ContentView: View {
         // on the xTR tab so the user sees the xTR status straight away.
         .onOpenURL { url in
             if url.scheme == "lispxtr" { selectedTab = .xtr }
+        }
+        // The tabs are an opacity-toggled ZStack (all always in the hierarchy), so PingView's
+        // onAppear/onDisappear never fire on a tab switch. Drive the ping's tab-leave grace
+        // (keep pinging 10s so the map-cache/Logs counters can be watched, then stop) off the
+        // actual tab selection instead.
+        .onChange(of: selectedTab) { old, new in
+            if new == .ping { ping.cancelGrace() }
+            else if old == .ping { ping.keepAliveBriefly(10) }
         }
     }
 

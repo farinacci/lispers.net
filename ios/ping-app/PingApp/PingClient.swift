@@ -45,6 +45,9 @@ final class PingClient: ObservableObject {
     @Published var currentTarget: String?
     @Published var tunnelUp = false
     @Published var ourEID: String = "—"
+    // The source address shown for the running ping: the overlay EID for an EID target, or
+    // the device's real outgoing underlay IP for a native RLOC ping (so it's not misleading).
+    @Published var sourceDisplay: String = "—"
     @Published var utunName: String = ""
     @Published var interval: Double = 1.0
     @Published var history: [PingSession] = []
@@ -61,6 +64,15 @@ final class PingClient: ObservableObject {
     private var seqResponders: [UInt16: Set<UInt32>] = [:]
     // 224.0.0.0/4 — a group ping (multiple responders expected).
     private var targetMulticast: Bool { (target & 0xF000_0000) == 0xE000_0000 }
+    // Overlay = a 240/4 unicast EID or a 224/4 overlay group (rides the tunnel via the LISP
+    // app). Anything else is a routable RLOC we ping natively over the underlay.
+    private var targetIsOverlay: Bool {
+        let hi = target & 0xF000_0000
+        return hi == 0xF000_0000 || hi == 0xE000_0000
+    }
+    private var targetIsNative = false
+    private var nativeFD: Int32 = -1
+    private var nativeSource: DispatchSourceRead?
     private let sendQueue = DispatchQueue(label: "net.lispers.ping.send")
     private var sendSource: DispatchSourceTimer?     // fires on sendQueue — survives backgrounding
     nonisolated(unsafe) private var sendSeq: UInt16 = 0     // touched only on sendQueue
@@ -123,6 +135,13 @@ final class PingClient: ObservableObject {
         guard let dst = LispWire.parseIPv4(input.trimmingCharacters(in: .whitespaces)) else { return }
         stop()                                          // finalizes any prior run
         target = dst; targetStr = LispWire.dotted(dst)
+        targetIsNative = !targetIsOverlay               // RLOC → native underlay ping
+        if targetIsNative {
+            ensureNativeSocket()
+            sourceDisplay = LispWire.outgoingIP(to: dst).map(LispWire.dotted) ?? ourEID
+        } else {
+            sourceDisplay = ourEID
+        }
         sessSent = 0; sessReplies = 0; sessStart = Date()
         sessRttSum = 0; sessRttMin = .greatestFiniteMagnitude; sessRttMax = 0; sessRttCount = 0
         running = true; currentTarget = targetStr
@@ -142,6 +161,8 @@ final class PingClient: ObservableObject {
         stopSendLoop()
         let ident = identifier
         let tgt = target
+        let native = targetIsNative
+        let fd = nativeFD
         let ivl = max(interval, 0.1)
         if resetSeq { sendQueue.async { [weak self] in self?.sendSeq = 0 } }   // new session only
         let src = DispatchSource.makeTimerSource(queue: sendQueue)
@@ -151,7 +172,9 @@ final class PingClient: ObservableObject {
             self.sendSeq &+= 1
             let s = self.sendSeq
             let sentAt = Date()
-            let ok = LispWire.sendEcho(to: tgt, identifier: ident, sequence: s) != nil
+            let ok = native
+                ? LispWire.sendEchoNative(to: tgt, identifier: ident, sequence: s, fd: fd)
+                : (LispWire.sendEcho(to: tgt, identifier: ident, sequence: s) != nil)
             Task { @MainActor in self.recordSent(seq: s, ok: ok, sentAt: sentAt) }
         }
         sendSource = src
@@ -239,14 +262,14 @@ final class PingClient: ObservableObject {
     // Bookkeeping for a packet the send loop already emitted (runs on the main actor).
     private func recordSent(seq: UInt16, ok: Bool, sentAt: Date) {
         guard running else { return }
-        if !ok {                                        // no overlay path
-            tunnelUp = false
+        if !ok {                                        // no path
+            if !targetIsNative { tunnelUp = false }     // a native RLOC failure ≠ overlay down
             var row = PingRow(sequence: seq, target: targetStr, responder: targetStr)
             row.status = .timeout
             results.insert(row, at: 0)
             return
         }
-        tunnelUp = true
+        if !targetIsNative { tunnelUp = true }
         sessSent += 1
         let row = PingRow(sequence: seq, target: targetStr, responder: targetStr)
         outstanding[seq] = (row.id, sentAt)
@@ -259,6 +282,25 @@ final class PingClient: ObservableObject {
                 self.results[i].status = .timeout
             }
         }
+    }
+
+    // Lazily open the shared native ICMP socket + reply reader for RLOC pings. Kept for the
+    // app's life; only one run is active at a time, so id/seq matching stays unambiguous.
+    private func ensureNativeSocket() {
+        guard nativeFD < 0 else { return }
+        let fd = LispWire.openICMPSocket()
+        guard fd >= 0 else { return }
+        nativeFD = fd
+        let src = DispatchSource.makeReadSource(fileDescriptor: fd, queue: DispatchQueue.global())
+        src.setEventHandler { [weak self] in
+            var buf = [UInt8](repeating: 0, count: 2048)
+            let n = recv(fd, &buf, buf.count, 0)
+            guard n > 0 else { return }
+            let data = Data(buf[0..<n])
+            Task { @MainActor in self?.handleReply(data) }
+        }
+        src.resume()
+        nativeSource = src
     }
 
     // MARK: receive (loopback from the LISP app)
@@ -292,21 +334,29 @@ final class PingClient: ObservableObject {
 
     // `data` is the inner reply IP packet: IP[src=responder, dst=ourEID] / ICMP echo-reply.
     private func handleReply(_ data: Data) {
-        guard data.count >= 20, (data[data.startIndex] >> 4) == 4 else { return }
+        guard data.count >= 8 else { return }
         let b = data.startIndex
-        let ihl = Int(data[b] & 0x0F) * 4
-        guard data[b + 9] == 1, data.count >= ihl + 8, data[b + ihl] == 0 else { return }   // ICMP echo-reply
-        let ident = (UInt16(data[b+ihl+4]) << 8) | UInt16(data[b+ihl+5])
-        let seq   = (UInt16(data[b+ihl+6]) << 8) | UInt16(data[b+ihl+7])
-        guard ident == identifier, let o = outstanding[seq] else { return }
-        let responderV4 = (UInt32(data[b+12]) << 24) | (UInt32(data[b+13]) << 16)
+        // A reply may arrive as IP+ICMP (an overlay inner packet, or a native ICMPv4 reply,
+        // which Darwin delivers with the IP header) or, defensively, as a bare ICMP message.
+        var off = 0
+        var responderV4 = target                        // bare-ICMP fallback: the RLOC we pinged
+        if (data[b] >> 4) == 4 {
+            let ihl = Int(data[b] & 0x0F) * 4
+            guard data[b + 9] == 1, data.count >= ihl + 8 else { return }   // proto ICMP
+            off = ihl
+            responderV4 = (UInt32(data[b+12]) << 24) | (UInt32(data[b+13]) << 16)
                         | (UInt32(data[b+14]) << 8) | UInt32(data[b+15])
+        }
+        guard data.count >= b + off + 8, data[b + off] == 0 else { return }  // ICMP echo-reply
+        let ident = (UInt16(data[b+off+4]) << 8) | UInt16(data[b+off+5])
+        let seq   = (UInt16(data[b+off+6]) << 8) | UInt16(data[b+off+7])
+        guard ident == identifier, let o = outstanding[seq] else { return }
         // One reply per member per seq — ignore a duplicate from the same responder.
         var seen = seqResponders[seq] ?? []
         guard !seen.contains(responderV4) else { return }
         let firstResponder = seen.isEmpty
         seen.insert(responderV4); seqResponders[seq] = seen
-        let responder = "\(data[b+12]).\(data[b+13]).\(data[b+14]).\(data[b+15])"
+        let responder = LispWire.dotted(responderV4)
         let rtt = (Date().timeIntervalSince(o.sentAt) * 1000).rounded()
         sessReplies += 1
         sessRttSum += rtt; sessRttCount += 1

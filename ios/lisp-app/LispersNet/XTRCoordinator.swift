@@ -57,13 +57,12 @@ enum XTRCoordinator {
     // in app mode restart the in-app engine. Without this, the running xTR keeps the old
     // per-interface next-hops and the map-cache never reflects the toggle.
     static func applyRebuild(engine: LispEngine, config: LispConfig, tunnel: TunnelManager) {
-        guard config.lispEnabled else { return }
-        if tunnel.choice == .enabled {
-            let eid = config.eidString.isEmpty ? "240.0.0.1" : config.eidString
-            tunnel.restart(eid: eid, instanceID: config.instanceID)
-        } else if engine.running {
-            engine.disable(); engine.enable()
-        }
+        // VPN OFF = the app owns the xTR, so bounce it here. VPN ON = the extension owns it and
+        // its applyLiveReload already picks up the change, LOGS it to lisp-core.log ("Config
+        // change: …"), and re-registers with sockets rebound — restarting the tunnel would only
+        // mask that log behind a fresh extension start, so we let applyLiveReload handle it.
+        guard config.lispEnabled, tunnel.choice != .enabled, engine.running else { return }
+        engine.disable(); engine.enable()
     }
 
     // Attempt engine.enable() and, if the sockets didn't bind yet (running still false),

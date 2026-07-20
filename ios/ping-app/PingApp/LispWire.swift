@@ -159,6 +159,102 @@ enum LispWire {
     }
 
 
+    // MARK: native (underlay) ping — for RLOCs, NOT overlay EIDs
+
+    // An unprivileged ICMP datagram socket (SOCK_DGRAM/IPPROTO_ICMP is allowed on iOS — no
+    // entitlement, same mechanism Apple's SimplePing uses). Replies land on the SAME fd, so
+    // the caller keeps it open with a read source. Returns -1 on failure.
+    static func openICMPSocket() -> Int32 { socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP) }
+
+    // Ping an RLOC directly over the underlay: the kernel adds the IP header, so we send just
+    // the ICMP echo. No overlay, no LISP app involved — this is a normal Internet ping.
+    static func sendEchoNative(to dest: UInt32, identifier: UInt16, sequence: UInt16, fd: Int32) -> Bool {
+        guard fd >= 0 else { return false }
+        let icmp = buildICMPEcho(identifier: identifier, sequence: sequence)
+        var addr = sockaddr_in()
+        addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_port = 0
+        addr.sin_addr.s_addr = dest.bigEndian
+        let n = icmp.withUnsafeBytes { raw in
+            withUnsafePointer(to: &addr) {
+                $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
+                    sendto(fd, raw.baseAddress, raw.count, 0, sa, socklen_t(MemoryLayout<sockaddr_in>.size))
+                }
+            }
+        }
+        return n == icmp.count
+    }
+
+    // Resolve a DNS name (or literal) to a first IPv4 address. Blocks — call off the main
+    // thread. Returns host-order UInt32, or nil if it doesn't resolve.
+    static func resolveDNS(_ host: String) -> UInt32? {
+        var hints = addrinfo(ai_flags: 0, ai_family: AF_INET, ai_socktype: SOCK_DGRAM,
+                             ai_protocol: 0, ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
+        var res: UnsafeMutablePointer<addrinfo>?
+        guard getaddrinfo(host, nil, &hints, &res) == 0 else { return nil }
+        defer { freeaddrinfo(res) }
+        var p = res
+        while let cur = p {
+            if cur.pointee.ai_family == AF_INET, let sa = cur.pointee.ai_addr {
+                return sa.withMemoryRebound(to: sockaddr_in.self, capacity: 1) {
+                    UInt32(bigEndian: $0.pointee.sin_addr.s_addr)
+                }
+            }
+            p = cur.pointee.ai_next
+        }
+        return nil
+    }
+
+    // The device's own outgoing IPv4 for a route to `dest` — the real underlay source a
+    // native ping leaves with (NOT the overlay EID). connect() on a UDP socket sends nothing;
+    // it just resolves the route so getsockname() reports the chosen local address.
+    static func outgoingIP(to dest: UInt32) -> UInt32? {
+        let fd = socket(AF_INET, SOCK_DGRAM, 0)
+        guard fd >= 0 else { return nil }
+        defer { close(fd) }
+        var addr = sockaddr_in()
+        addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_port = UInt16(9).bigEndian          // discard port; no packet is sent
+        addr.sin_addr.s_addr = dest.bigEndian
+        let c = withUnsafePointer(to: &addr) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        guard c == 0 else { return nil }
+        var local = sockaddr_in()
+        var len = socklen_t(MemoryLayout<sockaddr_in>.size)
+        let g = withUnsafeMutablePointer(to: &local) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(fd, $0, &len) }
+        }
+        guard g == 0 else { return nil }
+        let v = UInt32(bigEndian: local.sin_addr.s_addr)
+        return v == 0 ? nil : v
+    }
+
+    // Reverse-DNS (PTR) an RLOC to its hostname. Blocks — call off the main thread.
+    // NI_NAMEREQD makes getnameinfo fail (return nil) instead of echoing the numeric
+    // address back when there's no PTR record.
+    static func reverseDNS(_ addr: String) -> String? {
+        guard let v = parseIPv4(addr) else { return nil }
+        var sa = sockaddr_in()
+        sa.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        sa.sin_family = sa_family_t(AF_INET)
+        sa.sin_addr.s_addr = v.bigEndian
+        var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+        let r = withUnsafePointer(to: &sa) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { sap in
+                getnameinfo(sap, socklen_t(MemoryLayout<sockaddr_in>.size),
+                            &host, socklen_t(host.count), nil, 0, NI_NAMEREQD)
+            }
+        }
+        guard r == 0 else { return nil }
+        let name = String(cString: host)
+        return name.isEmpty ? nil : name
+    }
+
     private static func sendUDP(_ data: Data, to hostBE: UInt32, port: UInt16, boundTo ifIndex: UInt32?) -> Bool {
         let fd = socket(AF_INET, SOCK_DGRAM, 0)
         guard fd >= 0 else { return false }

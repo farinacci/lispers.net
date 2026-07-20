@@ -267,15 +267,18 @@ final class LTRService: ObservableObject {
         }
     }
 
+    // Round to 3 decimals so JSON doubles don't print float noise (0.0719999999999998).
+    private static func f3(_ d: Double) -> String { String(format: "%.3f", d) }
+
     private static func ts(_ any: Any) -> String {
-        if let d = any as? Double { return "\(d)" }
+        if let d = any as? Double { return f3(d) }
         if let i = any as? Int { return "\(i)" }
         return "\(any)"
     }
     private static func arr(_ any: Any?, rtts: Bool) -> String {
         guard let a = any as? [Any] else { return "[]" }
         return "[" + a.map { el -> String in
-            if rtts, let d = el as? Double { return d == -1 ? "?" : "\(d)" }
+            if rtts, let d = el as? Double { return d == -1 ? "?" : f3(d) }
             if rtts, let i = el as? Int { return i == -1 ? "?" : "\(i)" }
             if let s = el as? String { return s }
             return "\(el)"
