@@ -84,6 +84,24 @@ struct LTRView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(!engine.running || eid.isEmpty || ltr.inFlight)
             }
+            .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }   // full-width divider above "ltr self"
+            // Trace to our own EID — the path the mapping system has for us (mirrors "lig self").
+            Button {
+                keyboardUp = false
+                ltr.trace(target: "[\(engine.config.instanceID)]\(engine.config.eidString)")
+            } label: {
+                HStack {
+                    Spacer()
+                    Text("ltr self").bold()
+                    if !engine.config.eidString.isEmpty {
+                        Text("[\(engine.config.instanceID)]\(engine.config.eidString)")
+                            .font(.callout.monospaced())
+                            .foregroundStyle(Color.lispGreen)
+                    }
+                    Spacer()
+                }
+            }
+            .disabled(!engine.running || engine.config.eidString.isEmpty || ltr.inFlight)
         } header: {
             Text("LISP Traceroute").frame(maxWidth: .infinity, alignment: .center)
         }
