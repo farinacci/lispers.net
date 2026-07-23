@@ -1,4 +1,21 @@
 
+                  lispers.net IOS Release Version 0.16
+                  ------------------------------------
+
+o Release date: Wed Jul 22 20:03:48 PDT 2026
+
+o This release also contains release for Ping app version 0.4.    
+
+o On LTR tab, allow to "LTR self". Change "lig self" to "LIG self".
+
+o Trigger a Map-Register when an interface goes away and the RLOC should no
+  longer be registered. This is an important bugfix, because when the en0
+  interface goes away, its RLOC is still being registered. Fixed now.
+
+o Fix Ping app opacity of horizontal line after "show all 10 v" line.    
+    
+-------------------------------------------------------------------------------
+
                   lispers.net Linux Release Version 0.635
                   ---------------------------------------
 
@@ -11,15 +28,6 @@ o Fixed code so RTRs can detect which xTRs are behind the same NAT with
 
 o Fix liar.py to not include "[<key-id-0-255>]<string>" in the hash, just "<string>"
   but must register with key-id <key-id-0-255>.
-    
--------------------------------------------------------------------------------
-
-                  lispers.net IOS Release Version 0.16
-                  ------------------------------------
-
-o Release date:
-
-o On LTR tab, allow to "LTR self".    
     
 -------------------------------------------------------------------------------
     
