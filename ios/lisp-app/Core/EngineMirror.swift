@@ -68,6 +68,11 @@ struct EngineSnapshot: Codable {
     var igmpLastReport: [String: Date]? // overlay-app group address -> last IGMP report time
     var groupMapServers: [String: String]?  // group address -> map-server it registers to
     var rtrList: [LispAddress]?              // RTRs (for the LTR tab's NAT-trace primers)
+    // The build actually RUNNING the xTR. The LispTunnel extension is a separate process that
+    // iOS does NOT reload when the app is reinstalled, so it can keep executing an old binary
+    // while the app shows the new version — which silently makes a just-installed fix look like
+    // it "didn't work". Optional so snapshots written by older builds still decode.
+    var engineVersion: String?
     var updated: Date
 
     static var fileURL: URL? {
@@ -116,6 +121,7 @@ extension LispEngine {
             igmpLastReport: appJoinedGroups.reduce(into: [:]) { $0[$1.address] = $1.lastReport },
             groupMapServers: groupMapServers,
             rtrList: rtrList,
+            engineVersion: AppInfo.version,
             updated: Date())
     }
 
@@ -163,6 +169,8 @@ extension LispEngine {
         }
             .sorted { $0.address < $1.address }
         groupMapServers = s.groupMapServers ?? [:]
+        // Which build is REALLY running the xTR (see EngineSnapshot.engineVersion).
+        engineVersion = s.engineVersion
         if isMirroring { rtrList = s.rtrList ?? [] }    // app mirror learns the RTRs for LTR primers
         mhInterfaces = s.mh.map { $0.iface }
         ifaceTranslated = Dictionary(uniqueKeysWithValues: s.mh.compactMap { m in

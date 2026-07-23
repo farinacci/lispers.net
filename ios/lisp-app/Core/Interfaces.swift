@@ -17,19 +17,57 @@ struct DiscoveredRLOC: Codable {
 }
 
 enum Interfaces {
+    // Does the OS have a usable route out this interface? A UDP connect() to a public host
+    // SCOPED to the interface (IP_BOUND_IF) performs only a ROUTE LOOKUP — it sends nothing —
+    // and fails ENETUNREACH/EHOSTUNREACH when the interface has no route out. This is the
+    // signal that distinguishes a Wi-Fi that's been DISCONNECTED via Control Center (en0
+    // lingers UP + IFF_RUNNING with its stale IP, but its default route is gone) from a real
+    // working interface — which neither interface-presence nor IFF_RUNNING can tell apart.
+    // A torn-down cellular context vanishes from getifaddrs entirely, so it never needs this.
+    static func hasRoute(ifIndex: UInt32) -> Bool {
+        guard ifIndex != 0 else { return true }
+        let fd = socket(AF_INET, SOCK_DGRAM, 0)
+        guard fd >= 0 else { return true }              // can't test → don't withdraw
+        defer { close(fd) }
+        var idx = Int32(ifIndex)
+        setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &idx, socklen_t(MemoryLayout<Int32>.size))
+        var addr = sockaddr_in()
+        addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_port = UInt16(53).bigEndian
+        addr.sin_addr.s_addr = UInt32(0x0101_0101).bigEndian   // 1.1.1.1 (no packet is sent)
+        let r = withUnsafePointer(to: &addr) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        return r == 0
+    }
+
     // All UP, non-loopback, non-link-local IPv4 interfaces, with their index.
     private static func candidates() -> [DiscoveredRLOC] {
-        var out: [DiscoveredRLOC] = []
+        // strict = UP *and* RUNNING (really carrying traffic); loose = UP only. We return
+        // strict, but fall back to loose if strict comes up empty, so a platform that doesn't
+        // set IFF_RUNNING the way we expect can never strand the xTR with no RLOC at all.
+        var strict: [DiscoveredRLOC] = []
+        var loose: [DiscoveredRLOC] = []
+        var out: [DiscoveredRLOC] { strict.isEmpty ? loose : strict }
         var ifaddr: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&ifaddr) == 0, let first = ifaddr else { return out }
         defer { freeifaddrs(ifaddr) }
         var ptr: UnsafeMutablePointer<ifaddrs>? = first
         while let p = ptr {
             defer { ptr = p.pointee.ifa_next }
+            // IFF_UP alone is NOT liveness: it's the ADMINISTRATIVE flag, and iOS leaves en0
+            // IFF_UP with its IPv4 address still attached after Wi-Fi is switched off — so a
+            // dead Wi-Fi kept looking "live" and its RLOC stayed registered (cellular behaved
+            // correctly only because turning it off tears the pdp_ip0 context down entirely).
+            // IFF_RUNNING is the carrier/resources-allocated flag — ifconfig's "status: active".
             guard let sa = p.pointee.ifa_addr, sa.pointee.sa_family == AF_INET,
                   (p.pointee.ifa_flags & UInt32(IFF_UP)) != 0,
                   (p.pointee.ifa_flags & UInt32(IFF_LOOPBACK)) == 0
             else { continue }
+            let isRunning = (p.pointee.ifa_flags & UInt32(IFF_RUNNING)) != 0
             let name = String(cString: p.pointee.ifa_name)
             // Skip VPN / tunnel pseudo-interfaces: Perimeter 81 / IKEv2 = ipsec*,
             // WireGuard / Tailscale / iCloud Private Relay = utun*. Their addresses
@@ -43,9 +81,13 @@ enum Interfaces {
             memcpy(&addr, sa, MemoryLayout<sockaddr_in>.size)
             let host = UInt32(bigEndian: addr.sin_addr.s_addr)
             if (host & 0xFFFF_0000) == 0xA9FE_0000 { continue }   // link-local
-            out.append(DiscoveredRLOC(address: LispAddress(v4: host),
-                                      interfaceName: name,
-                                      ifIndex: if_nametoindex(name)))
+            let d = DiscoveredRLOC(address: LispAddress(v4: host),
+                                   interfaceName: name,
+                                   ifIndex: if_nametoindex(name))
+            loose.append(d)
+            // Strict = UP, RUNNING, *and* actually has a route out. The route check is what
+            // catches a Control-Center-disconnected Wi-Fi that still lingers with an IP.
+            if isRunning && hasRoute(ifIndex: d.ifIndex) { strict.append(d) }
         }
         return out
     }

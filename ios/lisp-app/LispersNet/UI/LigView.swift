@@ -105,7 +105,7 @@ struct LigView: View {
             } label: {
                 HStack {
                     Spacer()
-                    Text("lig self").bold()
+                    Text("LIG self").bold()
                     if !engine.config.eidString.isEmpty {
                         Text("[\(engine.config.instanceID)]\(engine.config.eidString)")
                             .font(.callout.monospaced())

@@ -32,7 +32,14 @@ extension LispEngine {
         let ifn = socket?.interfaceName ?? rloc?.interfaceName ?? "?"
         log.lprint(comp, "Send \(ifn) \(data.count) bytes to \(dest.addressString) " +
                    "\(port), packet: \(lispFormatPacket(data))")
-        socket?.send(data, to: dest, port: port)
+        // A FAILED send used to be silent: the "Send ..." line above printed while sendto()
+        // errored, so Map-Registers looked sent while the map-server got nothing and timed the
+        // registration out. Darwin pins a UDP socket's source address once it has sent, so when
+        // that interface's address goes away the socket returns EADDRNOTAVAIL/ENETDOWN forever.
+        if socket?.send(data, to: dest, port: port) == false {
+            log.aprint(comp, "SEND FAILED on \(ifn) to \(dest.addressString):\(port) " +
+                       "— errno \(errno) (\(String(cString: strerror(errno))))")
+        }
     }
 
     // MARK: - lisp.py print_record() parity
@@ -139,9 +146,39 @@ extension LispEngine {
         // end distinguishes interfaces by RLOC ADDRESS (lisp_get_nat_info matches on
         // nat_info.address, lisp.py:17173), so a shared "xtr" hostname is fine; the port
         // here is THIS interface's translated @tp (from ifaceTranslated), not a shared one.
+        // NEVER register an interface we no longer have. ifaceTranslated can outlive its
+        // interface: the path-change prune is behind a "did the interface set change" guard that
+        // short-circuits when mhInterfaces was already refreshed elsewhere (enable/resumeNetwork
+        // both call buildMultihomeSockets), and a late Info-Reply can even re-add a dead one
+        // (see the infoNonceIface handling below). Registering a dead RLOC is exactly what makes
+        // remote ITRs encap into a BLACK HOLE. So filter against a FRESH interface list here —
+        // not cached mhInterfaces, which can itself be stale — since this is the single point
+        // every Map-Register flows through.
+        // Register ONLY interfaces that are live right now. A translation whose interface is
+        // gone must never be registered — a remote ITR would cache that RLOC and encap into a
+        // black hole. No flap tolerance: interface changes are rare and user-driven, so we
+        // withdraw a departed interface's RLOC immediately rather than holding it.
+        let liveIfaces = Set(Interfaces.discoverAllRLOCs().map { $0.interfaceName })
+        let dead = ifaceTranslated.filter { !liveIfaces.contains($0.key) }
+        let liveTranslated = ifaceTranslated.filter { liveIfaces.contains($0.key) }
+        log.aprint(.etr, "Register: live ifaces [\(liveIfaces.sorted().joined(separator: ","))], " +
+            "translations [\(ifaceTranslated.keys.sorted().joined(separator: ","))]")
+        if !dead.isEmpty {
+            for (name, t) in dead {
+                log.aprint(.core, "Interface \(name) gone — withdrawing RLOC " +
+                    "\(t.rloc.addressString)\(LISP.tpPrefix)\(t.port) from Map-Register")
+            }
+            // Converge the published state so the UI/snapshot stop showing it. @Published →
+            // mutate on main. This register already uses liveTranslated, so it's correct now.
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                for name in dead.keys { self.ifaceTranslated.removeValue(forKey: name) }
+            }
+        }
+
         let locals: [(rloc: LispAddress, port: UInt16)]
-        if behindNAT && config.multihomingEnabled && !ifaceTranslated.isEmpty {
-            locals = ifaceTranslated.values
+        if behindNAT && config.multihomingEnabled && !liveTranslated.isEmpty {
+            locals = liveTranslated.values
                 .sorted { $0.rloc.v4 < $1.rloc.v4 }.map { ($0.rloc, $0.port) }
         } else if behindNAT {
             locals = [(translatedRLOC ?? myRLOC.address, advertisedPort)]

@@ -258,6 +258,18 @@ struct StatusHeader: View {
                     Text(String(engine.registrationsSent)) +
                     Text(", groups joined ").foregroundStyle(.secondary) +
                     Text(String(config.joinedGroups.count))
+
+                    // The LispTunnel extension is a separate process that iOS does NOT reload
+                    // when the app is reinstalled — it keeps running the OLD binary until the
+                    // VPN is toggled (or LISP is disabled/re-enabled). That made freshly-built
+                    // fixes look like they "didn't work". Surface it instead of guessing.
+                    if let ev = engine.engineVersion, ev != AppInfo.version {
+                        (Text("⚠︎ xTR running ").foregroundStyle(Color.lispRed) +
+                         Text(ev).foregroundStyle(Color.lispRed) +
+                         Text(", app is ").foregroundStyle(.secondary) +
+                         Text(AppInfo.version).foregroundStyle(.secondary) +
+                         Text(" — toggle VPN to reload").foregroundStyle(Color.lispRed))
+                    }
                 }
                 .font(.caption.monospaced())
             }

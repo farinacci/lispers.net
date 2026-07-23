@@ -14,7 +14,7 @@ extension Color {
     static let lispGreen = Color(red: 0.16, green: 0.55, blue: 0.16)
     static let lispRed = Color(red: 0.78, green: 0.12, blue: 0.12)
     static let lispBlue = Color(red: 0.20, green: 0.40, blue: 0.95)
-    static let lispSeparator = Color.gray.opacity(0.55)
+    static let lispSeparator = Color(white: 0.4)   // solid dark-gray row dividers (clearly visible)
 }
 
 // Reverse-DNS cache for RLOCs: hostname(for:) returns a cached name or nil while it looks
@@ -50,7 +50,7 @@ struct ContentView: View {
     @FocusState private var focused: Bool
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
-    static let version = "0.3"
+    static let version = "0.4"
     private static let resultsCollapsedCount = 10
     private static let hostsCollapsedCount = 5
 
@@ -187,6 +187,9 @@ struct ContentView: View {
                             }
                         }
                         .buttonStyle(.borderless).foregroundStyle(Color.lispBlue)
+                        // Full-width divider below "Show all N", matching the one above it
+                        // (a centered button otherwise gets an inset, lighter-looking separator).
+                        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                     }
                     // Read-only here — the Hostname Configuration is owned by the LISP xTR app.
                     Button { openLispApp() } label: {

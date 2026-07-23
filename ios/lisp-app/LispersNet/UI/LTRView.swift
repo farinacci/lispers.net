@@ -92,7 +92,7 @@ struct LTRView: View {
             } label: {
                 HStack {
                     Spacer()
-                    Text("ltr self").bold()
+                    Text("LTR self").bold()
                     if !engine.config.eidString.isEmpty {
                         Text("[\(engine.config.instanceID)]\(engine.config.eidString)")
                             .font(.callout.monospaced())

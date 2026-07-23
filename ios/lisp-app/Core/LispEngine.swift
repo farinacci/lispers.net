@@ -66,6 +66,10 @@ final class LispEngine: ObservableObject {
     // from each interface's own RTR Info-Reply. We register ALL of these so a
     // remote ITR can decap to us on either interface (outbound picks the active).
     @Published var ifaceTranslated: [String: (rloc: LispAddress, port: UInt16)] = [:]
+    // Build running the REAL xTR (from the snapshot). Differs from AppInfo.version when the
+    // LispTunnel extension is still executing an older binary after an app reinstall.
+    @Published var engineVersion: String?
+
     // Debounce for Info-Reply-triggered Map-Registers. A flurry of identical
     // Info-Replies — both RTRs, on every interface, plus retransmits — arrives within
     // a few ms; we coalesce them into ONE register fired after the burst settles,
@@ -94,9 +98,32 @@ final class LispEngine: ObservableObject {
     // falls back to the active OS RLOC interface when not interface-specific.
     func devName(_ ifn: String? = nil) -> String { ifn ?? rloc?.interfaceName ?? "?" }
 
-    // xTR identity
-    var xtrID: (UInt64, UInt64) = (UInt64.random(in: 0...UInt64.max),
-                                   UInt64.random(in: 0...UInt64.max))
+    // xTR identity — STABLE across launches, and shared by the app and the LispTunnel
+    // extension (either process can host the xTR, so both must present the SAME identity).
+    //
+    // This MUST NOT be re-randomized per launch. The map-server keys a site's registrations by
+    // xtr-id, so a fresh id registers as an ADDITIONAL ETR for the same EID rather than
+    // replacing the previous one — the map-server then keeps every past launch's RLOC-set for
+    // the full register TTL (24h) and merges them all into the Map-Reply. That is what left
+    // dead RLOCs (old NAT bindings / departed interfaces) in the mapping, so remote ITRs cached
+    // them and encapped into black holes. With a stable id, each Map-Register REPLACES our
+    // RLOC-set, so losing an interface actually withdraws its RLOC.
+    var xtrID: (UInt64, UInt64) = LispEngine.persistentXTRID()
+
+    private static func persistentXTRID() -> (UInt64, UInt64) {
+        let key = "xtrID"
+        let defaults = UserDefaults(suiteName: "group.net.lispers.xtr")
+        if let s = defaults?.string(forKey: key) {
+            let parts = s.split(separator: "-")
+            if parts.count == 2, let hi = UInt64(parts[0], radix: 16),
+               let lo = UInt64(parts[1], radix: 16) {
+                return (hi, lo)
+            }
+        }
+        let v = (UInt64.random(in: 0...UInt64.max), UInt64.random(in: 0...UInt64.max))
+        defaults?.set(String(format: "%016llx-%016llx", v.0, v.1), forKey: key)
+        return v
+    }
 
     // Base RLOC/host name advertised in Info-Requests and used as the prefix of
     // the translated RLOC-name ("<xtrName>@tp-<port>"). Strip the mDNS ".local".
@@ -485,6 +512,7 @@ final class LispEngine: ObservableObject {
             // discoverRLOC is cheap (getifaddrs); pathChanged only re-registers
             // when the chosen address actually changes.
             self?.pathChanged()
+            self?.withdrawDeadTranslations()   // withdraw a departed interface's RLOC promptly
             self?.sendRLOCProbes()
         }
         timers = [register, probe]
@@ -529,6 +557,43 @@ final class LispEngine: ObservableObject {
         hb.resume()
     }
 
+    // Re-bind the primary control/data sockets after a path change. Keeps the SAME local ports
+    // (the data port is deliberately fixed so the NAT-translated @tp stays stable), so this
+    // only discards the dead socket state — it doesn't move our @tp.
+    func rebuildPrimarySockets() {
+        guard running, !networkSuspended else { return }
+        let behindNATConfigured = config.natTraversalEnabled || config.decentNATEnabled
+        let dataBind: UInt16 = behindNATConfigured ? LISP.natDataPort : LISP.dataPort
+        ctrlSocket?.shutdown(); ctrlSocket = nil
+        dataSocket?.shutdown(); dataSocket = nil
+        guard let ctrl = UDPSocket(localPort: LISP.ctrlPort, queue: socketQueue),
+              let data = UDPSocket(localPort: dataBind, queue: socketQueue) else {
+            log.aprint(.core, "Path change: could not re-bind primary control/data sockets")
+            return
+        }
+        ctrlSocket = ctrl
+        dataSocket = data
+        ctrl.startReceiving { [weak self] d, from, port, ttl in
+            self?.processControlPacket(d, from: from, sourcePort: port, receivedTTL: ttl)
+        }
+        data.startReceiving { [weak self] d, from, port, ttl in
+            self?.processDataPacket(d, from: from, sourcePort: port, receivedTTL: ttl)
+        }
+        log.aprint(.core, "Path change: re-bound primary control/data sockets " +
+                   "(ctrl \(LISP.ctrlPort), data \(dataBind))")
+    }
+
+    // Trigger a Map-Register whenever a translation's interface has gone away, so its RLOC is
+    // withdrawn promptly (sendMapRegisters drops dead translations and registers the live set).
+    // Driven by the 10s probe timer so withdrawal lands within ~10s even if the NWPathMonitor
+    // callback didn't fire and pathChanged's change-guard short-circuited.
+    func withdrawDeadTranslations() {
+        guard running, config.multihomingEnabled, !ifaceTranslated.isEmpty else { return }
+        let live = Set(Interfaces.discoverAllRLOCs().map { $0.interfaceName })
+        guard ifaceTranslated.keys.contains(where: { !live.contains($0) }) else { return }
+        sendMapRegisters()
+    }
+
     private func pathChanged() {
         guard running else { return }
         let newRLOC = Interfaces.discoverRLOC()
@@ -556,7 +621,18 @@ final class LispEngine: ObservableObject {
             for (name, addr) in newMHMap where oldMH[name] != addr {
                 self.ifaceTranslated[name] = nil
             }
+            // A departed interface's translation is dropped in the Map-Register path
+            // (sendMapRegisters registers only live interfaces), which this triggers below.
             if primaryChanged { self.translatedRLOC = nil; self.translatedPort = 0 }
+
+            // Rebuild the PRIMARY control/data sockets too. Darwin pins a UDP socket's source
+            // address once it has sent, so after the interface that address belonged to goes
+            // away every sendto() on it fails (EADDRNOTAVAIL/ENETDOWN) — silently, until now.
+            // That is what stopped Map-Registers from ever leaving the phone on interface loss:
+            // the RLOC-set we built was correct, it just never went out, so the map-server kept
+            // the old set until it timed the registration out. Only the multi-homing sockets
+            // used to be rebuilt here; these two carry the Map-Registers.
+            self.rebuildPrimarySockets()
 
             // Rebuild the per-interface (multi-homing) sockets bound to the NEW interface IPs,
             // so Info-Requests and RLOC-probes egress the right path after the switch.
