@@ -64,8 +64,7 @@ final class ChatClient: ObservableObject {
     """
 
     private var group: UInt32 = 0
-    private var listenFD: Int32 = -1
-    private var listenSource: DispatchSourceRead?
+    private var inboxTimer: Timer?              // polls the shared inbox (replaces the loopback listener)
     private var reportTimer: Timer?             // periodic IGMP Report (soft-state refresh)
     private var readyTimer: Timer?
     // Ping/pong color cycling (Python: blue→green→red→purple).
@@ -73,7 +72,7 @@ final class ChatClient: ObservableObject {
     private var pingColorForSeq: [String: Int] = [:]
 
     init() {
-        startListener()
+        startInboxPolling()
         refreshReady()
         readyTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refreshReady() }
@@ -87,6 +86,11 @@ final class ChatClient: ObservableObject {
 
     // MARK: join / leave
 
+    // Timestamp for the "Joined group at …" line.
+    private static let joinStamp: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "MM/dd/yy HH:mm:ss"; return f
+    }()
+
     func join(_ name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -94,11 +98,14 @@ final class ChatClient: ObservableObject {
         groupName = trimmed
         groupAddress = GaapHash.groupAddress(trimmed)
         group = GaapWire.parseIPv4(groupAddress) ?? 0
+        GaapInbox.setSticky(group)     // keep this group joined at the xTR while we're suspended
+        GaapInbox.seekToEnd()          // fresh session — don't replay stale backlog
         joined = true
         messages.removeAll()
         members.removeAll(); lastSent.removeAll(); firstSeen.removeAll()   // fresh session state
         sentCount = 0; recvCount = 0
-        info("Joined group \"\(trimmed)\" → \(groupAddress)")
+        // Name + address are already shown in the header, so just stamp when we joined.
+        info("Joined group at \(Self.joinStamp.string(from: Date()))")
         sendReport(announce: true)                      // IGMP Report → LISP registers (*,G)
         reportTimer?.invalidate()
         reportTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
@@ -109,6 +116,7 @@ final class ChatClient: ObservableObject {
     func leave() {
         guard joined else { return }
         reportTimer?.invalidate(); reportTimer = nil
+        GaapInbox.clearSticky()        // stop keeping the group sticky-joined; let it age out
         if group != 0 {
             GaapWire.sendIGMP(type: GaapWire.igmpLeave, group: group)
         }
@@ -137,7 +145,13 @@ final class ChatClient: ObservableObject {
     private func runCommand(_ cmd: String) {
         switch cmd {
         case ":q", ":quit":
-            leave(); messages.removeAll(); info("Left the group.")
+            let name = groupName
+            let ts = Self.joinStamp.string(from: Date())
+            leave(); messages.removeAll()
+            // Group name in blue (like the header), with a timestamp.
+            append(.init(kind: .info, sender: "", text: "Left group \(name) at \(ts)",
+                         colorIndex: nil,
+                         spans: [.plain("Left group "), .name(name), .plain(" at \(ts)")]))
         case ":?", ":help":
             info(helpText)
         case ":s", ":show":
@@ -171,36 +185,20 @@ final class ChatClient: ObservableObject {
 
     // MARK: receive
 
-    private func startListener() {
-        // Tear down any existing listener first — iOS may invalidate the socket while the
-        // app is backgrounded, so we rebuild it on every foreground (see onForeground()).
-        listenSource?.cancel(); listenSource = nil
-        if listenFD >= 0 { close(listenFD); listenFD = -1 }
+    // Receive is now driven by the SHARED INBOX (see GaapInbox), not a loopback socket: the
+    // always-on xTR buffers every group message to a file, so messages that arrive while
+    // gaapchat is suspended are replayed on return. Polling covers both the live foreground
+    // case and the catch-up on foreground — no dedup needed, since each record is consumed once.
+    private func startInboxPolling() {
+        inboxTimer?.invalidate()
+        inboxTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.drainInbox() }
+        }
+    }
 
-        let fd = socket(AF_INET, SOCK_DGRAM, 0)
-        guard fd >= 0 else { return }
-        var yes: Int32 = 1
-        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, socklen_t(MemoryLayout<Int32>.size))
-        var addr = sockaddr_in()
-        addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
-        addr.sin_family = sa_family_t(AF_INET)
-        addr.sin_port = GaapWire.recvPort.bigEndian
-        addr.sin_addr.s_addr = INADDR_ANY
-        let bound = withUnsafePointer(to: &addr) {
-            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { bind(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) }
-        }
-        guard bound == 0 else { close(fd); return }
-        listenFD = fd
-        let src = DispatchSource.makeReadSource(fileDescriptor: fd, queue: DispatchQueue.global())
-        src.setEventHandler { [weak self] in
-            var buf = [UInt8](repeating: 0, count: 2048)
-            let n = recv(fd, &buf, buf.count, 0)
-            guard n > 0 else { return }
-            let data = Data(buf[0..<n])
-            Task { @MainActor in self?.handleInner(data) }
-        }
-        src.resume()
-        listenSource = src
+    private func drainInbox() {
+        guard joined, group != 0 else { return }
+        for inner in GaapInbox.drain(group: group) { handleInner(inner) }
     }
 
     // A raw inner IP/UDP packet the LISP app forwarded. Parse chat + dispatch.
@@ -225,13 +223,15 @@ final class ChatClient: ObservableObject {
                          detail: seq))
             sendPong(to: sender, seq: seq)
         case "pong" where parms.count >= 4:
-            let pinger = parms[2], seq = parms[3]
+            let seq = parms[3]
             let ci = pingColorForSeq[seq]
+            // Show only the sequence number, not whose ping it answered — the pinger name
+            // made the line wrap and hurt readability (parms[2] is still parsed/ignored).
             append(.init(kind: .pong, sender: sender,
-                         text: "pong from \(sender) for \(pinger)'s ping-\(seq)", colorIndex: ci,
+                         text: "pong from \(sender) for ping-\(seq)", colorIndex: ci,
                          spans: [.plain("pong from "), .name(sender),
-                                 .plain(" for \(pinger)'s ping-"), .seq(seq)],
-                         detail: "\(pinger)-\(seq)"))
+                                 .plain(" for ping-"), .seq(seq)],
+                         detail: "ping-\(seq)"))
         default:
             break
         }
@@ -269,9 +269,10 @@ final class ChatClient: ObservableObject {
         if messages.count > 1000 { messages.removeFirst(messages.count - 1000) }
     }
 
-    func onBackground() { sendReport() }                // one refresh before suspend
+    func onBackground() { sendReport() }                // one refresh; the sticky marker keeps us joined
     func onForeground() {
-        startListener()                                 // rebuild the 41345 socket (iOS may kill it while backgrounded)
+        startInboxPolling()                             // the poll timer was suspended while backgrounded
+        drainInbox()                                    // replay messages that arrived while we were away
         refreshReady(); if joined { sendReport() }
     }
     func onTerminate()  { leave() }                     // best-effort IGMP Leave on close

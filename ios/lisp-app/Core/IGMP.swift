@@ -110,7 +110,12 @@ extension LispEngine {
     func expireIGMPGroups() {
         guard !igmpGroups.isEmpty else { return }
         let now = Date()
+        // A group gaapchat marked "sticky" stays joined even without IGMP Reports, so the phone
+        // keeps receiving it while gaapchat is suspended (continuity). Cleared when gaapchat
+        // leaves/quits, after which it ages out normally.
+        let sticky = GaapInbox.stickyGroup
         for (g, last) in igmpGroups where now.timeIntervalSince(last) > LISP.igmpGroupTimeout {
+            if g == sticky { continue }
             igmpGroups.removeValue(forKey: g)
             let src = igmpGroupSource.removeValue(forKey: g) ?? "overlay app"
             var group = LispAddress(v4: g)

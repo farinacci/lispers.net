@@ -18,9 +18,13 @@ extension Color {
 // Ping/pong sequence colors — Python: blue → green → red → purple.
 let pingPalette: [Color] = [.gcBlue, .gcGreen, .gcRed, .gcPurple]
 
+// Display name: drop the "user@" prefix, show just the host. The full "user@host" id is
+// still used on the wire; this only affects what's shown in messages/history.
+func hostOnly(_ id: String) -> String { id.components(separatedBy: "@").last ?? id }
+
 struct ContentView: View {
     // App/build version — bump on every build (like the LISP + PING apps).
-    static let version = "0.3"
+    static let version = "0.4"
     @State private var tab = 0
     var body: some View {
         VStack(spacing: 0) {
@@ -116,7 +120,7 @@ struct ChatView: View {
                         .font(.caption2)
                 }
                 Spacer()
-                Text("you are \(client.myid)").font(.caption2).foregroundStyle(.secondary)
+                Text("you are \(hostOnly(client.myid))").font(.caption2).foregroundStyle(.secondary)
             }
             if client.joined {
                 (Text("group-name ").foregroundStyle(.secondary)
@@ -144,6 +148,10 @@ struct ChatView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 6) {
                     ForEach(client.messages) { m in row(m).id(m.id) }
+                    // Blank space below the last message so it isn't flush against the input
+                    // bar and read as cut off. Scroll to THIS pad (not the last message) so
+                    // the newest line always has room beneath it.
+                    Color.clear.frame(height: 60).id("bottom-pad")
                 }
                 .padding(12)
             }
@@ -156,7 +164,7 @@ struct ChatView: View {
                 }
                 .onEnded { _ in zoomBase = nil })
             .onChange(of: client.messages.count) { _, _ in
-                if let last = client.messages.last { withAnimation { proxy.scrollTo(last.id, anchor: .bottom) } }
+                withAnimation { proxy.scrollTo("bottom-pad", anchor: .bottom) }
             }
         }
     }
@@ -164,14 +172,15 @@ struct ChatView: View {
     @ViewBuilder private func row(_ m: ChatMessage) -> some View {
         switch m.kind {
         case .info:
-            Text(m.text).font(mono).foregroundStyle(.secondary)
+            if m.spans != nil { infoSpanText(m) }          // colored info (e.g. "Left group …")
+            else { Text(m.text).font(mono).foregroundStyle(.secondary) }
         case .mine:
             HStack { Spacer()
                 Text(m.text).font(mono).padding(8)
                     .background(Color.gcBlue.opacity(0.15)).clipShape(RoundedRectangle(cornerRadius: 10))
             }
         case .data:
-            (Text(m.sender + ": ").font(mono).bold().foregroundColor(.gcBlue)
+            (Text(hostOnly(m.sender) + ": ").font(mono).bold().foregroundColor(.gcBlue)
              + Text(m.text).font(mono))
         case .ping, .pong:
             spanText(m)
@@ -191,7 +200,23 @@ struct ChatView: View {
             case .plain(let s): return acc + Text(s)
             case .seq(let s):   return acc + Text(s).foregroundColor(seqColor).bold()
             case .eid(let s):   return acc + Text(s).foregroundColor(.gcGreen)
-            case .name(let s):  return acc + Text(s).bold()
+            case .name(let s):  return acc + Text(hostOnly(s)).bold()
+            }
+        }.font(mono)
+    }
+
+    // Colored info lines (e.g. "Left group <name> at <ts>"): the group name (.name span, NOT a
+    // user@host id here) in blue like the header; everything else secondary.
+    private func infoSpanText(_ m: ChatMessage) -> Text {
+        guard let spans = m.spans else {
+            return Text(m.text).font(mono).foregroundColor(.secondary)
+        }
+        return spans.reduce(Text("")) { acc, span in
+            switch span {
+            case .plain(let s): return acc + Text(s).foregroundColor(.secondary)
+            case .name(let s):  return acc + Text(s).foregroundColor(.gcBlue).bold()
+            case .eid(let s):   return acc + Text(s).foregroundColor(.gcGreen)
+            case .seq(let s):   return acc + Text(s).foregroundColor(.secondary)
             }
         }.font(mono)
     }
@@ -288,7 +313,7 @@ struct HistoryView: View {
     private func historyRow(_ m: ChatMessage) -> Text {
         // "<bold op> <sender>: <data>".
         Text(opLabel(m)).font(mono).bold()
-        + Text(" \(m.sender): ").font(mono)
+        + Text(" \(hostOnly(m.sender)): ").font(mono)
         + Text(m.detail ?? m.text).font(mono)
     }
 }
@@ -342,25 +367,31 @@ struct CenteredCard<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.35).ignoresSafeArea().onTapGesture(perform: onDone)
-            VStack(spacing: 0) {
-                HStack {
-                    Text(title).font(.headline).bold()
-                    Spacer()
-                    Button("Done", action: onDone).font(.headline)
+        GeometryReader { geo in
+            ZStack {
+                // Tap the dimmed backdrop to dismiss (in addition to Done).
+                Color.black.opacity(0.35).ignoresSafeArea().onTapGesture(perform: onDone)
+                VStack(spacing: 0) {
+                    HStack {
+                        Text(title).font(.headline).bold()
+                        Spacer()
+                        Button("Done", action: onDone).font(.headline)
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 12)
+                    .background(Color.gcBlue.opacity(0.10))
+                    Divider()
+                    content()          // the content's own ScrollView scrolls when it overflows
                 }
-                .padding(.horizontal, 16).padding(.vertical, 12)
-                .background(Color.gcBlue.opacity(0.10))
-                Divider()
-                content()
+                .frame(maxWidth: 400)
+                // Clamp to the ACTUAL available height (not UIScreen, which was unreliable and
+                // let the card grow past the screen — pushing Done off and leaving no way to
+                // dismiss). The header (with Done) stays fixed; the content scrolls inside.
+                .frame(height: min(height, geo.size.height * 0.85))
+                .background(Color(.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+                .shadow(radius: 24)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)   // center within the geometry
             }
-            .frame(maxWidth: 400)
-            .frame(height: height)
-            .background(Color(.systemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 18))
-            .shadow(radius: 24)
-            .padding(24)
         }
     }
 }

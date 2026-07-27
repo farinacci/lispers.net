@@ -18,6 +18,7 @@ struct ConfigView: View {
     // Share the whole xTR configuration: as one image (even the off-screen part)
     // or as a colored .html file that also carries the full map-cache.
     @State private var shareImage: UIImage?
+    @State private var shareImages: [UIImage] = []   // top + bottom halves
     @State private var shareURL: URL?
     @State private var showShare = false
     @State private var editingHosts = false          // top-left "Hostnames" -> hosts editor sheet
@@ -27,6 +28,98 @@ struct ConfigView: View {
     private func centeredTitle(_ s: String) -> some View {
         Text(s).frame(maxWidth: .infinity, alignment: .center)
     }
+
+    private static func keyWindow() -> UIWindow? {
+        let scene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        return scene?.windows.first(where: { $0.isKeyWindow }) ?? scene?.windows.first
+    }
+
+    // Plain viewport screenshot of the key window (fallback when nothing scrolls).
+    static func captureScreen() -> UIImage? {
+        guard let window = keyWindow() else { return nil }
+        let format = UIGraphicsImageRendererFormat(); format.scale = UIScreen.main.scale
+        return UIGraphicsImageRenderer(bounds: window.bounds, format: format).image { _ in
+            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }
+    }
+
+    // The biggest VISIBLE UIScrollView (the on-screen tab's Form). Critically, the app keeps
+    // all six tabs alive in a ZStack with the hidden ones at opacity/alpha 0 — so several
+    // Form scroll views (Ping, LIG, LTR, xTR) exist at once. Scrolling the largest one blindly
+    // moved an INVISIBLE tab, leaving the visible xTR config on the top — which is why both
+    // screenshots came out identical. Skip any scroll view whose ancestor chain is hidden.
+    private static func largestScrollView(in view: UIView) -> UIScrollView? {
+        func isVisible(_ v: UIView) -> Bool {
+            var cur: UIView? = v
+            while let c = cur {
+                if c.isHidden || c.alpha < 0.02 { return false }
+                cur = c.superview
+            }
+            return true
+        }
+        var best: UIScrollView?, bestArea: CGFloat = 0
+        func walk(_ v: UIView) {
+            if let sv = v as? UIScrollView, isVisible(sv) {
+                let area = sv.contentSize.width * sv.contentSize.height
+                if area > bestArea { bestArea = area; best = sv }
+            }
+            v.subviews.forEach(walk)
+        }
+        walk(view)
+        return best
+    }
+
+    // Capture the WHOLE page as a series of full-screen tiles — scroll one viewport at a time
+    // from top to bottom, snapshot each. Guarantees every section is captured with no gaps
+    // (adjacent tiles abut; only the final tile, pinned to the bottom, can slightly overlap the
+    // one before it). Done SYNCHRONOUSLY per tile: set offset → layout → render in the same
+    // run-loop turn, so SwiftUI's 1s status re-render can't reset the offset between shots.
+    // Two plain window captures at a time — no stitched bitmap, no memory blow-up.
+    static func captureTiles() -> [UIImage] {
+        guard let window = keyWindow() else { return [] }
+        let format = UIGraphicsImageRendererFormat(); format.scale = UIScreen.main.scale
+        func shot() -> UIImage {
+            UIGraphicsImageRenderer(bounds: window.bounds, format: format).image { _ in
+                window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+            }
+        }
+        guard let scroll = largestScrollView(in: window),
+              scroll.contentSize.height > scroll.bounds.height + 1 else {
+            return [shot()]
+        }
+        let saved = scroll.contentOffset
+        let V = scroll.bounds.height
+        // The nav bar and tab bar overlap the scroll view (content scrolls UNDER them), so the
+        // true top is contentOffset = -top-inset and only V-top-bottom of content is actually
+        // visible per screen. Start at the true top and step by the VISIBLE height so tiles abut
+        // at the content and nothing hides behind the bars.
+        let top = scroll.adjustedContentInset.top
+        let bottom = scroll.adjustedContentInset.bottom
+        let step = max(1, V - top - bottom)
+        let minOff = -top
+        let maxOff = max(minOff, scroll.contentSize.height - V + bottom)
+        // As many tiles as the content needs (3 for a ~3-screen config, more if you add lots of
+        // groups / lookup-prefixes) — each abuts the next, the last is pinned to the bottom.
+        var offsets: [CGFloat] = []
+        var o = minOff
+        while true {
+            let clamped = min(o, maxOff)
+            if offsets.last != clamped { offsets.append(clamped) }
+            if clamped >= maxOff { break }
+            o += step
+        }
+        var images: [UIImage] = []
+        for o in offsets {
+            scroll.setContentOffset(CGPoint(x: 0, y: o), animated: false)
+            scroll.layoutIfNeeded()
+            images.append(shot())
+        }
+        scroll.setContentOffset(saved, animated: false)
+        return images
+    }
+
 
     // Colored .html of the whole xTR state — config + the FULL map-cache — sharing
     // the Logs export's palette (eid green, rloc red, name blue). Written to a temp
@@ -424,28 +517,18 @@ struct ConfigView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        // Image: render the whole configuration (even off-screen) to
-                        // one picture — the inline paste for Messages.
-                        Button {
-                            let snap = XTRSnapshot()
-                                .environmentObject(config)
-                                .environmentObject(engine)
-                            let r = ImageRenderer(content: snap)
-                            r.scale = UIScreen.main.scale
-                            if let ui = r.uiImage { shareURL = nil; shareImage = ui; showShare = true }
-                        } label: { Label("Image", systemImage: "photo") }
-                        // Colored .html carrying the config AND the full map-cache.
-                        Button {
-                            shareImage = nil; shareURL = xtrHTMLFile(); showShare = true
-                        } label: { Label("HTML (config + map-cache)", systemImage: "doc.richtext") }
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                    }
+                    // Share the page as TWO screenshots — top half + bottom half — so the whole
+                    // config comes across without the fragile full-page stitch.
+                    Button {
+                        let imgs = Self.captureTiles()
+                        guard !imgs.isEmpty else { return }
+                        shareURL = nil; shareImage = nil; shareImages = imgs; showShare = true
+                    } label: { Image(systemName: "square.and.arrow.up") }
                 }
             }
             .sheet(isPresented: $showShare) {
-                if let u = shareURL { ShareSheet(items: [u]) }
+                if !shareImages.isEmpty { ShareSheet(items: shareImages) }
+                else if let u = shareURL { ShareSheet(items: [u]) }
                 else if let img = shareImage { ShareSheet(items: [img]) }
             }
             .sheet(isPresented: $editingHosts) { HostsEditor() }

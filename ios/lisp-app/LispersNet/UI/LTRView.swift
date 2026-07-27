@@ -127,6 +127,16 @@ struct LTRView: View {
         }
     }
 
+    // An overlay unicast EID literal: an IPv4 in 240/4 (first octet >= 240). A round-trip
+    // reply from the target EID is green; a reply from any other (RLOC) address means an xTR
+    // returned an error hop, so it stays red.
+    private static func isEIDAddress(_ s: String) -> Bool {
+        let host = s.split(separator: ":").first.map(String.init) ?? s
+        let octets = host.split(separator: ".")
+        guard octets.count == 4, let first = Int(octets[0]) else { return false }
+        return first >= 240 && first <= 255
+    }
+
     // ltr.py display_packet coloring: EID green, RLOC red (bold red if it has '?'),
     // node name blue; send-line EIDs bold.
     private func lineView(_ line: LTRLine) -> Text {
@@ -153,8 +163,11 @@ struct LTRView: View {
                  + Text(rtr).font(mono).foregroundColor(.lispRed)
                  + Text(" ...").font(mono)
         case .received(let source, let rtt):
+            // The reply source is green when it's an overlay EID (224/4 or 240/4 — a
+            // round-trip reply comes back FROM the target EID), red when it's an RLOC/RTR.
+            let srcColor: Color = Self.isEIDAddress(source) ? .lispGreen : .lispRed
             return Text("Received reply from ").font(mono)
-                 + Text(source).font(mono).foregroundColor(.lispRed)
+                 + Text(source).font(mono).foregroundColor(srcColor)
                  + Text(", rtt ").font(mono)
                  + Text(rtt).font(mono).fontWeight(.heavy).foregroundColor(.orange)
                  + Text(" secs").font(mono)

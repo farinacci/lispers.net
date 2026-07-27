@@ -361,6 +361,19 @@ extension LispEngine {
                                        port: LISP.ltrReplyPort, label: "LTR app")
             } else {
                 forwardUDPToOverlayApp(packet, from: srcAddr, iid: iid)
+                // Also buffer gaapchat chat (inner UDP dport 0xfafa) to the shared inbox so a
+                // SUSPENDED gaapchat can replay what arrived while it was away (see GaapInbox).
+                let p = packet.startIndex
+                if packet.count >= ub + 4, packet.count >= p + 20 {
+                    let dport = (UInt16(packet[ub + 2]) << 8) | UInt16(packet[ub + 3])
+                    if dport == LISP.gaapChatPort {
+                        let group = (UInt32(packet[p + 16]) << 24) | (UInt32(packet[p + 17]) << 16)
+                                  | (UInt32(packet[p + 18]) << 8) | UInt32(packet[p + 19])
+                        GaapInbox.append(packet, group: group)
+                        log.dprint(.etr, "Buffered gaapchat message to shared inbox for " +
+                                   "group \(dstAddr.addressString) (\(packet.count) bytes)")
+                    }
+                }
             }
         }
     }
