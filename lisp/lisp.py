@@ -14481,6 +14481,21 @@ class lisp_mapping(object):
         inner_version = lisp_packet.inner_version
         length = len(self.best_rloc_set)
 
+        #
+        # best_rloc_set can be empty while rloc_set still has up-state RLOCs:
+        # it is only (re)built on certain events, so an entry whose set was
+        # rebuilt while its RLOCs were momentarily unreach (best_priority stays
+        # 256, which matches no RLOC) stays empty even after the RLOCs probe
+        # back up -- the map-cache display reads rloc_set (shows "up") while
+        # this drops every packet as "No reachable RLOCs found". Seen on a
+        # gaapchat pong out a (0/0, 224/4) entry. Rebuild lazily here so
+        # forwarding self-heals on the next packet once an RLOC is reachable.
+        #
+        if (length == 0):
+            self.build_best_rloc_set()
+            length = len(self.best_rloc_set)
+        #endif
+
         if (length == 0):
             self.stats.increment(len(packet))
             return([None, None, None, self.action, None, None])
@@ -21404,9 +21419,29 @@ def lisp_update_igmp_database(source_str, group_str, joinleave):
         #endif
 
         #
-        # Create new database entry. Get translated info from the configured database entries.
+        # Create new database entry. Get translated info from the configured database
+        # entries. Scan for the first database-mapping that actually has an RLOC, rather
+        # than indexing [0][0] directly. That blind index raised IndexError and killed the
+        # pcappy callback thread when there are no database-mappings configured, or when
+        # the first one has an empty rloc-set (its RLOC interface has not come up yet).
         #
-        db_rloc = lisp_db_list[0].rloc_set[0]
+        db_rloc = None
+        for db_scan in lisp_db_list:
+            if (len(db_scan.rloc_set) == 0): continue
+            db_rloc = db_scan.rloc_set[0]
+            break
+        #endfor
+
+        #
+        # Without an RLOC to copy there is nothing to build the entry from. Skip this
+        # IGMP report instead of crashing; a later report re-adds the entry once a
+        # database-mapping RLOC exists.
+        #
+        if (db_rloc == None):
+            lprint("No database-mapping RLOC, cannot add IGMP entry for {}".format( \
+                green(prefix, False)))
+            return
+        #endif
 
         rloc_entry = copy.deepcopy(db_rloc)
         rloc_entry.priority = 1
