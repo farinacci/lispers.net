@@ -6,4 +6,8 @@ lisp/lisp-version.txt
 lisp/__pycache__    
 apps/*pyc
 apps/*pyo
-        
+
+# Xcode per-user state (window layout, open tabs) — machine-specific, churns on its own
+**/xcuserdata/
+**/*.xcuserstate
+
