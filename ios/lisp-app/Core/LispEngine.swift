@@ -263,10 +263,12 @@ final class LispEngine: ObservableObject {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
                 self?.sendMapRegisters()
                 self?.selfReportManualGroups()
+                self?.ensureStickyGroupRegistered()   // restore gaapchat's sticky (*,G) on start
             }
         } else {
             sendMapRegisters()
             selfReportManualGroups()
+            ensureStickyGroupRegistered()             // restore gaapchat's sticky (*,G) on start
         }
 
         startTimers()
@@ -456,6 +458,7 @@ final class LispEngine: ObservableObject {
         // sending on the DEAD sockets).
         if behindNATConfigured { sendInfoRequests() }
         sendMapRegisters()
+        ensureStickyGroupRegistered()                // restore gaapchat's sticky (*,G) if lost
         reregisterIGMPGroups()                       // refresh (*,G) with the resumed sockets
         log.fprint(.core, "Network resumed (app foregrounded)")
     }
@@ -497,6 +500,8 @@ final class LispEngine: ObservableObject {
                                             repeats: true) { [weak self] _ in
             self?.sendMapRegisters()                 // unicast EID (its own timer)
             self?.selfReportManualGroups()           // manual groups self-report IGMP → (*,G)
+            self?.ensureStickyGroupRegistered()      // restore gaapchat's sticky (*,G) if an
+                                                     //   extension restart wiped in-memory state
             self?.expireIGMPGroups()                 // drop overlay groups whose app went silent
                                                      //   past the grace window (igmpGroupTimeout)
             self?.reregisterIGMPGroups()             // extension-owned (*,G) refresh — keeps a

@@ -16,23 +16,24 @@ import UIKit
 
 // A styled span for rich rendering: only the ping/pong sequence and the group address
 // (an EID) get color, everything else is plain — matching the Python app.
-enum ChatSpan {
+enum ChatSpan: Codable {
     case plain(String)      // default text color
     case seq(String)        // ping/pong sequence number — colored by colorIndex
     case eid(String)        // group address — green (it's an EID)
     case name(String)       // sender/member name — bold
 }
 
-struct ChatMessage: Identifiable {
-    let id = UUID()
-    enum Kind { case data, mine, ping, pong, info }
+struct ChatMessage: Identifiable, Codable {
+    var id = UUID()                // var (not let) so Codable actually restores it on reload
+    enum Kind: String, Codable { case data, mine, ping, pong, info }
     let kind: Kind
     let sender: String
     let text: String
     let colorIndex: Int?        // 0..3 for ping/pong seq coloring (blue,green,red,purple)
     var spans: [ChatSpan]? = nil   // rich rendering (seq + EID coloring); nil = plain `text`
     var detail: String? = nil      // compact content for :history (nil = use `text`)
-    let at = Date()
+    var pongs: [String] = []       // for a ping bubble: responder hosts collected for this seq
+    var at = Date()                // var so Codable restores the real timestamp on reload
 }
 
 @MainActor
@@ -44,11 +45,15 @@ final class ChatClient: ObservableObject {
     @Published var lispReady = false
     @Published var members: [String] = []       // senders seen (":show"), insertion order
     @Published var lastSent: [String: Date] = [:]   // member -> last time they sent to the group
-    @Published var firstSeen: [String: Date] = [:]  // member -> join time (first message we saw from them)
+    @Published var firstSeen: [String: Date] = [:]  // member -> first-message time (first msg we saw)
+    @Published var dataSent: [String: Int] = [:]    // member -> data messages sent
+    @Published var pingsSent: [String: Int] = [:]   // member -> pings sent
+    @Published var pongsSent: [String: Int] = [:]   // member -> pongs sent
     @Published var sentCount = 0                 // messages we sent this session (data/ping/pong)
     @Published var recvCount = 0                 // messages we received this session
     @Published var showHistory = false           // drives the History sheet (set by :history)
     @Published var showMembers = false           // drives the Members sheet (set by :show)
+    @Published var missedCount = 0               // messages that arrived while we were away (badge)
     let nickname = "ios"                          // fixed identity prefix (not user-configurable)
 
     var device: String { GaapWire.localHostname }
@@ -70,6 +75,12 @@ final class ChatClient: ObservableObject {
     // Ping/pong color cycling (Python: blue→green→red→purple).
     private var colorCounter = -1
     private var pingColorForSeq: [String: Int] = [:]
+    // Which pong-collector bubble (message id) gathers the responders for a given ping seq — the
+    // pongs fold into ONE pill (colored by the seq) that's separate from the ping's own bubble.
+    private var pongBubbleIdForSeq: [String: UUID] = [:]
+    // Group name of the session we loaded from disk on launch (so restore knows the loaded
+    // messages belong to the sticky group and can be kept rather than wiped).
+    private var loadedGroupName = ""
 
     init() {
         startInboxPolling()
@@ -77,7 +88,12 @@ final class ChatClient: ObservableObject {
         readyTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refreshReady() }
         }
+        loadSession()               // restore prior messages/members/history (survives a kill)
+        restoreStickyGroupIfAny()   // re-enter + replay the sticky group if iOS killed us
     }
+
+    // The user has seen the missed messages — clear the badge.
+    func clearMissed() { missedCount = 0 }
 
     private func refreshReady() {
         let age = GaapWire.lispHeartbeatAge
@@ -91,36 +107,112 @@ final class ChatClient: ObservableObject {
         let f = DateFormatter(); f.dateFormat = "MM/dd/yy HH:mm:ss"; return f
     }()
 
-    func join(_ name: String) {
+    // A fresh, user-initiated join: skip whatever backlog is sitting in the inbox and clear
+    // any prior session state.
+    func join(_ name: String) { enter(name, replay: false, wipe: true) }
+
+    // Re-enter the sticky group on launch (iOS killed us while suspended). We do NOT seekToEnd,
+    // so the poll replays every message that arrived while gaapchat wasn't running. We also KEEP
+    // the session we just loaded (messages/members/history) as long as it's for this same group —
+    // that's what "state survives leaving the app" means from the user's side. From init().
+    private func restoreStickyGroupIfAny() {
+        guard !joined, let name = GaapInbox.savedGroupName,
+              !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        enter(name, replay: true, wipe: (name != loadedGroupName))
+    }
+
+    private func enter(_ name: String, replay: Bool, wipe: Bool) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         if joined { leave() }
         groupName = trimmed
         groupAddress = GaapHash.groupAddress(trimmed)
         group = GaapWire.parseIPv4(groupAddress) ?? 0
-        GaapInbox.setSticky(group)     // keep this group joined at the xTR while we're suspended
-        GaapInbox.seekToEnd()          // fresh session — don't replay stale backlog
+        GaapInbox.setSticky(group)         // keep this group joined at the xTR while we're suspended
+        GaapInbox.saveGroupName(trimmed)   // remember it so a relaunch can rejoin the same group
+        if replay {
+            missedCount = GaapInbox.pendingCount(group: group)   // badge: messages we missed
+        } else {
+            GaapInbox.seekToEnd()          // fresh session — don't replay stale backlog
+            missedCount = 0
+        }
         joined = true
-        messages.removeAll()
-        members.removeAll(); lastSent.removeAll(); firstSeen.removeAll()   // fresh session state
-        sentCount = 0; recvCount = 0
+        if wipe {
+            messages.removeAll()
+            members.removeAll(); lastSent.removeAll(); firstSeen.removeAll()   // fresh session state
+            dataSent.removeAll(); pingsSent.removeAll(); pongsSent.removeAll()
+            pongBubbleIdForSeq.removeAll()
+            sentCount = 0; recvCount = 0
+        }
         // Name + address are already shown in the header, so just stamp when we joined.
-        info("Joined group at \(Self.joinStamp.string(from: Date()))")
+        info("\(replay ? "Rejoined" : "Joined") group at \(Self.joinStamp.string(from: Date()))")
         sendReport(announce: true)                      // IGMP Report → LISP registers (*,G)
         reportTimer?.invalidate()
         reportTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.sendReport() }   // periodic refresh (silent)
         }
+        if replay { drainInbox() }                      // replay the missed backlog now
     }
 
     func leave() {
         guard joined else { return }
         reportTimer?.invalidate(); reportTimer = nil
         GaapInbox.clearSticky()        // stop keeping the group sticky-joined; let it age out
+        GaapInbox.clearGroupName()     // explicit leave — don't auto-rejoin on next launch
+        clearSession()                 // drop the persisted session — nothing to restore
         if group != 0 {
             GaapWire.sendIGMP(type: GaapWire.igmpLeave, group: group)
         }
         joined = false
+        missedCount = 0
+    }
+
+    // MARK: session persistence (survives an iOS kill)
+
+    // A snapshot of everything the UI shows, saved on background and reloaded on launch so
+    // messages, members (:show) and history survive gaapchat being jettisoned while suspended.
+    private struct GaapSession: Codable {
+        var groupName: String
+        var messages: [ChatMessage]
+        var members: [String]
+        var firstSeen: [String: Date]
+        var lastSent: [String: Date]
+        var dataSent: [String: Int]
+        var pingsSent: [String: Int]
+        var pongsSent: [String: Int]
+        var sentCount: Int
+        var recvCount: Int
+    }
+
+    private static var sessionURL: URL? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.net.lispers.xtr")?
+            .appendingPathComponent("gaap-session.json")
+    }
+
+    private func saveSession() {
+        guard joined, let url = Self.sessionURL else { return }
+        let s = GaapSession(groupName: groupName, messages: messages, members: members,
+                            firstSeen: firstSeen, lastSent: lastSent,
+                            dataSent: dataSent, pingsSent: pingsSent, pongsSent: pongsSent,
+                            sentCount: sentCount, recvCount: recvCount)
+        if let data = try? JSONEncoder().encode(s) { try? data.write(to: url) }
+    }
+
+    private func loadSession() {
+        guard let url = Self.sessionURL, let data = try? Data(contentsOf: url),
+              let s = try? JSONDecoder().decode(GaapSession.self, from: data) else { return }
+        loadedGroupName = s.groupName
+        messages = s.messages
+        members = s.members; firstSeen = s.firstSeen; lastSent = s.lastSent
+        dataSent = s.dataSent; pingsSent = s.pingsSent; pongsSent = s.pongsSent
+        sentCount = s.sentCount; recvCount = s.recvCount
+        // Rebuild the pong-collector map so replayed pongs fold into their existing pills.
+        for m in messages where m.kind == .pong { if let seq = m.detail { pongBubbleIdForSeq[seq] = m.id } }
+    }
+
+    private func clearSession() {
+        if let url = Self.sessionURL { try? FileManager.default.removeItem(at: url) }
+        loadedGroupName = ""
     }
 
     private func sendReport(announce: Bool = false) {
@@ -139,7 +231,7 @@ final class ChatClient: ObservableObject {
         guard joined, group != 0 else { info("Join a group first."); return }
         GaapWire.sendChat(group: group, ascii: Data("data%%\(myid)%%\(text)".utf8))
         append(.init(kind: .mine, sender: myid, text: text, colorIndex: nil))   // show my own
-        note(member: myid); sentCount += 1
+        note(member: myid); sentCount += 1; dataSent[myid, default: 0] += 1
     }
 
     private func runCommand(_ cmd: String) {
@@ -174,13 +266,31 @@ final class ChatClient: ObservableObject {
                      colorIndex: ci,
                      spans: [.plain("Send ping-"), .seq(seq), .plain(" to "), .eid(groupAddress)],
                      detail: seq))
-        note(member: myid); sentCount += 1
+        note(member: myid); sentCount += 1; pingsSent[myid, default: 0] += 1
     }
 
     private func sendPong(to pinger: String, seq: String) {
         guard group != 0 else { return }
         GaapWire.sendChat(group: group, ascii: Data("pong%%\(myid)%%\(pinger)%%\(seq)".utf8))
-        note(member: myid); sentCount += 1
+        note(member: myid); sentCount += 1; pongsSent[myid, default: 0] += 1
+    }
+
+    // A pong arrived for `seq` — add the responder to that ping's bubble (deduped) so all pongs
+    // for one ping collect in a single pill. If we never saw the ping (e.g. it predated our
+    // join), start a small collector bubble keyed by the seq.
+    private func collectPong(seq: String, from sender: String) {
+        let host = hostOnly(sender)
+        if let id = pongBubbleIdForSeq[seq], let i = messages.firstIndex(where: { $0.id == id }) {
+            if !messages[i].pongs.contains(host) { messages[i].pongs.append(host) }
+        } else {
+            // One pill per ping seq; colorIndex carries the seq color used to render the lines.
+            let ci = pingColorForSeq[seq] ?? nextColor(for: seq)
+            var m = ChatMessage(kind: .pong, sender: "", text: "pong for ping-\(seq)",
+                                colorIndex: ci, detail: seq)
+            m.pongs = [host]
+            pongBubbleIdForSeq[seq] = m.id
+            append(m)
+        }
     }
 
     // MARK: receive
@@ -211,10 +321,12 @@ final class ChatClient: ObservableObject {
         note(member: sender); recvCount += 1
         switch op {
         case "data":
+            dataSent[sender, default: 0] += 1
             append(.init(kind: .data, sender: sender, text: parms[2], colorIndex: nil))
         case "ping":
             let seq = parms[2]
             let ci = nextColor(for: seq)
+            pingsSent[sender, default: 0] += 1
             append(.init(kind: .ping, sender: sender,
                          text: "ping-\(seq) from \(sender), pong sent to \(groupAddress)",
                          colorIndex: ci,
@@ -223,15 +335,8 @@ final class ChatClient: ObservableObject {
                          detail: seq))
             sendPong(to: sender, seq: seq)
         case "pong" where parms.count >= 4:
-            let seq = parms[3]
-            let ci = pingColorForSeq[seq]
-            // Show only the sequence number, not whose ping it answered — the pinger name
-            // made the line wrap and hurt readability (parms[2] is still parsed/ignored).
-            append(.init(kind: .pong, sender: sender,
-                         text: "pong from \(sender) for ping-\(seq)", colorIndex: ci,
-                         spans: [.plain("pong from "), .name(sender),
-                                 .plain(" for ping-"), .seq(seq)],
-                         detail: "ping-\(seq)"))
+            pongsSent[sender, default: 0] += 1
+            collectPong(seq: parms[3], from: sender)   // fold into the ping's bubble
         default:
             break
         }
@@ -269,9 +374,12 @@ final class ChatClient: ObservableObject {
         if messages.count > 1000 { messages.removeFirst(messages.count - 1000) }
     }
 
-    func onBackground() { sendReport() }                // one refresh; the sticky marker keeps us joined
+    func onBackground() { sendReport(); saveSession() } // refresh + persist the session before suspend
     func onForeground() {
         startInboxPolling()                             // the poll timer was suspended while backgrounded
+        if joined, group != 0 {                         // badge the messages that arrived while away
+            missedCount += GaapInbox.pendingCount(group: group)
+        }
         drainInbox()                                    // replay messages that arrived while we were away
         refreshReady(); if joined { sendReport() }
     }

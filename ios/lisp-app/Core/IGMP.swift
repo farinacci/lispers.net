@@ -94,6 +94,24 @@ extension LispEngine {
         }
     }
 
+    // Restore gaapchat's sticky (*,G) if it's missing from our in-memory soft-state. The
+    // sticky marker survives in App-Group UserDefaults, but igmpGroups does NOT — it's rebuilt
+    // from scratch whenever iOS relaunches the tunnel extension (crash / memory pressure /
+    // network churn). A SUSPENDED gaapchat sends no IGMP Report to re-add its group, so without
+    // this the (*,G) silently drops after an extension restart and the phone stops receiving the
+    // group. expireIGMPGroups() only SKIPS the sticky group; it never re-adds one. Run every
+    // register cycle (and on start/resume) so the sticky group is treated like a persistent
+    // manual group: re-seeded once if lost, then kept fresh by reregisterIGMPGroups().
+    func ensureStickyGroupRegistered() {
+        let sticky = GaapInbox.stickyGroup
+        guard sticky != 0, (sticky >> 28) == 0xE, igmpGroups[sticky] == nil else { return }
+        var group = LispAddress(v4: sticky)
+        group.instanceID = UInt32(config.instanceID); group.maskLen = 32
+        log.lprint(.etr, "Restoring sticky (*,G) for group \(group.addressString) (gaapchat) " +
+                   "after extension restart — re-registering")
+        applyIGMP(sticky, type: LISP.igmpV2Report, source: "gaapchat")
+    }
+
     // Re-register every active (*,G) with the CURRENT translated port — used after the NAT
     // port is (re)learned (Info-Reply) or on network resume, without waiting for the next
     // IGMP report. No IGMP log (this is a port-refresh, not a membership change).

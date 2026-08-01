@@ -22,6 +22,35 @@ enum GaapInbox {
     static func setSticky(_ g: UInt32) { defaults?.set(Int(g), forKey: "gaapStickyGroup") }
     static func clearSticky() { defaults?.set(0, forKey: "gaapStickyGroup") }
 
+    // The group NAME we're stickily joined to — persisted so a relaunched gaapchat (iOS killed
+    // it while suspended) can re-enter the same group and replay what arrived while it was gone.
+    // Cleared only on an explicit leave/:quit, so its presence means "was joined, never left".
+    static func saveGroupName(_ name: String) { defaults?.set(name, forKey: "gaapStickyName") }
+    static func clearGroupName() { defaults?.removeObject(forKey: "gaapStickyName") }
+    static var savedGroupName: String? { defaults?.string(forKey: "gaapStickyName") }
+
+    // How many undrained records are buffered for `group` (messages that arrived while we were
+    // away) — a READ-ONLY peek that does NOT advance the reader offset. Drives the missed-count
+    // badge. Mirrors drain()'s framing + re-anchor logic.
+    static func pendingCount(group: UInt32) -> Int {
+        guard let url = fileURL, let data = try? Data(contentsOf: url) else { return 0 }
+        let gen = defaults?.integer(forKey: "gaapInboxGen") ?? 0
+        let readerGen = defaults?.integer(forKey: "gaapReaderGen") ?? -1
+        var offset = defaults?.integer(forKey: "gaapReaderOffset") ?? 0
+        if gen != readerGen || offset > data.count { offset = 0 }
+        let bytes = [UInt8](data)
+        var i = offset, n = 0
+        while i + 8 <= bytes.count {
+            let recGroup = u32(bytes, i)
+            let len = Int(u32(bytes, i + 4))
+            let end = i + 8 + len
+            if end > bytes.count { break }
+            if recGroup == group { n += 1 }
+            i = end
+        }
+        return n
+    }
+
     // Read the records for `group` we haven't consumed yet; returns the inner packets in order.
     // Re-anchors to the file start if it was trimmed (generation bumped) or shrank.
     static func drain(group: UInt32) -> [Data] {

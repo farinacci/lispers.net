@@ -24,7 +24,7 @@ func hostOnly(_ id: String) -> String { id.components(separatedBy: "@").last ?? 
 
 struct ContentView: View {
     // App/build version — bump on every build (like the LISP + PING apps).
-    static let version = "0.4"
+    static let version = "0.5"
     @State private var tab = 0
     var body: some View {
         VStack(spacing: 0) {
@@ -64,7 +64,30 @@ struct ChatView: View {
     @State private var input = ""
     @AppStorage("gcFontSize") private var fontSize: Double = 13   // pinch the message list to zoom
     @State private var zoomBase: Double? = nil
+    @State private var timeReveal: CGFloat = 0                    // swipe-left timestamp reveal (Messages-style)
+    private let revealWidth: CGFloat = 76                         // how far the bubbles slide to show times
     private var mono: Font { .system(size: fontSize, design: .monospaced) }
+
+    private static let timeStamp: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; return f
+    }()
+
+    private static let bubble = RoundedRectangle(cornerRadius: 16, style: .continuous)
+
+    // Messages-style: drag the message list LEFT to reveal a timestamp beside each bubble; it
+    // springs back on release. `at` is exact for live messages; for a replayed backlog message
+    // it's the replay time (inbox records carry no original timestamp yet).
+    private var timeSwipe: some Gesture {
+        DragGesture(minimumDistance: 15)
+            .onChanged { v in
+                if v.translation.width < 0, abs(v.translation.width) > abs(v.translation.height) {
+                    timeReveal = min(revealWidth, -v.translation.width)
+                }
+            }
+            .onEnded { _ in
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { timeReveal = 0 }
+            }
+    }
 
     // Launch the LISP app via its custom URL scheme (same as the PING app) so the user
     // can bring the xTR to the foreground straight from the "not running" hint.
@@ -102,7 +125,7 @@ struct ChatView: View {
 
     // Centered pop-up card sizing: grows with the list, capped at ~80% of the screen.
     private var memberCount: Int { Set(client.members + [client.myid]).count }
-    private var historyCount: Int { client.messages.filter { $0.kind != .info }.count }
+    private var historyCount: Int { memberCount }   // history is now a per-member summary
     private func cardHeight(items: Int, base: CGFloat, per: CGFloat) -> CGFloat {
         min(UIScreen.main.bounds.height * 0.8, base + CGFloat(items) * per)
     }
@@ -123,11 +146,23 @@ struct ChatView: View {
                 Text("you are \(hostOnly(client.myid))").font(.caption2).foregroundStyle(.secondary)
             }
             if client.joined {
-                (Text("group-name ").foregroundStyle(.secondary)
-                 + Text(client.groupName).bold().foregroundColor(.gcBlue)
-                 + Text("  →  ").foregroundStyle(.secondary)
-                 + Text(client.groupAddress).foregroundColor(.gcGreen))
-                    .font(.caption.monospaced())
+                HStack(spacing: 8) {
+                    (Text("group-name ").foregroundStyle(.secondary)
+                     + Text(client.groupName).bold().foregroundColor(.gcBlue)
+                     + Text("  →  ").foregroundStyle(.secondary)
+                     + Text(client.groupAddress).foregroundColor(.gcGreen))
+                        .font(.caption.monospaced())
+                    if client.missedCount > 0 {
+                        // Messages that arrived while gaapchat was away (backgrounded/relaunched).
+                        // Tap to acknowledge. (In-app badge — see note re: springboard icon badge.)
+                        Text("\(client.missedCount) new")
+                            .font(.caption2.bold()).foregroundStyle(.white)
+                            .padding(.horizontal, 8).padding(.vertical, 3)
+                            .background(Color.red, in: Capsule())
+                            .onTapGesture { client.clearMissed() }
+                            .transition(.scale.combined(with: .opacity))
+                    }
+                }
             } else {
                 HStack {
                     TextField("enter group-name", text: $groupField)
@@ -144,46 +179,98 @@ struct ChatView: View {
     }
 
     private var messageList: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 6) {
-                    ForEach(client.messages) { m in row(m).id(m.id) }
-                    // Blank space below the last message so it isn't flush against the input
-                    // bar and read as cut off. Scroll to THIS pad (not the last message) so
-                    // the newest line always has room beneath it.
-                    Color.clear.frame(height: 60).id("bottom-pad")
+        GeometryReader { geo in
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        ForEach(client.messages) { m in
+                            messageRow(m, width: geo.size.width - 24).id(m.id)
+                        }
+                        // Blank space below the last message so it isn't flush against the input
+                        // bar and read as cut off. Scroll to THIS pad so the newest line has room.
+                        Color.clear.frame(height: 60).id("bottom-pad")
+                    }
+                    .padding(12)
+                    .offset(x: -timeReveal)                  // slide bubbles left to reveal times
                 }
-                .padding(12)
-            }
-            .scrollDismissesKeyboard(.interactively)    // pull the keyboard down by dragging
-            .gesture(MagnificationGesture()             // pinch to zoom text smaller/larger
-                .onChanged { scale in
-                    let base = zoomBase ?? fontSize
-                    if zoomBase == nil { zoomBase = base }
-                    fontSize = min(30, max(8, base * Double(scale)))
+                .scrollDismissesKeyboard(.interactively)     // pull the keyboard down by dragging
+                .simultaneousGesture(timeSwipe)              // swipe-left → timestamps (Messages-style)
+                .gesture(MagnificationGesture()              // pinch to zoom text smaller/larger
+                    .onChanged { scale in
+                        let base = zoomBase ?? fontSize
+                        if zoomBase == nil { zoomBase = base }
+                        fontSize = min(30, max(8, base * Double(scale)))
+                    }
+                    .onEnded { _ in zoomBase = nil })
+                .onChange(of: client.messages.count) { _, _ in
+                    withAnimation { proxy.scrollTo("bottom-pad", anchor: .bottom) }
                 }
-                .onEnded { _ in zoomBase = nil })
-            .onChange(of: client.messages.count) { _, _ in
-                withAnimation { proxy.scrollTo("bottom-pad", anchor: .bottom) }
             }
         }
     }
 
-    @ViewBuilder private func row(_ m: ChatMessage) -> some View {
+    // One message row: the bubble (aligned by sender) plus a timestamp column parked just past
+    // the right edge, revealed when the whole list is dragged left.
+    private func messageRow(_ m: ChatMessage, width: CGFloat) -> some View {
+        HStack(spacing: 0) {
+            bubbleRow(m).frame(width: width, alignment: .leading)
+            Text(Self.timeStamp.string(from: m.at))
+                .font(.caption2).foregroundStyle(.secondary)
+                .frame(width: revealWidth, alignment: .leading)
+                .padding(.leading, 10)
+        }
+    }
+
+    // Each chat line as a Messages-style bubble: my texts right-aligned blue; others' texts,
+    // pings and pongs left-aligned gray. Info lines (join/leave) stay plain + centered.
+    @ViewBuilder private func bubbleRow(_ m: ChatMessage) -> some View {
         switch m.kind {
         case .info:
-            if m.spans != nil { infoSpanText(m) }          // colored info (e.g. "Left group …")
-            else { Text(m.text).font(mono).foregroundStyle(.secondary) }
+            Group {
+                if m.spans != nil { infoSpanText(m) }      // colored info (e.g. "Left group …")
+                else { Text(m.text).font(mono).foregroundStyle(.secondary) }
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
         case .mine:
-            HStack { Spacer()
-                Text(m.text).font(mono).padding(8)
-                    .background(Color.gcBlue.opacity(0.15)).clipShape(RoundedRectangle(cornerRadius: 10))
+            HStack { Spacer(minLength: 32)
+                Text(m.text).font(mono)
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(Color.gcBlue.opacity(0.18), in: Self.bubble)
             }
         case .data:
-            (Text(hostOnly(m.sender) + ": ").font(mono).bold().foregroundColor(.gcBlue)
-             + Text(m.text).font(mono))
-        case .ping, .pong:
-            spanText(m)
+            HStack {
+                (Text(hostOnly(m.sender) + ": ").font(mono).bold().foregroundColor(.gcBlue)
+                 + Text(m.text).font(mono))
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(Color.gray.opacity(0.18), in: Self.bubble)
+                Spacer(minLength: 32)
+            }
+        case .ping:
+            HStack {
+                spanText(m)                                  // "Send ping-X to G" — its own pill
+                    .lineLimit(1).minimumScaleFactor(0.5)    // keep on one line
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(Color.gray.opacity(0.12), in: Self.bubble)
+                Spacer(minLength: 8)
+            }
+        case .pong:
+            // All pongs for one ping in a single pill — original per-line text + seq coloring.
+            let seq = m.detail ?? ""
+            let c = m.colorIndex.map { pingPalette[$0] } ?? Color.primary
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(m.pongs, id: \.self) { host in
+                        (Text("pong from ").font(mono)
+                         + Text(host).font(mono).bold()
+                         + Text(" for ping-").font(mono)
+                         + Text(seq).font(mono).foregroundColor(c).bold())
+                            .lineLimit(1).minimumScaleFactor(0.5)   // one line per pong
+                    }
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(Color.gray.opacity(0.12), in: Self.bubble)
+                Spacer(minLength: 8)
+            }
         }
     }
 
@@ -277,7 +364,12 @@ struct HistoryView: View {
     @EnvironmentObject var client: ChatClient
     private let mono = Font.system(size: 13, design: .monospaced)
 
-    private var entries: [ChatMessage] { client.messages.filter { $0.kind != .info } }
+    // All members including self, alphabetical by host.
+    private var members: [String] {
+        let all = client.members.contains(client.myid) ? client.members
+                                                       : client.members + [client.myid]
+        return all.sorted { hostOnly($0) < hostOnly($1) }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -288,12 +380,12 @@ struct HistoryView: View {
                 .background(Color.gcBlue.opacity(0.10))
             Divider()
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 4) {
-                    if entries.isEmpty {
-                        Text("(no history yet)").font(mono).foregroundStyle(.secondary)
+                LazyVStack(alignment: .leading, spacing: 6) {
+                    if members.isEmpty {
+                        Text("(no members yet)").font(mono).foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     } else {
-                        ForEach(entries) { m in historyRow(m).lineLimit(1).minimumScaleFactor(0.5) }
+                        ForEach(members, id: \.self) { m in historyRow(m).lineLimit(1).minimumScaleFactor(0.5) }
                     }
                 }
                 .padding(12)
@@ -301,20 +393,14 @@ struct HistoryView: View {
         }
     }
 
-    private func opLabel(_ m: ChatMessage) -> String {
-        switch m.kind {
-        case .mine, .data: return "data"
-        case .ping:        return "ping"
-        case .pong:        return "pong"
-        case .info:        return ""
-        }
-    }
-
-    private func historyRow(_ m: ChatMessage) -> Text {
-        // "<bold op> <sender>: <data>".
-        Text(opLabel(m)).font(mono).bold()
-        + Text(" \(hostOnly(m.sender)): ").font(mono)
-        + Text(m.detail ?? m.text).font(mono)
+    // "<member>: messages sent <n>, pings/pongs sent: <p>/<q>".
+    private func historyRow(_ m: String) -> Text {
+        let d  = client.dataSent[m]  ?? 0
+        let pi = client.pingsSent[m] ?? 0
+        let po = client.pongsSent[m] ?? 0
+        return Text(hostOnly(m)).font(mono).bold().foregroundColor(.gcBlue)
+             + Text(": msgs \(d), pings \(pi), pongs \(po)")
+                .font(mono).foregroundColor(.secondary)
     }
 }
 
@@ -348,13 +434,15 @@ struct MembersView: View {
         }
     }
 
+    private static let ts: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "MMM d HH:mm:ss"; return f
+    }()
+
     private func memberRow(_ m: String) -> Text {
-        let now = Date()
-        let joined = client.firstSeen[m].map { client.agoString(now.timeIntervalSince($0)) } ?? "never"
-        let last = client.lastSent[m].map { client.agoString(now.timeIntervalSince($0)) } ?? "never"
+        let first = client.firstSeen[m].map { Self.ts.string(from: $0) } ?? "—"
         let short = m.components(separatedBy: "@").last ?? m   // drop "user@" for horizontal room
         return Text(short).font(mono).bold().foregroundColor(.gcBlue)
-             + Text(" — joined \(joined), last sent \(last)").font(mono).foregroundColor(.secondary)
+             + Text(" since \(first)").font(mono).foregroundColor(.secondary)
     }
 }
 
