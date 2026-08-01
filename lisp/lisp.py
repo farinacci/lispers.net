@@ -10121,7 +10121,11 @@ def lisp_remove_eid_from_map_notify_queue(eid_list):
     #
     # Now remove keys that were determined to be removed.
     #
-    for mn_key in keys_to_remove: lisp_map_notify_queue.pop(mn_key)
+    for mn_key in keys_to_remove:
+        if (mn_key in lisp_map_notify_queue):
+            lisp_map_notify_queue.pop(mn_key)
+        #endif
+    #endfor
     return
 #enddef
 
@@ -15942,6 +15946,11 @@ class lisp_trace(object):
     def return_to_sender(self, lisp_socket, rts_rloc, packet):
         rloc, port = self.rtr_cache_nat_trace_find(rts_rloc)
         if (rloc == None):
+            if (rts_rloc.count(":") != 1):
+                lprint("Cannot return LISP-Trace, malformed sender RLOC '{}'". \
+                    format(rts_rloc))
+                return
+            #endif
             rloc, port = rts_rloc.split(":")
             port = int(port)
             lprint("Send LISP-Trace to address {}:{}".format(rloc, port))
@@ -16260,7 +16269,8 @@ def lisp_send_map_request(lisp_sockets, lisp_ephem_port, seid, deid, rloc,
 
     sg = deid.is_multicast_address()
     if (sg):
-        map_request.target_eid = seid
+        map_request.target_eid = seid if (seid != None) else \
+            lisp_address(LISP_AFI_NONE, "", 0, 0)
         map_request.target_group = deid
     else:
         map_request.target_eid = deid
@@ -18019,6 +18029,13 @@ def lisp_show_rloc_probe_list():
 # RLOC. The parent is the first RLOC in the eid-list.
 #
 def lisp_mark_rlocs_for_other_eids(eid_list):
+
+    #
+    # Nothing to mark if the probe-list entry is empty (the EIDs sharing this
+    # RLOC were removed before the probe timer fired, or the shared list was
+    # emptied under us). Avoid an IndexError on eid_list[0] below.
+    #
+    if (eid_list == []): return
 
     #
     # Don't process parent but put its EID in printed list.
