@@ -8,15 +8,25 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct LTRView: View {
     @EnvironmentObject var engine: LispEngine
     @EnvironmentObject var hosts: HostsFile
     @EnvironmentObject var ltr: LTRService
     @State private var eid = ""
+    @State private var twoTraces = false        // one trace out each interface (forwarding-chosen RTR)
+    @State private var fullMatrix = false        // every RTR × every interface
+    @State private var showShare = false         // Share the output as a color-coded image
+    @State private var shareImage: UIImage?
     @FocusState private var keyboardUp: Bool
     @State private var fontScale: CGFloat = 1.0
     @GestureState private var pinch: CGFloat = 1.0
+
+    // Full Matrix wins if both are on (it's the superset).
+    private var traceMode: LTRService.TraceMode {
+        fullMatrix ? .fullMatrix : (twoTraces ? .twoTraces : .single)
+    }
 
     // Pinch-to-zoom the output by scaling its monospaced font size (same as LIG).
     private var zoom: CGFloat { min(max(fontScale * pinch, 0.6), 3.0) }
@@ -49,6 +59,9 @@ struct LTRView: View {
                         if !ltr.output.isEmpty { Button("Clear") { ltr.clear() } }
                     }
                 }
+                .sheet(isPresented: $showShare) {
+                    if let img = shareImage { ShareSheet(items: [img]) }
+                }
             }
         }
     }
@@ -68,14 +81,14 @@ struct LTRView: View {
                     // An explicit EID ("[iid]…" or a literal address) is traced as typed so the
                     // instance-id survives; otherwise resolve it as a hostname.
                     if input.hasPrefix("[") || LispAddress(string: input) != nil {
-                        ltr.trace(target: input)
+                        ltr.trace(target: input, mode: traceMode)
                     } else {
                         hosts.resolveTarget(input) { addr in
                             guard let addr = addr else {
                                 ltr.output = [LTRLine(content: .error("Cannot resolve \(input)"))]
                                 return
                             }
-                            ltr.trace(target: addr.addressString)
+                            ltr.trace(target: addr.addressString, mode: traceMode)
                         }
                     }
                 } label: {
@@ -88,7 +101,7 @@ struct LTRView: View {
             // Trace to our own EID — the path the mapping system has for us (mirrors "lig self").
             Button {
                 keyboardUp = false
-                ltr.trace(target: "[\(engine.config.instanceID)]\(engine.config.eidString)")
+                ltr.trace(target: "[\(engine.config.instanceID)]\(engine.config.eidString)", mode: traceMode)
             } label: {
                 HStack {
                     Spacer()
@@ -102,8 +115,22 @@ struct LTRView: View {
                 }
             }
             .disabled(!engine.running || engine.config.eidString.isEmpty || ltr.inFlight)
+            // Multi-path options — off = one trace via the normal forwarding path. Mutually
+            // exclusive: turning one on turns the other off.
+            Toggle("Multihoming Traces", isOn: $twoTraces).disabled(ltr.inFlight)
+                .onChange(of: twoTraces) { _, on in if on { fullMatrix = false } }
+            Toggle("Full-Matrix Traces", isOn: $fullMatrix).disabled(ltr.inFlight)
+                .onChange(of: fullMatrix) { _, on in if on { twoTraces = false } }
         } header: {
             Text("LISP Traceroute").frame(maxWidth: .infinity, alignment: .center)
+        }
+    }
+
+    @ViewBuilder private func rowView(_ line: LTRLine) -> some View {
+        if case .divider = line.content {
+            Divider()
+        } else {
+            lineView(line).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
         }
     }
 
@@ -113,18 +140,39 @@ struct LTRView: View {
                 Text("No traces yet").foregroundStyle(.secondary)
             } else {
                 VStack(alignment: .leading, spacing: 2) {
-                    ForEach(ltr.output) { line in
-                        lineView(line)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .textSelection(.enabled)
-                    }
+                    ForEach(ltr.output) { rowView($0) }
                 }
                 .id(Self.outputAnchor)
                 .simultaneousGesture(magnify)
             }
         } header: {
-            Text("Output").frame(maxWidth: .infinity, alignment: .center)
+            Text("Output")
+                .frame(maxWidth: .infinity, alignment: .center)
+                .overlay(alignment: .trailing) {
+                    if !ltr.output.isEmpty {
+                        Button { shareImage = makeShareImage(); showShare = true } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                    }
+                }
         }
+    }
+
+    // Render the color-coded output to an image (wide → no wrap; light scheme so default text
+    // is black on white), for the Share button.
+    private var shareRenderView: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(ltr.output) { rowView($0) }
+        }
+        .padding(12)
+        .frame(width: 1100, alignment: .leading)
+        .background(Color.white)
+        .environment(\.colorScheme, .light)
+    }
+    @MainActor private func makeShareImage() -> UIImage? {
+        let r = ImageRenderer(content: shareRenderView)
+        r.scale = 3
+        return r.uiImage
     }
 
     // An overlay unicast EID literal: an IPv4 in 240/4 (first octet >= 240). A round-trip
@@ -143,6 +191,14 @@ struct LTRView: View {
         switch line.content {
         case .plain(let s):
             return Text(s).font(mono)
+        case .title(let s):
+            return Text(s).font(mono).bold()
+        case .matrixTitle(let rloc, let iface):
+            return Text("Full-Matrix Traces - send to RLOC ").font(mono).bold()
+                 + Text(rloc).font(mono).bold().foregroundColor(.lispRed)
+                 + Text(" out \(iface)").font(mono).bold()
+        case .divider:
+            return Text("")                 // rendered as a real Divider() by rowView()
         case .error(let s):
             return Text(s).font(mono).foregroundColor(.lispRed)
         case .learning(let addr):

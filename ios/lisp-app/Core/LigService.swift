@@ -34,6 +34,26 @@ struct LigLine: Identifiable {
     }
 }
 
+extension LigLine {
+    // Plain-text form of a line, for the Share button (mirrors lineView's wording).
+    var asPlainText: String {
+        switch content {
+        case .plain(let s), .error(let s):
+            return s
+        case .send(let lead, let paren, let mid, let eid, let end):
+            return lead + paren + mid + eid + end
+        case .eidPrefix(let prefix, let rest):
+            return "EID-prefix: " + prefix + rest
+        case .mapReply(let from, let rtt):
+            return "Received map-reply from \(from) with rtt \(rtt) secs:"
+        case .rloc(let addr, let before, let name, let after, _):
+            return "  RLOC: " + addr + before + (name ?? "") + after
+        case .rle(let m):
+            return "    rle: " + m.rloc + (m.name.map { " \($0)" } ?? "")
+        }
+    }
+}
+
 final class LigService: ObservableObject {
     @Published var output: [LigLine] = []
     @Published var inFlight = false

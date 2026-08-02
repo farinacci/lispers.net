@@ -26,6 +26,9 @@ struct LTRLine: Identifiable {
     let content: Content
     enum Content {
         case plain(String)                                  // black text
+        case title(String)                                  // bold leg title (multihoming)
+        case matrixTitle(rloc: String, iface: String)       // bold full-matrix title, RLOC in red
+        case divider                                        // horizontal rule between trace legs
         case error(String)                                  // red text
         case learning(addr: String?)                        // "Learning ..." + red translated addr
 
@@ -35,6 +38,32 @@ struct LTRLine: Identifiable {
         case pathHeader(se: String, de: String)             // "Path from <se> to <de>:" green
         // "  <n> <encap|decap>: <sr> -> <dr>, ts <ts>, node <hn>" — sr/dr red (dr bold if '?'), hn blue
         case hop(n: String, ed: String, sr: String, dr: String, drError: Bool, ts: String, hn: String)
+    }
+}
+
+extension LTRLine {
+    // Plain-text form of a line, for the Share button (mirrors lineView's wording).
+    var asPlainText: String {
+        switch content {
+        case .plain(let s), .title(let s), .error(let s):
+            return s
+        case .matrixTitle(let rloc, let iface):
+            return "Full-Matrix Traces - send to RLOC \(rloc) out \(iface)"
+        case .divider:
+            return String(repeating: "-", count: 40)
+        case .learning(let addr):
+            return "Learning translation (Info-Request) ..." + (addr.map { " translated address \($0)" } ?? "")
+        case .sendRT(let se, let de):
+            return "Send round-trip LISP-Trace between EIDs \(se) -> \(de) ..."
+        case .natTraversal(let rtr):
+            return "Send NAT-traversal LISP-Trace to RTR \(rtr) ..."
+        case .received(let src, let rtt):
+            return "Received reply from \(src), rtt \(rtt) secs"
+        case .pathHeader(let se, let de):
+            return "Path from \(se) to \(de):"
+        case .hop(let n, let ed, let sr, let dr, _, let ts, let hn):
+            return "  \(n) \(ed): \(sr) -> \(dr), ts \(ts), node \(hn)"
+        }
     }
 }
 
@@ -61,11 +90,29 @@ final class LTRService: ObservableObject {
     private var replyFD: Int32 = -1
     private var replySource: DispatchSourceRead?
 
+    // Multi-path modes (LTR tab toggles):
+    //   .single     — one trace via the forwarding path (bumps map-cache counters).
+    //   .twoTraces  — forwarding path chooses the RTR; one trace out EACH interface to it.
+    //   .fullMatrix — every RTR × every interface.
+    // twoTraces/fullMatrix run as independent sequential traces (own Info-Request + nonce per
+    // leg) and force the encap directly out the leg's interface, so the map-cache counters are
+    // NOT touched — only the default .single leg goes through engine.encapAndSend.
+    enum TraceMode { case single, twoTraces, fullMatrix }
+    private struct TraceLeg {
+        let iface: DiscoveredRLOC?      // nil = default forwarding path
+        let rtr: LispAddress?           // nil = default; else forced-encap destination RTR
+        let encapPort: UInt16
+        let title: String?              // multihoming bold title (nil for single + full-matrix)
+        var matrix = false              // full-matrix: emit a red-RLOC title from rtr/iface
+    }
+    private var legs: [TraceLeg] = []
+    private var legIndex = 0
+
     init(engine: LispEngine) { self.engine = engine }
 
     // MARK: send
 
-    func trace(target rawTarget: String) {
+    func trace(target rawTarget: String, mode: TraceMode = .single) {
         guard let engine = engine, engine.running, let s = engine.config.eid else {
             set([LTRLine(content: .error("Enable LISP on the xTR tab first."))]); return
         }
@@ -90,17 +137,84 @@ final class LTRService: ObservableObject {
 
         seid = s; deid = d
         output = []; inFlight = true; done = false
-        nonce = Data((0..<8).map { _ in UInt8.random(in: 0...255) })
-        startReplyListener()                                // overlay replies -> 41346
+        startReplyListener()                                // overlay replies -> 41346 (all legs)
 
-        // Fallback translation if the Info-Request times out.
-        ephemRLOC = engine.translatedRLOC ?? engine.rloc?.address ?? LispAddress()
+        legs = buildLegs(mode: mode, engine: engine)
+        guard !legs.isEmpty else { finish(); return }
+        legIndex = 0
+        startLeg(0)
+    }
+
+    // Turn the selected mode into the list of traces to run (sequentially).
+    private func buildLegs(mode: TraceMode, engine: LispEngine) -> [TraceLeg] {
+        let single = [TraceLeg(iface: nil, rtr: nil, encapPort: 0, title: nil)]
+        switch mode {
+        case .single:
+            return single
+        case .twoTraces:
+            // Forwarding path picks the RTR; send one trace out each interface to it.
+            guard let entry = engine.mapCache.lookup(deid),
+                  let chosen = entry.selectRLOC(hashL4: engine.config.loadSplitUnicast) else { return single }
+            let ifaces = Interfaces.discoverAllRLOCs()
+            guard !ifaces.isEmpty else { return single }
+            return ifaces.map {
+                TraceLeg(iface: $0, rtr: chosen.rloc, encapPort: chosen.encapPort,
+                         title: "Multihoming Traces - send out \($0.interfaceName)")
+            }
+        case .fullMatrix:
+            // Every RTR (best-priority RLOCs of the default entry) × every interface.
+            guard let entry = engine.mapCache.lookup(deid) else { return single }
+            let ifaces = Interfaces.discoverAllRLOCs()
+            guard !ifaces.isEmpty else { return single }
+            let pool = entry.rlocSet.filter { $0.isUp }.isEmpty ? entry.rlocSet
+                                                                : entry.rlocSet.filter { $0.isUp }
+            guard let bestPri = pool.map({ $0.priority }).min() else { return single }
+            var seen = Set<UInt32>(); var rtrs: [(LispAddress, UInt16)] = []
+            for r in pool where r.priority == bestPri {
+                if seen.insert(r.rloc.v4).inserted { rtrs.append((r.rloc, r.encapPort)) }
+            }
+            guard !rtrs.isEmpty else { return single }
+            var out: [TraceLeg] = []
+            for (rtr, port) in rtrs {
+                for iface in ifaces {
+                    out.append(TraceLeg(iface: iface, rtr: rtr, encapPort: port,
+                                        title: nil, matrix: true))
+                }
+            }
+            return out
+        }
+    }
+
+    // Run one leg: (re)open the socket (bound to the leg's interface for a forced leg), learn
+    // that interface's translation, then send. Advances to the next leg on reply/error/timeout.
+    private func startLeg(_ i: Int) {
+        guard let engine = engine, i < legs.count else { finish(); return }
+        legIndex = i
+        let leg = legs[i]
+        done = false
+        nonce = Data((0..<8).map { _ in UInt8.random(in: 0...255) })
+        waitingForInfo = false
+
+        // Multihoming/Full-Matrix legs: a rule between runs, then the bold title + a blank line.
+        if leg.matrix, let iface = leg.iface, let rtr = leg.rtr {
+            if legIndex > 0 { append(.init(content: .divider)) }
+            append(.init(content: .plain("")))
+            append(.init(content: .matrixTitle(rloc: rtr.addressString, iface: iface.interfaceName)))
+            append(.init(content: .plain("")))
+        } else if let title = leg.title {
+            if legIndex > 0 { append(.init(content: .divider)) }
+            append(.init(content: .plain("")))
+            append(.init(content: .title(title)))
+            append(.init(content: .plain("")))
+        }
+
+        // Fallback translation if the Info-Request times out (per-interface for forced legs).
+        ephemRLOC = leg.iface?.address ?? engine.translatedRLOC ?? engine.rloc?.address ?? LispAddress()
         ephemPort = engine.advertisedPort
 
-        // Open the dedicated socket and learn its translation (Info-Request), then send.
         ltrSocket?.shutdown()
-        guard let sock = UDPSocket(localPort: 0, queue: socketQueue) else {
-            set([LTRLine(content: .error("Could not open LTR socket."))]); return
+        guard let sock = UDPSocket(localPort: 0, queue: socketQueue, boundTo: leg.iface) else {
+            append(.init(content: .error("Could not open LTR socket."))); advanceLeg(); return
         }
         ltrSocket = sock
         sock.startReceiving { [weak self] data, from, port, _ in
@@ -113,6 +227,18 @@ final class LTRService: ObservableObject {
             sendInfo(mr, attempt: 1)
         } else {
             sendTrace()                                     // no MR — use the fallback translation
+        }
+    }
+
+    // Move to the next leg, or fully finish if this was the last one.
+    private func advanceLeg() {
+        if legIndex + 1 < legs.count {
+            ltrSocket?.shutdown(); ltrSocket = nil          // keep the reply listener for the run
+            waitingForInfo = false
+            timeoutTimer?.invalidate(); timeoutTimer = nil
+            startLeg(legIndex + 1)
+        } else {
+            finish()
         }
     }
 
@@ -167,19 +293,35 @@ final class LTRService: ObservableObject {
         let udp = Self.buildUDP(sport: ephemPort, dport: LISP.tracePort, payload: trace)
         let inner = PingService.buildIPv4(source: seid, dest: deid, protocol: 17, payload: udp)
         sentAt = Date()
-        engine.log.lprint(.itr, "ltr: Send LISP-Trace \(seid.addressString) -> " +
-            "\(deid.addressString):\(LISP.tracePort)")
-        if engine.isMirroring, let utun = OverlayTunnel.findUtun() {
-            OverlayTunnel.sendRawInner(inner, toTunnelEID: utun.addr, ifIndex: utun.ifIndex)
+        let leg = legs[legIndex]
+        if let rtr = leg.rtr {
+            // Forced leg (twoTraces/fullMatrix): LISP-encap the inner ourselves and send it
+            // straight out this leg's interface to this RTR — bypassing the forwarding path, so
+            // the map-cache counters are NOT touched. The RTR is a public RLOC outside the
+            // tunnel routes, so it egresses the physical interface even with the VPN on; the
+            // round-trip reply still returns over the overlay (extension → loopback 41346).
+            var header = LispDataHeader()
+            header.setNonce(UInt32.random(in: 0...0xFFFFFF))
+            header.setInstanceID(deid.instanceID)
+            _ = ltrSocket?.send(header.encode() + inner, to: rtr, port: leg.encapPort)
+            engine.log.lprint(.itr, "ltr: forced LISP-Trace out \(leg.iface?.interfaceName ?? "?") " +
+                "-> RLOC \(rtr.addressString):\(leg.encapPort), \(seid.addressString) -> \(deid.addressString)")
         } else {
-            engine.encapAndSend(inner: inner, destEID: deid)
+            engine.log.lprint(.itr, "ltr: Send LISP-Trace \(seid.addressString) -> " +
+                "\(deid.addressString):\(LISP.tracePort)")
+            if engine.isMirroring, let utun = OverlayTunnel.findUtun() {
+                OverlayTunnel.sendRawInner(inner, toTunnelEID: utun.addr, ifIndex: utun.ifIndex)
+            } else {
+                engine.encapAndSend(inner: inner, destEID: deid)    // forwarding path (bumps counters)
+            }
         }
 
         timeoutTimer?.invalidate()
         timeoutTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: false) { [weak self] _ in
             guard let self = self, !self.done else { return }
+            self.done = true
             self.append(.init(content: .error("*** No LISP-Trace reply received (3s timeout) ***")))
-            self.finish()
+            self.advanceLeg()
         }
     }
 
@@ -232,7 +374,7 @@ final class LTRService: ObservableObject {
         append(.init(content: .received(source: source.addressString, rtt: "\(rtt)")))
         append(.init(content: .plain("")))
         displayJSON(packet.subdata(in: (p+16)..<packet.endIndex))
-        finish()
+        advanceLeg()
     }
 
     // ltr.py display_packet(): array of segments, each with se/de + a paths[] array.

@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct LigView: View {
     @EnvironmentObject var engine: LispEngine
@@ -17,6 +18,8 @@ struct LigView: View {
     @State private var pubsub = false
     @State private var noInfo = false
     @State private var debug = false
+    @State private var showShare = false         // Share the output as a color-coded image
+    @State private var shareImage: UIImage?
     @FocusState private var keyboardUp: Bool
     @State private var fontScale: CGFloat = 1.0
     @GestureState private var pinch: CGFloat = 1.0
@@ -53,6 +56,9 @@ struct LigView: View {
                     ToolbarItem(placement: .topBarTrailing) {
                         if !lig.output.isEmpty { Button("Clear") { lig.output = [] } }
                     }
+                }
+                .sheet(isPresented: $showShare) {
+                    if let img = shareImage { ShareSheet(items: [img]) }
                 }
             }
         }
@@ -138,7 +144,15 @@ struct LigView: View {
                 .simultaneousGesture(magnify)
             }
         } header: {
-            Text("Output").frame(maxWidth: .infinity, alignment: .center)
+            Text("Output")
+                .frame(maxWidth: .infinity, alignment: .center)
+                .overlay(alignment: .trailing) {
+                    if !lig.output.isEmpty {
+                        Button { shareImage = makeShareImage(); showShare = true } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                    }
+                }
         }
     }
 
@@ -167,6 +181,25 @@ struct LigView: View {
         }
         if last < ns.length { out = out + Text(ns.substring(from: last)).font(font) }
         return out
+    }
+
+    // Render the color-coded output to an image (wide → no wrap; light scheme so default text
+    // is black on white), for the Share button.
+    private var shareRenderView: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(lig.output) { line in
+                lineView(line).frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(12)
+        .frame(width: 1100, alignment: .leading)
+        .background(Color.white)
+        .environment(\.colorScheme, .light)
+    }
+    @MainActor private func makeShareImage() -> UIImage? {
+        let r = ImageRenderer(content: shareRenderView)
+        r.scale = 3
+        return r.uiImage
     }
 
     private func lineView(_ line: LigLine) -> Text {
