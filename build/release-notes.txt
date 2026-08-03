@@ -1,4 +1,19 @@
 
+                  lispers.net IOS Release Version 0.19
+                  ------------------------------------
+
+o Release date: Sun Aug  2 14:05:39 PDT 2026
+
+o Add share buttons for LIG and LTR output.    
+
+o Add 2 new modes for sending LTR traces, one is called "Multihoming Traces"
+  where the LTR is sent out both en0 and pdp_ip0 interfaces, the other is
+  "Full-Matrix Traces" which sends the LTR trace to each RLOC in the default
+  map-cache entry out each interface, so 4 Traces to check all paths from
+  the phone.
+    
+-------------------------------------------------------------------------------
+
                   lispers.net Linux Release Version 0.637
                   ---------------------------------------
 
