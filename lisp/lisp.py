@@ -14162,9 +14162,11 @@ class lisp_rloc(object):
         #endif
 
         #
-        # Remove the RLOC memory pointer we are replacing with self.
+        # Remove the RLOC memory pointer we are replacing with self. Check membership first:
+        # the RLOC-probe timer thread can rebuild lisp_rloc_probe_list between our find above
+        # and this remove, which would otherwise raise "x not in list".
         #
-        if (old_entry != None):
+        if (old_entry != None and old_entry in lisp_rloc_probe_list[addr_str]):
             lisp_rloc_probe_list[addr_str].remove(old_entry)
         #endif
 
