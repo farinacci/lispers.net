@@ -99,11 +99,7 @@ struct LigView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(!engine.running || eid.isEmpty || lig.inFlight)
             }
-            Stepper("count: \(count)", value: $count, in: 1...5)
-            Toggle("no-info", isOn: $noInfo)
-            Toggle("debug", isOn: $debug)
-            // Map-Request for our own EID, to see what the mapping system has
-            // registered for us — last line of the section.
+            // Map-Request for our own EID — same position as "LTR self" (right under the input).
             Button {
                 keyboardUp = false
                 lig.lookup(eidString: engine.config.eidString, count: count,
@@ -121,6 +117,9 @@ struct LigView: View {
                 }
             }
             .disabled(!engine.running || engine.config.eidString.isEmpty || lig.inFlight)
+            Stepper("count: \(count)", value: $count, in: 1...5)
+            Toggle("no-info-request", isOn: $noInfo)
+            Toggle("debug", isOn: $debug)
         } header: {
             Text("EID Mapping System Lookup")
                 .frame(maxWidth: .infinity, alignment: .center)

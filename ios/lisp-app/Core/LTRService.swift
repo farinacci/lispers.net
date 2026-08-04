@@ -48,7 +48,7 @@ extension LTRLine {
         case .plain(let s), .title(let s), .error(let s):
             return s
         case .matrixTitle(let rloc, let iface):
-            return "Full-Matrix Traces - send to RLOC \(rloc) out \(iface)"
+            return "Full-Matrix Trace - send to RLOC \(rloc) out \(iface)"
         case .divider:
             return String(repeating: "-", count: 40)
         case .learning(let addr):
@@ -159,7 +159,7 @@ final class LTRService: ObservableObject {
             guard !ifaces.isEmpty else { return single }
             return ifaces.map {
                 TraceLeg(iface: $0, rtr: chosen.rloc, encapPort: chosen.encapPort,
-                         title: "Multihoming Traces - send out \($0.interfaceName)")
+                         title: "Multihoming Trace - send out \($0.interfaceName)")
             }
         case .fullMatrix:
             // Every RTR (best-priority RLOCs of the default entry) × every interface.
@@ -370,8 +370,8 @@ final class LTRService: ObservableObject {
         done = true
         timeoutTimer?.invalidate(); timeoutTimer = nil
 
-        let rtt = Date().timeIntervalSince(sentAt).rounded(toPlaces: 3)
-        append(.init(content: .received(source: source.addressString, rtt: "\(rtt)")))
+        let rtt = Date().timeIntervalSince(sentAt)
+        append(.init(content: .received(source: source.addressString, rtt: Self.f3(rtt))))
         append(.init(content: .plain("")))
         displayJSON(packet.subdata(in: (p+16)..<packet.endIndex))
         advanceLeg()

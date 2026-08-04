@@ -298,8 +298,8 @@ final class LigService: ObservableObject {
 
     func handleReply(_ reply: LispMapReply, from: LispAddress) -> Bool {
         guard let sentAt = pending.removeValue(forKey: reply.nonce) else { return false }
-        let rtt = Date().timeIntervalSince(sentAt).rounded(toPlaces: 3)
-        append(.init(content: .mapReply(from: from.addressString, rtt: "\(rtt)")))
+        let rtt = Date().timeIntervalSince(sentAt)
+        append(.init(content: .mapReply(from: from.addressString, rtt: fmt3(rtt))))
         if debug {
             append(.init(content: .plain("")))
             let flags = (reply.rlocProbe ? "R" : "r") + "es"

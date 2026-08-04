@@ -161,7 +161,7 @@ extension LispEngine {
         let liveIfaces = Set(Interfaces.discoverAllRLOCs().map { $0.interfaceName })
         let dead = ifaceTranslated.filter { !liveIfaces.contains($0.key) }
         let liveTranslated = ifaceTranslated.filter { liveIfaces.contains($0.key) }
-        log.aprint(.etr, "Register: live ifaces [\(liveIfaces.sorted().joined(separator: ","))], " +
+        log.lprint(.etr, "Register: live ifaces [\(liveIfaces.sorted().joined(separator: ","))], " +
             "translations [\(ifaceTranslated.keys.sorted().joined(separator: ","))]")
         if !dead.isEmpty {
             for (name, t) in dead {

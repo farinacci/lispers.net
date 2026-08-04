@@ -1,4 +1,21 @@
 
+                  lispers.net IOS Release Version 0.20
+                  ------------------------------------
+
+o Release date: Mon Aug  3 14:34:11 PDT 2026
+
+o Have "lig self" line before parms just we did with "ltr self".
+
+o Log files are not clearing when user hits Clear button.
+
+o Some log messages appear in log when logging disabled.
+
+o Make sure all timstamps printed in format 0.xxx are 3 decimals of accuracy
+  so 100ms should print 0.100 and not 0.1. Make sure this is consistent throughout
+  the app.
+    
+-------------------------------------------------------------------------------
+
                   lispers.net IOS Release Version 0.19
                   ------------------------------------
 

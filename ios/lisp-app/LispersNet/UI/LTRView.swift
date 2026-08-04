@@ -117,9 +117,9 @@ struct LTRView: View {
             .disabled(!engine.running || engine.config.eidString.isEmpty || ltr.inFlight)
             // Multi-path options — off = one trace via the normal forwarding path. Mutually
             // exclusive: turning one on turns the other off.
-            Toggle("Multihoming Traces", isOn: $twoTraces).disabled(ltr.inFlight)
+            Toggle("Multihoming Trace", isOn: $twoTraces).disabled(ltr.inFlight)
                 .onChange(of: twoTraces) { _, on in if on { fullMatrix = false } }
-            Toggle("Full-Matrix Traces", isOn: $fullMatrix).disabled(ltr.inFlight)
+            Toggle("Full-Matrix Trace", isOn: $fullMatrix).disabled(ltr.inFlight)
                 .onChange(of: fullMatrix) { _, on in if on { twoTraces = false } }
         } header: {
             Text("LISP Traceroute").frame(maxWidth: .infinity, alignment: .center)
@@ -194,7 +194,7 @@ struct LTRView: View {
         case .title(let s):
             return Text(s).font(mono).bold()
         case .matrixTitle(let rloc, let iface):
-            return Text("Full-Matrix Traces - send to RLOC ").font(mono).bold()
+            return Text("Full-Matrix Trace - send to RLOC ").font(mono).bold()
                  + Text(rloc).font(mono).bold().foregroundColor(.lispRed)
                  + Text(" out \(iface)").font(mono).bold()
         case .divider:

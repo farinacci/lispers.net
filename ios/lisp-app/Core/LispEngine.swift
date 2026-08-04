@@ -573,7 +573,7 @@ final class LispEngine: ObservableObject {
         dataSocket?.shutdown(); dataSocket = nil
         guard let ctrl = UDPSocket(localPort: LISP.ctrlPort, queue: socketQueue),
               let data = UDPSocket(localPort: dataBind, queue: socketQueue) else {
-            log.aprint(.core, "Path change: could not re-bind primary control/data sockets")
+            log.lprint(.core, "Path change: could not re-bind primary control/data sockets")
             return
         }
         ctrlSocket = ctrl
@@ -584,7 +584,7 @@ final class LispEngine: ObservableObject {
         data.startReceiving { [weak self] d, from, port, ttl in
             self?.processDataPacket(d, from: from, sourcePort: port, receivedTTL: ttl)
         }
-        log.aprint(.core, "Path change: re-bound primary control/data sockets " +
+        log.lprint(.core, "Path change: re-bound primary control/data sockets " +
                    "(ctrl \(LISP.ctrlPort), data \(dataBind))")
     }
 
@@ -614,7 +614,7 @@ final class LispEngine: ObservableObject {
                 newMH.map { ($0.interfaceName, $0.address) })
             guard primaryChanged || oldMH != newMHMap else { return }
 
-            self.log.aprint(.core, "Path change: RLOC \(self.rloc?.address.addressString ?? "none") " +
+            self.log.lprint(.core, "Path change: RLOC \(self.rloc?.address.addressString ?? "none") " +
                             "-> \(newRLOC?.address.addressString ?? "none") — rebuilding sockets, " +
                             "re-learning NAT translations")
             self.rloc = newRLOC

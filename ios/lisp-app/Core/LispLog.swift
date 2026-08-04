@@ -34,6 +34,10 @@ final class LispLog: ObservableObject {
     private let queue = DispatchQueue(label: "lisp.log")
     private var handles: [LogComponent: FileHandle] = [:]
     private let maxUILines = 2000
+    // Byte offset in each component's file recorded at Clear time: loadTail only shows bytes
+    // AFTER this, so Clear takes effect immediately whether or not the extension truncates
+    // (VPN-on) — and self-heals to 0 if the file is later truncated below the offset.
+    private var clearedOffset: [LogComponent: Int] = [:]
     // Gate on file writes (not the in-memory ring). The app turns this OFF while mirroring
     // the extension (Option B) so it doesn't corrupt the extension's shared log files.
     private var fileWritesEnabled = true
@@ -136,13 +140,15 @@ final class LispLog: ObservableObject {
 
     func clear(_ component: LogComponent) {
         queue.async {
-            // Drop a shared "clear pending" marker so the process that OWNS the files (the
-            // extension, in VPN-on mirror mode) truncates on its next write, and so this
-            // process's loadTail shows empty until then. If WE own the files (VPN-off), clear
-            // immediately. Always blank the in-memory ring so the view empties right away.
+            // Record the current file size as the display floor: loadTail hides everything up to
+            // here, so the Clear sticks even if the extension never truncates. Also drop the
+            // marker so the owning writer CAN truncate (keeps the file from growing forever), and
+            // if WE own the files (VPN-off) truncate now. Always blank the ring for an instant UI.
+            let url = Self.logsDirectory.appendingPathComponent(component.filename)
+            self.clearedOffset[component] = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
             FileManager.default.createFile(atPath: self.markerURL(component).path, contents: nil)
             DispatchQueue.main.async { self.lines[component] = [] }
-            if self.fileWritesEnabled { self.applyClear(component) }
+            if self.fileWritesEnabled { self.applyClear(component); self.clearedOffset[component] = 0 }
         }
     }
 
@@ -173,13 +179,14 @@ final class LispLog: ObservableObject {
     func loadTail(_ component: LogComponent, maxLines: Int = 2000) {
         let url = Self.logsDirectory.appendingPathComponent(component.filename)
         queue.async {
-            // A Clear is pending (the owning writer hasn't truncated yet): show empty rather
-            // than reloading the stale file, so the Clear button takes effect immediately.
-            if FileManager.default.fileExists(atPath: self.markerURL(component).path) {
-                DispatchQueue.main.async { self.lines[component] = [] }
+            guard let data = try? Data(contentsOf: url) else {
+                DispatchQueue.main.async { self.lines[component] = [] }   // no file (e.g. just cleared)
                 return
             }
-            guard let s = try? String(contentsOf: url, encoding: .utf8) else { return }
+            // Only show bytes AFTER the last Clear. Self-heal if the file was truncated below it.
+            var start = self.clearedOffset[component] ?? 0
+            if start > data.count { start = 0; self.clearedOffset[component] = 0 }
+            let s = String(data: data.subdata(in: start..<data.count), encoding: .utf8) ?? ""
             let all = s.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
             let tail = Array(all.suffix(maxLines))
             DispatchQueue.main.async { self.lines[component] = tail }
