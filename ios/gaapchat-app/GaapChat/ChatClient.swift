@@ -42,7 +42,8 @@ final class ChatClient: ObservableObject {
     @Published var groupName = ""
     @Published var groupAddress = ""            // 224.b2.b3.b4
     @Published var joined = false
-    @Published var lispReady = false
+    @Published var lispReady = false             // xTR engine running (heartbeat fresh)
+    @Published var vpnUp = false                 // Overlay App VPN up (tunnel utun present)
     @Published var members: [String] = []       // senders seen (":show"), insertion order
     @Published var lastSent: [String: Date] = [:]   // member -> last time they sent to the group
     @Published var firstSeen: [String: Date] = [:]  // member -> first-message time (first msg we saw)
@@ -54,6 +55,7 @@ final class ChatClient: ObservableObject {
     @Published var showHistory = false           // drives the History sheet (set by :history)
     @Published var showMembers = false           // drives the Members sheet (set by :show)
     @Published var missedCount = 0               // messages that arrived while we were away (badge)
+    @Published var bottomTick = 0                // bumped to ask the list to jump to the bottom
     let nickname = "ios"                          // fixed identity prefix (not user-configurable)
 
     var device: String { GaapWire.localHostname }
@@ -98,6 +100,9 @@ final class ChatClient: ObservableObject {
     private func refreshReady() {
         let age = GaapWire.lispHeartbeatAge
         lispReady = (age != nil && age! < 5)
+        // The tunnel utun only exists when the Overlay App VPN is up. Engine running but no utun
+        // = "xTR app up, VPN down" — gaapchat can't send/receive until the VPN is enabled.
+        vpnUp = (GaapWire.findUtun() != nil)
     }
 
     // MARK: join / leave
@@ -376,6 +381,7 @@ final class ChatClient: ObservableObject {
 
     func onBackground() { sendReport(); saveSession() } // refresh + persist the session before suspend
     func onForeground() {
+        bottomTick += 1                                 // jump the list to the bottom on return
         startInboxPolling()                             // the poll timer was suspended while backgrounded
         if joined, group != 0 {                         // badge the messages that arrived while away
             missedCount += GaapInbox.pendingCount(group: group)

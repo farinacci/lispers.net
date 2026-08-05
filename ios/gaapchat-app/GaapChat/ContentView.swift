@@ -24,7 +24,7 @@ func hostOnly(_ id: String) -> String { id.components(separatedBy: "@").last ?? 
 
 struct ContentView: View {
     // App/build version — bump on every build (like the LISP + PING apps).
-    static let version = "0.5"
+    static let version = "0.6"
     @State private var tab = 0
     var body: some View {
         VStack(spacing: 0) {
@@ -67,6 +67,8 @@ struct ChatView: View {
     @State private var timeReveal: CGFloat = 0                    // swipe-left timestamp reveal (Messages-style)
     private let revealWidth: CGFloat = 76                         // how far the bubbles slide to show times
     private var mono: Font { .system(size: fontSize, design: .monospaced) }
+    // gaapchat can only send/receive when BOTH the xTR engine is up AND the Overlay App VPN is up.
+    private var xtrReady: Bool { client.lispReady && client.vpnUp }
 
     private static let timeStamp: DateFormatter = {
         let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; return f
@@ -131,20 +133,21 @@ struct ChatView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Circle().fill(client.lispReady ? Color.gcGreen : .orange)
+        VStack(spacing: 6) {
+            HStack(spacing: 6) {
+                Circle().fill(xtrReady ? Color.gcGreen : .orange)
                     .frame(width: 11, height: 11)
-                Text(client.lispReady ? "LISP xTR ready" : "LISP xTR not running")
-                    .font(.subheadline).foregroundStyle(client.lispReady ? .primary : .secondary)
-                if !client.lispReady {
+                // Three states: fully ready, engine up but Overlay VPN down, or not running.
+                Text(xtrReady ? "LISP xTR ready"
+                     : (client.lispReady ? "Overlay App VPN is off" : "LISP xTR not running"))
+                    .font(.subheadline).foregroundStyle(xtrReady ? .primary : .secondary)
+                if !xtrReady {
                     Button("Open") { openLispApp() }
                         .buttonStyle(.borderedProminent).tint(.gcGreen).controlSize(.mini)
                         .font(.caption2)
                 }
-                Spacer()
-                Text("you are \(hostOnly(client.myid))").font(.caption2).foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .center)
             if client.joined {
                 HStack(spacing: 8) {
                     (Text("group-name ").foregroundStyle(.secondary)
@@ -163,6 +166,7 @@ struct ChatView: View {
                             .transition(.scale.combined(with: .opacity))
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
             } else {
                 HStack {
                     TextField("enter group-name", text: $groupField)
@@ -204,6 +208,12 @@ struct ChatView: View {
                     .onEnded { _ in zoomBase = nil })
                 .onChange(of: client.messages.count) { _, _ in
                     withAnimation { proxy.scrollTo("bottom-pad", anchor: .bottom) }
+                }
+                .onChange(of: client.bottomTick) { _, _ in           // entering the app / foreground
+                    DispatchQueue.main.async { proxy.scrollTo("bottom-pad", anchor: .bottom) }
+                }
+                .onAppear {                                          // first appearance (launch, tab switch)
+                    DispatchQueue.main.async { proxy.scrollTo("bottom-pad", anchor: .bottom) }
                 }
             }
         }
@@ -311,7 +321,7 @@ struct ChatView: View {
     private var inputBar: some View {
         HStack(spacing: 8) {
             TextField(client.joined ? "enter message" : "join a group above", text: $input)
-                .textFieldStyle(.roundedBorder).font(mono)
+                .textFieldStyle(.roundedBorder).font(.body)     // proportional (Messages-style) — tighter word spacing
                 .autocapitalization(.none).disableAutocorrection(true)
                 .onSubmit { send() }
             Button { send() } label: {
