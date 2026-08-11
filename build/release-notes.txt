@@ -1,4 +1,41 @@
 
+                  lispers.net IOS Release xTR Version 0.21
+                  ----------------------------------------
+
+o Release date: Tue Aug 11 14:58:22 PDT 2026
+
+o When a multicast overlay app goes in background, the multicast group it
+  has joined is losing continuity so the LISP xTR app doesn't keep registering
+  it. This causes pongs to not return to the phone when gaapchat sends application
+  level pings.    
+
+-------------------------------------------------------------------------------
+
+                  lispers.net Linux Release Version 0.639
+                  ---------------------------------------
+
+o Release date: Tue Aug 11 14:58:26 PDT 2026
+
+o Built with Python 2.7.18 and Python 3.14.6.    
+
+o Fix crash in lisp_remove_eid_from_map_notify_queue() called from
+  lisp_send_multicast_map_notify(). This was a crash in 5.sm-ms.lispers.net.
+    
+-------------------------------------------------------------------------------
+
+                   lispers.net IOS Release gappchat Version 0.6
+                   --------------------------------------------
+
+o Release date: Wed Aug  5 15:49:39 PDT 2026
+
+o Put some simple UI changes in. Simpler title bar and scroll to bottom when
+  app is opened back up.
+
+o gaapchat can detect when the LISP xTR is not up, but it cannot detect when
+  it is up and the VPN is down. Fixed now.    
+
+-------------------------------------------------------------------------------
+
                   lispers.net Linux Release Version 0.638
                   ---------------------------------------
 
@@ -13,8 +50,8 @@ o The py3 build was compiled with python3.10.
 
 -------------------------------------------------------------------------------
 
-                  lispers.net IOS Release Version 0.20
-                  ------------------------------------
+                  lispers.net IOS Release xTR Version 0.20
+                  ----------------------------------------
 
 o Release date: Mon Aug  3 14:34:11 PDT 2026
 
@@ -30,8 +67,8 @@ o Make sure all timstamps printed in format 0.xxx are 3 decimals of accuracy
     
 -------------------------------------------------------------------------------
 
-                  lispers.net IOS Release Version 0.19
-                  ------------------------------------
+                  lispers.net IOS Release xTR Version 0.19
+                  ----------------------------------------
 
 o Release date: Sun Aug  2 14:05:39 PDT 2026
 
@@ -64,8 +101,8 @@ o Fix crash in lisp_mark_rlocs_for_other_eids for IndexError: list index out of
 
 -------------------------------------------------------------------------------
 
-                  lispers.net IOS Release Version 0.18
-                  ------------------------------------
+                  lispers.net IOS Release xTR Version 0.18
+                  ----------------------------------------
 
 o Release date: Sat Aug  1 11:05:40 PDT 2026
 
@@ -95,8 +132,8 @@ o Build best_rloc_set for multicast entries when the mappings are created. This
 
 -------------------------------------------------------------------------------
 
-                  lispers.net IOS Release Version 0.17
-                  ------------------------------------
+                  lispers.net IOS Release xTR Version 0.17
+                  ----------------------------------------
 
 o Release date: Mon Jul 27 14:03:09 PDT 2026
 
@@ -118,8 +155,8 @@ o Have the LISP xTR app queue incoming data for all overlay apps.
 
 -------------------------------------------------------------------------------
 
-                  lispers.net IOS Release Version 0.16
-                  ------------------------------------
+                  lispers.net IOS Release xTR Version 0.16
+                  ----------------------------------------
 
 o Release date: Wed Jul 22 20:03:48 PDT 2026
 
@@ -150,8 +187,8 @@ o Fix liar.py to not include "[<key-id-0-255>]<string>" in the hash, just "<stri
     
 -------------------------------------------------------------------------------
     
-                  lispers.net IOS Release Version 0.15
-                  ------------------------------------
+                  lispers.net IOS Release xTR Version 0.15
+                  ----------------------------------------
 
 o Release date: Mon Jul 20 16:13:39 PDT 2026
 
@@ -209,8 +246,8 @@ o Support sending to RLOCs so we can compare overlay latencies to underlay
             
 -------------------------------------------------------------------------------
 
-                  lispers.net IOS Release Version 0.14
-                  ------------------------------------
+                  lispers.net IOS Release xTR Version 0.14
+                  ----------------------------------------
 
 o Release date: Thu Jul 16 16:39:21 PDT 2026
 
@@ -230,8 +267,8 @@ o Have ping tab pull-down for hostname entries. But keep the default ones
 
 -------------------------------------------------------------------------------
 
-                  lispers.net IOS Release Version 0.13
-                  ------------------------------------
+                  lispers.net IOS Release xTR Version 0.13
+                  ----------------------------------------
 
 o Release date: Wed Jul 15 16:11:19 PDT 2026
 
@@ -247,8 +284,8 @@ o Add an iMessage like send button for gaapchat. Most more obviuos and
 
 -------------------------------------------------------------------------------
 
-                  lispers.net IOS Release Version 0.12
-                  ------------------------------------
+                  lispers.net IOS Release xTR Version 0.12
+                  ----------------------------------------
 
 o Release date: Tue Jul 14 20:16:14 PDT 2026
 
@@ -262,8 +299,9 @@ o With this release, releasing the gaapchat 0.2. We have a working
 o Improved some UI featuers in gaapchat.
 
 -------------------------------------------------------------------------------
-                  lispers.net IOS Release Version 0.11
-                  ------------------------------------
+
+                  lispers.net IOS Release xTR Version 0.11
+                  ----------------------------------------
 
 o Release date: Mon Jul 13 17:58:25 PDT 2026
 
@@ -288,8 +326,8 @@ o Condense the logging a bit, have a pull-down arrow when you want to see byte
 
 -------------------------------------------------------------------------------
                 
-                  lispers.net IOS Release Version 0.10
-                  ------------------------------------
+                  lispers.net IOS Release xTR Version 0.10
+                  ----------------------------------------
 
 o Release date: Fri Jul 10 16:56:30 PDT 2026
 
@@ -305,8 +343,8 @@ o Releasing the PING app 0.1 with this LISP app 0.10 release.
 
 -------------------------------------------------------------------------------
             
-                  lispers.net IOS Release Version 0.9
-                  -----------------------------------
+                  lispers.net IOS Release xTR Version 0.9
+                  ----------------------------------------
 
 o Release date: Thu Jul  9 14:06:39 PDT 2026
 
@@ -328,8 +366,8 @@ o The lisp-etr is sending too many Info-Requests. We only need to send one
 
 -------------------------------------------------------------------------------
 
-                  lispers.net IOS Release Version 0.8
-                  -----------------------------------
+                  lispers.net IOS Release xTR Version 0.8
+                  ----------------------------------------
 
 o Release date: Wed Jul  8 15:48:41 PDT 2026
 
@@ -368,8 +406,8 @@ o This version works with a new PING overlay app. Its not being release right no
 
 -------------------------------------------------------------------------------
 
-                  lispers.net IOS Release Version 0.7
-                  -----------------------------------
+                  lispers.net IOS Release xTR Version 0.7
+                  ----------------------------------------
 
 o Release date: Tue Jul  7 15:38:38 PDT 2026
 
@@ -405,8 +443,8 @@ o Put a grep in the Log tab. So it can display only the lines you want to
     
 -------------------------------------------------------------------------------
         
-                  lispers.net IOS Release Version 0.6
-                  -----------------------------------
+                  lispers.net IOS Release xTR Version 0.6
+                  ----------------------------------------
 
 o Release date: Fri Jul  3 13:51:04 EDT 2026
 
@@ -458,8 +496,8 @@ o Make sure that RLE translated RLOCs are sent RLOC-probes data
         
 -------------------------------------------------------------------------------
     
-                  lispers.net IOS Release Version 0.5
-                  -----------------------------------
+                  lispers.net IOS Release xTR Version 0.5
+                  ----------------------------------------
 
 o Release date: Wed Jul  1 08:15:30 EDT 2026
 
@@ -486,8 +524,8 @@ o Put uptime for app so we can know if it crashed or how long its been running.
 
 -------------------------------------------------------------------------------
 
-                  lispers.net IOS Release Version 0.4
-                  -----------------------------------
+                  lispers.net IOS Release xTR Version 0.4
+                  ----------------------------------------
 
 o Release date: Wed Jun 24 11:30:03 PDT 2026
 
