@@ -10105,8 +10105,14 @@ def lisp_remove_eid_from_map_notify_queue(eid_list):
     #
     keys_to_remove = []
     for eid_tuple in eid_list:
-        for mn_key in lisp_map_notify_queue:
-            map_notify = lisp_map_notify_queue[mn_key]
+        #
+        # Iterate over a snapshot of the keys (list()), not the live dictionary.
+        # Another thread can queue/dequeue a Map-Notify while we walk it, which
+        # raises "dictionary changed size during iteration" on the live dict.
+        #
+        for mn_key in list(lisp_map_notify_queue):
+            map_notify = lisp_map_notify_queue.get(mn_key)
+            if (map_notify == None): continue
             if (eid_tuple not in map_notify.eid_list): continue
 
             keys_to_remove.append(mn_key)
