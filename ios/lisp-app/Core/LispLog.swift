@@ -59,6 +59,28 @@ final class LispLog: ObservableObject {
                                                  withIntermediateDirectories: true)
     }
 
+    // Debug aid: copy the App-Group log files into the app's OWN Documents/logs so they can be
+    // pulled off-device with `devicectl device copy from --domain-type appDataContainer
+    // --domain-identifier net.lispers.xtr --source Documents/logs`. The app-GROUP container
+    // domain can't be copied (an Xcode `..`-path bug), but the app's own container copies fine.
+    // Called from the app's 1 s mirror poll (EngineMirror.mirrorLogs) so the pullable copy stays
+    // fresh while the Logs tab is open. No-op if the app is the writer (VPN-off) — same files.
+    func copyToAppDocuments() {
+        guard let docs = FileManager.default.urls(for: .documentDirectory,
+                                                  in: .userDomainMask).first else { return }
+        let dst = docs.appendingPathComponent("logs", isDirectory: true)
+        let fm = FileManager.default
+        try? fm.createDirectory(at: dst, withIntermediateDirectories: true)
+        for c in LogComponent.allCases {
+            let src = Self.logsDirectory.appendingPathComponent(c.filename)
+            guard src != dst.appendingPathComponent(c.filename),   // group != Documents
+                  fm.fileExists(atPath: src.path) else { continue }
+            let out = dst.appendingPathComponent(c.filename)
+            try? fm.removeItem(at: out)
+            try? fm.copyItem(at: src, to: out)
+        }
+    }
+
     private static let tsFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "MM/dd/yy HH:mm:ss.SSS"   // lprint() timestamp

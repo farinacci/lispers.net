@@ -322,9 +322,15 @@ extension LispEngine {
         let forUs = config.eid.map { dstAddr.v4 == $0.v4 } ?? false
         // A joined group: either a user-joined group (config) OR an overlay-app IGMP
         // soft-state group (gaapchat).
+        // Accept a group we're joined to (config or IGMP soft-state) OR gaapchat's STICKY group.
+        // The sticky marker is the durable "gaapchat wants this group" signal; keying only on the
+        // live igmpGroups soft-state means decapped pongs get discarded (not queued to the inbox)
+        // whenever that soft-state lapses — e.g. during the rapid kill/relaunch churn — which
+        // breaks continuity exactly when the queue is needed.
         let forGroup = dstAddr.isMulticast
             && (joinedGroupAddresses.contains { $0.v4 == dstAddr.v4 }
-                || igmpGroups[dstAddr.v4] != nil)
+                || igmpGroups[dstAddr.v4] != nil
+                || dstAddr.v4 == GaapInbox.stickyGroup)
         guard forUs || forGroup else {
             log.dprint(.etr, "Inner destination \(dstAddr.addressString) is not our EID " +
                        "or a joined group, discarding")

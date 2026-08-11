@@ -204,6 +204,7 @@ extension LispEngine {
     // running in mirror mode, so nothing else populates those scopes.
     private func mirrorLogs() {
         for c in [LogComponent.core, .itr, .etr] { log.loadTail(c) }
+        log.copyToAppDocuments()   // keep a devicectl-pullable copy in the app's own container
     }
 
     func stopStateMirror() {
