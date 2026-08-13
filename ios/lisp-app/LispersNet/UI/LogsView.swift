@@ -388,10 +388,15 @@ struct LogsView: View {
                 out += esc(ns.substring(with: NSRange(location: last,
                                         length: m.range.location - last)))
             }
-            let cls = (m.range(at: 1).location != NSNotFound
+            let token = ns.substring(with: m.range)
+            var cls = (m.range(at: 1).location != NSNotFound
                        || m.range(at: 2).location != NSNotFound) ? "eid"
                 : m.range(at: 4).location != NSNotFound ? "rloc" : "name"
-            out += "<span class=\"\(cls)\">\(esc(ns.substring(with: m.range)))</span>"
+            // A bare overlay address (first octet 224–255 = 224/4 multicast or 240/4 EID) is
+            // always an EID → green, even without an [iid] prefix — mirror tokens() (line ~354)
+            // so the HTML export colors it the same as the live Logs tab.
+            if cls == "rloc", Self.isEIDAddress(token) { cls = "eid" }
+            out += "<span class=\"\(cls)\">\(esc(token))</span>"
             last = m.range.location + m.range.length
         }
         if last < ns.length { out += esc(ns.substring(from: last)) }
