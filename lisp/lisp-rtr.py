@@ -756,6 +756,16 @@ def lisp_rtr_data_plane(lisp_packet, thread_name):
     #endif
 
     #
+    # IGMP is membership signaling directed at the RTR - consume it here and
+    # never replicate it back out to the group's RLE members. The gleaning-on
+    # path above already returned after gleaning; this covers the gleaning-off
+    # case, where the IGMP report (a non-link-local group dest) would otherwise
+    # fall through to the multicast replication path and get fanned out to every
+    # receiver (showing up as spurious decap-but-no-deliver packets on ETRs).
+    #
+    if (igmp): return
+
+    #
     # Is the destination gleaned which means we should suppress a mapping
     # system lookup.
     #
