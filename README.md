@@ -14,7 +14,7 @@ For more information, visit [lispers.net](https://www.lispers.net).
 
 ### Operating Systems
 
-- Ubuntu, Debian, CentOS, macOS
+- Ubuntu, Debian, CentOS, macOS, Apple iOS
 - Raspbian, Alpine Linux, Rocky Linux
 - Docker (guest-OS: Ubuntu, Debian, CentOS, or Alpine Linux)
 - Kubernetes (guest-OS: Ubuntu)
@@ -28,6 +28,7 @@ For more information, visit [lispers.net](https://www.lispers.net).
 - Arista EOS (Linux Fedora)
 - Cisco IOS-XE guestshell (Linux CentOS)
 - Nvidia Bluefield-3 DPU
+- Apple iPhone 
 
 ## Getting Started
 
