@@ -19561,6 +19561,7 @@ def lisp_write_to_dp_socket(entry):
         rec = json.dumps(entry)
         write = bold("Write IPC", False)
         lprint("{} record to named socket: '{}'".format(write, rec))
+        if (type(rec) == str): rec = rec.encode()
         lisp_ipc_dp_socket.sendto(rec, lisp_ipc_dp_socket_name)
     except:
         lprint("Failed to write IPC record to named socket: '{}'".format(rec))
