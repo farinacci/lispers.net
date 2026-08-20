@@ -641,6 +641,31 @@ extension LispEngine {
                     self.log.fprint(.etr, "xTR is behind NAT: translated RLOC " +
                                "\(g.addressString):\(self.advertisedPort)")
                 }
+
+                // SELF-HEAL (registration wedge): if our translated PUBLIC RLOC changed since the
+                // last register — a CGNAT rebind, or a move the local-interface path-watcher never
+                // saw — the map-server can be left holding a stale mapping that the merge-refresh
+                // can't dislodge (the wedge that otherwise needs a manual disable/enable). Rebuild
+                // sockets + re-learn NAT once. Gate on the PUBLIC IP changing (NOT the @tp port,
+                // which jitters every cycle on symmetric NAT) and rate-limit so it can't storm or
+                // loop. reestablishNAT() itself re-registers, so return after it.
+                let nowV4 = self.behindNAT ? (self.translatedRLOC?.v4 ?? 0) : 0
+                if nowV4 != 0 {
+                    let healedRecently = self.lastNATHealAt
+                        .map { Date().timeIntervalSince($0) < 30 } ?? false
+                    if self.lastRegisteredRLOCv4 != 0, nowV4 != self.lastRegisteredRLOCv4,
+                       !healedRecently {
+                        self.log.fprint(.etr, "Self-heal: translated RLOC changed " +
+                            "\(LispAddress(v4: self.lastRegisteredRLOCv4).addressString) -> " +
+                            "\(LispAddress(v4: nowV4).addressString) — rebuilding NAT state, " +
+                            "re-registering (registration-wedge recovery)")
+                        self.lastRegisteredRLOCv4 = nowV4
+                        self.reestablishNAT()
+                        return
+                    }
+                    self.lastRegisteredRLOCv4 = nowV4
+                }
+
                 self.sendMapRegisters()
                 self.reregisterIGMPGroups()          // (*,G) with the freshly-learned @tp port
             }

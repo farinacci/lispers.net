@@ -28,6 +28,13 @@ final class LispEngine: ObservableObject {
     // advertise in @tp and display. Fallback to natDataPort until an RTR replies.
     @Published var translatedPort: UInt16 = 0
     var advertisedPort: UInt16 { translatedPort != 0 ? translatedPort : LISP.natDataPort }
+    // Self-heal (registration wedge): the v4 of the translated PUBLIC RLOC we last registered
+    // with, and when reestablishNAT() last ran. processInfoReply uses these to notice a NAT
+    // rebind / a move the local-interface path-watcher didn't flag, and rebuild ONCE (rate-
+    // limited) instead of only merge-refreshing — the wedge that otherwise needs a manual
+    // disable/enable of LISP to recover. See [[ios-symmetric-nat-and-reg-wedge]].
+    var lastRegisteredRLOCv4: UInt32 = 0
+    var lastNATHealAt: Date?
     // Translated CONTROL port (ctrlSocket's public NAT port), learned from the
     // map-server's control-socket Info-Reply. An ECM Map-Request goes out the
     // ctrlSocket, and lisp.py's map-server proxy-replies to itr-rloc:<inner UDP
@@ -630,33 +637,41 @@ final class LispEngine: ObservableObject {
             // (sendMapRegisters registers only live interfaces), which this triggers below.
             if primaryChanged { self.translatedRLOC = nil; self.translatedPort = 0 }
 
-            // Rebuild the PRIMARY control/data sockets too. Darwin pins a UDP socket's source
-            // address once it has sent, so after the interface that address belonged to goes
-            // away every sendto() on it fails (EADDRNOTAVAIL/ENETDOWN) — silently, until now.
-            // That is what stopped Map-Registers from ever leaving the phone on interface loss:
-            // the RLOC-set we built was correct, it just never went out, so the map-server kept
-            // the old set until it timed the registration out. Only the multi-homing sockets
-            // used to be rebuilt here; these two carry the Map-Registers.
-            self.rebuildPrimarySockets()
-
-            // Rebuild the per-interface (multi-homing) sockets bound to the NEW interface IPs,
-            // so Info-Requests and RLOC-probes egress the right path after the switch.
-            if self.config.multihomingEnabled {
-                let dataBind = (self.config.natTraversalEnabled || self.config.decentNATEnabled)
-                    ? LISP.natDataPort : LISP.dataPort
-                self.tearDownMultihomeSockets()
-                self.buildMultihomeSockets(dataBind: dataBind)
-                // mhInterfaces changed (e.g. Wi-Fi came up at a hotel) — rebuild the RTR default
-                // map-cache entries so the new interface is a next-hop (one RLOC per RTR×iface).
-                self.installRTRDefaultMapCacheEntries()
-            }
-
-            if self.config.natTraversalEnabled || self.config.decentNATEnabled {
-                self.sendInfoRequests()
-            }
-            self.sendMapRegisters()
-            self.reregisterIGMPGroups()          // refresh (*,G) on RLOC change
+            // Rebuild sockets, re-learn NAT, and re-register. Factored into reestablishNAT() so
+            // the NAT-rebind self-heal (processInfoReply) can run the SAME recovery when only the
+            // translated PUBLIC RLOC changes — no local-interface change for the watcher to see.
+            self.reestablishNAT()
         }
+    }
+
+    // Rebuild the primary + multi-homing sockets, re-learn NAT translations, and re-register.
+    // Shared by pathChanged() (interface add/remove/IP change) and the registration-wedge self-
+    // heal in processInfoReply. Darwin pins a UDP socket's source address once it has sent, so
+    // after the interface that address belonged to goes away every sendto() on it fails
+    // silently — which is what stops Map-Registers from ever leaving the phone. Rebuilding the
+    // sockets is the fix, and is exactly what a manual disable/enable of LISP does. Stamps
+    // lastNATHealAt so the self-heal won't double-fire right after a path change already ran it.
+    func reestablishNAT() {
+        lastNATHealAt = Date()
+        rebuildPrimarySockets()
+
+        // Rebuild the per-interface (multi-homing) sockets bound to the current interface IPs,
+        // so Info-Requests and RLOC-probes egress the right path.
+        if config.multihomingEnabled {
+            let dataBind = (config.natTraversalEnabled || config.decentNATEnabled)
+                ? LISP.natDataPort : LISP.dataPort
+            tearDownMultihomeSockets()
+            buildMultihomeSockets(dataBind: dataBind)
+            // mhInterfaces may have changed — rebuild the RTR default map-cache entries so each
+            // interface is a next-hop (one RLOC per RTR×iface).
+            installRTRDefaultMapCacheEntries()
+        }
+
+        if config.natTraversalEnabled || config.decentNATEnabled {
+            sendInfoRequests()
+        }
+        sendMapRegisters()
+        reregisterIGMPGroups()               // refresh (*,G) with the current RLOC/@tp
     }
 
     // decent-NAT toggle: the 240.0.0.0/8 send-map-request static entry.
