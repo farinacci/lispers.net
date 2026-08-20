@@ -49,7 +49,7 @@ if (use_python3):
     PY = "py3"
     PYTHON = "python3"
     PYVER = getoutput("python3 --version")
-    PYFLAKES = "python -m pyflakes"
+    PYFLAKES = "python3 -m pyflakes"
     obfuscate_on = False
 else:
     PY = "py2"
@@ -70,8 +70,8 @@ root = "./.."
 # Check that pyflakes and pyobfuscate are installed.
 #
 pyflakes = getoutput("{} -h".format(PYFLAKES))
-if (pyflakes.find("not found") != -1):
-    print("Need to 'apt-get install {}'".format(PYFLAKES))
+if (pyflakes.find("not found") != -1 or pyflakes.find("No module named") != -1):
+    print("Need to 'pip3 install pyflakes'")
     exit(1)
 #endif    
 pyobfuscate = getoutput("pyobfuscate -h")
@@ -106,19 +106,39 @@ build_date = getoutput("date")
 #
 # Run pyflakes. We don't want to build a release with python errors.
 #
+# pyflakes 3.2 and later report "`global <var>` is unused: name is never
+# assigned in scope" when a global statement is used for read-only access.
+# That is legal python and the lisp code does it in many places, so do not
+# fail a build on it. Any other pyflakes complaint is still an error.
+#
 print("Checking for python errors with '{}' ... ".format(PYFLAKES), end=" ")
-status = os.system("{} {}/lisp/*py > /dev/null".format(PYFLAKES, root))
-if (status != 0):
+unused_global = "is unused: name is never assigned in scope"
+output = getoutput("{} {}/lisp/*py".format(PYFLAKES, root)).split("\n")
+
+errors = []
+ignored = 0
+for line in output:
+    if (line == ""): continue
+    if (line.find(unused_global) != -1):
+        ignored += 1
+        continue
+    #endif
+    errors.append(line)
+#endfor
+
+if (errors != []):
     print("found pyflakes errors")
+    print("\n".join(errors))
     exit(1)
 #endif
-print("done")
+print("done" if ignored == 0 else \
+    "done, ignored {} unused-global warnings".format(ignored))
 
 #
 # Check and ask if you want to build release with debug code in it.
 #
 print("Checking for any lisp.debug() calls ... ", end=" ")
-command = ('egrep "debug\(" {}/lisp/*py | egrep -v "def|self|_debug" > ' + \
+command = (r'egrep "debug\(" {}/lisp/*py | egrep -v "def|self|_debug" > ' + \
     '/dev/null').format(root)
 status = os.system(command)
 print("done")

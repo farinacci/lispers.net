@@ -3,12 +3,19 @@
 #
 
 #
+# Prompt matches the one in Dino's home directory .cshrc, but uses %M so the
+# full hostname shows. %m stops at the first dot, which would render the
+# container dino-build-py3.12-rocky as just "dino-build-py3".
+#
+set prompt = "%B%M-[%~] ->%b "
+
+#
 # Quick linux OS related shortcuts.
 #
 alias sa     'source /root/.cshrc'
 alias psg    'ps auxww | egrep \!* | egrep -v grep'
 alias py     'python -O -u'
-alias py3    'python3.8 -O -u'
+alias py3    'python3 -O -u'
 alias ll     'ls -lag'
 alias ld     'ls -lgd'
 alias h      'history'            
@@ -37,6 +44,14 @@ alias pslisp      './pslisp'
 alias log-packets './log-packets'
 alias rl          './RL'
 alias sl          './STOP-LISP'
+
+#
+# Build a lispers.net release from the git repo mounted at /dino. Takes the
+# version number as an argument, "build 0.640-1". Use popd to return to the
+# directory you ran it from. make-release.py builds a python2 release unless
+# LISPERS.NET_PYTHON3 is set, and this image has no python2.
+#
+alias build       'setenv LISPERS.NET_PYTHON3; pushd /dino/l/build; py3 make-release.py \!*'
 
 #------------------------------------------------------------------------------
 
