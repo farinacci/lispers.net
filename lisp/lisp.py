@@ -4213,7 +4213,8 @@ class lisp_map_notify(object):
     #enddef
 
     def print_notify(self):
-        auth_data = binascii.hexlify(self.auth_data)
+        auth_data = self.auth_data
+        if (type(auth_data) == bytes): auth_data = binascii.hexlify(auth_data).decode()
         if (self.alg_id == LISP_SHA_1_96_ALG_ID and len(auth_data) != 40):
             auth_data = self.auth_data
         elif (self.alg_id == LISP_SHA_256_128_ALG_ID and len(auth_data) != 64):
