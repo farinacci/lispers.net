@@ -2,7 +2,7 @@
                   lispers.net Linux Release Version 0.642
                   ---------------------------------------
 
-o Release date:
+o Release date: Tue Aug 25 14:40:08 PDT 2026
 
 o This release built with Python 2.7.18 on macOS 26.5 and Python 3.12.13 on Ubuntu 24.
 
