@@ -3574,7 +3574,7 @@ class lisp_keys(object):
         if (self.curve25519):
             data = self.shared_key
         else:
-            data = lisp_hex_string(self.shared_key)
+            data = lisp_hex_string(self.shared_key).encode()
         #endif
 
         #
@@ -10159,8 +10159,8 @@ def lisp_decrypt_map_register(packet):
     #
     try:
         ekey = lisp_ms_encryption_keys[ekey_id]
-        ekey = ekey.zfill(32)
-        iv = "0" * 8
+        ekey = ekey.zfill(32).encode()
+        iv = ("0" * 8).encode()
     except:
         lprint("Cannot decrypt Map-Register with key-id {}".format(ekey_id))
         return(None)
@@ -10173,6 +10173,7 @@ def lisp_decrypt_map_register(packet):
     # Use 20 rounds so we can interoperate with ct-lisp mobile platforms.
     #
     plaintext = chacha.ChaCha(ekey, iv, 20).decrypt(packet[4::])
+    plaintext = plaintext.encode("raw_unicode_escape")
     return(packet[0:4] + plaintext)
 #enddef
 
@@ -11393,9 +11394,10 @@ def lisp_send_map_register(lisp_sockets, packet, map_register, ms):
     # with ct-lisp mobile platforms.
     #
     if (ms.ekey != None):
-        ekey = ms.ekey.zfill(32)
-        iv = "0" * 8
+        ekey = ms.ekey.zfill(32).encode()
+        iv = ("0" * 8).encode()
         ciphertext = chacha.ChaCha(ekey, iv, 20).encrypt(packet[4::])
+        ciphertext = ciphertext.encode("raw_unicode_escape")
         packet = packet[0:4] + ciphertext
         e = bold("Encrypt", False)
         lprint("{} Map-Register with key-id {}".format(e, ms.ekey_id))
@@ -13331,23 +13333,24 @@ class lisp_json(object):
     #enddef
 
     def encrypt_json(self):
-        ekey = self.json_key.zfill(32)
-        iv = "0" * 8
+        ekey = self.json_key.zfill(32).encode()
+        iv = ("0" * 8).encode()
 
         jd = json.loads(self.json_string)
         for key in jd:
             value = jd[key]
             if (type(value) != str): value = str(value)
             value = chacha.ChaCha(ekey, iv).encrypt(value)
-            jd[key] = binascii.hexlify(value)
+            value = value.encode("raw_unicode_escape")
+            jd[key] = binascii.hexlify(value).decode()
         #endfor
         self.json_string = json.dumps(jd)
         self.json_encrypted = True
     #enddef
 
     def decrypt_json(self):
-        ekey = self.json_key.zfill(32)
-        iv = "0" * 8
+        ekey = self.json_key.zfill(32).encode()
+        iv = ("0" * 8).encode()
 
         jd = json.loads(self.json_string)
         for key in jd:
@@ -15908,7 +15911,7 @@ class lisp_trace(object):
         first_long = socket.htonl(0x90000000)
         packet = struct.pack("II", first_long, 0)
         packet += struct.pack("Q", self.nonce)
-        packet += json.dumps(self.packet_json)
+        packet += json.dumps(self.packet_json).encode()
         return(packet)
     #enddef
 

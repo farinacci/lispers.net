@@ -1595,7 +1595,7 @@ def lisp_process_show_command(lisp_socket, command):
     lisp.lprint("Waiting for response to show command '{}'".format(command))
 
     opcode, source, port, output = lisp.lisp_receive(lisp_socket, True)
-    output = output.decode()
+    if (isinstance(output, bytes)): output = output.decode()
 
     lisp.lisp_ipc_lock.release()
 
@@ -1610,6 +1610,7 @@ def lisp_process_show_command(lisp_socket, command):
             source, process))
         output = lisp_drain_socket(lisp_socket, process)
         if (output == None): output = "<i>Fatal error, retry later</i><br>"
+        elif (isinstance(output, bytes)): output = output.decode()
     #endif
     return(lisp_show_wrapper(output))
 #enddef
@@ -1967,7 +1968,7 @@ def lisp_process_command_lines(lisp_socket, old, new, line):
                 lisp.lprint("Fatal IPC error to {}, source {}".format(process,
                     source))
             #endif
-            new_clause = new_clause.decode()
+            if (isinstance(new_clause, bytes)): new_clause = new_clause.decode()
         #endif
 
         #
