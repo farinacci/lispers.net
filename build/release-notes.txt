@@ -1,4 +1,23 @@
 
+                  lispers.net Linux Release Version 0.642
+                  ---------------------------------------
+
+o Release date:
+
+o This release built with Python 2.7.18 on macOS 26.5 and Python 3.12.13 on Ubuntu 24.
+
+o Do not pass a str type to lisp_ipc_dp_socket.sendto(). Make the code py2
+  and py3 capable. Thanks Slime90 for the suggestion.
+
+o In lisp_map_notify.print_notify() do not binascii.hexlify() if auth-data is not a
+  string. Thanks again Slime90 for the suggestion.
+
+o Make changes throughout for py2->py3 conversion for str vs byte arrays.
+
+o Create build/setup-lisp-py312-u22.sh which installs python 3.12 on Ubuntu 22.
+
+-------------------------------------------------------------------------------
+
                   lispers.net Linux Release Version 0.641
                   ---------------------------------------
 
@@ -16,7 +35,7 @@ o Do the same for Rocky Linux 12. Test builds on this OS.
                   lispers.net IOS Release xTR Version 0.22
                   ----------------------------------------
 
-o Release date:
+o Release date: Thu Aug 20 13:51:56 PDT 2026
 
 o Display group addresses in logs in green, they are EIDs.
 
