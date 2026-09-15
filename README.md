@@ -69,6 +69,7 @@ The lispers.net implementation supports the following IETF LISP Working Group RF
 - [RFC 9437](https://www.rfc-editor.org/rfc/rfc9437.html) — Publish/Subscribe Functionality for LISP
 - [RFC 9735](https://www.rfc-editor.org/rfc/rfc9735.html) — LISP Distinguished Name Encoding
 - [RFC 9962](https://www.rfc-editor.org/rfc/rfc9962.html) — A Decentralized Locator/ID Separation Protocol Mapping System (LISP-Decent)
+- [RFC 10040](https://www.rfc-editor.org/rfc/rfc10040.html) — Locator/ID Separation Protocol (LISP) Geo-Coordinates
 
 ---    
 
@@ -76,7 +77,6 @@ The lispers.net implementation supports the following IETF LISP Working Group RF
 - [draft-ietf-lisp-ecdsa-auth](https://datatracker.ietf.org/doc/draft-ietf-lisp-ecdsa-auth/) — LISP Control-Plane ECDSA Authentication and Authorization
 - [draft-ietf-lisp-eid-anonymity](https://datatracker.ietf.org/doc/draft-ietf-lisp-eid-anonymity/) — LISP EID Anonymity
 - [draft-ietf-lisp-eid-mobility](https://datatracker.ietf.org/doc/draft-ietf-lisp-eid-mobility/) — LISP L2/L3 EID Mobility Using a Unified Control Plane
-- [draft-ietf-lisp-geo](https://datatracker.ietf.org/doc/draft-ietf-lisp-geo/) — LISP Geo-Coordinate Use-Cases
 - [draft-ietf-lisp-mn](https://datatracker.ietf.org/doc/draft-ietf-lisp-mn/) — LISP Mobile Node
 - [draft-ietf-lisp-nat-traversal](https://datatracker.ietf.org/doc/draft-ietf-lisp-nat-traversal/) — NAT traversal for LISP
 - [draft-ietf-lisp-name-encoding](https://datatracker.ietf.org/doc/draft-ietf-lisp-name-encoding/) — LISP Distinguished Name Encoding
@@ -98,5 +98,6 @@ The lispers.net implementation supports the following IETF LISP Working Group RF
 - [draft-farinacci-lisp-mobile-network](https://datatracker.ietf.org/doc/draft-farinacci-lisp-mobile-network/) — LISP for the Mobile Network
 - [draft-farinacci-lisp-satellite-network](https://datatracker.ietf.org/doc/draft-farinacci-lisp-satellite-network/) — LISP for Satellite Networks
 - [draft-farinacci-lisp-telemetry](https://datatracker.ietf.org/doc/draft-farinacci-lisp-telemetry/) — LISP Data-Plane Telemetry
+- [draft-ietf-lisp-geo](https://datatracker.ietf.org/doc/draft-ietf-lisp-geo/) — LISP Geo-Coordinate Use-Cases
 
 ---
