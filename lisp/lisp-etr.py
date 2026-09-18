@@ -1608,8 +1608,19 @@ def lisp_etr_process():
         pcap = pcapy.open_live(device, 1600, 0, 100)
         pcap.setfilter(pfilter)
         while(True):
-            header, packet = pcap.next()
-            if (len(packet) == 0): continue
+            #
+            # pcapy-ng (python3) can return (None, None) on a read timeout where
+            # pcapy (python2) returned (None, b""); guard so len() does not throw
+            # and silently kill this data-plane thread (same py2->py3 bug as in
+            # lisp-rtr.py; thread crashes are now logged via lisp_set_exception's
+            # threading.excepthook).
+            #
+            try:
+                header, packet = pcap.next()
+            except:
+                continue
+            #endtry
+            if (packet == None or len(packet) == 0): continue
             lisp_etr_data_plane([device, lisp_raw_socket], None, packet)
         #endwhile
     #endif

@@ -605,6 +605,39 @@ def lisp_record_traceback(*args):
 #
 def lisp_set_exception():
     sys.excepthook = lisp_record_traceback
+
+    #
+    # In python3, an unhandled exception in a threading.Thread goes to
+    # threading.excepthook, NOT sys.excepthook (which covers only the main
+    # thread). Without hooking it, a worker/pcap thread that throws dies
+    # SILENTLY with nothing written to lisp-traceback.log. In python2 the
+    # sys.excepthook above was sufficient.
+    #
+    if (hasattr(threading, "excepthook")):
+        threading.excepthook = lisp_record_thread_traceback
+    #endif
+    return
+#enddef
+
+#
+# lisp_record_thread_traceback
+#
+# threading.excepthook handler (python3): record a thread's unhandled exception
+# to lisp-traceback.log using the exc-info passed in (do NOT rely on
+# traceback.print_last(), which reads sys.last_* and is not set for threads).
+#
+def lisp_record_thread_traceback(args):
+    ts = datetime.datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")[:-3]
+    name = args.thread.name if (args.thread != None) else "?"
+    fd = open("./logs/lisp-traceback.log", "a")
+    fd.write("---------- Thread '{}' exception: {} ----------\n".format(name, ts))
+    try:
+        traceback.print_exception(args.exc_type, args.exc_value,
+            args.exc_traceback, file=fd)
+    except:
+        fd.write("traceback.print_exception() failed\n")
+    #endtry
+    fd.close()
     return
 #enddef
 

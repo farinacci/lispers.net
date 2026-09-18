@@ -1137,8 +1137,22 @@ def lisp_rtr_pcap_thread(lisp_thread):
         pcap = pcapy.open_live(device, 9000, 0, 100)
         pcap.setfilter(pfilter)
         while(True):
-            header, packet = pcap.next()
-            if (len(packet) == 0): continue
+            #
+            # pcapy-ng's next() (python3) can return (None, None) on a read
+            # timeout, where the original pcapy (python2) returned (None, b"").
+            # Guard against None (and a next() that raises on timeout) so a
+            # timeout does not throw and silently kill this data-plane thread.
+            # A packet-PROCESSING exception below is deliberately NOT caught here
+            # so it propagates to threading.excepthook and is recorded in
+            # lisp-traceback.log (see lisp_set_exception) - that is how we catch
+            # the real py2->py3 trigger instead of it vanishing silently.
+            #
+            try:
+                header, packet = pcap.next()
+            except:
+                continue
+            #endtry
+            if (packet == None or len(packet) == 0): continue
             lisp_rtr_pcap_process_packet([device, lisp_thread], None, packet)
         #endwhile
     #endif

@@ -1197,8 +1197,19 @@ def lisp_itr_pcap_thread(device, pfilter, pcap_lock):
         pcap_lock.release()
         pcap.setfilter(pfilter)
         while(True):
-            header, packet = pcap.next()
-            if (len(packet) == 0): continue
+            #
+            # pcapy-ng (python3) can return (None, None) on a read timeout where
+            # pcapy (python2) returned (None, b""); guard so len() does not throw
+            # and silently kill this data-plane thread (same py2->py3 bug as in
+            # lisp-rtr.py; thread crashes are now logged via lisp_set_exception's
+            # threading.excepthook).
+            #
+            try:
+                header, packet = pcap.next()
+            except:
+                continue
+            #endtry
+            if (packet == None or len(packet) == 0): continue
             lisp_itr_pcap_process_packet(device, None, packet)
         #endwhile
     #endif
