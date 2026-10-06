@@ -18513,7 +18513,9 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl, mrlo
         nrloc.rloc_name = rloc_name
         nrloc.last_rloc_probe_nonce = mrloc.last_rloc_probe_nonce
         nrloc.last_rloc_probe = mrloc.last_rloc_probe
-        r, eid, group = lisp_rloc_probe_list[multicast_rloc][0]
+        probe_array = lisp_rloc_probe_list.get(multicast_rloc)
+        if (not probe_array): return
+        r, eid, group = probe_array[0]
         nrloc.process_rloc_probe_reply(ts, nonce, eid, group, hc, ttl, jt)
         mrloc.process_rloc_probe_reply(ts, nonce, eid, group, hc, ttl, jt)
         return
@@ -18572,14 +18574,26 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl, mrlo
     # Look for RLOC in the RLOC-probe list for EID tuple and fix-up stored
     # RLOC-probe state.
     #
-    if (addr not in lisp_rloc_probe_list): return
+    # Snapshot the probe-list entry before processing. process_rloc_probe_
+    # reply() below can change RLOC reachability, which tears down map-cache
+    # state and calls delete_from_rloc_probe_list(); that pops addr out of
+    # lisp_rloc_probe_list once its array empties. Other threads can do the
+    # same concurrently. A membership test followed by a separate subscript
+    # still races - addr can be popped in between, KeyErroring the subscript.
+    # Use dict.get() to fetch the array atomically (one operation under the
+    # GIL), then copy it so the loops below are safe even if the live array is
+    # mutated while we walk it.
+    #
+    probe_entries = lisp_rloc_probe_list.get(addr)
+    if (probe_entries == None): return
+    probe_entries = probe_entries[:]
 
     #
     # Process probe reply for all RLOCs with this address. Track which one
     # actually matched the nonce so we can copy its RTT data to the others.
     #
     matched_rloc = None
-    for rloc, eid, group in lisp_rloc_probe_list[addr]:
+    for rloc, eid, group in probe_entries:
         if (lisp_i_am_rtr):
             if (rloc.translated_port != 0 and rloc.translated_port != port):
                 continue
@@ -18613,7 +18627,7 @@ def lisp_process_rloc_probe_reply(rloc_entry, source, port, map_reply, ttl, mrlo
     # so all EIDs using the same RLOC+interface see the same telemetry.
     #
     matched_nh = matched_rloc.rloc_next_hop
-    for parent_rloc, eid, group in lisp_rloc_probe_list[addr]:
+    for parent_rloc, eid, group in probe_entries:
 
         #
         # Find equivalent chain entry in this parent_rloc by matching
