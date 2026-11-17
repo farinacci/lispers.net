@@ -1,4 +1,16 @@
 
+                  lispers.net Linux Release Version 0.645
+                  ---------------------------------------
+
+o Release date: Mon Nov 16 19:54:13 PST 2026
+
+o This release built with Python 2.7.18 on macOS 26.5 and Python 3.12.13 on Ubuntu 24.
+
+o Fix crash in lisp_process_unicast_map_notify() and lisp_process_multicast_map_notify()
+  to account for no EID-records in the Map-Notify message.    
+
+-------------------------------------------------------------------------------
+
                   lispers.net Linux Release Version 0.644
                   ---------------------------------------
 
